@@ -1,0 +1,89 @@
+lpi units
+---------
+
+lodepng: PNG reading and writing. Also independent zlib encoder/decoder.
+lodewav: wav file reading and writing
+lpi_audio: playing audio, audio samples being std::vector<double>'s
+lpi_bignums: contains currently a 128-bit fixed point number class
+lpi_color: different color types and conversions
+lpi_draw2d: draw 2D shapes in 2D RGBA buffers, and general 2D drawing algorithms such as line clipping
+lpi_draw2dgl: draw 2D shapes in OpenGL (circles and rectangles and such, but not textures since lpi_texture does that)
+lpi_draw3dgl: draw 3D primitives that aren't standard in OpenGL, e.g. a 3D linesegment-circle, and some GL related 3D math
+lpi_event: events, keyboard and mouse input with SDL
+lpi_file: load and save files through simpler interface
+lpi_general: a mix of general things, including SDL time, mathematics and base64 coding
+lpi_gui: classes for gui elemenents
+lpi_math2d: 2D vector math
+lpi_math3d: 3D vector, matrix, transformation and camera math
+lpi_math4d: 4D vector and matrix
+lpi_pathfind: A* path finding, useful for some games
+lpi_screen: SDL + OpenGL screen related functions
+lpi_text: font and text drawing --> TODO: should split this up in the non-screen dependent stuff and the screen dependent stuff
+lpi_texture: class for textures for use in OpenGL or SDL screen. They can be drawn in 2D on screen, or used in 3D to map on OpenGL vertices.
+lpi_unittest: unit testing ability
+lpi_xml: XML parsing and generating
+
+External dependencies of lpi
+----------------------------
+
+C++ standard library
+SDL
+OpenGL
+
+lpi units that depend only on standard C++
+------------------------------------------
+
+These can be used as independent libraries whenever needed individually.
+
+*) lodepng
+*) lodewav
+*) lpi_bignums
+*) lpi_color
+*) lpi_crypto
+*) lpi_file
+*) lpi_math2d
+*) lpi_pathfind
+*) lpi_unittest
+*) lpi_xml
+
+lpi units that depend on other lpi units but not on SDL or OpenGL
+-----------------------------------------------------------------
+
+Still useful as independent library in combination with only a few other lpi units.
+
+*) lpi_draw2d: lpi_color
+
+*) lpi_math3d: lpi_math2d
+
+*) lpi_math4d: lpi_math3d
+
+lpi units that depend on SDL and/or OpenGL, but not on other lpi units
+----------------------------------------------------------------------
+
+*) lpi_audio: SDL
+
+*) lpi_event: SDL
+
+lpi units that depend on both other lpi units and OpenGL or SDL
+---------------------------------------------------------------
+
+lpi units with lots of dependencies on other lpi units and the external libraries.
+Indirect dependencies aren't always mentioned here. That is, if A depends on B and B on C,
+then it isn't always mentioned that A indirectly depends on C.
+
+*) lpi_draw2dgl: SDL, OpenGL, lpi_screen, lpi_draw2d
+
+*) lpi_draw3dgl: SDL, OpenGL, lpi_color, lpi_draw2d, lpi_math3d
+
+*) lpi_general: SDL, lpi_color
+
+*) lpi_gui: SDL, OpenGL, lodepng, lpi_general, lpi_event, lpi_text, lpi_texture, lpi_screen, lpi_color, lpi_drawgl, lpi_unittest
+  TODO: remove lpi_unittest dependency, make the gui unit test optional
+
+*) lpi_screen: SDL, OpenGL, lpi_color
+
+*) lpi_text: SDL, OpenGL, lodepng, lpi_screen, lpi_texture, lpi_color
+
+*) lpi_texture: SDL, OpenGL, lodepng, lpi_general, lpi_screen, lpi_color
+  REMARK: The lpi_screen dependency is for scissor, bind, and more important wrapped OpenGL stuff
+
