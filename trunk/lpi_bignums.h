@@ -334,6 +334,9 @@ class ufixed128 //unsigned version, used in some functions of the signed version
     ufixed128& operator+=(uint32 rhs);
     ufixed128& operator-=(uint32 rhs);
     
+    ufixed128& operator+=(double rhs);
+    ufixed128& operator-=(double rhs);
+    
     ufixed128& operator>>=(uint32 shift);
     ufixed128& operator<<=(uint32 shift);
     
@@ -447,6 +450,9 @@ class fixed128
     
     fixed128& operator+=(uint32 rhs);
     fixed128& operator-=(uint32 rhs);
+    
+    fixed128& operator+=(double rhs);
+    fixed128& operator-=(double rhs);
     
     fixed128& operator>>=(uint32 shift);
     fixed128& operator<<=(uint32 shift);

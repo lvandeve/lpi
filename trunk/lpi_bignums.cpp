@@ -54,6 +54,16 @@ ufixed128& ufixed128::operator-=(uint32 rhs)
   return *this;
 }
 
+ufixed128& ufixed128::operator+=(double rhs)
+{
+  return (*this)+= ufixed128(rhs);
+}
+
+ufixed128& ufixed128::operator-=(double rhs)
+{
+  return (*this)-= ufixed128(rhs);
+}
+
 void ufixed128::addFractional(uint32 rhs)
 {
   data[0] += rhs; //data[0], the fractional part, is left untouched
@@ -657,6 +667,16 @@ fixed128& fixed128::operator-=(uint32 rhs)
 {
   subtract<4,1,1,0>(data, data, &rhs);
   return *this;
+}
+
+fixed128& fixed128::operator+=(double rhs)
+{
+  return (*this)+= fixed128(rhs);
+}
+
+fixed128& fixed128::operator-=(double rhs)
+{
+  return (*this)-= fixed128(rhs);
 }
 
 void fixed128::addFractional(uint32 rhs)
