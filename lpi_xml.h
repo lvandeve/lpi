@@ -95,6 +95,21 @@ There are 3 classes and thus 3 different ways (+ combinations) to parse and gene
                  XMLCompose encounters. This allows a class to use a more nested structure, without
                  needing more classes.
 
+Note about XMLCompose
+---------------------
+
+There is next to the parse functions also a "parse_nonvirtual".
+
+Here's its purpose:
+
+If your class has XMLCompose members in it and you want it to parse a part
+of the string, you just call its member.parse function, but if you need a parent class of this class to
+parse a part of it, you'd need to call Parent::doParseContent and Parent::doParseAttributes separatly
+instead of Parent::parse, because parse will again call the virtual doParse### functions of this class
+instead of the parent. I consider those two calls code duplication, therefore I added a template function called
+parse_nonvirtual. You can call it as follows: parse_nonvirtual<Parent>(...parameters you normally give to parse...);
+In there, Parent is the type of the class of which you want to call the doParse### functions.
+
 Errors and exceptions
 ---------------------
 
@@ -234,6 +249,7 @@ class XML //tools for XML
   
   static bool isNestedTag(const std::string& in, size_t pos, size_t end); //checks if the given content is either a value, or nested tag(s) (combinations are not supported!)
   static bool isCommentTag(const std::string& in, size_t pos, size_t end); //checks if the given name is a comment <!----> or xml declaration <??>
+  
   ///Generating
   
   /*
@@ -347,6 +363,13 @@ class XMLCompose : public XML
   int parse(const std::string& in, size_t& pos, size_t end);
   //but THIS one throws an lpi::XML::error object because it's meant to be used from the inside of doParse... functions
   void parse(const std::string& in, size_t ab, size_t ae, size_t cb, size_t ce, RefRes& ref);
+  //this one also throws, use instead of parse when you need a parent class to parse a subtag. Set T to the parent type.
+  template<typename T>
+  void parse_nonvirtual(const std::string& in, size_t ab, size_t ae, size_t cb, size_t ce, RefRes& ref)
+  {
+    static_cast<T*>(this)->T::doParseAttributes(in, ab, ae, ref);
+    static_cast<T*>(this)->T::doParseContent(in, cb, ce, ref);
+  }
   
   void generate(std::string& out, const std::string& name) const;
   void generate(std::string& out, const std::string& name, size_t indent) const;
