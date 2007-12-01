@@ -25,8 +25,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 Lode's XML system
 -----------------
 
-This supports parsing and generating of xml files without mixed content. This is to be used to read/save settings
-from/to a file, such as descriptions of levels of a game, series of input keys from a keyboard, profiles, ...
+This supports parsing and generating of XML files without mixed content. This is to be used to read/save settings
+from/to a file, such as descriptions of levels of a game, mouse/keyboard controls, profiles, ...
 
 Mixed content (values and nested elements inside the same element) is not supported because it adds
 extra complexity without adding any more value to the purpose. Each element with a value in it, may contain
@@ -52,14 +52,15 @@ Supported:
 -Reading an XML string and writing it out as a nicely formatted and indented version of the same string. However
   it will not write the comments and xml declaration (for now).
 -Storing of pointers in xml and recreating a datastructure with pointers (with updated addresses) when parsing.
+-Storing binary data in base64 format in XML
 -Case sensitive tag names, as specified by the XML standard. So the following is invalid: <a>text</A>
 -Comments, these are tags of the form <!--comment-->. Avoid using other forms. But, the confusing rule
   about the "--" is followed, so this is a legal comment: "<!------>comment-->".
   The empty comment is "<!>".
   Comments are allowed only between tags or nested tags. They are NOT allowed to be mixed inside value tags.
-  That means, this is ok: <a><!><b>value</b></a>, but this is NOT ok: <a><!>value</a>
-  Comments are ignored by XMLCompose, but are optionally stored as comments in XMLTree to allow pretty printing
-  to include the comments and xml declaration.
+  That means, this is ok: <a><!><b>value</b></a>, but the following isn't: <a><!>value</a>
+  Comments are ignored by the composition method, but are optionally stored as comments in XMLTree
+  to allow pretty printing to include the comments and xml declaration.
 
 Not supported:
 --------------
@@ -75,40 +76,22 @@ Not supported:
 -The xml declaration of the form <?...?> is optional and ignored. But at least it won't cause an error if you include one: it's treated as a comment.
 -If you parse with comments, the xml declaration is seen as comment, but the ? is kept so you can recognise it if needed
 
-Three Classes:
---------------
+Different methods
+-----------------
 
-There are 3 classes and thus 3 different ways (+ combinations) to parse and generate your xml:
+There are actually different ways to parse and generate available:
 
-*) XML: this class provides only a basic toolset to parse and generate tags, and convert values
-        from tags to C++ datatypes. This is made a class, even though it has only static functions,
-        because inheriting from it them brings all these functions in the scope of the class
-        that inherits from it, which turned out to be handier than namespaces.
-*) XMLCompose: this class is intended to be used by composition. You can translate your class structure
-               to XML this way. It can be tricky to implement this and the class diagram and xml
-               structure have to match each other. This way allows a sort of serialization and allows
-               storing and loading a complete data structure that includes pointers to other data members.
-*) XMLTree: this allows storing the xml in a tree and generating xml out of it again. This is an easy way
-            that works without enforcing the xml on your class structure, instead you get a tree that can
-            be easier to get values from.
-*) Combinations: You can also combine XMLCompose and XMLTree, e.g. using XMLTree to parse subtags that
-                 XMLCompose encounters. This allows a class to use a more nested structure, without
-                 needing more classes.
-
-Note about XMLCompose
----------------------
-
-There is next to the parse functions also a "parse_nonvirtual".
-
-Here's its purpose:
-
-If your class has XMLCompose members in it and you want it to parse a part
-of the string, you just call its member.parse function, but if you need a parent class of this class to
-parse a part of it, you'd need to call Parent::doParseContent and Parent::doParseAttributes separatly
-instead of Parent::parse, because parse will again call the virtual doParse### functions of this class
-instead of the parent. I consider those two calls code duplication, therefore I added a template function called
-parse_nonvirtual. You can call it as follows: parse_nonvirtual<Parent>(...parameters you normally give to parse...);
-In there, Parent is the type of the class of which you want to call the doParse### functions.
+*) Tools: There's a basic toolset to parse and generate tags, and convert values
+      from tags to C++ datatypes. This also defines the primitive datatypes that
+      can be parsed and generated to tags.
+*) With composition: this is intended to be used by composition. You can translate your class
+      structure to XML this way. It can be tricky to implement this in a nice way though.
+      This way allows a sort of serialization and allows storing and loading a complete data
+      structure that includes pointers to other data members.
+*) XMLTree: this allows storing the XML in a tree and generating XML out of it again. This is an easy way
+            that works without enforcing certain functions to be made in classes or even making classes at all.
+*) Combinations: You can also combine the composition and XMLTree method, e.g. using XMLTree to parse subtags that
+                 are encountered.
 
 Errors and exceptions
 ---------------------
@@ -123,9 +106,9 @@ Other parse functions will throw an lpi::XML::Error object, with in it an intege
 that has the same rules as the returned integer described above.
 
 The reason for the exceptions is because I saw no other sane way to release the implementer
-of doParse... functions to do a lot of error checking. However, the functions you normally
+of parse... functions to do a lot of error checking. However, the functions you normally
 call from the external world will not throw anything and return an integer instead. The
-C++ exceptions are only used internally. You can throw in the doParse... functions that
+C++ exceptions are only used internally. You can throw in the parse... functions that
 you implement though, if you need it. It's indicated in this header file which parse functions
 throw and which ones not.
 
@@ -161,265 +144,351 @@ Here are the meanings of some of the names used in the comments or the identifie
 Example:
 --------
 
-There is an example at the bottom of the .cpp file, that shows how to use both XMLCompose and XMLTree.
-In the XMLCompose example, it shows how to implement the parse and generate functions. In the parse
+There is an example at the bottom of the .cpp file, that shows how to use the different methods.
+In the compose example, it shows how to implement the parsing and generating functions. In the parseXML
 functions, you need to use the while loop similar to in the example.
 */
 
 
 namespace lpi
 {
-
-////////////////////////////////////////////////////////////////////////////////
-//XML Tools
-////////////////////////////////////////////////////////////////////////////////
-
-class XML //tools for XML
+namespace xml
 {
-  public:
-  
-  virtual ~XML(){}
-  
-  ///Tools
-  
-  template<typename T>
-  static void deletify(T& t) //delete all pointers, then clear the container. This function has nothing to do with XML, except that you often need to deletify std::containers of pointers before parsing
-  {
-    for(typename T::iterator it = t.begin(); it != t.end();) delete (*it); t.clear();
-  }
-  
-  static void skipWhiteSpace(const std::string& in, size_t& pos, size_t end);
-  static void skipToChar(const std::string& in, size_t& pos, size_t end, char c);
-  static bool isWhiteSpace(char c);
-  static bool isCharacter(const std::string& in, size_t pos, size_t end, char c); //made to have the < size and == test in one function
-  static bool isNotCharacter(const std::string& in, size_t pos, size_t end, char c); //made to have the < size and != test in one function
 
-  static void entitify(std::string& out, const std::string& in, size_t pos, size_t end);
-  static void unentitify(std::string& out, const std::string& in, size_t pos, size_t end);
+extern const std::string xml_indentation_symbol;
+extern const std::string xml_newline_symbol;
 
-  //conversions between C++ and strings for xml
-  
-  //C++ to XML (convert)
-  static void convert(std::string& out, bool in); //bool -> boolean
-  static void convert(std::string& out, char in); //char -> byte
-  static void convert(std::string& out, int in); //int -> int
-  static void convert(std::string& out, short in); //short -> short
-  static void convert(std::string& out, long in); //long -> long
-  static void convert(std::string& out, unsigned char in); //unsigned char -> unsignedByte
-  static void convert(std::string& out, unsigned short in); //unsigned short -> unsignedShort
-  static void convert(std::string& out, unsigned int in); //unsigned int -> unsignedInt
-  static void convert(std::string& out, unsigned long in); //unsigned long -> unsignedLong
-  static void convert(std::string& out, float in); //float -> float
-  static void convert(std::string& out, double in); //double -> double
-  static void convert(std::string& out, const void* in);
-  static void convert(std::string& out, void* in);
-  static void convert(std::string& out, const std::string& in); //std::string -> string
-  static void convert(std::string& out, const std::vector<unsigned char>& in); //std::vector<unsigned char> -> base64Binary
-  //static void convert(std::string& out, const XMLCompose* in); //nested; this can't be implemented: it must know more parameters, to do indentation of nested tags
-  
-  //XML to C++ (unconvert)
-  static void unconvert(bool& out, const std::string& in, size_t pos, size_t end);
-  static void unconvert(char& out, const std::string& in, size_t pos, size_t end);
-  static void unconvert(short& out, const std::string& in, size_t pos, size_t end);
-  static void unconvert(int& out, const std::string& in, size_t pos, size_t end);
-  static void unconvert(long& out, const std::string& in, size_t pos, size_t end);
-  static void unconvert(unsigned char& out, const std::string& in, size_t pos, size_t end);
-  static void unconvert(unsigned short& out, const std::string& in, size_t pos, size_t end);
-  static void unconvert(unsigned int& out, const std::string& in, size_t pos, size_t end);
-  static void unconvert(unsigned long& out, const std::string& in, size_t pos, size_t end);
-  static void unconvert(float& out, const std::string& in, size_t pos, size_t end);
-  static void unconvert(double& out, const std::string& in, size_t pos, size_t end);
-  static void unconvert(const void*& out, const std::string& in, size_t pos, size_t end);
-  static void unconvert(void*& out, const std::string& in, size_t pos, size_t end);
-  static void unconvert(std::string& out, const std::string& in, size_t pos, size_t end);
-  static void unconvert(std::vector<unsigned char>& out, const std::string& in, size_t pos, size_t end);
-  //static void unconvert(XMLCompose* out, const std::string& in, size_t pos, size_t end); //this can't be implemented: it must know more parameters, to do indentation of nested tags
-  
-  template<typename T>
-  static void unconvert(T& out, const std::string& in)
+////////////////////////////////////////////////////////////////////////////////
+// 1.) General XML Tools
+////////////////////////////////////////////////////////////////////////////////
+
+///Tools
+
+template<typename T>
+void deletify(T& t) //delete all pointers, then clear the container. This function has nothing to do with XML, except that you often need to deletify std::containers of pointers before parsing
+{
+  for(typename T::iterator it = t.begin(); it != t.end();) delete (*it); t.clear();
+}
+
+void skipWhiteSpace(const std::string& in, size_t& pos, size_t end);
+void skipToChar(const std::string& in, size_t& pos, size_t end, char c);
+bool isWhiteSpace(char c);
+bool isCharacter(const std::string& in, size_t pos, size_t end, char c); //made to have the < size and == test in one function
+bool isNotCharacter(const std::string& in, size_t pos, size_t end, char c); //made to have the < size and != test in one function
+
+void entitify(std::string& out, const std::string& in, size_t pos, size_t end);
+void unentitify(std::string& out, const std::string& in, size_t pos, size_t end);
+
+//conversions between C++ and strings for xml
+
+//C++ to XML (convert). The converted value is appended to the string.
+void convert(std::string& out, bool in); //bool -> boolean
+void convert(std::string& out, char in); //char -> byte
+void convert(std::string& out, int in); //int -> int
+void convert(std::string& out, short in); //short -> short
+void convert(std::string& out, long in); //long -> long
+void convert(std::string& out, unsigned char in); //unsigned char -> unsignedByte
+void convert(std::string& out, unsigned short in); //unsigned short -> unsignedShort
+void convert(std::string& out, unsigned int in); //unsigned int -> unsignedInt
+void convert(std::string& out, unsigned long in); //unsigned long -> unsignedLong
+void convert(std::string& out, float in); //float -> float
+void convert(std::string& out, double in); //double -> double
+void convert(std::string& out, const void* in);
+void convert(std::string& out, void* in);
+void convert(std::string& out, const std::string& in); //std::string -> string
+void convert(std::string& out, const std::vector<unsigned char>& in); //std::vector<unsigned char> -> base64Binary
+
+//XML to C++ (unconvert). The pos and end values are the range in the string to parse.
+void unconvert(bool& out, const std::string& in, size_t pos, size_t end);
+void unconvert(char& out, const std::string& in, size_t pos, size_t end);
+void unconvert(short& out, const std::string& in, size_t pos, size_t end);
+void unconvert(int& out, const std::string& in, size_t pos, size_t end);
+void unconvert(long& out, const std::string& in, size_t pos, size_t end);
+void unconvert(unsigned char& out, const std::string& in, size_t pos, size_t end);
+void unconvert(unsigned short& out, const std::string& in, size_t pos, size_t end);
+void unconvert(unsigned int& out, const std::string& in, size_t pos, size_t end);
+void unconvert(unsigned long& out, const std::string& in, size_t pos, size_t end);
+void unconvert(float& out, const std::string& in, size_t pos, size_t end);
+void unconvert(double& out, const std::string& in, size_t pos, size_t end);
+void unconvert(const void*& out, const std::string& in, size_t pos, size_t end);
+void unconvert(void*& out, const std::string& in, size_t pos, size_t end);
+void unconvert(std::string& out, const std::string& in, size_t pos, size_t end);
+void unconvert(std::vector<unsigned char>& out, const std::string& in, size_t pos, size_t end);
+
+template<typename T>
+void unconvert(T& out, const std::string& in)
+{
+  unconvert(out, in, 0, in.size());
+}
+
+//base64 is used to put binary data in XML tags
+void encodeBase64(const std::vector<unsigned char>& in, std::string& out);
+void decodeBase64(std::vector<unsigned char>& out, const std::string& in, size_t pos = 0, size_t end = 0);
+
+//getting line and column number is useful for showing error messages given the pos in the string where it happened
+int getLineNumber(const std::string& fulltext, size_t pos);
+int getColumnNumber(const std::string& fulltext, size_t pos);
+
+//returns if this tag is nested (true) or a value tag (false). Combinations are not supported!
+bool isNestedTag(const std::string& in, size_t pos, size_t end);
+//checks if the given name is a comment <!----> or xml declaration <??>
+bool isCommentTag(const std::string& in, size_t pos, size_t end);
+
+///Generating
+
+//generates a space, then the attribute name, then "=", then a quote, then the value, then a quote again to close it
+template<typename T>
+static void generateAttribute(std::string& out, const std::string& name, const T& value)
+{
+  out += " ";
+  out += name;
+  out += "=";
+  out += '"';
+  convert(out, value);
+  out += '"';
+}
+
+/*
+generateValueTag: generate a tag with a simple value or string in it. This can only be used
+to generate tags with primitives. Nested tags and attributes can't be generated with this.
+If the value converts into an empty string, a singleton tag is generated.
+*/
+template<typename T>
+static void generateValueTag(std::string& out, const std::string& name, const T& value, size_t indent) //if the input is of type string, then it'll be entitified. Therefore, you can't use this function to generate nested tags.
+{
+  for(size_t i = 0; i < indent; i++) out += xml_indentation_symbol;
+  out += "<" + name + ">";
+  size_t size = out.size();
+  convert(out, value);
+  if(out.size() == size) //nothing was added, so make this a singleton tag. Change the ">" into "/>".
   {
-    unconvert(out, in, 0, in.size());
+    out[out.size() - 1] = '/'; //the > must become a '/'
+    out += ">";
   }
+  else //value was added, now add the end tag
+  {
+    out += "</" + name + ">";
+  }
+  out += xml_newline_symbol;
+}
+
+///Parsing
+
+struct Error //this is thrown by some parsing functions
+{
+  int error;
+  int pos; //the position in the text file, convert to line number with XML::getLineNumber(pos)
   
-  static void encodeBase64(const std::vector<unsigned char>& in, std::string& out);
-  static void decodeBase64(std::vector<unsigned char>& out, const std::string& in, size_t pos = 0, size_t end = 0);
-  
-  static int getLineNumber(const std::string& fulltext, size_t pos); //used for showing error message that indicate line instead of character number
-  static int getColumnNumber(const std::string& fulltext, size_t pos); //used for showing error message that indicate column instead of character number
-  
-  static bool isNestedTag(const std::string& in, size_t pos, size_t end); //checks if the given content is either a value, or nested tag(s) (combinations are not supported!)
-  static bool isCommentTag(const std::string& in, size_t pos, size_t end); //checks if the given name is a comment <!----> or xml declaration <??>
-  
-  ///Generating
-  
+  Error(int i_error, int i_pos) : error(i_error), pos(i_pos) {}
+};
+
+//return values of parse functions
+const int SUCCESS = 0;
+const int END = 1;
+const int MIN_ERROR = 10; //error values are values >= 10
+
+inline bool isError(int result) { return result >= MIN_ERROR; }
+
+struct ParsePos //information about the tag, in an efficient format by giving positions in the main string instead of copying each string part (this works for parsing but not for generating)
+{
+  //std::string* s; //pointer to the full string, to which the positions refer
+  size_t tb; //tag begin: the begin of this tag (the position of the first < symbol)
+  size_t te; //tag end: the end of this tag (the position after the last > symbol)
+  size_t ab; //attributes begin: the beginning of all the attributes
+  size_t ae; //attributes end: the end of all the attributes (after the last ' or " symbol)
+  size_t cb; //content begin: the beginning of all the content (after the position of the > symbol of the start tag)
+  size_t ce; //content end: the end of all the content (the position of the < symbol of the end tag)
+};
+
+//these parse functions can throw lpi::XML::Error objects if an error happens; their return value is to see the difference between SUCCESS and END
+int parseTag(const std::string& in, size_t& pos, size_t end, std::string& name, ParsePos& parsepos, bool skipcomments = true); //the content is empty if it was a singleton tag or an empty tag (you can't see the difference)
+int parseAttribute(const std::string& in, size_t& pos, size_t end, std::string& name, ParsePos& parsepos);
+
+//this function can also throw an lpi::XML::Error object
+void skipToNonCommentTag(const std::string& in, size_t& pos, size_t end); //call when you want to go to a '<' that is not of a comment tag. After calling this function, pos is on top of the first non-comment '<'. This function can throw.
+
+////////////////////////////////////////////////////////////////////////////////
+// 2.) Reference Resolver Tool
+////////////////////////////////////////////////////////////////////////////////
+
+struct RefRes //reference resolver
+{
   /*
-  -Done separatly in XMLCompose and XMLTree due to the big differences of their system.
-  -Also generating is much easier than parsing so no shared tools were needed here.
-  -Finally, there is e.g. no function that generates an open or close tag here, because
-  generating an open tag with "<" + name + ">" would be quite useless since in some cases
-  you want to add attributes between the name and the ">". So it ended up not being code
-  duplication at all to have statements of the form "<" + name + ... separatly
-  in XMLCompose and XMLTree.
+  RefRes is the reference (or pointer/address) resolver.
+  When generating, let things that are pointed to save their address, and let things that point to it
+  save the pointer value. When parsing, RefRes can then resolve everything back.
+  Please see the World/Monster/MonsterType example in the .cpp file for usage.
   */
+  std::map<const void*, void*> pointers;
+  std::vector<void**> clients; //these will be resolved at the end
+  const void* lastold; //used to communicate address to the caller
   
-  ///Parsing
-  
-  struct Error //this is thrown by some parsing functions
-  {
-    int error;
-    int pos; //the position in the text file, convert to line number with XML::getLineNumber(pos)
-    
-    Error(int i_error, int i_pos) : error(i_error), pos(i_pos) {}
-  };
-  
-  //return values of parse functions
-  static const int SUCCESS = 0;
-  static const int END = 1;
-  static const int MIN_ERROR = 10; //error values are values >= 10
-  
-  static bool isError(int result) { return result >= MIN_ERROR; }
-  
-  struct ParseTagPos //information about the tag, in an efficient format by giving positions in the main string instead of copying each string part (this works for parsing but not for generating)
-  {
-    //std::string* s; //pointer to the full string, to which the positions refer
-    size_t tb; //tag begin: the begin of this tag (the position of the first < symbol)
-    size_t te; //tag end: the end of this tag (the position after the last > symbol)
-    size_t ab; //attributes begin: the beginning of all the attributes
-    size_t ae; //attributes end: the end of all the attributes (after the last ' or " symbol)
-    size_t cb; //content begin: the beginning of all the content (after the position of the > symbol of the start tag)
-    size_t ce; //content end: the end of all the content (the position of the < symbol of the end tag)
-  };
-  
-  struct ParseAttributePos //information about the attribute, in an efficient format by giving positions in the main string instead of copying each string part (this works for parsing but not for generating)
-  {
-    //std::string* s; //pointer to the full string, to which the positions refer
-    size_t ab; //attribute begin: the beginning of this attribute (name + value)
-    size_t ae; //attribute end: the end of this attribute (name + value)
-    size_t cb; //content begin: the beginning of all the value (after the opening ' or ")
-    size_t ce; //content end: the end of all the value (the closing ' or ")
-  };
-  
-  //these parse functions can throw lpi::XML::Error objects if an error happens; their return value is to see the difference between SUCCESS and END
-  static int parseTag(const std::string& in, size_t& pos, size_t end, std::string& name, ParseTagPos& parsepos, bool skipcomments = true); //the content is empty if it was a singleton tag or an empty tag (you can't see the difference)
-  static int parseAttribute(const std::string& in, size_t& pos, size_t end, std::string& name, ParseAttributePos& parsepos);
+  void addPair(const void* old, void* newa); //register a old/new value pair
+  void addClient(void** client, void* address); //register a client, that will be resolved (correct address stored in it) at the end
+  void resolve(); //store the new values in all the clients
 
-  //this function can also throw an lpi::XML::Error object
-  static void skipToNonCommentTag(const std::string& in, size_t& pos, size_t end); //call when you want to go to a '<' that is not of a comment tag. After calling this function, pos is on top of the first non-comment '<'. This function can throw.
+  /*use RefRes::getAddress(this) instead of "this" or pointers to a member to write the address to the XML,
+  to make sure an unambigous address is written to it (using the convert or generateValueTag function with void*)*/
+  template<typename T> static void* getAddress(T* t) { return static_cast<void*>(t); }
+  template<typename T> static const void* getAddress(const T* t) { return static_cast<const void*>(t); }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-//XMLCompose (without tree, use by inheriting from it)
+// 3.) XML parsing and generating with composition
 ////////////////////////////////////////////////////////////////////////////////
 
-class XMLCompose : public XML
+/*
+For this system, make your classes have a parseXML function for parsing, or a
+generateContent and generateAttribute function for the generating, and then use
+these template functions to make it all work.
+For parsing, in a parseXML function, loop through parseTag calls and then:
+-to parse primitive data members, use the unconvert function
+-to parse other classes, call their parseXML function
+-to initiate the parsing, use one of the template functions below
+For generating in a generateContent or generateAttributes function:
+-to generate primitive data members, use generateValueTag/generateAttribute
+-to generate other classes or start the process, use the template function below on it
+See the example in the .cpp file for this usage.
+
+Note: there are two versions of the parser: one with and one without RefRes. For
+the one with RefRes, the parseXML function in classes should have such a parameter too.
+*/
+
+/*
+The parse functions work on classes that must have the following public function:
+  void parseXML(const std::string& in, xml::ParsePos& pos)
+  or
+  void parseXML(const std::string& in, xml::ParsePos& pos, RefRes& ref)
+These parse functions will not throw but return the error code, and these are the ones
+to be called from the outside world (while parseXML is supposed to be called from within
+other parseXML functions)
+*/
+
+//version without RefRes
+
+template<typename T>
+int parse(T& t, const std::string& in, size_t& pos, size_t end)
+{
+  try
+  {
+    ParsePos parsepos;
+    std::string name_dummy; //value will be ignored...
+    parseTag(in, pos, end, name_dummy, parsepos);
+    t.parseXML(in, parsepos);
+  }
+  catch(Error error)
+  {
+    pos = error.pos;
+    return error.error;
+  }
+  
+  return SUCCESS;
+}
+
+template<typename T>
+int parse(T& t, const std::string& in, size_t& pos)
+{
+  return parse(t, in, pos, in.size());
+}
+
+template<typename T>
+int parse(T& t, const std::string& in)
+{
+  size_t pos = 0;
+  return parse(t, in, pos, in.size());
+}
+
+//RefRes version
+
+template<typename T>
+int parseRefRes(T& t, const std::string& in, size_t& pos, size_t end)
+{
+  try
+  {
+    ParsePos parsepos;
+    std::string name_dummy; //value will be ignored...
+    parseTag(in, pos, end, name_dummy, parsepos);
+    RefRes ref;
+    t.parseXML(in, parsepos, ref);
+    ref.resolve();
+  }
+  catch(Error error)
+  {
+    pos = error.pos;
+    return error.error;
+  }
+  
+  return SUCCESS;
+}
+
+template<typename T>
+int parseRefRes(T& t, const std::string& in, size_t& pos)
+{
+  return parse(t, in, pos, in.size());
+}
+
+template<typename T>
+int parseRefRes(T& t, const std::string& in)
+{
+  size_t pos = 0;
+  return parse(t, in, pos, in.size());
+}
+
+/*
+The generate functions require two functions in the type:
+  void generateContent(std::string& out, size_t indent) const
+  and
+  void generateAttributes(std::string& out) const
+I found no way to allow putting them in one function without too much temporary std::string copies.
+*/
+
+template<typename T>
+void generate(std::string& out, const std::string& name, const T& t, size_t indent = 0)
+{
+  for(size_t i = 0; i < indent; i++) out += xml_indentation_symbol;
+
+  indent++;
+  
+  out += "<" + name;
+  t.generateAttributes(out);
+  size_t size_before_adding_tag_close_symbol = out.size(); //you can't know for sure how much characters the newline symbol will be
+  out += ">" + xml_newline_symbol;
+  size_t size_before_adding_content = out.size();
+  t.generateContent(out, indent);
+  size_t size_after_adding_content = out.size();
+  
+  indent--;
+  
+  if(size_before_adding_content == size_after_adding_content) //make this a singleton tag
+  {
+    out.resize(size_before_adding_tag_close_symbol); //remove the newline and >, to put a singleton tag end instead
+    out += "/>";
+  }
+  else
+  {
+    for(size_t i = 0; i < indent; i++) out += xml_indentation_symbol;
+
+    out += "</" + name + ">";
+  }
+  out += xml_newline_symbol;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// 4.) XML parsing and generating with tree
+////////////////////////////////////////////////////////////////////////////////
+
+class XMLTree //this is 1 node, all nodes together make up the tree
 {
   /*
-  The XMLCompose will parse/generate only the attributes and the content. It will
-  not parse/generate the name of its own tag. The reason is that the higher up class chooses
-  the name of the tag of this class: for example if a Monster class would contain
-  multiple Vector values, it'll call several generate functions of the Vector class,
-  but will give each a different name (e.g. position, velocity, ...).
-  All you have to implement is the doParseContent and doGenerateContent
-  (optionally also doParseAttributes and doGenerateAttributes)
-  functions, in which you read/write the values (the members of you class).
+  Unlike the above, where the parse functions only parse the attributes and content,
+  for XMLTree each node will parse it's own complete tag, including tag name.
   */
   public:
   
-  struct RefRes //reference resolver
-  {
-    /*
-    RefRes is the reference resolver. It resolves references, or more precicely, pointers and addresses.
-    When generating, let things that are pointed to save their address, and let things that point to it
-    save the pointer value.
-    When parsing, if you use RefRes correctly, you can make it resolve all addresses back even if after
-    parsing totally new values were generated.
-    Please see the World - Monster - MonsterType example in the cpp file for usage.
-    */
-    std::map<const void*, void*> pointers;
-    std::vector<void**> clients; //these will be resolved at the end
-    const void* lastold; //used to communicate address to the caller
-    
-    void addPair(const void* old, void* newa); //register a old/new value pair
-    
-    /*
-    addClient: register a client, that will be resolved at the end
-    e.g. if you have a Monster with in it a MonsterType* type, use "add((void**)(&type), address)" while
-    parsing, where address is the void* that you read from the XML file. MonsterType should also
-    inherit from XMLCompose.
-    */
-    void addClient(void** client, void* address);
-    
-    void resolve(); //store the new values in all the clients
-  };
+  XMLTree();
+  ~XMLTree();
   
-  void* getAddress(); //use getAddress() instead of "this" or pointers to a member to write the address of this to the XML, to make sure an unambigous address is written to the XML
-  const void* getAddress() const; //use getAddress() instead of "this" or pointers to a member to write the address of this to the XML, to make sure an unambigous address is written to the XML
-  
-  virtual ~XMLCompose(){}
-  
-  //these parse functions will NOT throw but return the error code, and these are the ones to be called from the outside world
-  int parse(const std::string& in);
-  int parse(const std::string& in, size_t& pos); //this one allows you to retrieve the pos, to see where a possible error happened to display the line number to the user
-  int parse(const std::string& in, size_t& pos, size_t end);
-  //but THIS one throws an lpi::XML::error object because it's meant to be used from the inside of doParse... functions
-  void parse(const std::string& in, size_t ab, size_t ae, size_t cb, size_t ce, RefRes& ref);
-  //this one also throws, use instead of parse when you need a parent class to parse a subtag. Set T to the parent type.
-  template<typename T>
-  void parse_nonvirtual(const std::string& in, size_t ab, size_t ae, size_t cb, size_t ce, RefRes& ref)
-  {
-    static_cast<T*>(this)->T::doParseAttributes(in, ab, ae, ref);
-    static_cast<T*>(this)->T::doParseContent(in, cb, ce, ref);
-  }
-  
-  void generate(std::string& out, const std::string& name) const;
-  void generate(std::string& out, const std::string& name, size_t indent) const;
-  
-  protected:
-  
-  //these parse functions can throw lpi::XML::Error objects
-  virtual void doParseAttributes(const std::string& /*in*/, size_t& /*pos*/, size_t /*end*/, RefRes& /*ref*/) {}
-  virtual void doParseContent(const std::string& /*in*/, size_t& /*pos*/, size_t /*end*/, RefRes& /*ref*/) {}
-  virtual void doGenerateAttributes(std::string& /*out*/) const {}
-  virtual void doGenerateContent(std::string& /*out*/, size_t /*indent*/) const {}
-  
-  //if the content string is empty, it'll generate a singleton tag. The generate function will NOT convert anything to entities, you must manually call functions on a string to convert that part to entities. This because the content can contain other tags, which have all these symbols and may not be broken.
-  template<typename T>
-  static void generateValueTag(std::string& out, const std::string& name, const T& value, size_t indent) //if the input is of type string, then it'll be entitified. Therefore, you can't use this function to generate nested tags.
-  {
-    std::string value_string;
-    convert(value_string, value);
-    
-    generateTagString(out, name, value_string, indent);
-  }
-  
-  static void generateTag(std::string& out, const std::string& name, const XMLCompose& value, size_t indent);
-  static void generateTag(std::string& out, const std::string& name, const XMLCompose* value, size_t indent);
-  
-  //generates a space, then the attribute name, then "=", then a quote, then the value, then a quote again to close it
-  template<typename T>
-  static void generateAttribute(std::string& out, const std::string& name, const T& value)
-  {
-    std::string value_string;
-    convert(value_string, value);
-    generateAttributeString(out, name, value_string);
-  }
-  
-  static void generateTagString(std::string& out, const std::string& name, const std::string& content, size_t indent);
-  static void generateAttributeString(std::string& out, const std::string& name, const std::string& value);
-};
-
-////////////////////////////////////////////////////////////////////////////////
-//XMLTreeParser (stores result in tree)
-////////////////////////////////////////////////////////////////////////////////
-
-class XMLTree : public XML //this is 1 node, all nodes together make up the tree
-{
-  /*
-  Unlike XMLCompose, for XMLTree each node will parse it's own tag, including
-  tag name, completely by itself. However, XMLTree is not designed to be
-  inherited from.
-  */
-  public:
+  ///Public data members representing the XML tag
   
   struct NameValue
   {
@@ -430,11 +499,8 @@ class XMLTree : public XML //this is 1 node, all nodes together make up the tree
   NameValue content;
   std::vector<XMLTree*> children;
   std::vector<NameValue> attributes;
-  XMLTree* parent;
   
-  XMLTree();
-  ~XMLTree();
-  size_t getLevel() const; //depth in the tree
+  ///Parse and generate functions
   
   //these parse functions will not throw anything but return the error as an integer. Input must be tag, including name and content
   int parse(const std::string& in, bool skipcomments = true); //feed the complete xml string to this, including the tags of this node itself
@@ -442,26 +508,31 @@ class XMLTree : public XML //this is 1 node, all nodes together make up the tree
   int parse(const std::string& in, size_t& pos, size_t end, bool skipcomments = true);
   
   /*
-  using the parseOuter functions makes the name and attributes of this node empty and is
-  meant for the "outer" scope. Input is "content" instead of a full tag with name.
-  It'll parse all tags (including comments if enabled), and supports multiple root elements.
-  If you parse without skipcomments, you have to use this, otherwise the xml declaration will be
-  wrongly seen as the root element. The whole point of the xml-rule that there must be a root
-  tag is made useless due to the fact that there can be comments and an xml declaration at
-  the highest scope... hence these parseOuter functions. If you parse without comments, you
-  can use the parse functions directly, the advantage then is that this node will be the real
-  root node.
+  Using the parseOuter functions makes the name and attributes of this node empty and is
+  meant for the "outer" scope. Input must be the content instead of a full tag with name.
+  It'll parse all tags (including comments if enabled), and (unlike parse()) supports
+  multiple root elements. If you parse without skipcomments, you have to use parseOuter,
+  otherwise the xml declaration will be wrongly seen as the sole root element. The whole
+  point of the xml-rule that there must be a root tag is made useless due to the fact that
+  there can be comments and an xml declaration at the highest scope... hence these
+  parseOuter functions. If you parse without comments, you can use the parse functions
+  directly, the advantage then is that this node will be the real root node.
   */
   int parseOuter(const std::string& in, bool skipcomments = true);
   int parseOuter(const std::string& in, size_t& pos, bool skipcomments = true);
   int parseOuter(const std::string& in, size_t& pos, size_t end, bool skipcomments = true);
   
+  void generate(std::string& out) const; //appends to the string
+  
+  ///Helper functions
+  
   bool isEmptyValueTag() const; //returns true if it has no children and the value is empty (==> create singleton tag)
   bool isValueTag() const; //returns true if this has no nested tags in it (no children)
-  void generate(std::string& out) const; //appends to the string
   bool isComment() const; //returns true if this is a comment or xml declaration
   bool isOuter() const; //returns true if this tag has no name, only content
-  XMLTree* getFirstNonCommentNode() const; //use this if you parsed with "parseUpper", to get the true xml root.
+  XMLTree* getFirstNonCommentNode() const; //use this if you parsed with "parseOuter", to get the true xml root.
+  XMLTree* getParent() const { return parent; }
+  size_t getLevel() const; //depth in the tree
   
   /*
   if this tag is a comment or xml declaration, then the name will include the !, -- and/or ? symbols,
@@ -469,12 +540,15 @@ class XMLTree : public XML //this is 1 node, all nodes together make up the tree
   */
   
   protected:
+  XMLTree* parent;
   bool outer; //if true: generate no name tags for this, only the content
   bool comment;
-  void parseContent(const std::string& in, ParseTagPos& parsepos, bool skipcomments = true); //can throw if error happens
+  void parseContent(const std::string& in, ParsePos& parsepos, bool skipcomments = true); //can throw if error happens
   void generateChildren(std::string& out) const;
 };
 
-}
+
+} //namespace xml
+} //namespace lpi
 
 #endif //lpi_xml_h_included

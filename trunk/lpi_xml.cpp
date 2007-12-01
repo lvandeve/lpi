@@ -21,40 +21,42 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 namespace lpi
 {
+namespace xml
+{
 
-static const std::string xml_indentation_symbol = "  ";
-static const std::string xml_newline_symbol = "\n";
+const std::string xml_indentation_symbol = "  ";
+const std::string xml_newline_symbol = "\n";
 
 ////////////////////////////////////////////////////////////////////////////////
-///XML Tools
+// 1.) General XML Tools
 ////////////////////////////////////////////////////////////////////////////////
 
-void XML::skipWhiteSpace(const std::string& in, size_t& pos, size_t end)
+void skipWhiteSpace(const std::string& in, size_t& pos, size_t end)
 {
   while(pos < end && isWhiteSpace(in[pos])) pos++;
 }
 
-void XML::skipToChar(const std::string& in, size_t& pos, size_t end, char c)
+void skipToChar(const std::string& in, size_t& pos, size_t end, char c)
 {
   while(pos < end && in[pos] != c) pos++;
 }
 
-bool XML::isWhiteSpace(char c)
+bool isWhiteSpace(char c)
 {
   return (c <= 32);
 }
 
-bool XML::isCharacter(const std::string& in, size_t pos, size_t end, char c) //made to have the < size and == test in one function
+bool isCharacter(const std::string& in, size_t pos, size_t end, char c) //made to have the < size and == test in one function
 {
   return(pos < end && in[pos] == c);
 }
 
-bool XML::isNotCharacter(const std::string& in, size_t pos, size_t end, char c) //made to have the < size and != test in one function
+bool isNotCharacter(const std::string& in, size_t pos, size_t end, char c) //made to have the < size and != test in one function
 {
   return(pos < end && in[pos] != c);
 }
 
-void XML::entitify(std::string& out, const std::string& in, size_t pos, size_t end)
+void entitify(std::string& out, const std::string& in, size_t pos, size_t end)
 {
   out.reserve(out.size() + end - pos);
   for(size_t i = pos; i < end; i++)
@@ -68,7 +70,7 @@ void XML::entitify(std::string& out, const std::string& in, size_t pos, size_t e
   }
 }
 
-void XML::unentitify(std::string& out, const std::string& in, size_t pos, size_t end)
+void unentitify(std::string& out, const std::string& in, size_t pos, size_t end)
 {
   out.reserve(out.size() + end - pos);
   for(size_t i = pos; i < end; i++)
@@ -87,7 +89,7 @@ void XML::unentitify(std::string& out, const std::string& in, size_t pos, size_t
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void XML::encodeBase64(const std::vector<unsigned char>& in, std::string& out)
+void encodeBase64(const std::vector<unsigned char>& in, std::string& out)
 {
   const std::string characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
   unsigned long bit24 = 0;
@@ -122,7 +124,7 @@ void XML::encodeBase64(const std::vector<unsigned char>& in, std::string& out)
   }
 }
 
-void XML::decodeBase64(std::vector<unsigned char>& out, const std::string& in, size_t begin, size_t end)
+void decodeBase64(std::vector<unsigned char>& out, const std::string& in, size_t begin, size_t end)
 {
   if(end == 0) end = in.size();
   size_t size = end - begin;
@@ -171,83 +173,82 @@ void XML::decodeBase64(std::vector<unsigned char>& out, const std::string& in, s
 
 //conversions between C++ and strings for xml
 
-//C++ to XML (convert)
-void XML::convert(std::string& out, bool in) //bool -> boolean
+void convert(std::string& out, bool in) //bool -> boolean
 {
   out += (in ? "true" : "false");
 }
 
-void XML::convert(std::string& out, char in) //char -> byte
+void convert(std::string& out, char in) //char -> byte
 {
   std::stringstream ss;
   ss << int(in);
   out += ss.str();
 }
 
-void XML::convert(std::string& out, int in) //int -> int
+void convert(std::string& out, int in) //int -> int
 {
   std::stringstream ss;
   ss << in;
   out += ss.str();
 }
 
-void XML::convert(std::string& out, short in) //short -> short
+void convert(std::string& out, short in) //short -> short
 {
   std::stringstream ss;
   ss << in;
   out += ss.str();
 }
 
-void XML::convert(std::string& out, long in) //long -> long
+void convert(std::string& out, long in) //long -> long
 {
   std::stringstream ss;
   ss << in;
   out += ss.str();
 }
 
-void XML::convert(std::string& out, unsigned char in) //unsigned char -> unsignedByte
+void convert(std::string& out, unsigned char in) //unsigned char -> unsignedByte
 {
   std::stringstream ss;
   ss << int(in);
   out += ss.str();
 }
 
-void XML::convert(std::string& out, unsigned short in) //unsigned short -> unsignedShort
+void convert(std::string& out, unsigned short in) //unsigned short -> unsignedShort
 {
   std::stringstream ss;
   ss << in;
   out += ss.str();
 }
 
-void XML::convert(std::string& out, unsigned int in) //unsigned int -> unsignedInt
+void convert(std::string& out, unsigned int in) //unsigned int -> unsignedInt
 {
   std::stringstream ss;
   ss << in;
   out += ss.str();
 }
 
-void XML::convert(std::string& out, unsigned long in) //unsigned long -> unsignedLong
+void convert(std::string& out, unsigned long in) //unsigned long -> unsignedLong
 {
   std::stringstream ss;
   ss << in;
   out += ss.str();
 }
 
-void XML::convert(std::string& out, float in) //float -> float
+void convert(std::string& out, float in) //float -> float
 {
   std::stringstream ss;
   ss << in;
   out += ss.str();
 }
 
-void XML::convert(std::string& out, double in) //double -> double
+void convert(std::string& out, double in) //double -> double
 {
   std::stringstream ss;
   ss << in;
   out += ss.str();
 }
 
-void XML::convert(std::string& out, const void* in) //NOTE: currently not safe if written by 64-bit PC and read by 32-bit PC
+void convert(std::string& out, const void* in) //NOTE: currently not safe if written by 64-bit PC and read by 32-bit PC
 {
   size_t address = (size_t)in;
   std::stringstream ss;
@@ -255,7 +256,7 @@ void XML::convert(std::string& out, const void* in) //NOTE: currently not safe i
   out += ss.str();
 }
 
-void XML::convert(std::string& out, void* in) //NOTE: currently not safe if written by 64-bit PC and read by 32-bit PC
+void convert(std::string& out, void* in) //NOTE: currently not safe if written by 64-bit PC and read by 32-bit PC
 {
   size_t address = (size_t)in;
   std::stringstream ss;
@@ -263,25 +264,26 @@ void XML::convert(std::string& out, void* in) //NOTE: currently not safe if writ
   out += ss.str();
 }
 
-void XML::convert(std::string& out, const std::string& in) //std::string -> string
+void convert(std::string& out, const std::string& in) //std::string -> string
 {
   entitify(out, in, 0, in.size()); //we generate a string in XML, so turn &, <, >, ' and " into entities
 }
 
-void XML::convert(std::string& out, const std::vector<unsigned char>& in) //std::vector<unsigned char> -> base64Binary
+void convert(std::string& out, const std::vector<unsigned char>& in) //std::vector<unsigned char> -> base64Binary
 {
   encodeBase64(in, out);
 }
 
-//XML to C++ (unconvert)
-void XML::unconvert(bool& out, const std::string& in, size_t pos, size_t end)
+////////////////
+
+void unconvert(bool& out, const std::string& in, size_t pos, size_t end)
 {
   std::string s(in, pos, end - pos);
   
   out = (s == "true");
 }
 
-void XML::unconvert(char& out, const std::string& in, size_t pos, size_t end)
+void unconvert(char& out, const std::string& in, size_t pos, size_t end)
 {
   std::string s(in, pos, end - pos);
   std::stringstream ss(s);
@@ -290,28 +292,28 @@ void XML::unconvert(char& out, const std::string& in, size_t pos, size_t end)
   out = i;
 }
 
-void XML::unconvert(short& out, const std::string& in, size_t pos, size_t end)
+void unconvert(short& out, const std::string& in, size_t pos, size_t end)
 {
   std::string s(in, pos, end - pos);
   std::stringstream ss(s);
   ss >> out;
 }
 
-void XML::unconvert(int& out, const std::string& in, size_t pos, size_t end)
+void unconvert(int& out, const std::string& in, size_t pos, size_t end)
 {
   std::string s(in, pos, end - pos);
   std::stringstream ss(s);
   ss >> out;
 }
 
-void XML::unconvert(long& out, const std::string& in, size_t pos, size_t end)
+void unconvert(long& out, const std::string& in, size_t pos, size_t end)
 {
   std::string s(in, pos, end - pos);
   std::stringstream ss(s);
   ss >> out;
 }
 
-void XML::unconvert(unsigned char& out, const std::string& in, size_t pos, size_t end)
+void unconvert(unsigned char& out, const std::string& in, size_t pos, size_t end)
 {
   std::string s(in, pos, end - pos);
   std::stringstream ss(s);
@@ -320,42 +322,42 @@ void XML::unconvert(unsigned char& out, const std::string& in, size_t pos, size_
   out = i;
 }
 
-void XML::unconvert(unsigned short& out, const std::string& in, size_t pos, size_t end)
+void unconvert(unsigned short& out, const std::string& in, size_t pos, size_t end)
 {
   std::string s(in, pos, end - pos);
   std::stringstream ss(s);
   ss >> out;
 }
 
-void XML::unconvert(unsigned int& out, const std::string& in, size_t pos, size_t end)
+void unconvert(unsigned int& out, const std::string& in, size_t pos, size_t end)
 {
   std::string s(in, pos, end - pos);
   std::stringstream ss(s);
   ss >> out;
 }
 
-void XML::unconvert(unsigned long& out, const std::string& in, size_t pos, size_t end)
+void unconvert(unsigned long& out, const std::string& in, size_t pos, size_t end)
 {
   std::string s(in, pos, end - pos);
   std::stringstream ss(s);
   ss >> out;
 }
 
-void XML::unconvert(float& out, const std::string& in, size_t pos, size_t end)
+void unconvert(float& out, const std::string& in, size_t pos, size_t end)
 {
   std::string s(in, pos, end - pos);
   std::stringstream ss(s);
   ss >> out;
 }
 
-void XML::unconvert(double& out, const std::string& in, size_t pos, size_t end)
+void unconvert(double& out, const std::string& in, size_t pos, size_t end)
 {
   std::string s(in, pos, end - pos);
   std::stringstream ss(s);
   ss >> out;
 }
 
-void XML::unconvert(const void*& out, const std::string& in, size_t pos, size_t end) //NOTE: currently not safe if written by 64-bit PC and read by 32-bit PC
+void unconvert(const void*& out, const std::string& in, size_t pos, size_t end) //NOTE: currently not safe if written by 64-bit PC and read by 32-bit PC
 {
   std::string s(in, pos, end - pos);
   std::stringstream ss(s);
@@ -364,7 +366,7 @@ void XML::unconvert(const void*& out, const std::string& in, size_t pos, size_t 
   out = (void*)address;
 }
 
-void XML::unconvert(void*& out, const std::string& in, size_t pos, size_t end) //NOTE: currently not safe if written by 64-bit PC and read by 32-bit PC
+void unconvert(void*& out, const std::string& in, size_t pos, size_t end) //NOTE: currently not safe if written by 64-bit PC and read by 32-bit PC
 {
   std::string s(in, pos, end - pos);
   std::stringstream ss(s);
@@ -373,19 +375,19 @@ void XML::unconvert(void*& out, const std::string& in, size_t pos, size_t end) /
   out = (void*)address;
 }
 
-void XML::unconvert(std::string& out, const std::string& in, size_t pos, size_t end)
+void unconvert(std::string& out, const std::string& in, size_t pos, size_t end)
 {
   out.clear();
   unentitify(out, in, pos, end); //we parse a string from XML, so turn entities into &, <, >, ' or "
 }
 
-void XML::unconvert(std::vector<unsigned char>& out, const std::string& in, size_t pos, size_t end)
+void unconvert(std::vector<unsigned char>& out, const std::string& in, size_t pos, size_t end)
 {
   out.clear();
   decodeBase64(out, in, pos, end); //we parse a string from XML, so turn entities into &, <, >, ' or "
 }
 
-void XML::skipToNonCommentTag(const std::string& in, size_t& pos, size_t end) //call when you want to go to a '<' that is not of a comment tag. After calling this function, pos is on top of the first non-comment '<'. This function can throw.
+void skipToNonCommentTag(const std::string& in, size_t& pos, size_t end) //call when you want to go to a '<' that is not of a comment tag. After calling this function, pos is on top of the first non-comment '<'. This function can throw.
 {
   bool tag_found = false; //comments and <?...?> tags are not counted as tags
   size_t ltpos = pos; //pos of the last '<' character
@@ -421,7 +423,7 @@ void XML::skipToNonCommentTag(const std::string& in, size_t& pos, size_t end) //
   pos = ltpos; //this is so that whoever calls skipToNonCommentTag has pos on the expected position: on top of the '<'
 }
 
-int XML::parseTag(const std::string& in, size_t& pos, size_t end, std::string& name, ParseTagPos& parsepos, bool skipcomments) //the string is empty if it was a singleton tag or an empty tag (you can't see the difference)
+int parseTag(const std::string& in, size_t& pos, size_t end, std::string& name, ParsePos& parsepos, bool skipcomments) //the string is empty if it was a singleton tag or an empty tag (you can't see the difference)
 {
   skipWhiteSpace(in, pos, end);
   if(skipcomments) skipToNonCommentTag(in, pos, end); //go to on top of next '<' symbol that is not of a comment tag
@@ -538,7 +540,7 @@ int XML::parseTag(const std::string& in, size_t& pos, size_t end, std::string& n
   throw Error(16, pos); //if you got here, something strange must have happened
 }
 
-int XML::parseAttribute(const std::string& in, size_t& pos, size_t end, std::string& name, ParseAttributePos& parsepos)
+int parseAttribute(const std::string& in, size_t& pos, size_t end, std::string& name, ParsePos& parsepos)
 {
   skipWhiteSpace(in, pos, end);
   
@@ -575,7 +577,7 @@ int XML::parseAttribute(const std::string& in, size_t& pos, size_t end, std::str
   return SUCCESS;
 }
 
-int XML::getLineNumber(const std::string& fulltext, size_t pos)
+int getLineNumber(const std::string& fulltext, size_t pos)
 {
   /*
   getLineNumber can be used for showing error messages: if something returns "ERROR", use this with current pos
@@ -586,7 +588,7 @@ int XML::getLineNumber(const std::string& fulltext, size_t pos)
   return line;
 }
 
-int XML::getColumnNumber(const std::string& fulltext, size_t pos)
+int getColumnNumber(const std::string& fulltext, size_t pos)
 {
   /*
   getColumnNumber can be used for showing error messages: if something returns "ERROR", use this with current pos
@@ -603,7 +605,7 @@ int XML::getColumnNumber(const std::string& fulltext, size_t pos)
   return column;
 }
 
-bool XML::isNestedTag(const std::string& in, size_t pos, size_t end)
+bool isNestedTag(const std::string& in, size_t pos, size_t end)
 {
   while(pos < end)
   {
@@ -616,7 +618,7 @@ bool XML::isNestedTag(const std::string& in, size_t pos, size_t end)
   return false;
 }
 
-bool XML::isCommentTag(const std::string& in, size_t pos, size_t end)
+bool isCommentTag(const std::string& in, size_t pos, size_t end)
 {
   if(in[pos] == '?' && in[end - 1] == '?') return true; //it's an xml declaration
   if(in.size() >= 5
@@ -629,21 +631,21 @@ bool XML::isCommentTag(const std::string& in, size_t pos, size_t end)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-///XMLCompose (without tree)
+// 2.) Reference Resolver Tool
 ////////////////////////////////////////////////////////////////////////////////
 
-void XMLCompose::RefRes::addPair(const void* old, void* newa)
+void RefRes::addPair(const void* old, void* newa)
 {
   pointers[old] = newa;
 }
 
-void XMLCompose::RefRes::addClient(void** client, void* address)
+void RefRes::addClient(void** client, void* address)
 {
   *client = address;
   clients.push_back(client);
 }
 
-void XMLCompose::RefRes::resolve() //store the new values in all the clients
+void RefRes::resolve() //store the new values in all the clients
 {
   for(size_t i = 0; i < clients.size(); i++)
   {
@@ -652,139 +654,14 @@ void XMLCompose::RefRes::resolve() //store the new values in all the clients
   }
 }
 
-void* XMLCompose::getAddress()
-{
-  return static_cast<void*>(this);
-}
+////////////////////////////////////////////////////////////////////////////////
+// 3.) XML parsing and generating with composition
+////////////////////////////////////////////////////////////////////////////////
 
-const void* XMLCompose::getAddress() const
-{
-  return dynamic_cast<const void*>(this);
-}
-
-int XMLCompose::parse(const std::string& in) //To this function you have to give the complete xml string, including the name of this tag, even though this name will be ignored. It'll parse the attributes and content.
-{
-  size_t pos = 0;
-  return parse(in, pos, in.size());
-}
-
-int XMLCompose::parse(const std::string& in, size_t& pos)
-{
-  return parse(in, pos, in.size());
-}
-
-int XMLCompose::parse(const std::string& in, size_t& pos, size_t end)
-{
-  try
-  {
-    ParseTagPos parsepos;
-    std::string name_dummy; //value will be ignored...
-    parseTag(in, pos, end, name_dummy, parsepos);
-    RefRes ref;
-    parse(in, parsepos.ab, parsepos.ae, parsepos.cb, parsepos.ce, ref);
-    ref.resolve();
-  }
-  catch(Error error)
-  {
-    pos = error.pos;
-    return error.error;
-  }
-  
-  return SUCCESS;
-}
-
-void XMLCompose::parse(const std::string& in, size_t ab, size_t ae, size_t cb, size_t ce, RefRes& ref)
-{
-  doParseAttributes(in, ab, ae, ref);
-  doParseContent(in, cb, ce, ref);
-}
-
-void XMLCompose::generate(std::string& out, const std::string& name) const
-{
-  generate(out, name, 0);
-}
-
-void XMLCompose::generate(std::string& out, const std::string& name, size_t indent) const
-{
-  for(size_t i = 0; i < indent; i++) out += xml_indentation_symbol;
-
-  indent++;
-  
-  out += "<";
-  out += name;
-  doGenerateAttributes(out);
-  size_t size_before_adding_tag_close_symbol = out.size(); //you can't know for sure how much characters the newline symbol will be
-  out += ">";
-  out += xml_newline_symbol;
-  size_t size_before_adding_content = out.size();
-  doGenerateContent(out, indent);
-  size_t size_after_adding_content = out.size();
-  
-  indent--;
-  
-  if(size_before_adding_content == size_after_adding_content) //make this a singleton tag
-  {
-    out.resize(size_before_adding_tag_close_symbol); //remove the newline and >, to put a singleton tag end instead
-    out += "/>";
-  }
-  else
-  {
-    for(size_t i = 0; i < indent; i++) out += xml_indentation_symbol;
-
-    out += "</";
-    out += name;
-    out += ">";
-  }
-  out += xml_newline_symbol;
-}
-
-//if the content string is empty, it'll generate a singleton tag. If the attributes string is not empty it'll generate the attributes in the tag WITHOUT a space between name and the attributes. The attributes themselves must be correct with quotes already (create them with generateAttribute to get them correct) and with a space in front of each attribute name. The generate function will NOT convert anything to entities, you must manually call functions on a string to convert that part to entities. This because the content can contain other tags, which have all these symbols and may not be broken.
-void XMLCompose::generateTagString(std::string& out, const std::string& name, const std::string& content, size_t indent)
-{
-  for(size_t i = 0; i < indent; i++) out += xml_indentation_symbol;
-  out += "<";
-  out += name;
-  //out += attributes;
-  if(content.size() == 0) //empty content, make singleton tag
-  {
-    out += "/>";
-  }
-  else
-  {
-    out += ">";
-    out += content;
-    out += "</";
-    out += name;
-    out += ">";
-  }
-  out += xml_newline_symbol;
-}
-
-void XMLCompose::generateAttributeString(std::string& out, const std::string& name, const std::string& value)
-{
-  std::string value_string;
-  convert(value_string, value);
-    
-  out += " ";
-  out += name;
-  out += "=";
-  out += '"';
-  out += value_string;
-  out += '"';
-}
-
-void XMLCompose::generateTag(std::string& out, const std::string& name, const XMLCompose& value, size_t indent)
-{
-  value.generate(out, name, indent);
-}
-
-void XMLCompose::generateTag(std::string& out, const std::string& name, const XMLCompose* value, size_t indent)
-{
-  value->generate(out, name, indent);
-}
+//all in template functions in the header
 
 ////////////////////////////////////////////////////////////////////////////////
-///XMLTree (stores result in tree)
+// 4.) XML parsing and generating with tree
 ////////////////////////////////////////////////////////////////////////////////
 
 XMLTree::XMLTree() : parent(0), outer(false), comment(false)
@@ -830,7 +707,7 @@ int XMLTree::parse(const std::string& in, size_t& pos, bool skipcomments)
   return parse(in, pos, in.size(), skipcomments);
 }
 
-void XMLTree::parseContent(const std::string& in, ParseTagPos& parsepos, bool skipcomments)
+void XMLTree::parseContent(const std::string& in, ParsePos& parsepos, bool skipcomments)
 {
   bool nest = isNestedTag(in, parsepos.cb, parsepos.ce);
   std::string tagname;
@@ -840,7 +717,7 @@ void XMLTree::parseContent(const std::string& in, ParseTagPos& parsepos, bool sk
     if(nest)
     {
       size_t subpos = parsepos.cb;
-      ParseTagPos subparsepos;
+      ParsePos subparsepos;
       while(parseTag(in, subpos, parsepos.ce, tagname, subparsepos, skipcomments) == SUCCESS)
       {
         children.push_back(new XMLTree);
@@ -859,7 +736,7 @@ int XMLTree::parse(const std::string& in, size_t& pos, size_t end, bool skipcomm
 {
   try
   {
-    ParseTagPos parsepos;
+    ParsePos parsepos;
     std::string tagname;
     parseTag(in, pos, end, tagname, parsepos, skipcomments);
     
@@ -873,7 +750,7 @@ int XMLTree::parse(const std::string& in, size_t& pos, size_t end, bool skipcomm
     if(parsepos.ae > parsepos.ab) //if there are attributes
     {
       //parse attributes
-      ParseAttributePos attrpos;
+      ParsePos attrpos;
       std::string attrname;
       size_t posa = parsepos.ab;
       while(parseAttribute(in, posa, parsepos.ae, attrname,  attrpos) == SUCCESS)
@@ -910,7 +787,7 @@ int XMLTree::parseOuter(const std::string& in, size_t& pos, size_t end, bool ski
 {
   outer = true;
   
-  ParseTagPos parsepos;
+  ParsePos parsepos;
   parsepos.cb = pos;
   parsepos.ce = end;
   
@@ -960,7 +837,7 @@ void XMLTree::generate(std::string& out) const //appends to the string
     out += "<" + content.name;
     for(size_t i = 0; i < attributes.size(); i++)
     {
-      out += " " + attributes[i].name + "=\"" + attributes[i].value + "\"";
+      generateAttribute(out, attributes[i].name, attributes[i].value);
     }
     
     if(isComment())
@@ -998,7 +875,9 @@ void XMLTree::generateChildren(std::string& out) const
   }
 }
 
-} //end of namespace lpi
+
+} //namespace xml
+} //namespace lpi
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -1014,88 +893,87 @@ void XMLTree::generateChildren(std::string& out) const
 
 #if 0 //LPI_XML_TEST
 
-//int main(){}
+int main(){}
 
 #include <iostream>
 using namespace lpi;
 namespace xmltest
 {
   ////////////////////////////////////////////////////////////////////////////////
-  ///Test and example of XMLCompose
+  ///Test and example of parsing/generating with the composition method
   ////////////////////////////////////////////////////////////////////////////////
   
-  class MonsterType : public XMLCompose
+  class MonsterType
   {
     public:
     double constitution;
     double strength;
     std::string name; //for the example, name will be saved as attributes instead of value tags
     
-    virtual void doParseContent(const std::string& in, size_t& pos, size_t end, RefRes& ref)
+    void parseXML(const std::string& in, xml::ParsePos& pos, xml::RefRes& ref)
     {
-      ParseTagPos parsepos;
+      xml::ParsePos parsepos;
       std::string tagname;
       const void* old_address = 0;
       
-      while(parseTag(in, pos, end, tagname, parsepos) == SUCCESS)
+      //content
+      while(parseTag(in, pos.cb, pos.ce, tagname, parsepos) == xml::SUCCESS)
       {
-        if(tagname == "constitution") unconvert(constitution, in, parsepos.cb, parsepos.ce);
-        else if(tagname == "strength") unconvert(strength, in, parsepos.cb, parsepos.ce);
-        else if(tagname == "id") unconvert(old_address, in, parsepos.cb, parsepos.ce);
+        if(tagname == "constitution") xml::unconvert(constitution, in, parsepos.cb, parsepos.ce);
+        else if(tagname == "strength") xml::unconvert(strength, in, parsepos.cb, parsepos.ce);
+        else if(tagname == "id") xml::unconvert(old_address, in, parsepos.cb, parsepos.ce);
       }
+      
+      //attributes
+      while(parseAttribute(in, pos.ab, pos.ae, tagname, parsepos) == xml::SUCCESS)
+      {
+        if(tagname == "name") xml::unconvert(name, in, parsepos.cb, parsepos.ce);
+      }
+      
       ref.lastold = old_address;
     }
     
-    virtual void doParseAttributes(const std::string& in, size_t& pos, size_t end, RefRes& /*ref*/)
+    void generateAttributes(std::string& out) const
     {
-      ParseAttributePos parsepos;
-      std::string tagname;
-      
-      while(parseAttribute(in, pos, end, tagname, parsepos) == SUCCESS)
-      {
-        if(tagname == "name") unconvert(name, in, parsepos.cb, parsepos.ce);
-      }
+      xml::generateAttribute(out, "name", name);
     }
     
-    virtual void doGenerateAttributes(std::string& out) const
+    void generateContent(std::string& out, size_t indent) const
     {
-      generateAttribute(out, "name", name);
-    }
-    
-    virtual void doGenerateContent(std::string& out, size_t indent) const
-    {
-      generateValueTag(out, "id", getAddress(), indent);
-      generateValueTag(out, "constitution", constitution, indent);
-      generateValueTag(out, "strength", strength, indent);
+      xml::generateValueTag(out, "id", xml::RefRes::getAddress(this), indent);
+      xml::generateValueTag(out, "constitution", constitution, indent);
+      xml::generateValueTag(out, "strength", strength, indent);
     }
   };
   
-  class Vector2 : public XMLCompose
+  class Vector2
   {
     public:
     double x;
     double y;
     
-    virtual void doParseContent(const std::string& in, size_t& pos, size_t end, RefRes& /*ref*/)
+    void parseXML(const std::string& in, xml::ParsePos& pos, xml::RefRes& /*ref*/)
     {
-      ParseTagPos parsepos;
+      xml::ParsePos parsepos;
       std::string tagname;
       
-      while(parseTag(in, pos, end, tagname, parsepos) == SUCCESS)
+      while(parseTag(in, pos.cb, pos.ce, tagname, parsepos) == xml::SUCCESS)
       {
-        if(tagname == "x") unconvert(x, in, parsepos.cb, parsepos.ce);
-        else if(tagname == "y") unconvert(y, in, parsepos.cb, parsepos.ce);
+        if(tagname == "x") xml::unconvert(x, in, parsepos.cb, parsepos.ce);
+        else if(tagname == "y") xml::unconvert(y, in, parsepos.cb, parsepos.ce);
       }
     }
     
-    virtual void doGenerateContent(std::string& out, size_t indent) const
+    void generateContent(std::string& out, size_t indent) const
     {
-      generateValueTag(out, "x", x, indent);
-      generateValueTag(out, "y", y, indent);
+      xml::generateValueTag(out, "x", x, indent);
+      xml::generateValueTag(out, "y", y, indent);
     }
+    
+    void generateAttributes(std::string&) const {} //needed because no default function can be given to template
   };
   
-  class Monster : public XMLCompose
+  class Monster
   {
     public:
     
@@ -1104,33 +982,35 @@ namespace xmltest
     Vector2 position;
     Vector2 velocity;
     
-    virtual void doParseContent(const std::string& in, size_t& pos, size_t end, RefRes& ref)
+    void parseXML(const std::string& in, xml::ParsePos& pos, xml::RefRes& ref)
     {
-      ParseTagPos parsepos;
+      xml::ParsePos parsepos;
       std::string tagname;
       
-      while(parseTag(in, pos, end, tagname, parsepos) == SUCCESS)
+      while(parseTag(in, pos.cb, pos.ce, tagname, parsepos) == xml::SUCCESS)
       {
-        if(tagname == "health") unconvert(health, in, parsepos.cb, parsepos.ce);
-        else if(tagname == "position") position.parse(in, parsepos.ab, parsepos.ae, parsepos.cb, parsepos.ce, ref);
+        if(tagname == "health") xml::unconvert(health, in, parsepos.cb, parsepos.ce);
+        else if(tagname == "position") position.parseXML(in, parsepos, ref);
         else if(tagname == "type")
         {
           void* address;
-          unconvert(address, in, parsepos.cb, parsepos.ce);
+          xml::unconvert(address, in, parsepos.cb, parsepos.ce);
           ref.addClient((void**)(&type), address);
         }
       }
     }
     
-    virtual void doGenerateContent(std::string& out, size_t indent) const
+    void generateContent(std::string& out, size_t indent) const
     {
-      generateValueTag(out, "type", type->getAddress(), indent);
-      generateValueTag(out, "health", health, indent);
-      generateTag(out, "position", position, indent);
+      xml::generateValueTag(out, "type", xml::RefRes::getAddress(type), indent);
+      xml::generateValueTag(out, "health", health, indent);
+      xml::generate(out, "position", position, indent);
     }
+    
+    void generateAttributes(std::string&) const {} //needed because no default function can be given to template
   };
   
-  class World : public XMLCompose
+  class World
   {
     public:
     
@@ -1139,47 +1019,49 @@ namespace xmltest
     int sizex;
     int sizey;
     
-    virtual void doParseContent(const std::string& in, size_t& pos, size_t end, RefRes& ref)
+    void parseXML(const std::string& in, xml::ParsePos& pos, xml::RefRes& ref)
     {
-      deletify(monstertypes);
-      deletify(monsters);
+      xml::deletify(monstertypes);
+      xml::deletify(monsters);
       
-      ParseTagPos parsepos;
+      xml::ParsePos parsepos;
       std::string tagname;
       
-      while(parseTag(in, pos, end, tagname, parsepos) == SUCCESS)
+      while(parseTag(in, pos.cb, pos.ce, tagname, parsepos) == xml::SUCCESS)
       {
         if(tagname == "monster")
         {
           monsters.push_back(new Monster);
-          monsters.back()->parse(in, parsepos.ab, parsepos.ae, parsepos.cb, parsepos.ce, ref);
+          monsters.back()->parseXML(in, parsepos, ref);
         }
         else if(tagname == "monstertype")
         {
           monstertypes.push_back(new MonsterType);
-          monstertypes.back()->parse(in, parsepos.ab, parsepos.ae, parsepos.cb, parsepos.ce, ref);
-          ref.addPair(ref.lastold, monstertypes.back()->getAddress());
+          monstertypes.back()->parseXML(in, parsepos, ref);
+          ref.addPair(ref.lastold, xml::RefRes::getAddress(monstertypes.back()));
         }
-        else if(tagname == "sizex") unconvert(sizex, in, parsepos.cb, parsepos.ce);
-        else if(tagname == "sizey") unconvert(sizey, in, parsepos.cb, parsepos.ce);
+        else if(tagname == "sizex") xml::unconvert(sizex, in, parsepos.cb, parsepos.ce);
+        else if(tagname == "sizey") xml::unconvert(sizey, in, parsepos.cb, parsepos.ce);
       }
     }
     
-    virtual void doGenerateContent(std::string& out, size_t indent) const
+    void generateContent(std::string& out, size_t indent) const
     {
-      generateValueTag(out, "sizex", sizex, indent);
-      generateValueTag(out, "sizey", sizey, indent);
+      xml::generateValueTag(out, "sizex", sizex, indent);
+      xml::generateValueTag(out, "sizey", sizey, indent);
       
       for(size_t i = 0; i < monstertypes.size(); i++)
       {
-        generateTag(out, "monstertype", monstertypes[i], indent); //or alternatively you can use "monstertypes[i]->generate(out, "monstertype", indent);"
+        xml::generate(out, "monstertype", *monstertypes[i], indent); //or alternatively you can use "monstertypes[i]->generate(out, "monstertype", indent);"
       }
       
       for(size_t i = 0; i < monsters.size(); i++)
       {
-        generateTag(out, "monster", monsters[i], indent); //or alternatively you can use "monsters[i]->generate(out, "monster", indent);"
+        xml::generate(out, "monster", *monsters[i], indent); //or alternatively you can use "monsters[i]->generate(out, "monster", indent);"
       }
     }
+    
+    void generateAttributes(std::string&) const {} //needed because no default function can be given to template
   };
   
   void xmltest()
@@ -1229,16 +1111,16 @@ namespace xmltest
     World world;
     
     size_t pos = 0; //allows displaying line number of error message, if any
-    int result = world.parse(xml_in, pos, xml_in.size());
-    if(XML::isError(result))
-      std::cout << "parsing error " << result << " on line " << XML::getLineNumber(xml_in, pos) << std::endl;
+    int result = xml::parseRefRes(world, xml_in, pos, xml_in.size());
+    if(xml::isError(result))
+      std::cout << "parsing error " << result << " on line " << xml::getLineNumber(xml_in, pos) << std::endl;
     
     std::string xml_out;
-    world.generate(xml_out, "world");
+    xml::generate(xml_out, "world", world);
     std::cout << xml_out; //after generating the xml again, output it again, it should be the same as the input (except the whitespace, which is indented in a fixed way)
     
     std::cout << std::endl;
-    std::cout << "Segfault test: " << world.monsters[0]->type->name << std::endl; //if this segfaults, the RefRes system doesn't work correctly, or there aren't enough monsters / no correct types&id's in the xml code
+    std::cout << "anti-segfault test: " << world.monsters[0]->type->name << std::endl; //if this segfaults, the RefRes system doesn't work correctly, or there aren't enough monsters / no correct types&id's in the xml code
     std::cout << std::endl;
   }
   
@@ -1250,7 +1132,7 @@ namespace xmltest
   {
     std::string xml = "<a><b x='y'>c</b><d><e/></d><f/><g><h>i</h><j><k>l</k></j></g></a>";
     
-    XMLTree tree;
+    xml::XMLTree tree;
     int error = tree.parse(xml); //comments are ignored
     if(error) std::cout << "An error happened: " << error << std::endl;
     
@@ -1265,7 +1147,7 @@ namespace xmltest
   {
     std::string xml = "<?declaration?><a><!--comment1--><!--comment2--><b x='y'>c</b><d><!--comment3--><e/></d><f/><g><h>i</h><j><k>l</k></j></g><!--comment4--></a><!--comment5-->";
     
-    XMLTree tree;
+    xml::XMLTree tree;
     int error = tree.parseOuter(xml, false); //comments and xml declaration not ignored, but included in pretty printing
     if(error) std::cout << "An error happened: " << error << std::endl;
     
@@ -1349,7 +1231,7 @@ namespace xmltest
   {
     TEST()
     {
-      std::cout << "[XMLCompose test]"<<std::endl;
+      std::cout << "[composition test]"<<std::endl;
       xmltest();
       std::cout << "[XMLTree pretty printing test]"<<std::endl;
       xmltreetest();
