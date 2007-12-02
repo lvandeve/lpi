@@ -30,14 +30,13 @@ metres or 4187211692790 lightyears, which is ideal for my space game project.
 For this to work properly, it's important that the type "unsigned" is 32-bit,
 not more, not less.
 But the C++ standard doesn't properly assure such thing for any type.
+*/
 
-Values like "4" and "32" are hardcoded magic numbers, sometimes the "4" appears
-in the form of that amount of statements by doing everything separatly.
-However it should still be not too much work to convert it to other bit amounts.
+/*
+There are also template functions available that work on arbitrary uint32 arrays.
 
-Before the classes are a few generalized template functions for working with
-arrays of uint32's that represent big integers or fixed point numbers. This is
-not complete yet.
+This is a work in progress, for example it's planned to make the sqrt and /= functions
+also templated like already done with the add and multiply functions.
 */
 
 namespace lpi
@@ -268,6 +267,56 @@ void rightshift_signed(uint32* a, uint32 shift)
   }
 }
 
+inline bool getLSB(const uint32* a)
+{
+  return a[0] & 1;
+}
+
+template<int size>
+bool getMSB(const uint32* a)
+{
+  return a[size - 1] > 2147483647;
+}
+
+/*
+getBit functions:
+gets a bit from the given bignum.
+Bit 0 is the lsb, bit 1 the more significant one, etc...
+If you enter a negative number, it returns 0.
+If you enter a number larger than size * 4:
+-unsigned version will return 0
+-signed version will return the MSB
+*/
+
+template<int size>
+bool getBit_unsigned(const uint32* a, int bit)
+{
+  if(bit >= 0 && bit < size * 32)
+  {
+    int i = bit % 32;
+    int j = bit / 32;
+    
+    return (a[j] >> i) & 1;
+  }
+  else if(bit < 0) return false;
+  else return false;
+}
+
+template<int size>
+bool getBit_signed(const uint32* a, int bit)
+{
+  if(bit >= 0 && bit < size * 32)
+  {
+    int i = bit % 32;
+    int j = bit / 32;
+    
+    return (a[j] >> i) & 1;
+  }
+  else if(bit < 0) return false;
+  else return getMSB<size>(a);
+}
+
+
 template<int size>
 void addLSB(uint32* a) //increments the LSB and the other bits if it carries over
 {
@@ -301,9 +350,52 @@ void negate(uint32* a)
   addLSB<size>(a);
 }
 
-inline bool getLSB(const uint32* a)
+template<int size>
+void makeZero(uint32* a)
 {
-  return a[0] & 1;
+  for(int i = 0; i < size; i++) a[i] = 0U;
+}
+
+/*
+sizeo = size of output in uint32's
+sizea and sizeb = size of inputs
+If the numbers have fractional bits, reinterpret them correctly after the multiplication.
+It's just a shift over uint32's.
+sizeo must be >= sizea and >= sizeb
+the maximum useful sizeo is 2 * sizea or 2 * sizeb
+*/
+template<int sizeo, int sizea, int sizeb>
+void multiply_signed(uint32* out, const uint32* a, const uint32* b)
+{
+  makeZero<sizeo>(out);
+  
+  //the copy is needed because add doesn't support bitshifted input, and the sign bits must be correct for more uints
+  uint32 b_copy[sizeo];
+  for(int i = 0; i < sizeb; i++) b_copy[i] = b[i];
+  for(int i = sizeb; i < sizeo; i++) b_copy[i] = getMSB<sizeb>(b) ? 4294967295U : 0U;
+  
+  for(int j = 0; j < sizeo * 32; j++)
+  {
+    if(lpi::getBit_signed<sizea>(a, j)) add<sizeo, 0, sizeo, 0>(out, out, b_copy);
+    leftshift<sizeo>(b_copy, 1U);
+  }
+}
+
+template<int sizeo, int sizea, int sizeb>
+void multiply_unsigned(uint32* out, const uint32* a, const uint32* b)
+{
+  makeZero<sizeo>(out);
+  
+  //the copy is needed because add doesn't support bitshifted input, and the sign bits must be correct for more uints
+  uint32 b_copy[sizeo];
+  for(int i = 0; i < sizeb; i++) b_copy[i] = b[i];
+  for(int i = sizeb; i < sizeo; i++) b_copy[i] = 0U;
+  
+  for(int j = 0; j < sizeo * 32; j++)
+  {
+    if(lpi::getBit_unsigned<sizea>(a, j)) add<sizeo, 0, sizeo, 0>(out, out, b_copy);
+    leftshift<sizeo>(b_copy, 1U);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
