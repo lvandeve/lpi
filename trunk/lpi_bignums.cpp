@@ -343,37 +343,15 @@ ufixed128& ufixed128::operator*=(uint32 rhs)
 
 ufixed128& ufixed128::operator*=(const ufixed128& rhs)
 {
-  //160 bit precision for multiplication: one 32-bit group extra, because at the end we need to do a right shift
-  uint32 a[5] = { data[0], data[1], data[2], data[3], sign() ? 4294967295U : 0U };
-  uint32 extra = 0U; //similar: 5th 32-bit group for *this, representing "data[4]"
+  //160 bit precision used, and one right shift at the end
+  uint32 result[5];
   
-  ufixed128 b = rhs;
+  multiply_unsigned<5, 4, 4>(result, data, rhs.data);
   
-  makeZero(); //result will be stored in *this, start at zero
-  
-  for(int j = 0; j < 128; j++)
-  {
-    if(b.getLSB()) //the code from the += operator implemented again, to fill the 5th uint32 (*this += a)
-    {
-      uint32 carry = 0U;
-      for(int i = 0; i < 4; i++)
-      {
-        data[i] += a[i] + carry;
-        if(!carry && data[i] < a[i]) carry = 1U; //if it has overflown
-        else if(carry && data[i] <= a[i]) carry = 1U;
-        else carry = 0U;
-      }
-      extra += a[4] + carry;
-    }
-    leftshift<5>(a, 1U);
-      
-    b >>= 1;
-  }
-  
-  data[0] = data[1];
-  data[1] = data[2];
-  data[2] = data[3];
-  data[3] = extra;
+  data[0] = result[1];
+  data[1] = result[2];
+  data[2] = result[3];
+  data[3] = result[4];
 
   return *this;
 }
@@ -968,52 +946,29 @@ void fixed128::makeZero()
 
 fixed128& fixed128::operator*=(uint32 rhs)
 {
-  fixed128 a = *this;
+  uint32 result[4];
   
-  makeZero();
+  multiply_signed<4, 4, 1>(result, data, &rhs);
   
-  for(int i = 0; i < 32; i++)
-  {
-    if((rhs >> i) & 1) (*this) += a;
-    a <<= 1;
-  }
+  data[0] = result[0];
+  data[1] = result[1];
+  data[2] = result[2];
+  data[3] = result[3];
 
   return *this;
 }
 
 fixed128& fixed128::operator*=(const fixed128& rhs)
 {
-  //160 bit precision for multiplication: one 32-bit group extra, because at the end we need to do a right shift
-  uint32 a[5] = { data[0], data[1], data[2], data[3], sign() ? 4294967295U : 0U };
-  uint32 extra = 0U; //similar: 5th 32-bit group for *this, representing "data[4]"
+  //160 bit precision used, and one right shift at the end
+  uint32 result[5];
   
-  uint32 b[5] = { rhs.data[0], rhs.data[1], rhs.data[2], rhs.data[3], rhs.sign() ? 4294967295U : 0U };
+  multiply_signed<5, 4, 4>(result, data, rhs.data);
   
-  makeZero(); //result will be stored in *this, start at zero
-  
-  for(int j = 0; j < 160; j++)
-  {
-    if(lpi::getLSB(b)) //the code from the += operator implemented again, to fill the 5th uint32 (*this += a)
-    {
-      uint32 carry = 0U;
-      for(int i = 0; i < 4; i++)
-      {
-        data[i] += a[i] + carry;
-        if(!carry && data[i] < a[i]) carry = 1U; //if it has overflown
-        else if(carry && data[i] <= a[i]) carry = 1U;
-        else carry = 0U;
-      }
-      extra += a[4] + carry;
-    }
-    leftshift<5>(a, 1U);
-    
-    rightshift_signed<5>(b, 1U);
-  }
-  
-  data[0] = data[1];
-  data[1] = data[2];
-  data[2] = data[3];
-  data[3] = extra;
+  data[0] = result[1];
+  data[1] = result[2];
+  data[2] = result[3];
+  data[3] = result[4];
 
   return *this;
 }
@@ -1316,13 +1271,12 @@ class Testfixed128
   
   void testaddsub()
   {
-    using namespace lpi;
     std::cout.precision(20);
     
     std::cout << "testing addition and subtraction" << std::endl;
     
-    fixed128 n = -5.0;
-    fixed128 p = +5.0;
+    lpi::fixed128 n = -5.0;
+    lpi::fixed128 p = +5.0;
     
     std::cout<<(double)(p + p)<<std::endl;
     std::cout<<(double)(p + n)<<std::endl;
@@ -1335,10 +1289,10 @@ class Testfixed128
     
     std::cout << std::endl;
     
-    fixed128 f = 5.5;
-    fixed128 g = -5.5;
-    uint32 i = 5;
-    uint32 j = 6;
+    lpi::fixed128 f = 5.5;
+    lpi::fixed128 g = -5.5;
+    lpi::uint32 i = 5;
+    lpi::uint32 j = 6;
 
     std::cout<<(double)(f + i)<<std::endl;
     std::cout<<(double)(f - i)<<std::endl;
@@ -1354,15 +1308,14 @@ class Testfixed128
   
   void testsmallmul()
   {
-    using namespace lpi;
-    std::cout.precision(30);
+    std::cout.precision(20);
     
     std::cout << "testing small multiplication" << std::endl;
     
-    fixed128 a = 0.01;
-    fixed128 b = 0.3;
-    fixed128 c = -0.01;
-    fixed128 d = -0.3;
+    lpi::fixed128 a = 0.015625;
+    lpi::fixed128 b = 0.5;
+    lpi::fixed128 c = -0.015625;
+    lpi::fixed128 d = -0.5;
     
     std::cout<<(double)(a*a)<<std::endl;
     std::cout<<(double)(b*b)<<std::endl;
@@ -1385,22 +1338,21 @@ class Testfixed128
   
   void testlargemul()
   {
-    using namespace lpi;
     std::cout.precision(30);
     
     std::cout << "testing large multiplication" << std::endl;
     
-    fixed128 a = 8000000000.5;
-    fixed128 b = 9000000000.5;
-    fixed128 c = -8000000000.5;
-    fixed128 d = -9000000000.5;
+    lpi::fixed128 a = 8000000000.5;
+    lpi::fixed128 b = 9000000000.5;
+    lpi::fixed128 c = -8000000000.5;
+    lpi::fixed128 d = -9000000000.5;
     
     std::cout<<(double)(a*b)<<std::endl;
     std::cout<<(double)(a*d)<<std::endl;
     std::cout<<(double)(c*b)<<std::endl;
     std::cout<<(double)(c*d)<<std::endl;
     
-    fixed128 e = -614.488;
+    lpi::fixed128 e = -614.488;
     std::cout<<(double)(e*e)<<std::endl;
     
     std::cout<<std::endl;
@@ -1408,31 +1360,31 @@ class Testfixed128
   
   void testintmul()
   {
-    using namespace lpi;
     std::cout.precision(30);
     
     std::cout << "testing multiplication with integer" << std::endl;
     
-    fixed128 a = 8000000000.0;
-    uint32 b = 5;
+    lpi::fixed128 a = 8000000000.0;
+    lpi::fixed128 b = -8000000000.0;
+    lpi::uint32 c = 5;
+    lpi::uint32 d = -5;
     
-    std::cout<<(double)a<<" "<<b<<std::endl;
     
-    a *= b;
-    
-    std::cout<<(double)a<<std::endl;
+    std::cout<<(double)(a * c)<<std::endl;
+    std::cout<<(double)(a * d)<<std::endl;
+    std::cout<<(double)(b * c)<<std::endl;
+    std::cout<<(double)(b * d)<<std::endl;
     
     std::cout<<std::endl;
   }
   
   void testdoublemul()
   {
-    using namespace lpi;
     std::cout.precision(30);
     
     std::cout << "testing multiplication with doubles" << std::endl;
     
-    fixed128 a = 8000000000.0;
+    lpi::fixed128 a = 8000000000.0;
     
     std::cout<<(double)(a * 0.5)<<std::endl;
     std::cout<<(double)(a * -1.5)<<std::endl;
@@ -1441,7 +1393,7 @@ class Testfixed128
     std::cout<<(double)(a * 0.0)<<std::endl;
     
     std::cout << std::endl;
-    fixed128 b = -8000000000.0;
+    lpi::fixed128 b = -8000000000.0;
     
     std::cout<<(double)(b * 0.5)<<std::endl;
     std::cout<<(double)(b * -1.5)<<std::endl;
@@ -1454,15 +1406,14 @@ class Testfixed128
   
   void testltgt()
   {
-    using namespace lpi;
     std::cout.precision(30);
     
     std::cout << "testing lesser than and greater than" << std::endl;
     
-    fixed128 a = +5.0;
-    fixed128 b = +6.0;
-    fixed128 c = -5.0;
-    fixed128 d = -6.0;
+    lpi::fixed128 a = +5.0;
+    lpi::fixed128 b = +6.0;
+    lpi::fixed128 c = -5.0;
+    lpi::fixed128 d = -6.0;
     
     std::cout<<(a < b)<<std::endl;
     std::cout<<(a < c)<<std::endl;
@@ -1482,20 +1433,19 @@ class Testfixed128
   
   void testsqrt()
   {
-    using namespace lpi;
     std::cout.precision(30);
     
     std::cout << "testing square root" << std::endl;
     
-    fixed128 a = 1600000000.0;
+    lpi::fixed128 a = 1600000000.0;
     a.takeSqrt();
     std::cout<<(double)a<<std::endl;
     
-    fixed128 b = 9.0;
+    lpi::fixed128 b = 9.0;
     b.takeSqrt();
     std::cout<<(double)b<<std::endl;
     
-    fixed128 c = 2.0;
+    lpi::fixed128 c = 2.0;
     c.takeSqrt();
     std::cout<<(double)c<<std::endl;
     
@@ -1504,31 +1454,30 @@ class Testfixed128
   
   void testdiv()
   {
-    using namespace lpi;
     std::cout.precision(30);
     
     std::cout << "testing division" << std::endl;
     
-    fixed128 a = 3.0;
+    lpi::fixed128 a = 3.0;
     a /= 2.0;
     std::cout<<(double)a<<std::endl;
     
-    fixed128 b = -16000000000000.0;
+    lpi::fixed128 b = -16000000000000.0;
     b /= 2.0;
     std::cout<<(double)b<<std::endl;
     
-    fixed128 c = 0.005;
+    lpi::fixed128 c = 0.005;
     c /= 2.0;
     std::cout<<(double)c<<std::endl;
     
     
-    fixed128 e = 4U;
+    lpi::fixed128 e = 4U;
     e <<= 32U;
     e /= 2.0;
     e >>= 32U;
     std::cout<<(double)e<<std::endl;
     
-    fixed128 d = 4U;
+    lpi::fixed128 d = 4U;
     d <<= 64U;
     d /= 2.0;
     d >>= 64U;
