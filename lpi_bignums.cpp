@@ -1305,7 +1305,7 @@ fixed128 abs(const fixed128& a)
 
 
 //test
-#if 1
+#if 0
 #include <iostream>
 
 int main(){}
