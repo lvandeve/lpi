@@ -94,10 +94,8 @@ class GameTime
   
   public:
   
-  GameTime()
+  GameTime() : oldTime(0), newTime(0), fps_prepared(false), oldtime_prepared(false)
   {
-    fps_prepared = false;
-    oldtime_prepared = false;
   }
   
   void init_oldtime()
@@ -131,7 +129,7 @@ class GameTime
     return diff_t() / 1000.0;
   }
   
-  Sint32 currentDiff() const //return difference between last frame and current time
+  Sint32 currentDiff() const //return difference between last frame and current time (in ms)
   {
     return getTicks() - newTime;
   }

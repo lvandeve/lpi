@@ -138,6 +138,12 @@ bool subtract(uint32* out, const uint32* a, const uint32* b) //size of out will 
 }
 
 template<int size>
+bool sign(const uint32* a)
+{
+  return a[size - 1] >= 2147483648U;
+}
+
+template<int size>
 void leftshift(uint32* a, uint32 shift)
 {
   //will make this more efficient if needed
@@ -173,12 +179,6 @@ void leftshift(uint32* a, uint32 shift)
       a[0] <<= 1U;
     }
   }
-}
-
-template<int size>
-bool sign(const uint32* a)
-{
-  return a[size - 1] >= 2147483648U;
 }
 
 template<int size>
@@ -299,6 +299,11 @@ void negate(uint32* a)
 {
   bit_invert<size>(a);
   addLSB<size>(a);
+}
+
+inline bool getLSB(const uint32* a)
+{
+  return a[0] & 1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
