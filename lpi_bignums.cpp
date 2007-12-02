@@ -987,13 +987,13 @@ fixed128& fixed128::operator*=(const fixed128& rhs)
   uint32 a[5] = { data[0], data[1], data[2], data[3], sign() ? 4294967295U : 0U };
   uint32 extra = 0U; //similar: 5th 32-bit group for *this, representing "data[4]"
   
-  fixed128 b = rhs;
+  uint32 b[5] = { rhs.data[0], rhs.data[1], rhs.data[2], rhs.data[3], rhs.sign() ? 4294967295U : 0U };
   
   makeZero(); //result will be stored in *this, start at zero
   
-  for(int j = 0; j < 128; j++)
+  for(int j = 0; j < 160; j++)
   {
-    if(b.getLSB()) //the code from the += operator implemented again, to fill the 5th uint32 (*this += a)
+    if(lpi::getLSB(b)) //the code from the += operator implemented again, to fill the 5th uint32 (*this += a)
     {
       uint32 carry = 0U;
       for(int i = 0; i < 4; i++)
@@ -1006,8 +1006,8 @@ fixed128& fixed128::operator*=(const fixed128& rhs)
       extra += a[4] + carry;
     }
     leftshift<5>(a, 1U);
-      
-    b >>= 1;
+    
+    rightshift_signed<5>(b, 1U);
   }
   
   data[0] = data[1];
@@ -1305,8 +1305,10 @@ fixed128 abs(const fixed128& a)
 
 
 //test
-#if 0
+#if 1
 #include <iostream>
+
+int main(){}
 
 class Testfixed128
 {
@@ -1353,20 +1355,32 @@ class Testfixed128
   void testsmallmul()
   {
     using namespace lpi;
-    std::cout.precision(20);
+    std::cout.precision(30);
     
     std::cout << "testing small multiplication" << std::endl;
     
-    fixed128 a = 0.3;
-    fixed128 b = 0.01;
+    fixed128 a = 0.01;
+    fixed128 b = 0.3;
+    fixed128 c = -0.01;
+    fixed128 d = -0.3;
     
-    std::cout<<(double)a<<" "<<(double)b<<std::endl;
-    
-    a *= b;
-    
-    std::cout<<(double)a<<std::endl;
+    std::cout<<(double)(a*a)<<std::endl;
+    std::cout<<(double)(b*b)<<std::endl;
+    std::cout<<(double)(c*c)<<std::endl;
+    std::cout<<(double)(d*d)<<std::endl;
+    std::cout<<std::endl;
+    std::cout<<(double)(a*b)<<std::endl;
+    std::cout<<(double)(a*d)<<std::endl;
+    std::cout<<(double)(c*b)<<std::endl;
+    std::cout<<(double)(c*d)<<std::endl;
+    std::cout<<std::endl;
+    std::cout<<(double)(b*a)<<std::endl;
+    std::cout<<(double)(d*a)<<std::endl;
+    std::cout<<(double)(b*c)<<std::endl;
+    std::cout<<(double)(d*c)<<std::endl;
     
     std::cout<<std::endl;
+    
   }
   
   void testlargemul()
@@ -1376,15 +1390,18 @@ class Testfixed128
     
     std::cout << "testing large multiplication" << std::endl;
     
-    fixed128 a = 8000000000.0;
-    fixed128 b = 9000000000.0;
-    fixed128 c = -8000000000.0;
-    fixed128 d = -9000000000.0;
+    fixed128 a = 8000000000.5;
+    fixed128 b = 9000000000.5;
+    fixed128 c = -8000000000.5;
+    fixed128 d = -9000000000.5;
     
     std::cout<<(double)(a*b)<<std::endl;
     std::cout<<(double)(a*d)<<std::endl;
     std::cout<<(double)(c*b)<<std::endl;
     std::cout<<(double)(c*d)<<std::endl;
+    
+    fixed128 e = -614.488;
+    std::cout<<(double)(e*e)<<std::endl;
     
     std::cout<<std::endl;
   }
@@ -1533,6 +1550,5 @@ class Testfixed128
   }
 } testfixed128;
 
-int main(){}
 #endif
 
