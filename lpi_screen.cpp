@@ -21,16 +21,18 @@ namespace lpi
 void initBuiltInFontTextures(); //link time dependency to init the built in font textures
 namespace gui { void initBuiltInGuiTextures(); } //link time dependency to init the built in gui textures
 
-SDL_Surface *scr; //the single SDL surface used
-int w; //width of the screen
-int h; //height of the screen
-
-//these values are in OpenGL viewport coordinates, that is NOT the same as pixel coordinates, use setScissor to properly set these
-std::vector<int> clipLeft;
-std::vector<int> clipTop;
-std::vector<int> clipRight;
-std::vector<int> clipBottom;
-bool fullscreenMode; //if true, it's fullscreen
+namespace
+{
+  SDL_Surface *scr; //the single SDL surface used
+  int w; //width of the screen
+  int h; //height of the screen
+  //these values are in OpenGL viewport coordinates, that is NOT the same as pixel coordinates, use setScissor to properly set these
+  std::vector<int> clipLeft;
+  std::vector<int> clipTop;
+  std::vector<int> clipRight;
+  std::vector<int> clipBottom;
+  bool fullscreenMode; //if true, it's fullscreen
+}
 
 /*
 This function sets up an SDL window ready for OpenGL graphics.
@@ -96,6 +98,16 @@ void screen(int width, int height, bool fullscreen, const char* text)
   
   initBuiltInFontTextures();
   gui::initBuiltInGuiTextures();
+}
+
+int screenWidth()
+{
+  return w;
+}
+
+int screenHeight()
+{
+  return h;
 }
 
 int screenMode = -1;
@@ -206,6 +218,11 @@ void enableSmoothing()
 void disableSmoothing()
 {
   smoothing_gl = false;
+}
+
+bool enabledSmoothing()
+{
+  return smoothing_gl;
 }
 
 //set new scissor area (limited drawing area on the screen)

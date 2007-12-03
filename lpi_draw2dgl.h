@@ -14,8 +14,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 //2D drawing with opengl
 
-#ifndef DRAW2DGL_H
-#define DRAW2DGL_H
+#ifndef LPI_DRAW2DGL_H_INCLUDED
+#define LPI_DRAW2DGL_H_INCLUDED
 
 
 #include <vector>
@@ -29,7 +29,7 @@ namespace lpi
 
 void pset(int x, int y, const ColorRGB& color);
 void drawPoint(int x, int y, const ColorRGB& color); //same as pset but with other name
-void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color, int clipx1 = 0, int clipy1 = 0, int clipx2 = w, int clipy2 = h);
+void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color, int clipx1 = 0, int clipy1 = 0, int clipx2 = screenWidth(), int clipy2 = screenHeight());
 void drawRectangle(int x1, int y1, int x2, int y2, const ColorRGB& color = RGB_White);
 void drawDisk(int x, int y, double radius, const ColorRGB& color);
 void gradientLine(int x1, int y1, int x2, int y2, const ColorRGB& color1, const ColorRGB& color2);

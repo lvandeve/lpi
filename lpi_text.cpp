@@ -134,7 +134,7 @@ int printString(std::string text, int x, int y, const Markup& markup, unsigned l
      x += markup.getWidth();
   }
   //return position of a next character, where you may want to start drawing another string
-  return h * x + y;
+  return screenHeight() * x + y;
 }
 
 //Draws a string of text, and uses some of the ascii control characters, e.g. newline
@@ -167,7 +167,7 @@ int printText(std::string text, int x, int y, const Markup& markup, unsigned lon
      pos++;
   }  
   //return pos;
-  return h * drawX + drawY;
+  return screenHeight() * drawX + drawY;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -185,7 +185,7 @@ int printFormattedM(std::string text, int x, int y, Markup& markup, const Markup
      symbol = text[pos];
      if(symbol == '#')
      {
-       if(pos + 1 >= text.length()) return h * drawX + drawY;
+       if(pos + 1 >= text.length()) return screenHeight() * drawX + drawY;
        pos++;
        
        symbol = text[pos];
@@ -206,7 +206,7 @@ int printFormattedM(std::string text, int x, int y, Markup& markup, const Markup
        }
        else if(symbol == 'c')
        {
-         if(pos + 8 >= text.length()) return h * drawX + drawY;
+         if(pos + 8 >= text.length()) return screenHeight() * drawX + drawY;
          pos++;
          int r1, r2, g1, g2, b1, b2, a1, a2;
          r1 = text[pos] - 48; if(r1 > 9) r1 -= 7; pos++;
@@ -224,7 +224,7 @@ int printFormattedM(std::string text, int x, int y, Markup& markup, const Markup
        }
        else if(symbol == 'b')
        {
-         if(pos + 8 >= text.length()) return h * drawX + drawY;
+         if(pos + 8 >= text.length()) return screenHeight() * drawX + drawY;
          pos++;
          int r1, r2, g1, g2, b1, b2, a1, a2;
          r1 = text[pos] - 48; if(r1 > 9) r1 -= 7; pos++;
@@ -246,7 +246,7 @@ int printFormattedM(std::string text, int x, int y, Markup& markup, const Markup
        }
        else if(symbol == '?') //draw any of the 256 glyphs, which one is given by 2 hex digits
        {
-         if(pos + 8 >= text.length()) return h * drawX + drawY;
+         if(pos + 8 >= text.length()) return screenHeight() * drawX + drawY;
          pos++;
          int g1, g2;
          g1 = text[pos] - 48; if(g1 > 9) g1 -= 7; pos++;
@@ -264,7 +264,7 @@ int printFormattedM(std::string text, int x, int y, Markup& markup, const Markup
      pos++;
   }  
 
-  return h * drawX + drawY;
+  return screenHeight() * drawX + drawY;
 }
 
 int printFormatted(std::string text, int x, int y, const Markup& markup)

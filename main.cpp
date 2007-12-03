@@ -50,94 +50,92 @@ gprof > gprof.txt
 #include <vector>
 #include <iostream>
 #include <cmath>
-using namespace lpi;
-
 
 int main(int, char*[]) //the arguments have to be given here, or DevC++ can't link to SDL for some reason
 {
-  screen(1024, 768, 0, "Lode's GUI system");
+  lpi::screen(1024, 768, 0, "Lode's GUI system");
   
-  gui::Container c;
+  lpi::gui::Container c;
   
-  gui::Button sound_button;
+  lpi::gui::Button sound_button;
   sound_button.makeTextPanel(20, 500, "sound");
   c.pushTop(&sound_button);
   
-  gui::Scrollbar bar;
+  lpi::gui::Scrollbar bar;
   bar.makeVertical(700, 20, 200);
   c.pushTop(&bar);
   
-  gui::Slider sli;
+  lpi::gui::Slider sli;
   sli.makeVertical(650, 20, 200);
   c.pushTop(&sli);
   
-  gui::Checkbox cb;
+  lpi::gui::Checkbox cb;
   cb.make(500, 20);
   c.pushTop(&cb);
   
-  gui::BulletList bl;
+  lpi::gui::BulletList bl;
   bl.make(500, 80, 8, 0, 24);
   c.pushTop(&bl);
   
-  gui::Button tb;
+  lpi::gui::Button tb;
   tb.makeText(20, 540, "Text Button");
   c.pushTop(&tb);
   
-  gui::Button tb_unittest;
+  lpi::gui::Button tb_unittest;
   tb_unittest.makeText(20, 550, "Unit Test");
   c.pushTop(&tb_unittest);
   
-  gui::Window w;
+  lpi::gui::Window w;
   w.make(50, 50, 300, 300);
   w.addTop();
   w.addTitle("Window 1");
   w.addCloseButton();
-  w.setColor(RGBA_White(192));
+  w.setColor(lpi::RGBA_White(192));
   c.pushTop(&w);
   
-  gui::Button wb;
+  lpi::gui::Button wb;
   wb.makeTextPanel(0, 0, "window button");
   wb.autoTextSize(4);
   wb.centerText();
   w.pushTopAt(&wb, 20, 20);
   
-  gui::Window w2;
+  lpi::gui::Window w2;
   w2.make(100, 100, 300, 300);
   w2.addTop();
   w2.addTitle("Window 2");
   w2.addCloseButton();
   w2.addResizer();
-  w2.setColor(RGBA_Red(192));
+  w2.setColor(lpi::RGBA_Red(192));
   c.pushTop(&w2);
   
-  gui::Checkbox wcb;
+  lpi::gui::Checkbox wcb;
   wcb.make(0, 0);
   w2.pushTopAt(&wcb, 20, 20);
   
   std::vector<double> sound(30000);
   for(size_t i = 0; i < 30000; i++) sound[i] = 0.3 * std::sin(i / (30.0 * (40000.0-i)/30000.0));
   
-  audioOpen(44100, 2048);
+  lpi::audioOpen(44100, 2048);
   
-  while(frame(true, true))
+  while(lpi::frame(true, true))
   {
     SDL_Delay(5);
     
-    print("lpi GUI demo");
+    lpi::print("lpi GUI demo");
     
-    drawGradientDisk(600, 400, 100, ColorRGB(128, 255, 128, 255), ColorRGB(255, 128, 128, 128));
+    lpi::drawGradientDisk(600, 400, 100, lpi::ColorRGB(128, 255, 128, 255), lpi::ColorRGB(255, 128, 128, 128));
     
-    gui::builtInTexture[37].draw(0, 50);
+    lpi::gui::builtInTexture[37].draw(0, 50);
     
     c.draw();
     c.handle();
     
-    if(sound_button.pressed()) audioPlay(sound);
+    if(sound_button.pressed()) lpi::audioPlay(sound);
     
     if(tb_unittest.pressed()) lpi::gui::unitTest();
     
-    redraw();
-    cls(RGB_Darkgreen);
+    lpi::redraw();
+    lpi::cls(lpi::RGB_Darkgreen);
   }
   
   
