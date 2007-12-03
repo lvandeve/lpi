@@ -239,7 +239,7 @@ void Texture::reupload()
 void Texture::bind() const
 {
   glBindTexture(GL_TEXTURE_2D, texture[0]);
-  if(smoothing_gl)
+  if(enabledSmoothing())
   {
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -250,25 +250,6 @@ void Texture::bind() const
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   }
 }
-
-/*//Draw the texture on screen
-void Texture::draw(int x, int y, ColorRGB colorMod)
-{
-  glEnable(GL_TEXTURE_2D);
-
-  glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
-  bind();
-
-  setOpenGLScissor(); //everything that draws something must always do this
-
-  //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
-  glBegin(GL_QUADS);
-    glTexCoord2d(0.0, 0.0); glVertex3d(x + 0 , y + 0 , 1);
-    glTexCoord2d(+u3, 0.0); glVertex3d(x + u2, y + 0 , 1);
-    glTexCoord2d(+u3, +v3); glVertex3d(x + u2, y + v2, 1);
-    glTexCoord2d(0.0, +v3); glVertex3d(x + 0 , y + v2, 1);
-  glEnd();
-}*/
 
 //Draw the texture on screen
 void Texture::draw(int x, int y, const ColorRGB& colorMod, int sizex, int sizey, int skewx, int skewy) const

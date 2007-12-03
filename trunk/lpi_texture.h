@@ -11,8 +11,8 @@ Redistribution and use in source and binary forms, with or without modification,
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef texture_h
-#define texture_h
+#ifndef LPI_TEXTURE_H_INCLUDED
+#define LPI_TEXTURE_H_INCLUDED
 
 #include <SDL/SDL.h>
 #include <GL/gl.h>
@@ -42,20 +42,20 @@ class AlphaEffect
   AlphaEffect(int style, unsigned char alpha = 0, const ColorRGB& alphaColor = RGB_Black);
 };
 
-#define AE_Opaque AlphaEffect(0, 255, RGB_Black) //no alpha effect
-#define AE_GreenKey AlphaEffect(128, 255, RGB_Green) //make the green color invisible
-#define AE_PinkKey AlphaEffect(128, 255, RGB_Magenta) //make the magenta color invisible
-#define AE_PinkKeyS AlphaEffect(3200, 255, RGB_Magenta) //make the magenta color invisible, dark magenta (128) will become shadow, slightly brighter magenta (192) becomes more translucent shadow
-#define AE_PinkKeyT25 AlphaEffect(3201, 64, RGB_Magenta) //make the magenta color invisible and the rest 25% visible + shadow effect
-#define AE_PinkKeyT50 AlphaEffect(3201, 128, RGB_Magenta) //make the magenta color invisible and the rest 50% visible + shadow effect
-#define AE_PinkKeyT75 AlphaEffect(3201, 192, RGB_Magenta) //make the magenta color invisible and the rest 75% visible + shadow effect
-#define AE_BlackKey AlphaEffect(128, 255, RGB_Black) //make the black color invisible
-#define AE_Translucent AlphaEffect(4, 255, RGB_Black) //Translucent: the darker, the more transparent
-#define AE_ITranslucent AlphaEffect(68, 255, RGB_Black) //Inverse Translucent: the brighter, the more transparent
-#define AE_Particle AlphaEffect(260, 255, RGB_White) //Use this for turning greyscale particles into 100% color where blackness is now translucency
-#define AE_ColorParticle AlphaEffect(516, 255, RGB_White) //Same as AE_Particle, but hue and saturation information is preserved. 
-#define AE_Modulated AlphaEffect(19, 255, RGB_White) //Modulated (special translucency, as in Unreal 1)
-#define AE_IModulated AlphaEffect(20, 255, RGB_White) //Inverse Modulated
+#define AE_Opaque AlphaEffect(0, 255, lpi::RGB_Black) //no alpha effect
+#define AE_GreenKey AlphaEffect(128, 255, lpi::RGB_Green) //make the green color invisible
+#define AE_PinkKey AlphaEffect(128, 255, lpi::RGB_Magenta) //make the magenta color invisible
+#define AE_PinkKeyS AlphaEffect(3200, 255, lpi::RGB_Magenta) //make the magenta color invisible, dark magenta (128) will become shadow, slightly brighter magenta (192) becomes more translucent shadow
+#define AE_PinkKeyT25 AlphaEffect(3201, 64, lpi::RGB_Magenta) //make the magenta color invisible and the rest 25% visible + shadow effect
+#define AE_PinkKeyT50 AlphaEffect(3201, 128, lpi::RGB_Magenta) //make the magenta color invisible and the rest 50% visible + shadow effect
+#define AE_PinkKeyT75 AlphaEffect(3201, 192, lpi::RGB_Magenta) //make the magenta color invisible and the rest 75% visible + shadow effect
+#define AE_BlackKey AlphaEffect(128, 255, lpi::RGB_Black) //make the black color invisible
+#define AE_Translucent AlphaEffect(4, 255, lpi::RGB_Black) //Translucent: the darker, the more transparent
+#define AE_ITranslucent AlphaEffect(68, 255, lpi::RGB_Black) //Inverse Translucent: the brighter, the more transparent
+#define AE_Particle AlphaEffect(260, 255, lpi::RGB_White) //Use this for turning greyscale particles into 100% color where blackness is now translucency
+#define AE_ColorParticle AlphaEffect(516, 255, lpi::RGB_White) //Same as AE_Particle, but hue and saturation information is preserved. 
+#define AE_Modulated AlphaEffect(19, 255, lpi::RGB_White) //Modulated (special translucency, as in Unreal 1)
+#define AE_IModulated AlphaEffect(20, 255, lpi::RGB_White) //Inverse Modulated
 
 void createImageAlpha(unsigned char* image, int w, int h, const AlphaEffect& effect);
 
@@ -171,4 +171,4 @@ extern Texture emptyTexture; //default texture for initializing pointers
 } //namespace lpi
 
 
-#endif //texture_h
+#endif

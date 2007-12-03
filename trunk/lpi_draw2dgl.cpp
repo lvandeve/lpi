@@ -86,9 +86,9 @@ void gradientLine(int x1, int y1, int x2, int y2, const ColorRGB& color1, const 
 
   glBegin(GL_LINES);
     glColor4f(color1.r / 255.0, color1.g / 255.0, color1.b / 255.0, color1.a / 255.0);
-    glVertex3d(x1, h - y1, 1);
+    glVertex3d(x1, screenHeight() - y1, 1);
     glColor4f(color2.r / 255.0, color2.g / 255.0, color2.b / 255.0, color2.a / 255.0);
-    glVertex3d(x2, h - y2, 1);
+    glVertex3d(x2, screenHeight() - y2, 1);
   glEnd();
 }
 

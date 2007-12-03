@@ -1000,8 +1000,8 @@ void Element::putInScreen()
     
     if(x0 < 0) newx = 0;
     if(y0 < 0) newy = 0;
-    if(x1 >= w) newx = w - getSizex();
-    if(y1 >= h) newy = h - getSizey();
+    if(x1 >= screenWidth()) newx = screenWidth() - getSizex();
+    if(y1 >= screenHeight()) newy = screenWidth() - getSizey();
     
     moveTo(newx, newy);
 }
@@ -1086,13 +1086,12 @@ Container::Container()
 {
   clear(); //clear the element list
   this->totallyEnable();
-
   
   //the default container is as big as the screen (note: don't forget to resize it if you resize the resolution of the screen!)
   this->x0 = 0;
   this->y0 = 0;
-  this->x1 = w;
-  this->y1 = h;
+  this->x1 = screenWidth();
+  this->y1 = screenHeight();
   
   this->keepElementsInside = 0;
 }

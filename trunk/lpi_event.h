@@ -11,8 +11,12 @@ Redistribution and use in source and binary forms, with or without modification,
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef input_h
-#define input_h
+/*
+lpi_event: SDL events, mouse input and keyboard input
+*/
+
+#ifndef LPI_EVENT_H_INCLUDED
+#define LPI_EVENT_H_INCLUDED
 
 #include <SDL/SDL.h>
 
@@ -21,13 +25,13 @@ namespace lpi
 
 extern SDL_Event event;
 
+//like it or not, the mouse interface works with global variables. You can even control them yourself for gui unit tests. That is and stays the interface :)
 extern int globalMouseX;
 extern int globalMouseY;
 extern bool globalLMB; //left mouse button
 extern bool globalRMB; //right mouse button
 extern bool globalMouseWheelUp; //mouse wheel up
 extern bool globalMouseWheelDown; //mouse wheel down
-//extern int mouseBuffer[1280][1024];
 
 //left or right mouse button
 enum MouseButton
@@ -68,7 +72,7 @@ bool keyPressed(int key, KeyState* state = 0); //only returns true the first tim
 bool keyPressedTime(int key, double time, double warmupTime, double repTime, KeyState* state = 0); //reptime = time to repeat key press. All times in seconds.
 bool pressedEnter(KeyState* state = 0);
 
-void checkMouse();
+void checkMouse(); //updates the values from the physical mouse
 int mouseXDiff();
 int mouseYDiff();
 int mouseXDiffWarp();
@@ -90,4 +94,4 @@ void end();
 
 } //namespace lpi
 
-#endif //input_h
+#endif
