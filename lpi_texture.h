@@ -95,6 +95,7 @@ class Texture
     void draw(int x, int y, double scale, const ColorRGB& colorMod = RGB_White) const;
     void draw(int x1, int y1, int x2, int y2, const ColorRGB& colorMod = RGB_White) const;
     void drawCentered(int x, int y, const ColorRGB& colorMod = RGB_White, int sizex = -1, int sizey = -1, int skewx = 0, int skewy = 0) const;
+    void drawCentered(int x, int y, double scale, const ColorRGB& colorMod = RGB_White) const;
     void drawRepeated(int x1, int y1, int x2, int y2, double scalex = 1.0, double scaley = 1.0, const ColorRGB& colorMod = RGB_White) const;
     
     unsigned char getPixel(int x, int y, int c) const

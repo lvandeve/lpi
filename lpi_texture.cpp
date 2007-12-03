@@ -323,6 +323,16 @@ void Texture::drawCentered(int x, int y, const ColorRGB& colorMod, int sizex, in
   draw(x - sizex / 2, y - sizey / 2, colorMod, sizex, sizey, skewx, skewy);
 }
 
+void Texture::drawCentered(int x, int y, double scale, const ColorRGB& colorMod) const
+{
+  int sizex = int(u * scale);
+  int sizey = int (v * scale);
+  if(sizex < 0) sizex = u;
+  if(sizey < 0) sizey = v;
+  if(sizex == 0 || sizey == 0) return;
+  draw(x - sizex / 2, y - sizey / 2, colorMod, sizex, sizey, 0, 0);
+}
+
 /*
 draws the texture repeated, useful to fill something with a tilable texture
 The texture size must be a power of 2, or you get ugly black things in between
