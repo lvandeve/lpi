@@ -865,6 +865,7 @@ Element::Element() : selfActivate(false),
                      minSizey(0),
                      labelX(0),
                      labelY(0),
+                     tooltipenabled(false),
                      hasBackgroundRectangle(false),
                      elementOver(false),
                      notDrawnByContainer(false)
@@ -884,6 +885,19 @@ void Element::drawLabel() const
 {
   if(label.length() > 0)
   print(label, x0 + labelX, y0 + labelY, labelMarkup);
+}
+
+void Element::drawToolTip() const
+{
+  if(tooltipenabled && mouseOver())
+  {
+    int x = globalMouseX;
+    int y = globalMouseY - 6;
+    int sizex = tooltip.size() * 6 + 4;
+    int sizey = 10;
+    drawRectangle(x, y, x + sizex, y + sizey, RGBA_Lightyellow(192));
+    print(tooltip, x + 2, y + 2, TS_Black6);
+  }
 }
 
 void Element::makeLabel(const std::string& label, int labelX, int labelY, const Markup& labelMarkup)
@@ -916,7 +930,6 @@ void Element::draw() const
   
   drawWidget();
   drawLabel();
-  
 }
 
 /*void Element::drawWidget() const
@@ -1312,13 +1325,21 @@ void Container::drawWidget() const
 {
   setSmallestScissor(getVisibleX0(), getVisibleY0(), getVisibleX1(), getVisibleY1()); //currently does same as setScissor (because otherwise there's weird bug, to reproduce: resize the red window and look at smiley in the small grey window), so elements from container in container are still drawn outside container. DEBUG THIS ASAP!!!
   
+  Element* tooltipelement = 0;
+  
   for(unsigned long i = 0; i < size(); i++)
   {
     if(!element[i]->isNotDrawnByContainer())
+    {
       element[i]->draw();
+      if(element[i]->mouseOver() && element[i]->tooltipenabled) tooltipelement = element[i];
+    }
   }
   
   resetScissor();
+  
+  //tooltip (only 1 can be active at the same time)
+  if(tooltipelement) tooltipelement->drawToolTip();
   
   bars.draw();
 }
@@ -5221,8 +5242,8 @@ void YesNoWindow::make(int x, int y, int sizex, int sizey, const std::string& te
   Window::make(x, y , sizex, sizey);
   addTop();
   
-  yes.makeTextPanel(0, 0, "yes");
-  no.makeTextPanel(0, 0, "no");
+  yes.makeTextPanel(0, 0, "Yes");
+  no.makeTextPanel(0, 0, "No");
   //yes.autoTextSize();
   //no.autoTextSize();
   
@@ -5232,6 +5253,34 @@ void YesNoWindow::make(int x, int y, int sizex, int sizey, const std::string& te
   int centerx = getSizex() / 2;
   pushTop(&yes, centerx - yes.getSizex() - 16, getSizey() - yes.getSizey() - 8 - 16);
   pushTop(&no, centerx + 16, getSizey() - no.getSizey() - 8 - 16);
+  
+  this->active = 1;
+  this->visible = 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//OKWINDOW//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+OkWindow::OkWindow()
+{
+  this->active = 0;
+  this->visible = 0;
+}
+
+void OkWindow::make(int x, int y, int sizex, int sizey, const std::string& text)
+{
+  Window::make(x, y , sizex, sizey);
+  addTop();
+  
+  ok.makeTextPanel(0, 0, "Ok");
+  //ok.autoTextSize();
+  
+  message.make(0, 0, text);
+  
+  pushTop(&message, 16, 16);
+  int centerx = getSizex() / 2;
+  pushTop(&ok, centerx - ok.getSizex() / 2, getSizey() - ok.getSizey() - 8 - 16);
   
   this->active = 1;
   this->visible = 1;
