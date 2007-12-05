@@ -17,19 +17,19 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <iostream>
 
 /*
-lpi::fixed128 is a 128-bit fixed point number
+lpi::fixed96q32 is a 128-bit fixed point number with fractional bits
 *) 32 bits represent the part after the point
 *) 95 bits represent the part before the point
 *) 1 bit (the MSB) represents the sign, but two's complement is used
 
-lpi::ufixed128 is the unsigned version.
+lpi::ufixed96q32 is the unsigned version.
 
 This allows nanometer precision over a distance of 39614081257132168796771975168
 metres or 4187211692790 lightyears, which is ideal for my space game project.
 
-For this to work properly, it's important that the type "unsigned" is 32-bit,
-not more, not less.
-But the C++ standard doesn't properly assure such thing for any type.
+For this to work properly, it's important that the type "unsigned int" is
+32-bit, not more, not less. But the C++ standard doesn't properly assure such
+thing for any type.
 */
 
 /*
@@ -42,7 +42,7 @@ also templated like already done with the add and multiply functions.
 namespace lpi
 {
 
-typedef unsigned uint32; //the 32-bit unsigned type used by the big numbers, must be exactly 32-bit!
+typedef unsigned int uint32; //the 32-bit unsigned type used by the big numbers, must be exactly 32-bit!
 
 /*
 these are generalized functions that operate on arrays of uint32's
@@ -228,7 +228,7 @@ void rightshift_signed(uint32* a, uint32 shift)
   //will make this more efficient if needed
   if(shift >= 128)
   {
-    if(sign<size>(a)) for(int i = 0; i < size; i++) a[i] = 4294967295U;
+    if(sign<size>(a)) for(int i = 0; i < size; i++) a[i] = 0xFFFFFFFFU;
     else for(int i = 0; i < size; i++) a[i] = 0U;
   }
   else
@@ -240,7 +240,7 @@ void rightshift_signed(uint32* a, uint32 shift)
       {
         a[i] = a[i + 1];
       }
-      a[size - 1] = sign<size>(a) ? 4294967295U : 0U;
+      a[size - 1] = sign<size>(a) ? 0xFFFFFFFFU : 0U;
     }
     while(shift >= 8)
     {
@@ -333,7 +333,7 @@ void subtractLSB(uint32* a) //increments the LSB and the other bits if it carrie
   for(int i = 0; i < size; i++)
   {
     a[i]--;
-    if(a[i] != 4294967295U) break; //it only carries over if this uint32 became 0 due to overflow
+    if(a[i] != 0xFFFFFFFFU) break; //it only carries over if this uint32 became 0 due to overflow
   }
 }
 
@@ -372,7 +372,7 @@ void multiply_signed(uint32* out, const uint32* a, const uint32* b)
   //the copy is needed because add doesn't support bitshifted input, and the sign bits must be correct for more uints
   uint32 b_copy[sizeo];
   for(int i = 0; i < sizeb; i++) b_copy[i] = b[i];
-  for(int i = sizeb; i < sizeo; i++) b_copy[i] = getMSB<sizeb>(b) ? 4294967295U : 0U;
+  for(int i = sizeb; i < sizeo; i++) b_copy[i] = getMSB<sizeb>(b) ? 0xFFFFFFFFU : 0U;
   
   for(int j = 0; j < sizeo * 32; j++)
   {
@@ -403,61 +403,61 @@ void multiply_unsigned(uint32* out, const uint32* a, const uint32* b)
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-class fixed128;
+class fixed96q32;
 
-class ufixed128 //unsigned version, used in some functions of the signed version
+class ufixed96q32 //unsigned version, used in some functions of the signed version
 {
   public:
     
     
     //ctors
-    ufixed128(){}
-    ufixed128(const ufixed128& other) { *this = other; }
-    ufixed128(double other) { *this = other; }
-    ufixed128(uint32 other) { *this = other; }
-    ufixed128(const fixed128& other) { *this = other; }
+    ufixed96q32(){}
+    ufixed96q32(const ufixed96q32& other) { *this = other; }
+    ufixed96q32(double other) { *this = other; }
+    ufixed96q32(uint32 other) { *this = other; }
+    ufixed96q32(const fixed96q32& other) { *this = other; }
     
     //conversions
     operator double() const; //this only returns a correct result if the double can hold this value
     void operator=(double d);
     operator uint32() const;
     void operator=(uint32 d);
-    void operator=(const fixed128& o);
+    void operator=(const fixed96q32& o);
 
     //member operators
-    ufixed128& operator+=(const ufixed128& rhs);
-    ufixed128& operator-=(const ufixed128& rhs);
+    ufixed96q32& operator+=(const ufixed96q32& rhs);
+    ufixed96q32& operator-=(const ufixed96q32& rhs);
     
-    ufixed128& operator+=(uint32 rhs);
-    ufixed128& operator-=(uint32 rhs);
+    ufixed96q32& operator+=(uint32 rhs);
+    ufixed96q32& operator-=(uint32 rhs);
     
-    ufixed128& operator+=(double rhs);
-    ufixed128& operator-=(double rhs);
+    ufixed96q32& operator+=(double rhs);
+    ufixed96q32& operator-=(double rhs);
     
-    ufixed128& operator>>=(uint32 shift);
-    ufixed128& operator<<=(uint32 shift);
+    ufixed96q32& operator>>=(uint32 shift);
+    ufixed96q32& operator<<=(uint32 shift);
     
-    ufixed128& operator&=(const ufixed128& rhs);
-    ufixed128& operator|=(const ufixed128& rhs);
-    ufixed128& operator^=(const ufixed128& rhs);
+    ufixed96q32& operator&=(const ufixed96q32& rhs);
+    ufixed96q32& operator|=(const ufixed96q32& rhs);
+    ufixed96q32& operator^=(const ufixed96q32& rhs);
     
-    ufixed128& operator*=(uint32 rhs);
-    ufixed128& operator*=(const ufixed128& rhs);
-    ufixed128& operator*=(double rhs);
+    ufixed96q32& operator*=(uint32 rhs);
+    ufixed96q32& operator*=(const ufixed96q32& rhs);
+    ufixed96q32& operator*=(double rhs);
     
-    ufixed128& operator/=(const ufixed128& rhs);
+    ufixed96q32& operator/=(const ufixed96q32& rhs);
     
-    ufixed128& operator++();
-    ufixed128 operator++(int);
-    ufixed128& operator--();
-    ufixed128 operator--(int);
+    ufixed96q32& operator++();
+    ufixed96q32 operator++(int);
+    ufixed96q32& operator--();
+    ufixed96q32 operator--(int);
     
-    bool operator==(const ufixed128& rhs) const;
+    bool operator==(const ufixed96q32& rhs) const;
     bool operator==(uint32 rhs) const;
-    bool operator>(const ufixed128& rhs) const;
-    bool operator<(const ufixed128& rhs) const;
-    bool operator>=(const ufixed128& rhs) const;
-    bool operator<=(const ufixed128& rhs) const;
+    bool operator>(const ufixed96q32& rhs) const;
+    bool operator<(const ufixed96q32& rhs) const;
+    bool operator>=(const ufixed96q32& rhs) const;
+    bool operator<=(const ufixed96q32& rhs) const;
 
     //helper functions
     void makeZero();
@@ -474,107 +474,110 @@ class ufixed128 //unsigned version, used in some functions of the signed version
     void setFractional(uint32 frac) { data[0] = frac; } //set the fractional part to that integer (divided through roughly 4 billion)
     void addFractional(uint32 rhs); //add integer to the fractional part
     void subtractFractional(uint32 rhs); //subtract integer from the fractional part
-    void crudeMultiply(const ufixed128& rhs); //not really useful function
+    void crudeMultiply(const ufixed96q32& rhs); //not really useful function
     void takeSqrt();
     
-    friend class fixed128;
+    friend class fixed96q32;
     
     private:
     /*
     uint32 is assumed to be 32 bit, it won't work at all if it isn't, incorrect overflows happen then.
     data[0] are the bits behind the point
-    the LSB of data[0] is also the LSB of this ufixed128
-    the LSB of data[1] is the LSB of the integer part of this ufixed128
+    the LSB of data[0] is also the LSB of this ufixed96q32
+    the LSB of data[1] is the LSB of the integer part of this ufixed96q32
     */
     uint32 data[4];
 };
 
 
 //free operators
-ufixed128 operator-(const ufixed128& a); //does to the bits what "would" be done if it were signed, but it isn't
-ufixed128 operator~(const ufixed128& a);
+ufixed96q32 operator-(const ufixed96q32& a); //does to the bits what "would" be done if it were signed, but it isn't
+ufixed96q32 operator~(const ufixed96q32& a);
 
-ufixed128 operator+(const ufixed128& a, const ufixed128& b);
-ufixed128 operator-(const ufixed128& a, const ufixed128& b);
-ufixed128 operator+(const ufixed128& a, uint32& b);
-ufixed128 operator+(uint32& a, const ufixed128& b);
-ufixed128 operator-(const ufixed128& a, uint32& b);
+ufixed96q32 operator+(const ufixed96q32& a, const ufixed96q32& b);
+ufixed96q32 operator-(const ufixed96q32& a, const ufixed96q32& b);
+ufixed96q32 operator+(const ufixed96q32& a, uint32& b);
+ufixed96q32 operator+(uint32& a, const ufixed96q32& b);
+ufixed96q32 operator-(const ufixed96q32& a, uint32& b);
 
-ufixed128 operator>>(const ufixed128& a, uint32 b);
-ufixed128 operator<<(const ufixed128& a, uint32 b);
+ufixed96q32 operator>>(const ufixed96q32& a, uint32 b);
+ufixed96q32 operator<<(const ufixed96q32& a, uint32 b);
 
-ufixed128 operator&(const ufixed128& a, const ufixed128& b);
-ufixed128 operator|(const ufixed128& a, const ufixed128& b);
-ufixed128 operator^(const ufixed128& a, const ufixed128& b);
+ufixed96q32 operator&(const ufixed96q32& a, const ufixed96q32& b);
+ufixed96q32 operator|(const ufixed96q32& a, const ufixed96q32& b);
+ufixed96q32 operator^(const ufixed96q32& a, const ufixed96q32& b);
 
-ufixed128 operator*(const ufixed128& a, const ufixed128& b);
-ufixed128 operator*(const ufixed128& a, uint32 b);
-ufixed128 operator*(uint32 a, const ufixed128& b);
-ufixed128 operator*(const ufixed128& a, double b);
-ufixed128 operator*(double a, const ufixed128& b);
+ufixed96q32 operator*(const ufixed96q32& a, const ufixed96q32& b);
+ufixed96q32 operator*(const ufixed96q32& a, uint32 b);
+ufixed96q32 operator*(uint32 a, const ufixed96q32& b);
+ufixed96q32 operator*(const ufixed96q32& a, double b);
+ufixed96q32 operator*(double a, const ufixed96q32& b);
 
-ufixed128 operator/(const ufixed128& a, const ufixed128& b);
+ufixed96q32 operator/(const ufixed96q32& a, const ufixed96q32& b);
 
-ufixed128 sqrt(const ufixed128& a);
+ufixed96q32 sqrt(const ufixed96q32& a);
 
-bool operator==(uint32 a, const ufixed128& b); //the other operator=='s are member functions since access to private data is needed
+bool operator==(uint32 a, const ufixed96q32& b); //the other operator=='s are member functions since access to private data is needed
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-class fixed128
+class fixed96q32
 {
   public:
     //ctors
-    fixed128(){}
-    fixed128(const fixed128& other) { *this = other; }
-    fixed128(double other) { *this = other; }
-    fixed128(uint32 other) { *this = other; }
-    fixed128(const ufixed128& other) { *this = other; }
+    fixed96q32(){}
+    fixed96q32(const fixed96q32& other) { *this = other; }
+    fixed96q32(double other) { *this = other; }
+    fixed96q32(uint32 other) { *this = other; }
+    fixed96q32(int other) { *this = other; }
+    fixed96q32(const ufixed96q32& other) { *this = other; }
     
     //conversions
     operator double() const; //this only returns a correct result if the double can hold this value
     void operator=(double d);
     operator uint32() const;
     void operator=(uint32 d);
-    void operator=(const ufixed128& o);
+    operator int() const;
+    void operator=(int d);
+    void operator=(const ufixed96q32& o);
 
     //member operators
-    fixed128& operator+=(const fixed128& rhs);
-    fixed128& operator-=(const fixed128& rhs);
+    fixed96q32& operator+=(const fixed96q32& rhs);
+    fixed96q32& operator-=(const fixed96q32& rhs);
     
-    fixed128& operator+=(uint32 rhs);
-    fixed128& operator-=(uint32 rhs);
+    fixed96q32& operator+=(uint32 rhs);
+    fixed96q32& operator-=(uint32 rhs);
     
-    fixed128& operator+=(double rhs);
-    fixed128& operator-=(double rhs);
+    fixed96q32& operator+=(double rhs);
+    fixed96q32& operator-=(double rhs);
     
-    fixed128& operator>>=(uint32 shift);
-    fixed128& operator<<=(uint32 shift);
+    fixed96q32& operator>>=(uint32 shift);
+    fixed96q32& operator<<=(uint32 shift);
     
-    fixed128& operator&=(const fixed128& rhs);
-    fixed128& operator|=(const fixed128& rhs);
-    fixed128& operator^=(const fixed128& rhs);
+    fixed96q32& operator&=(const fixed96q32& rhs);
+    fixed96q32& operator|=(const fixed96q32& rhs);
+    fixed96q32& operator^=(const fixed96q32& rhs);
     
-    fixed128& operator*=(uint32 rhs);
-    fixed128& operator*=(const fixed128& rhs);
-    fixed128& operator*=(double rhs);
+    fixed96q32& operator*=(uint32 rhs);
+    fixed96q32& operator*=(const fixed96q32& rhs);
+    fixed96q32& operator*=(double rhs);
     
-    fixed128& operator/=(const fixed128& rhs);
+    fixed96q32& operator/=(const fixed96q32& rhs);
     
-    fixed128& operator++();
-    fixed128 operator++(int);
-    fixed128& operator--();
-    fixed128 operator--(int);
+    fixed96q32& operator++();
+    fixed96q32 operator++(int);
+    fixed96q32& operator--();
+    fixed96q32 operator--(int);
     
-    bool operator==(const fixed128& rhs) const;
+    bool operator==(const fixed96q32& rhs) const;
     bool operator==(uint32 rhs) const;
-    bool operator>(const fixed128& rhs) const;
-    bool operator<(const fixed128& rhs) const;
-    bool operator>=(const fixed128& rhs) const;
-    bool operator<=(const fixed128& rhs) const;
+    bool operator>(const fixed96q32& rhs) const;
+    bool operator<(const fixed96q32& rhs) const;
+    bool operator>=(const fixed96q32& rhs) const;
+    bool operator<=(const fixed96q32& rhs) const;
 
     //helper functions
     void makeZero();
@@ -591,17 +594,17 @@ class fixed128
     void setFractional(uint32 frac) { data[0] = frac; } //set the fractional part to that integer (divided through roughly 4 billion)
     void addFractional(uint32 rhs); //add integer to the fractional part
     void subtractFractional(uint32 rhs); //subtract integer from the fractional part
-    void crudeMultiply(const fixed128& rhs); //not really useful function
+    void crudeMultiply(const fixed96q32& rhs); //not really useful function
     void takeSqrt();
     
-    friend class ufixed128;
+    friend class ufixed96q32;
     
     private:
     /*
     uint32 is assumed to be 32 bit, it won't work at all if it isn't, incorrect overflows happen then.
     data[0] are the bits behind the point
-    the LSB of data[0] is also the LSB of this fixed128
-    the LSB of data[1] is the LSB of the integer part of this fixed128
+    the LSB of data[0] is also the LSB of this fixed96q32
+    the LSB of data[1] is the LSB of the integer part of this fixed96q32
     the MSB of data[3] is the sign (note that two's complement notation is used)
     */
     uint32 data[4];
@@ -609,36 +612,36 @@ class fixed128
 
 
 //free operators
-fixed128 operator-(const fixed128& a);
-fixed128 operator~(const fixed128& a);
+fixed96q32 operator-(const fixed96q32& a);
+fixed96q32 operator~(const fixed96q32& a);
 
-fixed128 operator+(const fixed128& a, const fixed128& b);
-fixed128 operator-(const fixed128& a, const fixed128& b);
-fixed128 operator+(const fixed128& a, uint32& b);
-fixed128 operator+(uint32& a, const fixed128& b);
-fixed128 operator-(const fixed128& a, uint32& b);
+fixed96q32 operator+(const fixed96q32& a, const fixed96q32& b);
+fixed96q32 operator-(const fixed96q32& a, const fixed96q32& b);
+fixed96q32 operator+(const fixed96q32& a, uint32& b);
+fixed96q32 operator+(uint32& a, const fixed96q32& b);
+fixed96q32 operator-(const fixed96q32& a, uint32& b);
 
-fixed128 operator>>(const fixed128& a, uint32 b);
-fixed128 operator<<(const fixed128& a, uint32 b);
+fixed96q32 operator>>(const fixed96q32& a, uint32 b);
+fixed96q32 operator<<(const fixed96q32& a, uint32 b);
 
-fixed128 operator&(const fixed128& a, const fixed128& b);
-fixed128 operator|(const fixed128& a, const fixed128& b);
-fixed128 operator^(const fixed128& a, const fixed128& b);
+fixed96q32 operator&(const fixed96q32& a, const fixed96q32& b);
+fixed96q32 operator|(const fixed96q32& a, const fixed96q32& b);
+fixed96q32 operator^(const fixed96q32& a, const fixed96q32& b);
 
-fixed128 operator*(const fixed128& a, const fixed128& b);
-fixed128 operator*(const fixed128& a, uint32 b);
-fixed128 operator*(uint32 a, const fixed128& b);
-fixed128 operator*(const fixed128& a, double b);
-fixed128 operator*(double a, const fixed128& b);
+fixed96q32 operator*(const fixed96q32& a, const fixed96q32& b);
+fixed96q32 operator*(const fixed96q32& a, uint32 b);
+fixed96q32 operator*(uint32 a, const fixed96q32& b);
+fixed96q32 operator*(const fixed96q32& a, double b);
+fixed96q32 operator*(double a, const fixed96q32& b);
 
-fixed128 operator/(const fixed128& a, const fixed128& b);
+fixed96q32 operator/(const fixed96q32& a, const fixed96q32& b);
 
-fixed128 sqrt(const fixed128& a);
+fixed96q32 sqrt(const fixed96q32& a);
 
-bool sign(const fixed128& a);
-fixed128 abs(const fixed128& a);
+bool sign(const fixed96q32& a);
+fixed96q32 abs(const fixed96q32& a);
 
-bool operator==(uint32 a, const fixed128& b); //the other operator=='s are member functions since access to private data is needed
+bool operator==(uint32 a, const fixed96q32& b); //the other operator=='s are member functions since access to private data is needed
 
 } //namespace lpi
 
