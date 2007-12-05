@@ -450,13 +450,20 @@ class Element : public BasicElement
     void resizeSticky(int x0, int y0, int x1, int y1); //see implementation and locations where it's used what this function does; the parameters are the new sides of the master
     void setSticky(double left, double top, double right, double bottom) {leftSticky = left; topSticky = top; rightSticky = right; bottomSticky = bottom;}
     
-    ////optional part "label"
+    ////optional label
     std::string label;
     int labelX; //label position is relative to the position of the element
     int labelY;
     Markup labelMarkup;
     void drawLabel() const;
     void makeLabel(const std::string& label, int labelX, int labelY, const Markup& labelMarkup);
+    
+    ////optional tooltip
+    std::string tooltip;
+    bool tooltipenabled;
+    void addToolTip(const std::string& text) { tooltipenabled = true; tooltip = text; }
+    void removeToolTip() { tooltipenabled = false; }
+    void drawToolTip() const;
     
     
     virtual void setElementOver(bool state); //ALL gui types that have gui elements inside of them, must set elementOver of all gui elements inside of them too! ==> overload this virtual function for those
@@ -1556,6 +1563,7 @@ class Variable : public Element //can be anything the typename is: integer, floa
     const T& getValue() const { return this->v; }
 };
 
+//message boxes
 class YesNoWindow : public Window
 {
   public:
@@ -1567,7 +1575,17 @@ class YesNoWindow : public Window
   void make(int x, int y, int sizex, int sizey, const std::string& text);
 };
 
-//it's a painting canvas that allows you to paint with the mouse
+class OkWindow : public Window
+{
+  public:
+  Button ok;
+  Text message;
+  
+  OkWindow();
+  void make(int x, int y, int sizex, int sizey, const std::string& text);
+};
+
+//a painting canvas that allows you to paint with the mouse
 class Canvas : public Element
 {
   private:
