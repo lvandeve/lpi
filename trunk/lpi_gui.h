@@ -458,7 +458,7 @@ class Element : public BasicElement
     void drawLabel() const;
     void makeLabel(const std::string& label, int labelX, int labelY, const Markup& labelMarkup);
     
-    ////optional tooltip
+    ////optional tooltip. Drawing it must be controlled by a higher layer, e.g. see the Container's implementation.
     std::string tooltip;
     bool tooltipenabled;
     void addToolTip(const std::string& text) { tooltipenabled = true; tooltip = text; }
@@ -800,7 +800,8 @@ class Grid : public Element
 class Container : public Element
 {
   private:
-    
+    bool keepElementsInside; //will not allow you to drag elements outside (if the element is dragged(), it'll be kept inside the container)
+    bool enableTooltips; //whether or not to display tooltips of elements in this if they have it (default is true)
     void initElement(Element* element, int x, int y, double leftSticky, double topSticky, double rightSticky, double bottomSticky);
   public:
     std::vector<Element*> element;
@@ -834,7 +835,8 @@ class Container : public Element
               int areax = 0, int areay = 0, int areasizex = -1, int areasizey = -1, //areax and areay are relative to the container!
               double areaLeftSticky = 0, double areaTopSticky = 0, double areaRightSticky = 1, double areaBottomSticky = 1);
     
-    bool keepElementsInside; //will not allow you to drag elements outside (if the element is dragged(), it'll be kept inside the container)
+    void enableToolTips(bool enable) { enableTooltips = enable; }
+    void setKeepElementsInside(bool set) { keepElementsInside = set; }
     
     void getRelativeElementPos(Element& element, int& ex, int& ey) const;
     virtual void resizeWidget();
