@@ -30,52 +30,52 @@ namespace lpi
 ////////////////////////////////////////////////////////////////////////////////
 
 
-ufixed128& ufixed128::operator+=(const ufixed128& rhs)
+ufixed96q32& ufixed96q32::operator+=(const ufixed96q32& rhs)
 {
   add<4>(data, data, rhs.data);
   return *this;
 }
 
-ufixed128& ufixed128::operator-=(const ufixed128& rhs)
+ufixed96q32& ufixed96q32::operator-=(const ufixed96q32& rhs)
 {
   subtract<4>(data, data, rhs.data);
   return *this;
 }
 
-ufixed128& ufixed128::operator+=(uint32 rhs)
+ufixed96q32& ufixed96q32::operator+=(uint32 rhs)
 {
   add<4,1,1,0>(data, data, &rhs);
   return *this;
 }
 
-ufixed128& ufixed128::operator-=(uint32 rhs)
+ufixed96q32& ufixed96q32::operator-=(uint32 rhs)
 {
   subtract<4,1,1,0>(data, data, &rhs);
   return *this;
 }
 
-ufixed128& ufixed128::operator+=(double rhs)
+ufixed96q32& ufixed96q32::operator+=(double rhs)
 {
-  return (*this)+= ufixed128(rhs);
+  return (*this)+= ufixed96q32(rhs);
 }
 
-ufixed128& ufixed128::operator-=(double rhs)
+ufixed96q32& ufixed96q32::operator-=(double rhs)
 {
-  return (*this)-= ufixed128(rhs);
+  return (*this)-= ufixed96q32(rhs);
 }
 
-void ufixed128::addFractional(uint32 rhs)
+void ufixed96q32::addFractional(uint32 rhs)
 {
   data[0] += rhs; //data[0], the fractional part, is left untouched
   if(data[0] < rhs) //if it has overflown
   for(int i = 1; i < 4; i++)
   {
     data[i]++;
-    if(data[i] != 0U) break; //only if data[i] is 0 (4294967295 + 1), it has overflown and we should continue
+    if(data[i] != 0U) break; //only if data[i] is 0 (0xFFFFFFFF + 1), it has overflown and we should continue
   }
 }
 
-void ufixed128::subtractFractional(uint32 rhs)
+void ufixed96q32::subtractFractional(uint32 rhs)
 {
   if(rhs <= data[0])
   {
@@ -87,12 +87,12 @@ void ufixed128::subtractFractional(uint32 rhs)
     for(int i = 1; i < 4; i++)
     {
       data[i]--;
-      if(data[i] != 4294967295U) break; //only if data[i] is 4294967295 (0 - 1), it has overflown and we should continue
+      if(data[i] != 0xFFFFFFFFU) break; //only if data[i] is 0xFFFFFFFF (0 - 1), it has overflown and we should continue
     }
   }
 }
 
-ufixed128::operator double() const //this only returns a correct result if the double can hold this value
+ufixed96q32::operator double() const //this only returns a correct result if the double can hold this value
 {
   double result = 0.0;
   
@@ -105,7 +105,7 @@ ufixed128::operator double() const //this only returns a correct result if the d
   return result;
 }
 
-void ufixed128::operator=(double d)
+void ufixed96q32::operator=(double d)
 {
   double multiplier = 4294967296.0;
   for(int i = 0; i < 4; i++)
@@ -115,7 +115,7 @@ void ufixed128::operator=(double d)
   }
 }
 
-void ufixed128::operator=(const fixed128& o)
+void ufixed96q32::operator=(const fixed96q32& o)
 {
   data[0] = o.data[0];
   data[1] = o.data[1];
@@ -123,12 +123,12 @@ void ufixed128::operator=(const fixed128& o)
   data[3] = o.data[3];
 }
 
-ufixed128::operator uint32() const //this only returns a correct result if the double can hold this value
+ufixed96q32::operator uint32() const //this only returns a correct result if the double can hold this value
 {
   return data[1];
 }
 
-void ufixed128::operator=(uint32 d)
+void ufixed96q32::operator=(uint32 d)
 {
   data[0] = 0;
   data[1] = d;
@@ -136,7 +136,7 @@ void ufixed128::operator=(uint32 d)
   data[3] = 0;
 }
 
-ufixed128& ufixed128::operator++()
+ufixed96q32& ufixed96q32::operator++()
 {
   data[1]++;
   if(data[1] == 0)
@@ -150,20 +150,20 @@ ufixed128& ufixed128::operator++()
   return *this;
 }
 
-ufixed128 ufixed128::operator++(int)
+ufixed96q32 ufixed96q32::operator++(int)
 {
-  ufixed128 result = *this;
+  ufixed96q32 result = *this;
   (*this)++;
   return result;
 }
 
-ufixed128& ufixed128::operator--()
+ufixed96q32& ufixed96q32::operator--()
 {
   data[1]--;
-  if(data[1] == 4294967295U)
+  if(data[1] == 0xFFFFFFFFU)
   {
     data[2]--;
-    if(data[2] == 4294967295U)
+    if(data[2] == 0xFFFFFFFFU)
     {
       data[3]--;
     }
@@ -171,51 +171,55 @@ ufixed128& ufixed128::operator--()
   return *this;
 }
 
-ufixed128 ufixed128::operator--(int)
+ufixed96q32 ufixed96q32::operator--(int)
 {
-  ufixed128 result = *this;
+  ufixed96q32 result = *this;
   (*this)--;
   return result;
 }
 
-void ufixed128::addLSB()
+void ufixed96q32::addLSB()
 {
   lpi::addLSB<4>(data);
 }
 
-void ufixed128::subtractLSB()
+void ufixed96q32::subtractLSB()
 {
   lpi::subtractLSB<4>(data);
 }
 
-void ufixed128::bit_invert()
+void ufixed96q32::bit_invert()
 {
   lpi::bit_invert<4>(data);
 }
 
-void ufixed128::negate()
+void ufixed96q32::negate()
 {
   lpi::negate<4>(data);
 }
 
-bool ufixed128::sign() const
+bool ufixed96q32::sign() const
 {
   return data[3] > 2147483647U;
 }
 
-void ufixed128::takeSqrt()
+void ufixed96q32::takeSqrt()
 {
+  /*
+  Note: a good and faster way to take the sqrt is to convert to double and then take the sqrt.
+  That has less precision, but that is not always a problem since it's always nearly right for even the largest values.
+  */
   if(isZero()) return;
 
-  ufixed128 result = *this;
-  static const ufixed128 mask = ~(ufixed128(1U) >> 32U); //only the LSB is 0
+  ufixed96q32 result = *this;
+  static const ufixed96q32 mask = ~(ufixed96q32(1U) >> 32U); //only the LSB is 0
 
   uint32 i;
   for(i = 0; result.isZero(); i++) result >>= 1U;
   result = (*this) >> (2 * i);
   for(;;)
   {
-    ufixed128 temp = ufixed128((*this)>>1U) / result - (result>>1U);
+    ufixed96q32 temp = ufixed96q32((*this)>>1U) / result - (result>>1U);
     if((temp & mask).isZero()) break;
     else result += temp;
   }
@@ -225,17 +229,17 @@ void ufixed128::takeSqrt()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-ufixed128& ufixed128::operator/=(const ufixed128& rhs)
+ufixed96q32& ufixed96q32::operator/=(const ufixed96q32& rhs)
 {
   //divident / dividor = quotient (= *this)
   /*
   Without precaution, the result will exclude the digits behind the point.
   So to solve: the divident is multiplied with 4 billion compared to the dividor
   */
-  ufixed128 dividor = rhs;
+  ufixed96q32 dividor = rhs;
   uint32 dividorMSB = 0U;
   uint32 dividentMSB = data[3]; //MSB's for the divident
-  ufixed128 divident = ((*this) << 32U);
+  ufixed96q32 divident = ((*this) << 32U);
   
   int shift = 0;
   
@@ -309,26 +313,26 @@ ufixed128& ufixed128::operator/=(const ufixed128& rhs)
   return *this;
 }
 
-ufixed128& ufixed128::operator>>=(uint32 shift)
+ufixed96q32& ufixed96q32::operator>>=(uint32 shift)
 {
   rightshift_unsigned<4>(data, shift);
   return *this;
 }
 
-ufixed128& ufixed128::operator<<=(uint32 shift)
+ufixed96q32& ufixed96q32::operator<<=(uint32 shift)
 {
   leftshift<4>(data, shift);
   return *this;
 }
 
-void ufixed128::makeZero()
+void ufixed96q32::makeZero()
 {
   data[0] = data[1] = data[2] = data[3] = 0U;
 }
 
-ufixed128& ufixed128::operator*=(uint32 rhs)
+ufixed96q32& ufixed96q32::operator*=(uint32 rhs)
 {
-  ufixed128 a = *this;
+  ufixed96q32 a = *this;
   
   makeZero();
   
@@ -341,7 +345,7 @@ ufixed128& ufixed128::operator*=(uint32 rhs)
   return *this;
 }
 
-ufixed128& ufixed128::operator*=(const ufixed128& rhs)
+ufixed96q32& ufixed96q32::operator*=(const ufixed96q32& rhs)
 {
   //160 bit precision used, and one right shift at the end
   uint32 result[5];
@@ -356,16 +360,16 @@ ufixed128& ufixed128::operator*=(const ufixed128& rhs)
   return *this;
 }
 
-ufixed128& ufixed128::operator*=(double rhs)
+ufixed96q32& ufixed96q32::operator*=(double rhs)
 {
-  return operator*=((ufixed128)rhs);
+  return operator*=((ufixed96q32)rhs);
 }
 
 //this one loses the leftmost 32 bits, but shows a simpler version of the multiplication implementation for documentation
-void ufixed128::crudeMultiply(const ufixed128& rhs)
+void ufixed96q32::crudeMultiply(const ufixed96q32& rhs)
 {
-  ufixed128 a = *this;
-  ufixed128 b = rhs;
+  ufixed96q32 a = *this;
+  ufixed96q32 b = rhs;
   makeZero();
   for(int i = 0; i < 128; i++)
   {
@@ -377,7 +381,7 @@ void ufixed128::crudeMultiply(const ufixed128& rhs)
   (*this) >>= 32; //the part behind the comma is smaller
 }
 
-bool ufixed128::operator==(const ufixed128& rhs) const
+bool ufixed96q32::operator==(const ufixed96q32& rhs) const
 {
   return data[0] == rhs.data[0]
       && data[1] == rhs.data[1]
@@ -385,7 +389,7 @@ bool ufixed128::operator==(const ufixed128& rhs) const
       && data[3] == rhs.data[3];
 }
 
-bool ufixed128::operator==(uint32 rhs) const
+bool ufixed96q32::operator==(uint32 rhs) const
 {
   return data[0] == 0U
       && data[1] == rhs
@@ -393,7 +397,7 @@ bool ufixed128::operator==(uint32 rhs) const
       && data[3] == 0U;
 }
 
-bool ufixed128::operator>(const ufixed128& rhs) const
+bool ufixed96q32::operator>(const ufixed96q32& rhs) const
 {
   if(data[3] == rhs.data[3])
   {
@@ -410,7 +414,7 @@ bool ufixed128::operator>(const ufixed128& rhs) const
   else return data[3] > rhs.data[3];
 }
 
-bool ufixed128::operator<(const ufixed128& rhs) const
+bool ufixed96q32::operator<(const ufixed96q32& rhs) const
 {
   if(data[3] == rhs.data[3])
   {
@@ -427,17 +431,17 @@ bool ufixed128::operator<(const ufixed128& rhs) const
   else return data[3] < rhs.data[3];
 }
 
-bool ufixed128::operator>=(const ufixed128& rhs) const
+bool ufixed96q32::operator>=(const ufixed96q32& rhs) const
 {
   return !((*this) > rhs);
 }
 
-bool ufixed128::operator<=(const ufixed128& rhs) const
+bool ufixed96q32::operator<=(const ufixed96q32& rhs) const
 {
   return !((*this) > rhs);
 }
 
-ufixed128& ufixed128::operator&=(const ufixed128& rhs)
+ufixed96q32& ufixed96q32::operator&=(const ufixed96q32& rhs)
 {
   for(int i = 0; i < 4; i++)
   {
@@ -447,7 +451,7 @@ ufixed128& ufixed128::operator&=(const ufixed128& rhs)
   return *this;
 }
 
-ufixed128& ufixed128::operator|=(const ufixed128& rhs)
+ufixed96q32& ufixed96q32::operator|=(const ufixed96q32& rhs)
 {
   for(int i = 0; i < 4; i++)
   {
@@ -457,7 +461,7 @@ ufixed128& ufixed128::operator|=(const ufixed128& rhs)
   return *this;
 }
 
-ufixed128& ufixed128::operator^=(const ufixed128& rhs)
+ufixed96q32& ufixed96q32::operator^=(const ufixed96q32& rhs)
 {
   for(int i = 0; i < 4; i++)
   {
@@ -470,143 +474,147 @@ ufixed128& ufixed128::operator^=(const ufixed128& rhs)
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-ufixed128 operator-(const ufixed128& a)
+ufixed96q32 operator-(const ufixed96q32& a)
 {
-  ufixed128 result = a;
+  ufixed96q32 result = a;
   result.negate();
   return result;
 }
 
 
-ufixed128 operator~(const ufixed128& a)
+ufixed96q32 operator~(const ufixed96q32& a)
 {
-  ufixed128 result = a;
+  ufixed96q32 result = a;
   result.bit_invert();
   return result;
 }
 
 
-ufixed128 operator+(const ufixed128& a, const ufixed128& b)
+ufixed96q32 operator+(const ufixed96q32& a, const ufixed96q32& b)
 {
-  ufixed128 result = a;
+  ufixed96q32 result = a;
   result += b;
   return result;
 }
 
-ufixed128 operator-(const ufixed128& a, const ufixed128& b)
+ufixed96q32 operator-(const ufixed96q32& a, const ufixed96q32& b)
 {
-  ufixed128 result = a;
+  ufixed96q32 result = a;
   result -= b;
   return result;
 }
 
-ufixed128 operator+(const ufixed128& a, uint32& b)
+ufixed96q32 operator+(const ufixed96q32& a, uint32& b)
 {
-  ufixed128 result = a;
+  ufixed96q32 result = a;
   result += b;
   return result;
 }
 
-ufixed128 operator+(uint32& a, const ufixed128& b)
+ufixed96q32 operator+(uint32& a, const ufixed96q32& b)
 {
-  ufixed128 result = b;
+  ufixed96q32 result = b;
   result += a;
   return result;
 }
 
-ufixed128 operator-(const ufixed128& a, uint32& b)
+ufixed96q32 operator-(const ufixed96q32& a, uint32& b)
 {
-  ufixed128 result = a;
+  ufixed96q32 result = a;
   result -= b;
   return result;
 }
 
-ufixed128 operator>>(const ufixed128& a, uint32 b)
+ufixed96q32 operator>>(const ufixed96q32& a, uint32 b)
 {
-  ufixed128 result = a;
+  ufixed96q32 result = a;
   result >>= b;
   return result;
 }
 
-ufixed128 operator<<(const ufixed128& a, uint32 b)
+ufixed96q32 operator<<(const ufixed96q32& a, uint32 b)
 {
-  ufixed128 result = a;
+  ufixed96q32 result = a;
   result <<= b;
   return result;
 }
 
-ufixed128 operator&(const ufixed128& a, const ufixed128& b)
+ufixed96q32 operator&(const ufixed96q32& a, const ufixed96q32& b)
 {
-  ufixed128 result = a;
+  ufixed96q32 result = a;
   result &= b;
   return result;
 }
 
-ufixed128 operator|(const ufixed128& a, const ufixed128& b)
+ufixed96q32 operator|(const ufixed96q32& a, const ufixed96q32& b)
 {
-  ufixed128 result = a;
+  ufixed96q32 result = a;
   result |= b;
   return result;
 }
 
-ufixed128 operator^(const ufixed128& a, const ufixed128& b)
+ufixed96q32 operator^(const ufixed96q32& a, const ufixed96q32& b)
 {
-  ufixed128 result = a;
+  ufixed96q32 result = a;
   result ^= b;
   return result;
 }
 
-ufixed128 operator*(const ufixed128& a, const ufixed128& b)
+ufixed96q32 operator*(const ufixed96q32& a, const ufixed96q32& b)
 {
-  ufixed128 result = a;
+  ufixed96q32 result = a;
   result *= b;
   return result;
 }
 
-ufixed128 operator*(const ufixed128& a, uint32 b)
+ufixed96q32 operator*(const ufixed96q32& a, uint32 b)
 {
-  ufixed128 result = a;
+  ufixed96q32 result = a;
   result *= b;
   return result;
 }
 
-ufixed128 operator*(uint32 a, const ufixed128& b)
+ufixed96q32 operator*(uint32 a, const ufixed96q32& b)
 {
-  ufixed128 result = b;
+  ufixed96q32 result = b;
   result *= a;
   return result;
 }
 
 
-ufixed128 operator*(const ufixed128& a, double b)
+ufixed96q32 operator*(const ufixed96q32& a, double b)
 {
-  ufixed128 result = a;
+  ufixed96q32 result = a;
   result *= b;
   return result;
 }
 
-ufixed128 operator*(double a, const ufixed128& b)
+ufixed96q32 operator*(double a, const ufixed96q32& b)
 {
-  ufixed128 result = b;
+  ufixed96q32 result = b;
   result *= a;
   return result;
 }
 
-ufixed128 operator/(const ufixed128& a, const ufixed128& b)
+ufixed96q32 operator/(const ufixed96q32& a, const ufixed96q32& b)
 {
-  ufixed128 result = a;
+  ufixed96q32 result = a;
   result /= b;
   return result;
 }
 
-bool operator==(uint32 a, const ufixed128& b)
+bool operator==(uint32 a, const ufixed96q32& b)
 {
   return b == a;
 }
 
-ufixed128 sqrt(const ufixed128& a)
+ufixed96q32 sqrt(const ufixed96q32& a)
 {
-  ufixed128 result = a;
+  /*
+  Note: a good and faster way to take the sqrt is to convert to double and then take the sqrt.
+  That has less precision, but that is not always a problem since it's always nearly right for even the largest values.
+  */
+  ufixed96q32 result = a;
   result.takeSqrt();
   return result;
 }
@@ -623,52 +631,52 @@ ufixed128 sqrt(const ufixed128& a)
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-fixed128& fixed128::operator+=(const fixed128& rhs)
+fixed96q32& fixed96q32::operator+=(const fixed96q32& rhs)
 {
   add<4>(data, data, rhs.data);
   return *this;
 }
 
-fixed128& fixed128::operator-=(const fixed128& rhs)
+fixed96q32& fixed96q32::operator-=(const fixed96q32& rhs)
 {
   subtract<4>(data, data, rhs.data);
   return *this;
 }
 
-fixed128& fixed128::operator+=(uint32 rhs)
+fixed96q32& fixed96q32::operator+=(uint32 rhs)
 {
   add<4,1,1,0>(data, data, &rhs);
   return *this;
 }
 
-fixed128& fixed128::operator-=(uint32 rhs)
+fixed96q32& fixed96q32::operator-=(uint32 rhs)
 {
   subtract<4,1,1,0>(data, data, &rhs);
   return *this;
 }
 
-fixed128& fixed128::operator+=(double rhs)
+fixed96q32& fixed96q32::operator+=(double rhs)
 {
-  return (*this)+= fixed128(rhs);
+  return (*this)+= fixed96q32(rhs);
 }
 
-fixed128& fixed128::operator-=(double rhs)
+fixed96q32& fixed96q32::operator-=(double rhs)
 {
-  return (*this)-= fixed128(rhs);
+  return (*this)-= fixed96q32(rhs);
 }
 
-void fixed128::addFractional(uint32 rhs)
+void fixed96q32::addFractional(uint32 rhs)
 {
   data[0] += rhs; //data[0], the fractional part, is left untouched
   if(data[0] < rhs) //if it has overflown
   for(int i = 1; i < 4; i++)
   {
     data[i]++;
-    if(data[i] != 0U) break; //only if data[i] is 0 (4294967295 + 1), it has overflown and we should continue
+    if(data[i] != 0U) break; //only if data[i] is 0 (0xFFFFFFFF + 1), it has overflown and we should continue
   }
 }
 
-void fixed128::subtractFractional(uint32 rhs)
+void fixed96q32::subtractFractional(uint32 rhs)
 {
   if(rhs <= data[0])
   {
@@ -680,12 +688,12 @@ void fixed128::subtractFractional(uint32 rhs)
     for(int i = 1; i < 4; i++)
     {
       data[i]--;
-      if(data[i] != 4294967295U) break; //only if data[i] is 4294967295 (0 - 1), it has overflown and we should continue
+      if(data[i] != 0xFFFFFFFFU) break; //only if data[i] is 0xFFFFFFFF (0 - 1), it has overflown and we should continue
     }
   }
 }
 
-fixed128::operator double() const //this only returns a correct result if the double can hold this value
+fixed96q32::operator double() const //this only returns a correct result if the double can hold this value
 {
   double result = 0.0;
   
@@ -711,7 +719,7 @@ fixed128::operator double() const //this only returns a correct result if the do
   }
 }
 
-void fixed128::operator=(double d)
+void fixed96q32::operator=(double d)
 {
   bool negative = d < 0.0;
   if(negative) d = -d;
@@ -724,7 +732,7 @@ void fixed128::operator=(double d)
   if(negative) negate();
 }
 
-void fixed128::operator=(const ufixed128& o)
+void fixed96q32::operator=(const ufixed96q32& o)
 {
   data[0] = o.data[0];
   data[1] = o.data[1];
@@ -732,12 +740,12 @@ void fixed128::operator=(const ufixed128& o)
   data[3] = o.data[3];
 }
 
-fixed128::operator uint32() const //this only returns a correct result if the double can hold this value
+fixed96q32::operator uint32() const //this only returns a correct result if the double can hold this value
 {
   return data[1];
 }
 
-void fixed128::operator=(uint32 d)
+void fixed96q32::operator=(uint32 d)
 {
   data[0] = 0;
   data[1] = d;
@@ -745,7 +753,28 @@ void fixed128::operator=(uint32 d)
   data[3] = 0;
 }
 
-fixed128& fixed128::operator++()
+fixed96q32::operator int() const //this only returns a correct result if the double can hold this value
+{
+  return (int)data[1];
+}
+
+void fixed96q32::operator=(int d)
+{
+  data[0] = 0;
+  data[1] = (uint32)d;
+  if(d >= 0)
+  {
+    data[2] = 0;
+    data[3] = 0;
+  }
+  else
+  {
+    data[2] = 0xFFFFFFFFU;
+    data[3] = 0xFFFFFFFFU;
+  }
+}
+
+fixed96q32& fixed96q32::operator++()
 {
   data[1]++;
   if(data[1] == 0)
@@ -759,20 +788,20 @@ fixed128& fixed128::operator++()
   return *this;
 }
 
-fixed128 fixed128::operator++(int)
+fixed96q32 fixed96q32::operator++(int)
 {
-  fixed128 result = *this;
+  fixed96q32 result = *this;
   (*this)++;
   return result;
 }
 
-fixed128& fixed128::operator--()
+fixed96q32& fixed96q32::operator--()
 {
   data[1]--;
-  if(data[1] == 4294967295U)
+  if(data[1] == 0xFFFFFFFFU)
   {
     data[2]--;
-    if(data[2] == 4294967295U)
+    if(data[2] == 0xFFFFFFFFU)
     {
       data[3]--;
     }
@@ -780,55 +809,59 @@ fixed128& fixed128::operator--()
   return *this;
 }
 
-fixed128 fixed128::operator--(int)
+fixed96q32 fixed96q32::operator--(int)
 {
-  fixed128 result = *this;
+  fixed96q32 result = *this;
   (*this)--;
   return result;
 }
 
-void fixed128::addLSB()
+void fixed96q32::addLSB()
 {
   lpi::addLSB<4>(data);
 }
 
-void fixed128::subtractLSB()
+void fixed96q32::subtractLSB()
 {
   lpi::subtractLSB<4>(data);
 }
 
-void fixed128::bit_invert()
+void fixed96q32::bit_invert()
 {
   lpi::bit_invert<4>(data);
 }
 
-void fixed128::negate()
+void fixed96q32::negate()
 {
   lpi::negate<4>(data);
 }
 
-bool fixed128::sign() const
+bool fixed96q32::sign() const
 {
   return data[3] > 2147483647U;
 }
 
-void fixed128::takeSqrt()
+void fixed96q32::takeSqrt()
 {
+  /*
+  Note: a good and faster way to take the sqrt is to convert to double and then take the sqrt.
+  That has less precision, but that is not always a problem since it's always nearly right for even the largest values.
+  */
   if(sign() || isZero())
   {
     makeZero();
     return;
   }
 
-  ufixed128 result = *this;
-  static const ufixed128 mask = ~(ufixed128(1U) >> 32U); //only the LSB is 0
+  ufixed96q32 result = *this;
+  static const ufixed96q32 mask = ~(ufixed96q32(1U) >> 32U); //only the LSB is 0
 
   uint32 i;
   for(i = 0; result.isZero(); i++) result >>= 1U;
   result = (*this) >> (2 * i);
   for(;;)
   {
-    ufixed128 temp = ufixed128((*this)>>1U) / result - (result>>1U);
+    ufixed96q32 temp = ufixed96q32((*this)>>1U) / result - (result>>1U);
     if((temp & mask).isZero()) break;
     else result += temp;
   }
@@ -838,7 +871,7 @@ void fixed128::takeSqrt()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-fixed128& fixed128::operator/=(const fixed128& rhs)
+fixed96q32& fixed96q32::operator/=(const fixed96q32& rhs)
 {
   //divident / dividor = quotient (= *this)
   /*
@@ -847,11 +880,11 @@ fixed128& fixed128::operator/=(const fixed128& rhs)
   */
   bool negative = false; //sign
   if(sign()) { negative = !negative; negate(); }
-  ufixed128 dividor = rhs;
+  ufixed96q32 dividor = rhs;
   if(dividor.sign()) { negative = !negative; dividor.negate(); }
   uint32 dividorMSB = 0U;
   uint32 dividentMSB = data[3]; //MSB's for the divident
-  ufixed128 divident = ((*this) << 32U);
+  ufixed96q32 divident = ((*this) << 32U);
   
   int shift = 0;
   
@@ -927,24 +960,24 @@ fixed128& fixed128::operator/=(const fixed128& rhs)
   return *this;
 }
 
-fixed128& fixed128::operator>>=(uint32 shift)
+fixed96q32& fixed96q32::operator>>=(uint32 shift)
 {
   rightshift_signed<4>(data, shift);
   return *this;
 }
 
-fixed128& fixed128::operator<<=(uint32 shift)
+fixed96q32& fixed96q32::operator<<=(uint32 shift)
 {
   leftshift<4>(data, shift);
   return *this;
 }
 
-void fixed128::makeZero()
+void fixed96q32::makeZero()
 {
   data[0] = data[1] = data[2] = data[3] = 0U;
 }
 
-fixed128& fixed128::operator*=(uint32 rhs)
+fixed96q32& fixed96q32::operator*=(uint32 rhs)
 {
   uint32 result[4];
   
@@ -958,7 +991,7 @@ fixed128& fixed128::operator*=(uint32 rhs)
   return *this;
 }
 
-fixed128& fixed128::operator*=(const fixed128& rhs)
+fixed96q32& fixed96q32::operator*=(const fixed96q32& rhs)
 {
   //160 bit precision used, and one right shift at the end
   uint32 result[5];
@@ -973,16 +1006,16 @@ fixed128& fixed128::operator*=(const fixed128& rhs)
   return *this;
 }
 
-fixed128& fixed128::operator*=(double rhs)
+fixed96q32& fixed96q32::operator*=(double rhs)
 {
-  return operator*=((fixed128)rhs);
+  return operator*=((fixed96q32)rhs);
 }
 
 //this one loses the leftmost 32 bits, but shows a simpler version of the multiplication implementation for documentation
-void fixed128::crudeMultiply(const fixed128& rhs)
+void fixed96q32::crudeMultiply(const fixed96q32& rhs)
 {
-  fixed128 a = *this;
-  fixed128 b = rhs;
+  fixed96q32 a = *this;
+  fixed96q32 b = rhs;
   makeZero();
   for(int i = 0; i < 128; i++)
   {
@@ -994,7 +1027,7 @@ void fixed128::crudeMultiply(const fixed128& rhs)
   (*this) >>= 32; //the part behind the comma is smaller
 }
 
-bool fixed128::operator==(const fixed128& rhs) const
+bool fixed96q32::operator==(const fixed96q32& rhs) const
 {
   return data[0] == rhs.data[0]
       && data[1] == rhs.data[1]
@@ -1002,7 +1035,7 @@ bool fixed128::operator==(const fixed128& rhs) const
       && data[3] == rhs.data[3];
 }
 
-bool fixed128::operator==(uint32 rhs) const
+bool fixed96q32::operator==(uint32 rhs) const
 {
   return data[0] == 0U
       && data[1] == rhs
@@ -1010,7 +1043,7 @@ bool fixed128::operator==(uint32 rhs) const
       && data[3] == 0U;
 }
 
-bool fixed128::operator>(const fixed128& rhs) const
+bool fixed96q32::operator>(const fixed96q32& rhs) const
 {
   if(sign() && !rhs.sign()) return false;
   if(!sign() && rhs.sign()) return true;
@@ -1030,7 +1063,7 @@ bool fixed128::operator>(const fixed128& rhs) const
   else return data[3] > rhs.data[3];
 }
 
-bool fixed128::operator<(const fixed128& rhs) const
+bool fixed96q32::operator<(const fixed96q32& rhs) const
 {
   if(sign() && !rhs.sign()) return true;
   if(!sign() && rhs.sign()) return false;
@@ -1050,17 +1083,17 @@ bool fixed128::operator<(const fixed128& rhs) const
   else return data[3] < rhs.data[3];
 }
 
-bool fixed128::operator>=(const fixed128& rhs) const
+bool fixed96q32::operator>=(const fixed96q32& rhs) const
 {
   return !((*this) > rhs);
 }
 
-bool fixed128::operator<=(const fixed128& rhs) const
+bool fixed96q32::operator<=(const fixed96q32& rhs) const
 {
   return !((*this) > rhs);
 }
 
-fixed128& fixed128::operator&=(const fixed128& rhs)
+fixed96q32& fixed96q32::operator&=(const fixed96q32& rhs)
 {
   for(int i = 0; i < 4; i++)
   {
@@ -1070,7 +1103,7 @@ fixed128& fixed128::operator&=(const fixed128& rhs)
   return *this;
 }
 
-fixed128& fixed128::operator|=(const fixed128& rhs)
+fixed96q32& fixed96q32::operator|=(const fixed96q32& rhs)
 {
   for(int i = 0; i < 4; i++)
   {
@@ -1080,7 +1113,7 @@ fixed128& fixed128::operator|=(const fixed128& rhs)
   return *this;
 }
 
-fixed128& fixed128::operator^=(const fixed128& rhs)
+fixed96q32& fixed96q32::operator^=(const fixed96q32& rhs)
 {
   for(int i = 0; i < 4; i++)
   {
@@ -1093,151 +1126,155 @@ fixed128& fixed128::operator^=(const fixed128& rhs)
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-fixed128 operator-(const fixed128& a)
+fixed96q32 operator-(const fixed96q32& a)
 {
-  fixed128 result = a;
+  fixed96q32 result = a;
   result.negate();
   return result;
 }
 
-fixed128 operator~(const fixed128& a)
+fixed96q32 operator~(const fixed96q32& a)
 {
-  fixed128 result = a;
+  fixed96q32 result = a;
   result.bit_invert();
   return result;
 }
 
 
-fixed128 operator+(const fixed128& a, const fixed128& b)
+fixed96q32 operator+(const fixed96q32& a, const fixed96q32& b)
 {
-  fixed128 result = a;
+  fixed96q32 result = a;
   result += b;
   return result;
 }
 
-fixed128 operator-(const fixed128& a, const fixed128& b)
+fixed96q32 operator-(const fixed96q32& a, const fixed96q32& b)
 {
-  fixed128 result = a;
+  fixed96q32 result = a;
   result -= b;
   return result;
 }
 
-fixed128 operator+(const fixed128& a, uint32& b)
+fixed96q32 operator+(const fixed96q32& a, uint32& b)
 {
-  fixed128 result = a;
+  fixed96q32 result = a;
   result += b;
   return result;
 }
 
-fixed128 operator+(uint32& a, const fixed128& b)
+fixed96q32 operator+(uint32& a, const fixed96q32& b)
 {
-  fixed128 result = b;
+  fixed96q32 result = b;
   result += a;
   return result;
 }
 
-fixed128 operator-(const fixed128& a, uint32& b)
+fixed96q32 operator-(const fixed96q32& a, uint32& b)
 {
-  fixed128 result = a;
+  fixed96q32 result = a;
   result -= b;
   return result;
 }
 
-fixed128 operator>>(const fixed128& a, uint32 b)
+fixed96q32 operator>>(const fixed96q32& a, uint32 b)
 {
-  fixed128 result = a;
+  fixed96q32 result = a;
   result >>= b;
   return result;
 }
 
-fixed128 operator<<(const fixed128& a, uint32 b)
+fixed96q32 operator<<(const fixed96q32& a, uint32 b)
 {
-  fixed128 result = a;
+  fixed96q32 result = a;
   result <<= b;
   return result;
 }
 
-fixed128 operator&(const fixed128& a, const fixed128& b)
+fixed96q32 operator&(const fixed96q32& a, const fixed96q32& b)
 {
-  fixed128 result = a;
+  fixed96q32 result = a;
   result &= b;
   return result;
 }
 
-fixed128 operator|(const fixed128& a, const fixed128& b)
+fixed96q32 operator|(const fixed96q32& a, const fixed96q32& b)
 {
-  fixed128 result = a;
+  fixed96q32 result = a;
   result |= b;
   return result;
 }
 
-fixed128 operator^(const fixed128& a, const fixed128& b)
+fixed96q32 operator^(const fixed96q32& a, const fixed96q32& b)
 {
-  fixed128 result = a;
+  fixed96q32 result = a;
   result ^= b;
   return result;
 }
 
-fixed128 operator*(const fixed128& a, const fixed128& b)
+fixed96q32 operator*(const fixed96q32& a, const fixed96q32& b)
 {
-  fixed128 result = a;
+  fixed96q32 result = a;
   result *= b;
   return result;
 }
 
-fixed128 operator*(const fixed128& a, uint32 b)
+fixed96q32 operator*(const fixed96q32& a, uint32 b)
 {
-  fixed128 result = a;
+  fixed96q32 result = a;
   result *= b;
   return result;
 }
 
-fixed128 operator*(uint32 a, const fixed128& b)
+fixed96q32 operator*(uint32 a, const fixed96q32& b)
 {
-  fixed128 result = b;
+  fixed96q32 result = b;
   result *= a;
   return result;
 }
 
 
-fixed128 operator*(const fixed128& a, double b)
+fixed96q32 operator*(const fixed96q32& a, double b)
 {
-  fixed128 result = a;
+  fixed96q32 result = a;
   result *= b;
   return result;
 }
 
-fixed128 operator*(double a, const fixed128& b)
+fixed96q32 operator*(double a, const fixed96q32& b)
 {
-  fixed128 result = b;
+  fixed96q32 result = b;
   result *= a;
   return result;
 }
 
-fixed128 operator/(const fixed128& a, const fixed128& b)
+fixed96q32 operator/(const fixed96q32& a, const fixed96q32& b)
 {
-  fixed128 result = a;
+  fixed96q32 result = a;
   result /= b;
   return result;
 }
-bool operator==(uint32 a, const fixed128& b)
+bool operator==(uint32 a, const fixed96q32& b)
 {
   return b == a;
 }
 
-fixed128 sqrt(const fixed128& a)
+fixed96q32 sqrt(const fixed96q32& a)
 {
-  fixed128 result = a;
+  /*
+  Note: a good and faster way to take the sqrt is to convert to double and then take the sqrt.
+  That has less precision, but that is not always a problem since it's always nearly right for even the largest values.
+  */
+  fixed96q32 result = a;
   result.takeSqrt();
   return result;
 }
 
-bool sign(const fixed128& a)
+bool sign(const fixed96q32& a)
 {
   return a.sign();
 }
 
-fixed128 abs(const fixed128& a)
+fixed96q32 abs(const fixed96q32& a)
 {
   if(a.sign()) return -a;
   else return a;
@@ -1265,7 +1302,7 @@ fixed128 abs(const fixed128& a)
 
 int main(){}
 
-class Testfixed128
+class Testfixed96q32
 {
   public:
   
@@ -1275,8 +1312,8 @@ class Testfixed128
     
     std::cout << "testing addition and subtraction" << std::endl;
     
-    lpi::fixed128 n = -5.0;
-    lpi::fixed128 p = +5.0;
+    lpi::fixed96q32 n = -5.0;
+    lpi::fixed96q32 p = +5.0;
     
     std::cout<<(double)(p + p)<<std::endl;
     std::cout<<(double)(p + n)<<std::endl;
@@ -1289,8 +1326,8 @@ class Testfixed128
     
     std::cout << std::endl;
     
-    lpi::fixed128 f = 5.5;
-    lpi::fixed128 g = -5.5;
+    lpi::fixed96q32 f = 5.5;
+    lpi::fixed96q32 g = -5.5;
     lpi::uint32 i = 5;
     lpi::uint32 j = 6;
 
@@ -1312,10 +1349,10 @@ class Testfixed128
     
     std::cout << "testing small multiplication" << std::endl;
     
-    lpi::fixed128 a = 0.015625;
-    lpi::fixed128 b = 0.5;
-    lpi::fixed128 c = -0.015625;
-    lpi::fixed128 d = -0.5;
+    lpi::fixed96q32 a = 0.015625;
+    lpi::fixed96q32 b = 0.5;
+    lpi::fixed96q32 c = -0.015625;
+    lpi::fixed96q32 d = -0.5;
     
     std::cout<<(double)(a*a)<<std::endl;
     std::cout<<(double)(b*b)<<std::endl;
@@ -1342,17 +1379,17 @@ class Testfixed128
     
     std::cout << "testing large multiplication" << std::endl;
     
-    lpi::fixed128 a = 8000000000.5;
-    lpi::fixed128 b = 9000000000.5;
-    lpi::fixed128 c = -8000000000.5;
-    lpi::fixed128 d = -9000000000.5;
+    lpi::fixed96q32 a = 8000000000.5;
+    lpi::fixed96q32 b = 9000000000.5;
+    lpi::fixed96q32 c = -8000000000.5;
+    lpi::fixed96q32 d = -9000000000.5;
     
     std::cout<<(double)(a*b)<<std::endl;
     std::cout<<(double)(a*d)<<std::endl;
     std::cout<<(double)(c*b)<<std::endl;
     std::cout<<(double)(c*d)<<std::endl;
     
-    lpi::fixed128 e = -614.488;
+    lpi::fixed96q32 e = -614.488;
     std::cout<<(double)(e*e)<<std::endl;
     
     std::cout<<std::endl;
@@ -1364,8 +1401,8 @@ class Testfixed128
     
     std::cout << "testing multiplication with integer" << std::endl;
     
-    lpi::fixed128 a = 8000000000.0;
-    lpi::fixed128 b = -8000000000.0;
+    lpi::fixed96q32 a = 8000000000.0;
+    lpi::fixed96q32 b = -8000000000.0;
     lpi::uint32 c = 5;
     lpi::uint32 d = -5;
     
@@ -1384,7 +1421,7 @@ class Testfixed128
     
     std::cout << "testing multiplication with doubles" << std::endl;
     
-    lpi::fixed128 a = 8000000000.0;
+    lpi::fixed96q32 a = 8000000000.0;
     
     std::cout<<(double)(a * 0.5)<<std::endl;
     std::cout<<(double)(a * -1.5)<<std::endl;
@@ -1393,7 +1430,7 @@ class Testfixed128
     std::cout<<(double)(a * 0.0)<<std::endl;
     
     std::cout << std::endl;
-    lpi::fixed128 b = -8000000000.0;
+    lpi::fixed96q32 b = -8000000000.0;
     
     std::cout<<(double)(b * 0.5)<<std::endl;
     std::cout<<(double)(b * -1.5)<<std::endl;
@@ -1410,10 +1447,10 @@ class Testfixed128
     
     std::cout << "testing lesser than and greater than" << std::endl;
     
-    lpi::fixed128 a = +5.0;
-    lpi::fixed128 b = +6.0;
-    lpi::fixed128 c = -5.0;
-    lpi::fixed128 d = -6.0;
+    lpi::fixed96q32 a = +5.0;
+    lpi::fixed96q32 b = +6.0;
+    lpi::fixed96q32 c = -5.0;
+    lpi::fixed96q32 d = -6.0;
     
     std::cout<<(a < b)<<std::endl;
     std::cout<<(a < c)<<std::endl;
@@ -1437,15 +1474,15 @@ class Testfixed128
     
     std::cout << "testing square root" << std::endl;
     
-    lpi::fixed128 a = 1600000000.0;
+    lpi::fixed96q32 a = 1600000000.0;
     a.takeSqrt();
     std::cout<<(double)a<<std::endl;
     
-    lpi::fixed128 b = 9.0;
+    lpi::fixed96q32 b = 9.0;
     b.takeSqrt();
     std::cout<<(double)b<<std::endl;
     
-    lpi::fixed128 c = 2.0;
+    lpi::fixed96q32 c = 2.0;
     c.takeSqrt();
     std::cout<<(double)c<<std::endl;
     
@@ -1458,26 +1495,26 @@ class Testfixed128
     
     std::cout << "testing division" << std::endl;
     
-    lpi::fixed128 a = 3.0;
+    lpi::fixed96q32 a = 3.0;
     a /= 2.0;
     std::cout<<(double)a<<std::endl;
     
-    lpi::fixed128 b = -16000000000000.0;
+    lpi::fixed96q32 b = -16000000000000.0;
     b /= 2.0;
     std::cout<<(double)b<<std::endl;
     
-    lpi::fixed128 c = 0.005;
+    lpi::fixed96q32 c = 0.005;
     c /= 2.0;
     std::cout<<(double)c<<std::endl;
     
     
-    lpi::fixed128 e = 4U;
+    lpi::fixed96q32 e = 4U;
     e <<= 32U;
     e /= 2.0;
     e >>= 32U;
     std::cout<<(double)e<<std::endl;
     
-    lpi::fixed128 d = 4U;
+    lpi::fixed96q32 d = 4U;
     d <<= 64U;
     d /= 2.0;
     d >>= 64U;
@@ -1486,7 +1523,21 @@ class Testfixed128
     std::cout<<std::endl;
   }
   
-  Testfixed128()
+  void testint()
+  {
+    std::cout.precision(30);
+    
+    std::cout << "testing conversion from/to signed int" << std::endl;
+    
+    int a = 5;
+    lpi::fixed96q32 a128 = a;
+    std::cout << (double)a128 << std::endl;
+    int b = -5;
+    lpi::fixed96q32 b128 = b;
+    std::cout << (double)b128 << std::endl;
+  }
+  
+  Testfixed96q32()
   {
     testaddsub();
     testsmallmul();
@@ -1496,8 +1547,105 @@ class Testfixed128
     testltgt();
     testsqrt();
     testdiv();
+    testint();
+    
+    /*
+    The console output of the tests should be:
+    
+    testing addition and subtraction
+    10
+    0
+    0
+    -10
+    0
+    10
+    -10
+    0
+    
+    10.5
+    0.5
+    -0.5
+    -10.5
+    11.5
+    -0.5
+    0.5
+    -11.5
+    
+    testing small multiplication
+    0.000244140625
+    0.25
+    0.000244140625
+    0.25
+    
+    0.0078125
+    -0.0078125
+    -0.0078125
+    0.0078125
+    
+    0.0078125
+    -0.0078125
+    -0.0078125
+    0.0078125
+    
+    testing large multiplication
+    72000000000000000000
+    -72000000000000000000
+    -72000000000000000000
+    72000000000000000000
+    377595.502143871737644076347351
+    
+    testing multiplication with integer
+    40000000000
+    -40000000000
+    -40000000000
+    40000000000
+    
+    testing multiplication with doubles
+    4000000000
+    -12000000000
+    8000000000000
+    -8000000000
+    0
+    
+    -4000000000
+    12000000000
+    -8000000000000
+    8000000000
+    0
+    
+    testing lesser than and greater than
+    1
+    0
+    0
+    0
+    1
+    1
+    
+    0
+    1
+    1
+    1
+    0
+    0
+    
+    testing square root
+    40000
+    3
+    1.41421356215141713619232177734
+    
+    testing division
+    1.5
+    -8000000000000
+    0.0024999999441206455230712890625
+    2
+    2
+    
+    testing conversion from/to signed int
+    5
+    -5
+    */
   }
-} testfixed128;
+} testfixed96q32;
 
 #endif
 
