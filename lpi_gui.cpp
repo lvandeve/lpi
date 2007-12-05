@@ -894,8 +894,8 @@ void Element::drawToolTip() const
     int x = globalMouseX;
     int y = globalMouseY - 6;
     int sizex = tooltip.size() * 6 + 4;
-    int sizey = 10;
-    drawRectangle(x, y, x + sizex, y + sizey, RGBA_Lightyellow(192));
+    int sizey = 8;
+    drawRectangle(x, y, x + sizex, y + sizey, RGBA_Lightyellow(224));
     print(tooltip, x + 2, y + 2, TS_Black6);
   }
 }
@@ -1095,18 +1095,16 @@ void Container::setScrollSizeToElements()
   area.resizeSticky(newx0, newy0, newx1, newy1);
 }
 
-Container::Container()
+Container::Container() : keepElementsInside(false), enableTooltips(true)
 {
   clear(); //clear the element list
-  this->totallyEnable();
+  totallyEnable();
   
   //the default container is as big as the screen (note: don't forget to resize it if you resize the resolution of the screen!)
-  this->x0 = 0;
-  this->y0 = 0;
-  this->x1 = screenWidth();
-  this->y1 = screenHeight();
-  
-  this->keepElementsInside = 0;
+  x0 = 0;
+  y0 = 0;
+  x1 = screenWidth();
+  y1 = screenHeight();
 }
 
 void Container::make(int x, int y, int sizex, int sizey, 
@@ -1332,14 +1330,14 @@ void Container::drawWidget() const
     if(!element[i]->isNotDrawnByContainer())
     {
       element[i]->draw();
-      if(element[i]->mouseOver() && element[i]->tooltipenabled) tooltipelement = element[i];
+      if(enableTooltips && element[i]->tooltipenabled && element[i]->mouseOver()) tooltipelement = element[i];
     }
   }
   
   resetScissor();
   
   //tooltip (only 1 can be active at the same time)
-  if(tooltipelement) tooltipelement->drawToolTip();
+  if(enableTooltips && tooltipelement) tooltipelement->drawToolTip();
   
   bars.draw();
 }
@@ -1842,7 +1840,7 @@ void Window::initContainer()
   container.make(x0, y0, getSizex(), getSizey());
   container.setSticky(0.0, 0.0, 1.0, 1.0);
   container.saveInitialPosition(x0, y0, x1, y1);
-  container.keepElementsInside = true;
+  container.setKeepElementsInside(true);
 }
 
 //to let the scrollbars work properly, call this AFTER using setContainerBorders, addTop, addResizer and such of the window
@@ -1854,10 +1852,10 @@ void Window::addScrollbars(int areax, int areay, int areasizex, int areasizey, d
 //this function could be obsolete once there's the resize function
 void Window::setSize(int x, int y, int sizex, int sizey)
 {
-  this->x0 = x;
-  this->y0 = y;
-  this->setSizex(sizex);
-  this->setSizey(sizey);
+  x0 = x;
+  y0 = y;
+  setSizex(sizex);
+  setSizey(sizey);
 }
 
 void Window::putInside(int i)
