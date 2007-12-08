@@ -24,8 +24,9 @@ namespace lpi
 namespace xml
 {
 
-const std::string xml_indentation_symbol = "  ";
 const std::string xml_newline_symbol = "\n";
+std::string xml_indentation_symbol = "  ";
+std::string xml_attr_quote_symbol = "\"";
 
 ////////////////////////////////////////////////////////////////////////////////
 // 1.) General XML Tools
@@ -387,167 +388,240 @@ void unconvert(std::vector<unsigned char>& out, const std::string& in, size_t po
   decodeBase64(out, in, pos, end); //we parse a string from XML, so turn entities into &, <, >, ' or "
 }
 
-void skipToNonCommentTag(const std::string& in, size_t& pos, size_t end) //call when you want to go to a '<' that is not of a comment tag. After calling this function, pos is on top of the first non-comment '<'. This function can throw.
+void parseTag(const std::string& in, size_t& pos, size_t end, std::string& name, TagPos& tagpos)
 {
-  bool tag_found = false; //comments and <?...?> tags are not counted as tags
-  size_t ltpos = pos; //pos of the last '<' character
-  while(!tag_found)
+  /*
+  The following are NOT well-formed XML (no spaces in the names of start, end and singleton tags allowed):
+  <a/ >
+  < /a>
+  </ a>
+  < a/>
+  < a>
+  But the following are well formad (location where attributes may come can have space)
+  <a >
+  <a />
+  */
+  
+  name.clear();
+  
+  tagpos.ab = tagpos.ae = 0;
+  
+  skipWhiteSpace(in, pos, end);
+  tagpos.tb = pos;
+  if(pos >= end) throw Error(64, pos);
+  if(in[pos] != '<') //not a tag, but text mixed in a mixed element
   {
-    skipToChar(in, pos, end, '<');
-    ltpos = pos;
-    pos++;
-    skipWhiteSpace(in, pos, end);
+    tagpos.type = TT_MIXEDTEXT;
     
-    //if there is an exclamation mark (!), it's a comment tag. Also attempt to follow the rules about "--" here.
-    if(isCharacter(in, pos, end, '!'))
+    //everything until next '<' or end is considered the content
+    skipToChar(in, pos, end, '<');
+    tagpos.te = pos;
+    
+    name = in.substr(tagpos.tb, tagpos.te - tagpos.tb);
+  }
+  else
+  {
+    pos++;
+    if(pos >= end) throw Error(61, pos);
+    if(in[pos] == '/') //end tag
     {
+      tagpos.type = TT_END;
+      pos++;
+      if(pos >= end) throw Error(61, pos);
+      //parse the name of the tag
+      while(pos < end && !isWhiteSpace(in[pos]) && in[pos] != '>')
+      {
+        name += in[pos];
+        pos++;
+      }
+      
+      skipWhiteSpace(in, pos, end);
+    
+      tagpos.ab = pos;
+      while(pos < end && in[pos] != '>') pos++; //while there are attributes
+      tagpos.ae = pos;
+      tagpos.te = ++pos; //go after last >
+    }
+    
+    else if(in[pos] != '?' && in[pos] != '!') //start tag or singleton tag
+    {
+      //parse the name of the tag
+      while(pos < end && !isWhiteSpace(in[pos]) && in[pos] != '>' && in[pos] != '/')
+      {
+        name += in[pos];
+        pos++;
+      }
+      
+      skipWhiteSpace(in, pos, end);
+    
+      tagpos.ab = pos;
+      while(pos < end && in[pos] != '>' && in[pos] != '/') pos++; //while there are attributes
+      tagpos.ae = pos;
+      
+      if(in[pos] == '/') //singleton tag
+      {
+        tagpos.type = TT_SINGLETON;
+        pos++;
+        if(!isCharacter(in, pos, end, '>')) throw Error(62, pos);
+      }
+      else tagpos.type = TT_START;
+      
+      tagpos.te = ++pos; //go after last >
+    }
+    
+    else if(in[pos] == '?') //processing instruction
+    {
+      tagpos.type = TT_PI;
+      skipToChar(in, pos, end, '>');
+      if(in[pos - 1] != '?') throw Error(63, pos);
+      tagpos.te = ++pos; //go after last >
+      name = in.substr(tagpos.tb + 1, tagpos.te - tagpos.tb - 2);
+    }
+    
+    else if(in[pos] == '!' && pos + 1 < end && in[pos + 1] == '-') //comment
+    {
+      tagpos.type = TT_COMMENT;
       int num_minusses = 0; //how many "--" symbols (-- counts as 1, not 2)
       for(;;)
       {
         pos++;
-        if(pos >= end) throw Error(20, pos); //document ends in the middle of a comment...
-        if(in[pos] == '>') if(num_minusses % 2 == 0) { pos++; break; } //only if a multiple of 4 minusses occured, a '>' is the end tag symbol
+        if(pos >= end) throw Error(64, pos); //document ends in the middle of a comment...
+        if(in[pos] == '>' && num_minusses % 2 == 0) break; //only if a multiple of 4 minusses occured, a '>' is the end tag symbol
         if(in[pos] == '-' && pos < end && in[pos + 1] == '-') num_minusses++;
       }
+      tagpos.te = ++pos; //go after last >
+      name = in.substr(tagpos.tb + 1, tagpos.te - tagpos.tb - 2);
     }
-    //if there is a question mark (?), it's an xml start tag at the top. Ignore it, skip to the matching ?>, and try again.
-    else if(isCharacter(in, pos, end, '?'))
+    
+    else if(in[pos] == '!' && in[pos + 1] == '[') //section
     {
-      pos++;
-      skipToChar(in, pos, end, '>');
-      pos++;
+      tagpos.type = TT_SECTION;
+      //go to first "]]>" encountered
+      for(;;)
+      {
+        pos++;
+        if(pos + 2 >= end) throw Error(65, pos);
+        if(in[pos] == ']' && in[pos + 1] == ']' && in[pos + 2] == '>') break;
+      }
+      tagpos.te = ++pos; //go after last >
+      name = in.substr(tagpos.tb + 1, tagpos.te - tagpos.tb - 2);
     }
-    else tag_found = true;
+    else if(in[pos] == '!') //declaration
+    {
+      tagpos.type = TT_DECLARATION;
+      skipToChar(in, pos, end, '>');
+      tagpos.te = ++pos; //go after last >
+      name = in.substr(tagpos.tb + 1, tagpos.te - tagpos.tb - 2);
+    }
+    else throw Error(66, pos); //not a valid tag
   }
-  
-  pos = ltpos; //this is so that whoever calls skipToNonCommentTag has pos on the expected position: on top of the '<'
 }
 
-int parseTag(const std::string& in, size_t& pos, size_t end, std::string& name, ParsePos& parsepos, bool skipcomments) //the string is empty if it was a singleton tag or an empty tag (you can't see the difference)
+int parseElement(const std::string& in, size_t& pos, size_t end, std::string& name, ElementPos& elementpos, bool skipcomments) //the string is empty if it was a singleton tag or an empty tag (you can't see the difference)
 {
   skipWhiteSpace(in, pos, end);
-  if(skipcomments) skipToNonCommentTag(in, pos, end); //go to on top of next '<' symbol that is not of a comment tag
   
-  if(pos >= end) return END;
   
-  name.clear();
+  TagPos tagpos;
   
-  parsepos.tb = pos;
-  pos++;
-  skipWhiteSpace(in, pos, end);
-  
-  //parse the name of the tag
-  while(pos < end && !isWhiteSpace(in[pos]) && in[pos] != '>' && in[pos] != '/')
+  for(;;) //until a tag we want to use is found
   {
-    name += in[pos];
-    pos++;
-  }
-  
-  if(!skipcomments && isCommentTag(name, 0, name.size()))
-  {
-    pos++; //go after the >
-    //these have no meaning
-    parsepos.ab = 0;
-    parsepos.ae = 0;
-    parsepos.cb = 0;
-    parsepos.ce = 0;
-    parsepos.te = pos;
-    return SUCCESS; //comments have no content so don't continue
-  }
-  
-  skipWhiteSpace(in, pos, end);
-
-  parsepos.ab = pos;
-  while(pos < end && in[pos] != '>' && in[pos] != '/') pos++; //while there are attributes
-  parsepos.ae = pos;
-  
-  if(pos < end && in[pos] == '/') //it's a singleton tag
-  {
-    pos++;
+    if(pos >= end) return END;
+    parseTag(in, pos, end, name, tagpos);
     skipWhiteSpace(in, pos, end);
-    parsepos.cb = parsepos.ce = pos;
-    if(isCharacter(in, pos, end, '>'))
-    {
-      pos++; //bring pos to after what we just parsed
-      parsepos.te = pos;
-      return SUCCESS;
-    }
-    else throw Error(11, pos);
+    if(!skipcomments || !isTreatedAsComment(tagpos.type)) break;
   }
-  else if(!(pos < end && in[pos] == '>')) throw Error(12, pos);
   
-  //it's not a singleton tag, now parse the content
-  //there must be kept parseing until tagcount is 1 and you reach an end tag (making tagcount 0). Then check if the end tag has the same text as the start tag, that must be to be so correct XML.
-  int tagcount = 1; //1 already because our current tag itself is also counted
-  bool done = false;
-  pos++;
-  parsepos.cb = pos; //content begin
+  elementpos.eb = tagpos.tb;
+  //element.ee is still to be determined later, depending on the tag type
+  elementpos.ab = tagpos.ab;
+  elementpos.ae = tagpos.ae;
+  elementpos.cb = elementpos.ce = pos;
   
-  while(pos < end && !done)
+  switch(tagpos.type)
   {
-    /*if(skipcomments)*/ skipToNonCommentTag(in, pos, end); //go to after next '<' symbol that is not of a comment tag
-
-    size_t temp_pos = pos;
-    pos++;
-    skipWhiteSpace(in, pos, end);
-    if(isCharacter(in, pos, end, '/')) //it's an end tag
-    {
-      pos++;
-      tagcount--;
-      if(tagcount < 1) //matching end tag reached
+    case TT_START: //only in this case there is content
       {
+        //go to matching end tag and while at it determine the content type (simple, mixed, nested, empty)
+        TagPos endtagpos;
+        int tagcount = 1; //this is for finding _matching_ endtag. It's 1 already because our current tag itself is also counted
         std::string end_tag_name;
-        skipWhiteSpace(in, pos, end);
-        while(pos < end && !isWhiteSpace(in[pos]) && in[pos] != '>' && in[pos] != '/')
+        size_t numchildtags = 0; //this makes it nested or mixed
+        size_t numchildtexts = 0; //this makes it simple or mixed
+
+        for(;;)
         {
-          end_tag_name += in[pos];
-          pos++;
+          if(pos >= end) throw Error(68, pos); //shouldn't reach end in the middle of tags
+          parseTag(in, pos, end, end_tag_name, endtagpos);
+          
+          if(endtagpos.type == TT_END)
+          {
+            tagcount--;
+            if(tagcount < 1) //matching end tag reached
+            {
+              if(end_tag_name != name) throw Error(14, pos); //name must match that of start tag
+              elementpos.ee = pos; //element end
+              elementpos.ce = endtagpos.tb; //content end
+              break; //end the for(;;) loop
+            }
+            else numchildtags++;
+          }
+          else if(endtagpos.type == TT_START)
+          {
+            tagcount++;
+            numchildtags++;
+          }
+          else if(endtagpos.type == TT_MIXEDTEXT) numchildtexts++;
+          else numchildtags++; //comments and singleton tags count as child tags
         }
         
-        skipWhiteSpace(in, pos, end);
-        
-        if(isNotCharacter(in, pos, end, '>')) throw Error(13, pos);
-        if(end_tag_name != name) throw Error(14, pos);
-        
-        pos++; //place the position after the end tag
-        parsepos.te = pos; //tag end
-        
-        //now we know where the content start and ends, so parse the content
-        parsepos.ce = temp_pos; //content end
-        
-        return SUCCESS;
+        //4 content types
+        if(numchildtexts == 0 && numchildtags == 0) elementpos.type = ET_EMPTY;
+        else if(numchildtexts == 1 && numchildtags == 0) elementpos.type = ET_SIMPLE;
+        else if(numchildtexts == 0 && numchildtags > 0) elementpos.type = ET_NESTED;
+        else elementpos.type = ET_MIXED;
       }
-    }
-    else //it's a singleton tag or start tag
-    {
-      while(pos < end && in[pos] != '>' && in[pos] != '/') pos++;
-      
-      if(isCharacter(in, pos, end, '/')) //it's a singleton tag
-      {
-        pos++;
-        skipWhiteSpace(in, pos, end);
-        if(isNotCharacter(in, pos, end, '>')) throw Error(15, pos);
-        pos++;
-      }
-      else if(isCharacter(in, pos, end, '>'))//it's a start tag
-      {
-        tagcount++;
-        pos++;
-      }
-    }
+      break;
+    case TT_SINGLETON:
+      elementpos.type = ET_EMPTY;
+      elementpos.ee = tagpos.te;
+      break;
+    case TT_END:
+      throw Error(67, pos); //error, it starts with an end tag, that can't be
+      break;
+    case TT_MIXEDTEXT:
+      elementpos.type = ET_MIXEDTEXT;
+      elementpos.ee = tagpos.te;
+      break;
+    case TT_COMMENT:
+      elementpos.type = ET_COMMENT;
+      elementpos.ee = tagpos.te;
+      break;
+    case TT_PI:
+      elementpos.type = ET_PI;
+      elementpos.ee = tagpos.te;
+      break;
+    case TT_DECLARATION:
+      elementpos.type = ET_DECLARATION;
+      elementpos.ee = tagpos.te;
+      break;
+    case TT_SECTION:
+      elementpos.type = ET_SECTION;
+      elementpos.ee = tagpos.te;
+      break;
   }
   
-  throw Error(16, pos); //if you got here, something strange must have happened
+  return SUCCESS;
 }
 
-int parseAttribute(const std::string& in, size_t& pos, size_t end, std::string& name, ParsePos& parsepos)
+int parseAttribute(const std::string& in, size_t& pos, size_t end, std::string& name, ElementPos& elementpos)
 {
   skipWhiteSpace(in, pos, end);
   
   if(pos >= end || in[pos] == '>' || in[pos] == '/') return END;
   
   name.clear();
-  parsepos.cb = parsepos.ce = pos;
+  elementpos.cb = elementpos.ce = pos;
   
   //parse name
   while(!isWhiteSpace(in[pos]) && isNotCharacter(in, pos, end, '='))
@@ -568,9 +642,9 @@ int parseAttribute(const std::string& in, size_t& pos, size_t end, std::string& 
   pos++;
   
   //parse the value
-  parsepos.cb = pos; //value begin
+  elementpos.cb = pos; //value begin
   while(isNotCharacter(in, pos, end, '\'') && isNotCharacter(in, pos, end, '"')) pos++;
-  parsepos.ce = pos; //value end
+  elementpos.ce = pos; //value end
   
   pos++; //go behind the "
   
@@ -603,31 +677,6 @@ int getColumnNumber(const std::string& fulltext, size_t pos)
   }
   
   return column;
-}
-
-bool isNestedTag(const std::string& in, size_t pos, size_t end)
-{
-  while(pos < end)
-  {
-    skipWhiteSpace(in, pos, end);
-    if(pos >= end) return false;
-    if(in[pos] == '<') return true;
-    else return false; //if it doesn't begin with a <, it's no tag
-  }
-  
-  return false;
-}
-
-bool isCommentTag(const std::string& in, size_t pos, size_t end)
-{
-  if(in[pos] == '?' && in[end - 1] == '?') return true; //it's an xml declaration
-  if(in.size() >= 5
-     && in[pos] == '!' && in[pos + 1] == '-' && in[pos + 2] == '-'
-     && in[end - 2] == '-' && in[end - 1] == '-') return true; //it's a comment
-
-  //TODO: check in a more precise way if it's a comment, by counting the number of -- pairs
-  
-  return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -664,7 +713,7 @@ void RefRes::resolve() //store the new values in all the clients
 // 4.) XML parsing and generating with tree
 ////////////////////////////////////////////////////////////////////////////////
 
-XMLTree::XMLTree() : parent(0), outer(false), comment(false)
+XMLTree::XMLTree() : parent(0), outer(false)
 {
 }
 
@@ -674,11 +723,6 @@ XMLTree::~XMLTree()
   {
     delete children[i];
   }
-}
-
-bool XMLTree::isComment() const
-{
-  return comment;
 }
 
 bool XMLTree::isOuter() const
@@ -707,27 +751,27 @@ int XMLTree::parse(const std::string& in, size_t& pos, bool skipcomments)
   return parse(in, pos, in.size(), skipcomments);
 }
 
-void XMLTree::parseContent(const std::string& in, ParsePos& parsepos, bool skipcomments)
+void XMLTree::parseContent(const std::string& in, ElementPos& elementpos, bool skipcomments)
 {
-  bool nest = isNestedTag(in, parsepos.cb, parsepos.ce);
-  std::string tagname;
+  bool nest = elementpos.type != ET_SIMPLE && elementpos.type != ET_EMPTY;
+  std::string elementname;
   
-  if(!isComment())
+  if(!isTreatedAsComment(type))
   {
     if(nest)
     {
-      size_t subpos = parsepos.cb;
-      ParsePos subparsepos;
-      while(parseTag(in, subpos, parsepos.ce, tagname, subparsepos, skipcomments) == SUCCESS)
+      size_t subpos = elementpos.cb;
+      ElementPos subparsepos;
+      while(parseElement(in, subpos, elementpos.ce, elementname, subparsepos, skipcomments) == SUCCESS)
       {
         children.push_back(new XMLTree);
         children.back()->parent = this;
-        children.back()->parse(in, subparsepos.tb, subparsepos.te, skipcomments);
+        children.back()->parse(in, subparsepos.eb, subparsepos.ee, skipcomments);
       }
     }
     else //it's a value
     {
-      content.value = in.substr(parsepos.cb, parsepos.ce - parsepos.cb);
+      content.value = in.substr(elementpos.cb, elementpos.ce - elementpos.cb);
     }
   }
 }
@@ -736,24 +780,19 @@ int XMLTree::parse(const std::string& in, size_t& pos, size_t end, bool skipcomm
 {
   try
   {
-    ParsePos parsepos;
-    std::string tagname;
-    parseTag(in, pos, end, tagname, parsepos, skipcomments);
+    ElementPos elementpos;
+    std::string elementname;
+    parseElement(in, pos, end, elementname, elementpos, skipcomments);
+    type = elementpos.type;
+    content.name = elementname;
     
-    content.name = tagname;
-    
-    if(!skipcomments && isCommentTag(tagname, 0, tagname.size()))
-    {
-      comment = true;
-    }
-    
-    if(parsepos.ae > parsepos.ab) //if there are attributes
+    if(elementpos.ae > elementpos.ab) //if there are attributes
     {
       //parse attributes
-      ParsePos attrpos;
+      ElementPos attrpos;
       std::string attrname;
-      size_t posa = parsepos.ab;
-      while(parseAttribute(in, posa, parsepos.ae, attrname,  attrpos) == SUCCESS)
+      size_t posa = elementpos.ab;
+      while(parseAttribute(in, posa, elementpos.ae, attrname,  attrpos) == SUCCESS)
       {
         attributes.resize(attributes.size() + 1);
         attributes.back().name = attrname;
@@ -761,7 +800,7 @@ int XMLTree::parse(const std::string& in, size_t& pos, size_t end, bool skipcomm
       }
     }
     
-    parseContent(in, parsepos, skipcomments);
+    parseContent(in, elementpos, skipcomments);
   }
   catch(Error error)
   {
@@ -787,13 +826,13 @@ int XMLTree::parseOuter(const std::string& in, size_t& pos, size_t end, bool ski
 {
   outer = true;
   
-  ParsePos parsepos;
-  parsepos.cb = pos;
-  parsepos.ce = end;
+  ElementPos elementpos;
+  elementpos.cb = pos;
+  elementpos.ce = end;
   
   try
   {
-    parseContent(in, parsepos, skipcomments);
+    parseContent(in, elementpos, skipcomments);
   }
   catch(Error error)
   {
@@ -802,11 +841,6 @@ int XMLTree::parseOuter(const std::string& in, size_t& pos, size_t end, bool ski
   }
   
   return SUCCESS;
-}
-
-bool XMLTree::isEmptyValueTag() const //returns true if it has no children and the value is empty
-{
-  return children.empty() && content.value.empty();
 }
 
 bool XMLTree::isValueTag() const //returns true if this has no nested tags in it (no children)
@@ -818,7 +852,7 @@ XMLTree* XMLTree::getFirstNonCommentNode() const
 {
   for(size_t i = 0; i < children.size(); i++)
   {
-    if(!children[i]->isComment()) return children[i];
+    if(!isTreatedAsComment(children[i]->getType())) return children[i];
   }
   return 0;
 }
@@ -834,34 +868,43 @@ void XMLTree::generate(std::string& out) const //appends to the string
     size_t level = getLevel();
     
     for(size_t i = 0; i < level; i++) out += xml_indentation_symbol;
-    out += "<" + content.name;
-    for(size_t i = 0; i < attributes.size(); i++)
+    
+    if(type == ET_MIXEDTEXT)
     {
-      generateAttribute(out, attributes[i].name, attributes[i].value);
+      out += content.name;
+    }
+    else
+    {
+      out += "<" + content.name;
+      for(size_t i = 0; i < attributes.size(); i++)
+      {
+        generateAttribute(out, attributes[i].name, attributes[i].value);
+      }
+      
+      if(isTreatedAsComment(type))
+      {
+        out += ">";
+      }
+      else if(type == ET_EMPTY)
+      {
+        out += "/>";
+      }
+      else if(isValueTag())
+      {
+        out += ">";
+        out += content.value;
+        out += "</" + content.name + ">";
+      }
+      else //nested tag
+      {
+        out += ">";
+        out += xml_newline_symbol;
+        generateChildren(out);
+        for(size_t i = 0; i < level; i++) out += xml_indentation_symbol;
+        out += "</" + content.name + ">";
+      }
     }
     
-    if(isComment())
-    {
-      out += ">";
-    }
-    else if(isEmptyValueTag())
-    {
-      out += "/>";
-    }
-    else if(isValueTag())
-    {
-      out += ">";
-      out += content.value;
-      out += "</" + content.name + ">";
-    }
-    else //nested tag
-    {
-      out += ">";
-      out += xml_newline_symbol;
-      generateChildren(out);
-      for(size_t i = 0; i < level; i++) out += xml_indentation_symbol;
-      out += "</" + content.name + ">";
-    }
     
     out += xml_newline_symbol;
   }
@@ -910,24 +953,24 @@ namespace xmltest
     double strength;
     std::string name; //for the example, name will be saved as attributes instead of value tags
     
-    void parseXML(const std::string& in, xml::ParsePos& pos, xml::RefRes& ref)
+    void parseXML(const std::string& in, xml::ElementPos& pos, xml::RefRes& ref)
     {
-      xml::ParsePos parsepos;
-      std::string tagname;
+      xml::ElementPos elementpos;
+      std::string elementname;
       const void* old_address = 0;
       
       //content
-      while(parseTag(in, pos.cb, pos.ce, tagname, parsepos) == xml::SUCCESS)
+      while(parseElement(in, pos.cb, pos.ce, elementname, elementpos) == xml::SUCCESS)
       {
-        if(tagname == "constitution") xml::unconvert(constitution, in, parsepos.cb, parsepos.ce);
-        else if(tagname == "strength") xml::unconvert(strength, in, parsepos.cb, parsepos.ce);
-        else if(tagname == "id") xml::unconvert(old_address, in, parsepos.cb, parsepos.ce);
+        if(elementname == "constitution") xml::unconvert(constitution, in, elementpos.cb, elementpos.ce);
+        else if(elementname == "strength") xml::unconvert(strength, in, elementpos.cb, elementpos.ce);
+        else if(elementname == "id") xml::unconvert(old_address, in, elementpos.cb, elementpos.ce);
       }
       
       //attributes
-      while(parseAttribute(in, pos.ab, pos.ae, tagname, parsepos) == xml::SUCCESS)
+      while(parseAttribute(in, pos.ab, pos.ae, elementname, elementpos) == xml::SUCCESS)
       {
-        if(tagname == "name") xml::unconvert(name, in, parsepos.cb, parsepos.ce);
+        if(elementname == "name") xml::unconvert(name, in, elementpos.cb, elementpos.ce);
       }
       
       ref.lastold = old_address;
@@ -940,9 +983,9 @@ namespace xmltest
     
     void generateContent(std::string& out, size_t indent) const
     {
-      xml::generateValueTag(out, "id", xml::RefRes::getAddress(this), indent);
-      xml::generateValueTag(out, "constitution", constitution, indent);
-      xml::generateValueTag(out, "strength", strength, indent);
+      xml::generateSimpleElement(out, "id", xml::RefRes::getAddress(this), indent);
+      xml::generateSimpleElement(out, "constitution", constitution, indent);
+      xml::generateSimpleElement(out, "strength", strength, indent);
     }
   };
   
@@ -952,22 +995,22 @@ namespace xmltest
     double x;
     double y;
     
-    void parseXML(const std::string& in, xml::ParsePos& pos, xml::RefRes& /*ref*/)
+    void parseXML(const std::string& in, xml::ElementPos& pos, xml::RefRes& /*ref*/)
     {
-      xml::ParsePos parsepos;
-      std::string tagname;
+      xml::ElementPos elementpos;
+      std::string elementname;
       
-      while(parseTag(in, pos.cb, pos.ce, tagname, parsepos) == xml::SUCCESS)
+      while(parseElement(in, pos.cb, pos.ce, elementname, elementpos) == xml::SUCCESS)
       {
-        if(tagname == "x") xml::unconvert(x, in, parsepos.cb, parsepos.ce);
-        else if(tagname == "y") xml::unconvert(y, in, parsepos.cb, parsepos.ce);
+        if(elementname == "x") xml::unconvert(x, in, elementpos.cb, elementpos.ce);
+        else if(elementname == "y") xml::unconvert(y, in, elementpos.cb, elementpos.ce);
       }
     }
     
     void generateContent(std::string& out, size_t indent) const
     {
-      xml::generateValueTag(out, "x", x, indent);
-      xml::generateValueTag(out, "y", y, indent);
+      xml::generateSimpleElement(out, "x", x, indent);
+      xml::generateSimpleElement(out, "y", y, indent);
     }
     
     void generateAttributes(std::string&) const {} //needed because no default function can be given to template
@@ -982,19 +1025,19 @@ namespace xmltest
     Vector2 position;
     Vector2 velocity;
     
-    void parseXML(const std::string& in, xml::ParsePos& pos, xml::RefRes& ref)
+    void parseXML(const std::string& in, xml::ElementPos& pos, xml::RefRes& ref)
     {
-      xml::ParsePos parsepos;
-      std::string tagname;
+      xml::ElementPos elementpos;
+      std::string elementname;
       
-      while(parseTag(in, pos.cb, pos.ce, tagname, parsepos) == xml::SUCCESS)
+      while(parseElement(in, pos.cb, pos.ce, elementname, elementpos) == xml::SUCCESS)
       {
-        if(tagname == "health") xml::unconvert(health, in, parsepos.cb, parsepos.ce);
-        else if(tagname == "position") position.parseXML(in, parsepos, ref);
-        else if(tagname == "type")
+        if(elementname == "health") xml::unconvert(health, in, elementpos.cb, elementpos.ce);
+        else if(elementname == "position") position.parseXML(in, elementpos, ref);
+        else if(elementname == "type")
         {
           void* address;
-          xml::unconvert(address, in, parsepos.cb, parsepos.ce);
+          xml::unconvert(address, in, elementpos.cb, elementpos.ce);
           ref.addClient((void**)(&type), address);
         }
       }
@@ -1002,8 +1045,8 @@ namespace xmltest
     
     void generateContent(std::string& out, size_t indent) const
     {
-      xml::generateValueTag(out, "type", xml::RefRes::getAddress(type), indent);
-      xml::generateValueTag(out, "health", health, indent);
+      xml::generateSimpleElement(out, "type", xml::RefRes::getAddress(type), indent);
+      xml::generateSimpleElement(out, "health", health, indent);
       xml::generate(out, "position", position, indent);
     }
     
@@ -1019,36 +1062,36 @@ namespace xmltest
     int sizex;
     int sizey;
     
-    void parseXML(const std::string& in, xml::ParsePos& pos, xml::RefRes& ref)
+    void parseXML(const std::string& in, xml::ElementPos& pos, xml::RefRes& ref)
     {
       xml::deletify(monstertypes);
       xml::deletify(monsters);
       
-      xml::ParsePos parsepos;
-      std::string tagname;
+      xml::ElementPos elementpos;
+      std::string elementname;
       
-      while(parseTag(in, pos.cb, pos.ce, tagname, parsepos) == xml::SUCCESS)
+      while(parseElement(in, pos.cb, pos.ce, elementname, elementpos) == xml::SUCCESS)
       {
-        if(tagname == "monster")
+        if(elementname == "monster")
         {
           monsters.push_back(new Monster);
-          monsters.back()->parseXML(in, parsepos, ref);
+          monsters.back()->parseXML(in, elementpos, ref);
         }
-        else if(tagname == "monstertype")
+        else if(elementname == "monstertype")
         {
           monstertypes.push_back(new MonsterType);
-          monstertypes.back()->parseXML(in, parsepos, ref);
+          monstertypes.back()->parseXML(in, elementpos, ref);
           ref.addPair(ref.lastold, xml::RefRes::getAddress(monstertypes.back()));
         }
-        else if(tagname == "sizex") xml::unconvert(sizex, in, parsepos.cb, parsepos.ce);
-        else if(tagname == "sizey") xml::unconvert(sizey, in, parsepos.cb, parsepos.ce);
+        else if(elementname == "sizex") xml::unconvert(sizex, in, elementpos.cb, elementpos.ce);
+        else if(elementname == "sizey") xml::unconvert(sizey, in, elementpos.cb, elementpos.ce);
       }
     }
     
     void generateContent(std::string& out, size_t indent) const
     {
-      xml::generateValueTag(out, "sizex", sizex, indent);
-      xml::generateValueTag(out, "sizey", sizey, indent);
+      xml::generateSimpleElement(out, "sizex", sizex, indent);
+      xml::generateSimpleElement(out, "sizey", sizey, indent);
       
       for(size_t i = 0; i < monstertypes.size(); i++)
       {
@@ -1066,7 +1109,9 @@ namespace xmltest
   
   void xmltest()
   {
-    std::string xml_in = "<world>\n\
+    std::string xml_in = "<!DOCTYPE none>\n\
+<?xml version=\"1.0\"?>\n\
+<world>\n\
   <sizex>16</sizex>\n\
   <sizey>16</sizey>\n\
   <!--comment-->\n\
@@ -1082,6 +1127,7 @@ namespace xmltest
     <strength>85</strength>\n\
     <!>\n\
   </monstertype>\n\
+  <![WEIRD SECTION[ignored by lpi_xml]]>\n\
   <monster>\n\
     <type>1</type>\n\
     <health>8</health>\n\
@@ -1120,7 +1166,8 @@ namespace xmltest
     std::cout << xml_out; //after generating the xml again, output it again, it should be the same as the input (except the whitespace, which is indented in a fixed way)
     
     std::cout << std::endl;
-    std::cout << "anti-segfault test: " << world.monsters[0]->type->name << std::endl; //if this segfaults, the RefRes system doesn't work correctly, or there aren't enough monsters / no correct types&id's in the xml code
+    std::cout << "RefRes anti-segfault test (should say \"dragon\"):" << std::endl;
+    std::cout << world.monsters[0]->type->name << std::endl; //if this segfaults, the RefRes system doesn't work correctly, or there aren't enough monsters / no correct types&id's in the xml code
     std::cout << std::endl;
   }
   
@@ -1130,7 +1177,7 @@ namespace xmltest
   
   void xmltreetest()
   {
-    std::string xml = "<a><b x='y'>c</b><d><e/></d><f/><g><h>i</h><j><k>l</k></j></g></a>";
+    std::string xml = "<!DOCTYPE none><?xml version=\"1.0\"?><a><!--comment1--><!--comment2--><b x='y'>c</b><d><!--comment3--><e/></d><f/><g><h>i</h><j><k>l<m/>n</k></j></g><!--comment4--></a><!--comment5-->";
     
     xml::XMLTree tree;
     int error = tree.parse(xml); //comments are ignored
@@ -1145,7 +1192,7 @@ namespace xmltest
   
   void xmltreetest_comments()
   {
-    std::string xml = "<?declaration?><a><!--comment1--><!--comment2--><b x='y'>c</b><d><!--comment3--><e/></d><f/><g><h>i</h><j><k>l</k></j></g><!--comment4--></a><!--comment5-->";
+    std::string xml = "<!DOCTYPE none><?xml version=\"1.0\"?><a><!--comment1--><!--comment2--><b x='y'>c</b><d><!--comment3--><e/></d><f/><g><h>i</h><j><k>l<m/>n</k></j></g><!--comment4--></a><!--comment5-->";
     
     xml::XMLTree tree;
     int error = tree.parseOuter(xml, false); //comments and xml declaration not ignored, but included in pretty printing
@@ -1233,7 +1280,7 @@ namespace xmltest
     {
       std::cout << "[composition test]"<<std::endl;
       xmltest();
-      std::cout << "[XMLTree pretty printing test]"<<std::endl;
+      std::cout << "[XMLTree pretty printing test without comments]"<<std::endl;
       xmltreetest();
       std::cout << "[XMLTree pretty printing test with comments]"<<std::endl;
       xmltreetest_comments();
