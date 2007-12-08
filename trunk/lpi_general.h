@@ -28,8 +28,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 namespace lpi
 {
 
-
-/*bool doubleClick(float time, bool button = 0);*/
 Uint32 getTicks(); //returns the ticks in milliseconds
 inline double getSeconds() { return getTicks() / 1000.0; } //returns the ticks in seconds
 
@@ -41,7 +39,7 @@ double getRandom(double first, double last); //get random number in the range of
 //HANDY AUXILIARY FUNCTIONS/////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-void combSort(std::vector<int> &order, std::vector<double> &dist);
+void sort(std::vector<int> &order, std::vector<double> &dist);
 int wrapmod(int i, int n); //wraps i between 0 and n, using the modulo operator
 double clamp(double a, double low, double high);
 int clamp(int a, int low, int high);
@@ -49,7 +47,6 @@ int clamp(int a, int low, int high);
 bool isPowerOfTwo(int n);
 int floatMod(double f, int m);
 int gcd(int a, int b);
-float floatpow(float a, float b);
 
 static const double pi = 3.14159265358979323846264338327950288419716939937510; //why isn't this in standard C++ anyway
 
@@ -59,14 +56,9 @@ inline int intdown(double f) //intdown(0.5) becomes 0, intdown(-0.5) becomes -1,
   else return int(f) - 1;
 }
 
-inline Sint32 intdivdown(Sint32 a, Sint32 b) //divide so that 2/2 = 1, 1/2 = 0, -1/2 = -1, -2/2 = -1, ...
+inline int intdivdown(int a, int b) //divide so that 2/2 = 1, 1/2 = 0, -1/2 = -1, -2/2 = -1, ... (more logical on 2D tile maps than the standard integer dividion)
 {
-  //return a < 0 ? (a + b) / b - 1 : a / b;
-
-  if(a < 0)
-  {
-    return -((-a - 1) / b + 1);
-  }
+  if(a < 0) return -((-a - 1) / b + 1);
   else return a / b;
 }
 
@@ -95,7 +87,6 @@ class GameTime
   {
     oldTime = getTicks();
     newTime = getTicks();
-    
     oldtime_prepared = true;
   }
   
@@ -103,7 +94,6 @@ class GameTime
   {
     lastTimes.clear();
     lastTimes.push_back(newTime);
-    
     fps_prepared = true;
   }
   
