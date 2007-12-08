@@ -46,19 +46,12 @@ int wrapmod(int i, int n); //wraps i between 0 and n, using the modulo operator
 double clamp(double a, double low, double high);
 int clamp(int a, int low, int high);
 
-//there are no proper versions of these functions, or at least I've had troubles with them, so I just define the same functions but with a different name to avoid conflicts (abs, max, min)
-
-//REMOVE THESE ASAP: std::abs, std::min and std::max work just as well, and there are also std::swap and so on by the way
-template<typename T>
-const T template_abs(const T &a)
-{
-  return (a < 0) ? -a : a;
-}
-
 bool isPowerOfTwo(int n);
 int floatMod(double f, int m);
 int gcd(int a, int b);
 float floatpow(float a, float b);
+
+static const double pi = 3.14159265358979323846264338327950288419716939937510; //why isn't this in standard C++ anyway
 
 inline int intdown(double f) //intdown(0.5) becomes 0, intdown(-0.5) becomes -1, intdown(0.0) becomes something unknown, it's a border
 {

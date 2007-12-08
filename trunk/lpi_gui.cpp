@@ -572,24 +572,24 @@ bool BasicElement::mouseOver() const
     case 1: //triangle pointing up
       relX = globalMouseX - x0;
       relY = globalMouseY - y0;
-      symX = template_abs(getSizex() / 2 - relX); //it's symmetrical
+      symX = std::abs(getSizex() / 2 - relX); //it's symmetrical
       if(relY >= (2 * symX * getSizey()) / getSizex()) over = 1;
       break;
     case 2: //triangle pointing right
       relX = globalMouseX - x0;
       relY = globalMouseY - y0;
-      symY = template_abs(getSizey() / 2 - relY); //it's symmetrical
+      symY = std::abs(getSizey() / 2 - relY); //it's symmetrical
       if(getSizex() - relX >= (2 * symY * getSizex()) / getSizey()) over = 1;
       break;
     case 3: //triangle pointing down
       relX = globalMouseX - x0;
       relY = globalMouseY - y0;
-      symX = template_abs(getSizex() / 2 - relX); //it's symmetrical
+      symX = std::abs(getSizex() / 2 - relX); //it's symmetrical
       if(getSizey() - relY >= (2 * symX * getSizey()) / getSizex()) over = 1;
     case 4: //triangle pointing left
       relX = globalMouseX - x0;
       relY = globalMouseY - y0;
-      symY = template_abs(getSizey() / 2 - relY); //it's symmetrical
+      symY = std::abs(getSizey() / 2 - relY); //it's symmetrical
       if(relX >= (2 * symY * getSizey()) / getSizey()) over = 1;
       break;
     default: //rectangle
