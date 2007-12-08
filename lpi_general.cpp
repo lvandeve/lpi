@@ -64,8 +64,10 @@ double getRandom(double first, double last)
 
 
 //this sorts objects based on their distance, and will at the same time also sort an ordered index
-void combSort(std::vector<int> &order, std::vector<double> &dist)
+void sort(std::vector<int> &order, std::vector<double> &dist)
 {
+  //implemented with combsort here
+  
   if(order.size() != dist.size()) return;
   int amount = order.size();
   
@@ -124,6 +126,8 @@ bool isPowerOfTwo(int n) //does not work properly if n is <= 0, then an extra te
 this will apply modulo division to a floating point number. by converting to integer and then taking modulo division, sometimes you don't get nice results because the integer is too small to contain the value of the floating point number. This function here tries to overcome that problem.
 the return value is an integer in the range [0, m)
 negative f is made positive and then the result is calculated (since this fucntion is supposed to be used to find digits).
+
+NOTE: std::fmod already does this in fact...
 */
 int floatMod(double f, int m)
 {
@@ -157,11 +161,6 @@ int gcd(int a, int b)
      a = t;
    }
    return a;
-}
-
-float floatpow(float a, float b)
-{
-   return pow(a, b);
 }
 
 void encodeBase64(const std::vector<unsigned char>& in, std::string& out)
