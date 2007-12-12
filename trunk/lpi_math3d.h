@@ -15,6 +15,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #define LPI_MATH3D_H_INCLUDED
 
 #include <cmath>
+#include <iostream>
 
 namespace lpi
 {
@@ -72,6 +73,8 @@ Vector3 rotateAroundArbitrary(const Vector3& v, const Vector3& axis, double angl
 bool operator==(const Vector3& a, const Vector3& b);
 bool operator!=(const Vector3& a, const Vector3& b);
 
+std::ostream& operator<<(std::ostream& ostr, const Vector3& v);
+
 #define Vector3_origin Vector3(0.0, 0.0, 0.0)
 #define Vector3_0 Vector3(0.0, 0.0, 0.0)
 #define Vector3_x Vector3(1.0, 0.0, 0.0)
@@ -118,6 +121,8 @@ Matrix3 operator/(const Matrix3& A, double a);
 Vector3 operator*(const Matrix3& A, const Vector3& v);
 //Vector3 operator*(const Vector3& v, Matrix3 A);
 Matrix3 operator*(const Matrix3& A, const Matrix3& B);
+
+std::ostream& operator<<(std::ostream& ostr, const Matrix3& m);
 
 Matrix3 getRotationMatrix3(const Vector3& axis, double angle);
 Matrix3 rotateAroundArbitrary(const Matrix3& m, const Vector3& axis, double angle);
