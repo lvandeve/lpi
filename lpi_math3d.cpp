@@ -239,7 +239,6 @@ bool operator!=(const Vector3& a, const Vector3& b)
   return !(a == b);
 }
 
-
 //Gives the angle between two 3D vectors (in radians), should be a value from 0 to Pi
 //if v == w, the dot product is 1, so the result will be 0
 //if v is 90 degrees on w, the dot product is 0 and thus the acos of that is Pi/2 (90 degrees)
@@ -1479,14 +1478,14 @@ Vector3 planeSphereTangent(const Vector3& p, const Vector3& o, double radius, co
   return I;
 }
 
-std::ostream& operator<< (std::ostream& ostr, const Matrix3& m)
-{
-  return ostr << "[" << m.a[0] << " " << m.a[3] << " " << m.a[6] << " ; " << m.a[1] << " " << m.a[4] << " " << m.a[7] << " ; " << m.a[2] << " " << m.a[5] << " " << m.a[8] << "]";
-}
-
-std::ostream& operator<< (std::ostream& ostr, const Vector3& v)
+std::ostream& operator<<(std::ostream& ostr, const Vector3& v)
 {
   return ostr << "[" << v.x << " " << v.y << " " << v.z << "]";
+}
+
+std::ostream& operator<<(std::ostream& ostr, const Matrix3& m)
+{
+  return ostr << "[" << m.a[0] << " " << m.a[3] << " " << m.a[6] << " ; " << m.a[1] << " " << m.a[4] << " " << m.a[7] << " ; " << m.a[2] << " " << m.a[5] << " " << m.a[8] << "]";
 }
 
 } //end of namespace lpi
