@@ -437,7 +437,7 @@ Matrix3 inverse(const Matrix3& A)
   Matrix3 result = A;
   result.invert();
   return result;
-} 
+}
 
 Matrix3& Matrix3::operator+=(const Matrix3& rhs)
 {
@@ -558,9 +558,9 @@ Matrix3& Matrix3::operator*=(const Matrix3& rhs)
   temp.a[3] = a[0]*rhs.a[3] + a[3]*rhs.a[4] + a[6]*rhs.a[5];
   temp.a[4] = a[1]*rhs.a[3] + a[4]*rhs.a[4] + a[7]*rhs.a[5];
   temp.a[5] = a[2]*rhs.a[3] + a[5]*rhs.a[4] + a[8]*rhs.a[5];
-  temp.a[6] = a[0]*rhs.a[6] + a[3]*rhs.a[5] + a[6]*rhs.a[8];
-  temp.a[7] = a[1]*rhs.a[6] + a[4]*rhs.a[5] + a[7]*rhs.a[8];
-  temp.a[8] = a[2]*rhs.a[6] + a[5]*rhs.a[5] + a[8]*rhs.a[8];
+  temp.a[6] = a[0]*rhs.a[6] + a[3]*rhs.a[7] + a[6]*rhs.a[8];
+  temp.a[7] = a[1]*rhs.a[6] + a[4]*rhs.a[7] + a[7]*rhs.a[8];
+  temp.a[8] = a[2]*rhs.a[6] + a[5]*rhs.a[7] + a[8]*rhs.a[8];
   *this = temp;
   return *this;
 }
@@ -575,9 +575,9 @@ Matrix3 operator*(const Matrix3& A, const Matrix3& B)
   C.a[3] = A.a[0]*B.a[3] + A.a[3]*B.a[4] + A.a[6]*B.a[5];
   C.a[4] = A.a[1]*B.a[3] + A.a[4]*B.a[4] + A.a[7]*B.a[5];
   C.a[5] = A.a[2]*B.a[3] + A.a[5]*B.a[4] + A.a[8]*B.a[5];
-  C.a[6] = A.a[0]*B.a[6] + A.a[3]*B.a[5] + A.a[6]*B.a[8];
-  C.a[7] = A.a[1]*B.a[6] + A.a[4]*B.a[5] + A.a[7]*B.a[8];
-  C.a[8] = A.a[2]*B.a[6] + A.a[5]*B.a[5] + A.a[8]*B.a[8];
+  C.a[6] = A.a[0]*B.a[6] + A.a[3]*B.a[7] + A.a[6]*B.a[8];
+  C.a[7] = A.a[1]*B.a[6] + A.a[4]*B.a[7] + A.a[7]*B.a[8];
+  C.a[8] = A.a[2]*B.a[6] + A.a[5]*B.a[7] + A.a[8]*B.a[8];
   return C;
 }
 
@@ -608,7 +608,7 @@ Transformation3::Transformation3(double posx, double posy, double posz, double u
   invMatrixUpToDate = false;
   generateMatrix();
   planetGroundPlaneType = XZ;
-}  
+}
 
 //Construct a camera with default parameters
 Transformation3::Transformation3()
@@ -636,15 +636,18 @@ Transformation3::Transformation3()
 Vector3& Transformation3::getU()
 {
   return u;
-}  
+}
+
 Vector3& Transformation3::getV()
 {
   return v;
-}  
+}
+
 Vector3& Transformation3::getDir()
 {
   return dir;
-}  
+}
+
 Vector3& Transformation3::getPos()
 {
   return pos;
@@ -654,7 +657,8 @@ void Transformation3::setU(const Vector3& newU)
 {
   u = newU;
   generateMatrix();
-}  
+}
+
 void Transformation3::setV(const Vector3& newV)
 {
   v = newV;
@@ -665,17 +669,17 @@ void Transformation3::setDir(const Vector3& newDir)
 {
   dir = newDir;
   generateMatrix();
-}  
+}
 
 void Transformation3::setPos(const Vector3& newPos)
 {
   pos = newPos;
-} 
+}
 
 void Transformation3::move(const Vector3& offset)
 {
   pos = pos + offset;
-}  
+}
 
 /*
 rotate around the center of this transformation, around certain axis through this center
@@ -699,7 +703,6 @@ void Transformation3::rotate(const Vector3& a, const Vector3& b, double angle)
   //make a the origin, so that b - a becomes the rotation axis for rotateAroundArbitrary function that only works for axis through origin
   pos = pos - a;
   Vector3 axis = b - a;
-
   
   u = rotateAroundArbitrary(u, axis, angle);
   v = rotateAroundArbitrary(v, axis, angle);
@@ -730,6 +733,8 @@ void Transformation3::setLookDir(const Vector3& newDir)
 
   double angle = -vectorAngle(newDir, dir);
   if(angle != 0) rotate(axis, angle);
+  
+  generateMatrix();
 }
 
 //Look at a certain point (the point will come in the center of the screen, if nothing's in front of it that is)
@@ -747,6 +752,8 @@ void Transformation3::setGroundPlane(const Vector3& n)
 
   double angle = -vectorAngle(-n, v);
   if(angle != 0) rotate(axis, angle);
+  
+  generateMatrix();
 }
 
 double Transformation3::getDist(const Vector3& point)
@@ -783,12 +790,12 @@ void Transformation3::zoomV(double a)
   generateMatrix();
 }
 
-double Transformation3::getZoomU()
+double Transformation3::getZoomU() const
 {
   return(dir.length() / u.length());
 }
 
-double Transformation3::getZoomV()
+double Transformation3::getZoomV() const
 {
   return(dir.length() / v.length());
 }
@@ -803,7 +810,7 @@ void Transformation3::setZoomV(double a)
 {
   v = v / (a / getZoomV());
   generateMatrix();
-}  
+}
 
 double Transformation3::getFOVU(double w, double h)
 {
@@ -824,7 +831,7 @@ void Transformation3::setFOVU(double angle)
 void Transformation3::setFOVV(double angle)
 {
   setZoomV(1.0 / tan(angle / 2.0));
-}   
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //Functions to get Yaw, Pitch and Roll. Normally to do things with the camera, 
@@ -838,10 +845,10 @@ Yaw is the wind direction the camera is looking at if you'd be standing on plane
        N
        ^ 
        |z 
-       |   x      Looking in the direction Z = North (0�, 0 rad)
-W -----+-----> E  Looking in the direction X = East (+90�, +1.57 rad)
-       |          Looking in negative Z = South (180�, 3.1415 rad, sign jump)
-       |          Looking in negative X = West (-90�, -1.57 rad)
+       |   x      Looking in the direction Z = North (0 deg., 0 rad)
+W -----+-----> E  Looking in the direction X = East (+90 deg., +1.57 rad)
+       |          Looking in negative Z = South (180 deg., 3.1415 rad, sign jump)
+       |          Looking in negative X = West (-90 deg., -1.57 rad)
        |
        S
 */
@@ -849,7 +856,7 @@ W -----+-----> E  Looking in the direction X = East (+90�, +1.57 rad)
 //NOTE!!!! It may seem confusing that X and Z are wind directions, while Y is the axis of the world that points to the sky, but this is the convention used in most 3D engines as well as OpenGL, and it makes a camera with unit matrix have it's up vector really up to the sky while the looking direction is a wind direction!
 
 double Transformation3::getYaw()
-{  
+{
   //the atan2 function returns the angle of a 2D point (like from polar coordinates), so here it gives angle of dir projected on XZ plane, which is what we want for the yaw
   if(planetGroundPlaneType == XZ) return(atan2(dir.x, dir.z));
   else /*if(planetGroundPlaneType == XY)*/ return(atan2(dir.x, dir.y));
@@ -863,30 +870,33 @@ void Transformation3::setYaw(double angle)
   
   if(planetGroundPlaneType == XZ) rotate(Vector3(0,1,0), - angle + currentAngle);
   else if(planetGroundPlaneType == XY) rotate(Vector3(0,0,1), - angle + currentAngle);
+  
+  generateMatrix();
 }
 
 //rotates camera around world Y-axis with given angle (in space this would make no sense since there isn't really an "up" or "down" of the world, instead you rotate around the "up" and "down" of your own spaceship there
 //When rolled, yawPlanet will give very annoying rotation, so for a spacegame or flight simulator you'll want to use yawSpace instead.
 void Transformation3::yawPlanet(double angle)
-{  
-  
+{
   if(planetGroundPlaneType == XZ) rotate(Vector3(0,1,0), angle);
   else if(planetGroundPlaneType == XY) rotate(Vector3(0,0,1), angle);
+  
+  generateMatrix();
 }
 
 //rotates camera around camera v axis with given angle (this one makes sense in space, but not on a planet, on a planet your camera would start getting a "roll")
 void Transformation3::yawSpace(double angle)
-{  
+{
   rotate(v, angle);
 }
 
 /*
 Pitch is only useful to define if you're standing on a plane or a planet, and there's a sky
 The plane you're standing on is the XZ plane, and Y points to the sky
-Pitch is 0� if you look forward (direction vector parallel to the XZ plane)
-Pitch is +90� if you look to the sky (maximum "up")
-Pitch is -90� if you look at the ground (maximum "down")
-Pitches of more than 90� or less than -90� aren't defined, since these can also be made by having  yaw 180� rotated and having a pitch between -90� and +90�
+Pitch is 0 deg. if you look forward (direction vector parallel to the XZ plane)
+Pitch is +90 deg. if you look to the sky (maximum "up")
+Pitch is -90 deg. if you look at the ground (maximum "down")
+Pitches of more than 90 deg. or less than -90 deg. aren't defined, since these can also be made by having  yaw 180 deg. rotated and having a pitch between -90 deg. and +90 deg.
 */
 double Transformation3::getPitch()
 {
@@ -904,7 +914,7 @@ NOT useful for spacecrafts etc... because there's no up or down in space and X, 
 only useful for FPS games or other games where you walk on a planet surface
 */
 void Transformation3::setPitch(double angle)
-{  
+{
   double currentAngle = getPitch();
   //to change pitch, you have to rotate around the horizontal vector of the camera
   rotate(u, angle - currentAngle);
@@ -912,16 +922,16 @@ void Transformation3::setPitch(double angle)
 
 //pitches the camera over a certain amount
 void Transformation3::pitch(double angle)
-{  
+{
   rotate(u, angle);
 }
 
 /*
 Roll is only necessary for spacegames, flightsimulators or rare effects of FPS games
-Roll 0� = cam.u parallel with XZ plane, cam.v points upwards
-Roll +90� = cam.v parallel with XZ plane, cam.u points downwards
-Roll +-180� = cam.u parallel with XZ plane, cam.v points downwards (= you're upside down)
-Roll -90� = cam.v parallel with XZ plane, cam.u points upwards
+Roll 0 deg. = cam.u parallel with XZ plane, cam.v points upwards
+Roll +90 deg. = cam.v parallel with XZ plane, cam.u points downwards
+Roll +-180 deg. = cam.u parallel with XZ plane, cam.v points downwards (= you're upside down)
+Roll -90 deg. = cam.v parallel with XZ plane, cam.u points upwards
 In space games the angles have no physical meaning, but in the coordinate system this angle is an "Euler" angle.
 */
 double Transformation3::getRoll()
@@ -930,7 +940,6 @@ double Transformation3::getRoll()
   //the angle between two planes is the angle between their normals
   //the normals are gotten with cross products
   //the vectorAngle function uses acos and dot product
-  
   
   if(planetGroundPlaneType == XZ)
   {
@@ -944,12 +953,10 @@ double Transformation3::getRoll()
     if(u.z < 0) roll = -roll;
     return roll;
   }
-  
-
 }
 
 void Transformation3::setRoll(double angle)
-{  
+{
   double currentAngle = getRoll();
   //to change roll, you have to rotate around the direction vector of the camera
   rotate(dir, angle - currentAngle);
@@ -957,7 +964,7 @@ void Transformation3::setRoll(double angle)
 
 //rolls the camera by rotating it around the direction vector (only makes sense in space or for "shaking" effects)
 void Transformation3::roll(double angle)
-{  
+{
   rotate(dir, angle);
 }
 
@@ -970,6 +977,7 @@ void Transformation3::resetSkewU()
   v = cross(dir, -u);
   setZoomU(oldZoomU);
   setZoomV(oldZoomV);
+  generateMatrix();
 }
 
 //makes u, v and dir perpendicular by using cross product, maintains exact direction and roll if only u was skewed
@@ -981,13 +989,14 @@ void Transformation3::resetSkewV()
   u = cross(dir, -v);
   setZoomU(oldZoomU);
   setZoomV(oldZoomV);
+  generateMatrix();
 }
 
 //get and set screen ratios of the camera (ratio of length of u and v, e.g. 4:3, 16:9, 640:480, ...)
 double Transformation3::getRatioUV()
 {
   return u.length() / v.length();
-}  
+}
 
 double Transformation3::getRatioVU()
 {
@@ -999,8 +1008,8 @@ void Transformation3::setRatioUV(double ratio)
 {
   v.normalize();
   v = v * u.length() / ratio;
-  generateMatrix();  
-}  
+  generateMatrix();
+}
 
 //changes U
 void Transformation3::setRatioVU(double ratio)
@@ -1008,32 +1017,32 @@ void Transformation3::setRatioVU(double ratio)
   u.normalize();
   u = u * (v.length() / ratio);
   generateMatrix();
-} 
+}
 
 //scale U, V and Dir without changing what you see
 double Transformation3::getScale()
 {
   return dir.length();
-}  
+}
+
 void Transformation3::setScale(double dirLength)
 {
   scale(dir.length() / dirLength);
 }
-  
+
 void Transformation3::scale(double factor)  
 {
   dir = dir * factor;
   u = u * factor;
   v = v * factor;
   generateMatrix();
-}  
+}
 
 void Transformation3::generateMatrix()
 {
   //instead of generating it here, it's just set that it's not up to date anymore and it'll be generated only as soon as it's actually needed, in the get functions. Always use the get functions, even inside this class, to make sure up to date matrices are always used.
   matrixUpToDate = false;
   invMatrixUpToDate = false;
-
 }
 
 const Matrix3& Transformation3::getMatrix()
@@ -1082,13 +1091,13 @@ void Transformation3::setMatrix(const Matrix3& matrix)
   dir.y = matrix.a[7];
   dir.z = matrix.a[8];
   generateMatrix();
-} 
+}
 
 Vector3 Transformation3::transform(const Vector3& v)
 {
   /*
   Transformation from coordinate system 1 (base 1) to coordinate system 2 (base 2):
-    
+  
   vector v = coordinates of point p in base 1 (column vector)
   matrix A = the 3 vectors representing coordinates of unit vectors of base 2 in base 1 (3 column vectors in matrix)
   vector w = coordinates of point p in base 2(column vector)
@@ -1106,7 +1115,7 @@ Vector3 Transformation3::transform(const Vector3& v)
   All this text to describe only one line of code...
   */
   
-  return getInvMatrix() * v;  
+  return getInvMatrix() * v;
 }
 
 //same as transform, but before multiplying, pos is subtracted from v
@@ -1176,12 +1185,12 @@ bool Transformation3::camSpaceToScreen(const Vector3& point, int& x, int& y, int
 double radToDeg(double rad)
 {
   return 360.0 * rad / (3.14159 * 2.0);
-} 
+}
 
 double degToRad(double deg)
 {
   return (3.14159 * 2.0) * deg / 360.0;
-}  
+}
 
 Vector3 normalOfTriangle(const Vector3& a, const Vector3& b, const Vector3& c)
 {

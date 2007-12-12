@@ -161,7 +161,7 @@ class Transformation3
                   double vx,   double vy,   double vz,
                   double dirx, double diry, double dirz,
                   double nearClip = 0.0, double farClip = 0.0);
-           
+
   //Get and Set the 4 important vectors 
   Vector3& getU(); //the "right" vector of the camera, x coordinate of screen
   Vector3& getV(); //the "up" vector of the camera, y coordinate of screen
@@ -185,8 +185,8 @@ class Transformation3
   void setDist(const Vector3& point, double dist);
   
   //get and set zoom
-  double getZoomU();
-  double getZoomV();
+  double getZoomU() const;
+  double getZoomV() const;
   void setZoomU(double a);
   void setZoomV(double a); 
   void zoom(double a);
