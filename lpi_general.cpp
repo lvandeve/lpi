@@ -163,7 +163,7 @@ int gcd(int a, int b)
    return a;
 }
 
-void encodeBase64(const std::vector<unsigned char>& in, std::string& out)
+void encodeBase64(std::string& out, const std::vector<unsigned char>& in)
 {
   const std::string characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
   unsigned long bit24 = 0;
@@ -190,11 +190,11 @@ void encodeBase64(const std::vector<unsigned char>& in, std::string& out)
     
     for(size_t i = 0; i < 4; i++)
     {
-      if(pos + i - 1 < in.size()) out.push_back(characters[sextet[i]]);
+      if(pos + i <= in.size()) out.push_back(characters[sextet[i]]);
       else out.push_back('=');
     }
     
-    if(pos % 57 == 0 && pos != 0) out.push_back(10); //newline char every 76 chars (57 = 3/4th of 76)
+    if(pos % 57 == 54) out.push_back(10); //newline char every 76 chars (57 = 3/4th of 76)
   }
 }
   

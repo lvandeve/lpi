@@ -117,7 +117,7 @@ void encodeBase64(const std::vector<unsigned char>& in, std::string& out)
     
     for(size_t i = 0; i < 4; i++)
     {
-      if(pos + i - 1 < in.size()) out.push_back(characters[sextet[i]]);
+      if(pos + i <= in.size()) out.push_back(characters[sextet[i]]);
       else out.push_back('=');
     }
     
