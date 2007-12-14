@@ -26,6 +26,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_screen.h"
 #include "lpi_draw2dgl.h"
 #include "lpi_draw2d.h"
+#include "lpi_file.h"
 
 #include "lpi_xml.h"
 
@@ -132,24 +133,40 @@ void initBuiltInGui(const std::string& xmlgui)
   {
     if(tree.children[i]->content.name == "textures_small")
     {
-      initBuiltInGuiTexturesSmall(tree.children[i]->content.value);
+      initBuiltInGuiTexturesSmall64(tree.children[i]->content.value);
     }
     else if(tree.children[i]->content.name == "icons_small")
     {
-      initBuiltInGuiIconsSmall(tree.children[i]->content.value);
+      initBuiltInGuiIconsSmall64(tree.children[i]->content.value);
     }
   }
 }
 
-void initBuiltInGuiTexturesSmall(const std::string& png_base64)
+
+void initBuiltInGuiTexturesSmall(const std::string& png_file_name)
+{
+  std::vector<unsigned char> png;
+  loadFile(png, png_file_name);
+  if(!png.empty())
+    initBuiltInGuiTexturesSmall(png);
+}
+
+
+void initBuiltInGuiTexturesSmall64(const std::string& png_base64)
+{
+  std::vector<unsigned char> decoded64;
+  decodeBase64(decoded64, png_base64);
+  initBuiltInGuiTexturesSmall(decoded64);
+}
+
+void initBuiltInGuiTexturesSmall(const std::vector<unsigned char>& png)
 {
   LodePNG::Decoder pngdec;
 
-  std::vector<unsigned char> decoded64;
+  
   std::vector<unsigned char> dataBuffer;
-
-  decodeBase64(decoded64, png_base64);
-  pngdec.decode(dataBuffer, decoded64);
+  
+  pngdec.decode(dataBuffer, png);
   
   const int GDW = pngdec.getWidth(); //width of the gui data
   const int GDH = pngdec.getHeight(); //height of the gui data
@@ -302,15 +319,28 @@ void initBuiltInGuiTexturesSmall(const std::string& png_base64)
   builtInGuiSet.textButtonMarkup[2] = TS_RShadow;
 }
 
-void initBuiltInGuiIconsSmall(const std::string& png_base64)
+
+
+void initBuiltInGuiIconsSmall(const std::string& png_file_name)
+{
+  std::vector<unsigned char> png;
+  loadFile(png, png_file_name);
+  if(!png.empty())
+    initBuiltInGuiIconsSmall(png);
+}
+
+void initBuiltInGuiIconsSmall64(const std::string& png_base64)
+{
+  std::vector<unsigned char> decoded64;
+  decodeBase64(decoded64, png_base64);
+  initBuiltInGuiIconsSmall(decoded64);
+}
+
+void initBuiltInGuiIconsSmall(const std::vector<unsigned char>& png)
 {
   LodePNG::Decoder pngdec;
-
-  std::vector<unsigned char> decoded64;
   std::vector<unsigned char> dataBuffer;
-
-  decodeBase64(decoded64, png_base64);
-  pngdec.decode(dataBuffer, decoded64);
+  pngdec.decode(dataBuffer, png);
   
   const int GDW = pngdec.getWidth(); //width of the gui data
   const int GDH = pngdec.getHeight(); //height of the gui data
