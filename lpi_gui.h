@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
 /*
 lpi_gui: an OpenGL GUI
 */
@@ -36,7 +37,9 @@ namespace lpi
 namespace gui
 {
 
-void initBuiltInGuiTextures();
+void initBuiltInGui(const std::string& xmlgui);
+void initBuiltInGuiTexturesSmall(const std::string& png_base64);
+void initBuiltInGuiIconsSmall(const std::string& png_base64);
 
 ////////////////////////////////////////////////////////////////////////////////
 //ENUMS/////////////////////////////////////////////////////////////////////////
@@ -207,7 +210,7 @@ class BackRule
 #define DEFAULTHRULE BackRule(1)
 #define DEFAULTVRULE BackRule(2)
 
-struct GuiSet //contains the actual texture data, not just pointers
+struct GuiSet
 {
   const Texture* windowTextures[9];
   const Texture* buttonTextures[9];
@@ -831,6 +834,8 @@ class Container : public Element
     void pushTopAt(Element* element, int x, int y, double leftSticky=0.0, double topSticky=0.0, double rightSticky=0.0, double bottomSticky=0.0);
     void pushBottomAt(Element* element, int x, int y, double leftSticky=0.0, double topSticky=0.0, double rightSticky=0.0, double bottomSticky=0.0);
     void insertAt(size_t pos, Element* element, int x, int y, double leftSticky=0.0, double topSticky=0.0, double rightSticky=0.0, double bottomSticky=0.0);
+
+    void centerElement(Element* element);
 
     void remove(Element* element);
     unsigned long size() const;

@@ -345,28 +345,28 @@ Matrix3 rotateAroundArbitrary(const Matrix3& m, const Vector3& axis, double angl
 
 Matrix3::Matrix3(double a0, double a1, double a2, double a3, double a4, double a5, double a6, double a7, double a8)
 {
-  this->a[0] = a0;
-  this->a[1] = a1;
-  this->a[2] = a2;
-  this->a[3] = a3;
-  this->a[4] = a4;
-  this->a[5] = a5;
-  this->a[6] = a6;
-  this->a[7] = a7;
-  this->a[8] = a8;
+  this->a[0][0] = a0;
+  this->a[0][1] = a1;
+  this->a[0][2] = a2;
+  this->a[1][0] = a3;
+  this->a[1][1] = a4;
+  this->a[1][2] = a5;
+  this->a[2][0] = a6;
+  this->a[2][1] = a7;
+  this->a[2][2] = a8;
 }
 
 Matrix3::Matrix3()
 {
-  this->a[0] = 0.0;
-  this->a[1] = 0.0;
-  this->a[2] = 0.0;
-  this->a[3] = 0.0;
-  this->a[4] = 0.0;
-  this->a[5] = 0.0;
-  this->a[6] = 0.0;
-  this->a[7] = 0.0;
-  this->a[8] = 0.0;
+  this->a[0][0] = 0.0;
+  this->a[0][1] = 0.0;
+  this->a[0][2] = 0.0;
+  this->a[1][0] = 0.0;
+  this->a[1][1] = 0.0;
+  this->a[1][2] = 0.0;
+  this->a[2][0] = 0.0;
+  this->a[2][1] = 0.0;
+  this->a[2][2] = 0.0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -378,9 +378,9 @@ Matrix3::Matrix3()
 ////////////////////////////////////////////////////////////////////////////////
 void Matrix3::transpose()
 {
-  a[1] += a[3]; a[3] = a[1] - a[3]; a[1] -= a[3]; //swap b and d
-  a[2] += a[6]; a[6] = a[2] - a[6]; a[2] -= a[6]; //swap c and g
-  a[5] += a[7]; a[7] = a[5] - a[7]; a[5] -= a[7]; //swap f and h
+  a[0][1] += a[1][0]; a[1][0] = a[0][1] - a[1][0]; a[0][1] -= a[1][0]; //swap b and d
+  a[0][2] += a[2][0]; a[2][0] = a[0][2] - a[2][0]; a[0][2] -= a[2][0]; //swap c and g
+  a[1][2] += a[2][1]; a[2][1] = a[1][2] - a[2][1]; a[1][2] -= a[2][1]; //swap f and h
 }
 
 Matrix3 transpose(const Matrix3& A)
@@ -392,12 +392,12 @@ Matrix3 transpose(const Matrix3& A)
 
 double Matrix3::determinant() const
 {
-  double det = a[0] * a[4] * a[8]
-             + a[3] * a[7] * a[2]
-             + a[1] * a[5] * a[6]
-             - a[2] * a[4] * a[6]
-             - a[1] * a[3] * a[8]
-             - a[5] * a[7] * a[0];
+  double det = a[0][0] * a[1][1] * a[2][2]
+             + a[1][0] * a[2][1] * a[0][2]
+             + a[0][1] * a[1][2] * a[2][0]
+             - a[0][2] * a[1][1] * a[2][0]
+             - a[0][1] * a[1][0] * a[2][2]
+             - a[1][2] * a[2][1] * a[0][0];
   return det;
 }
 
@@ -426,15 +426,15 @@ void Matrix3::invert()
   Matrix3 B;
 
   //included in these calculations: minor, cofactor (changed signs), transpose (by the order of "="), division through determinant
-  B.a[0] = ( a[4] * a[8] - a[5] * a[7]) / det;
-  B.a[3] = (-a[3] * a[8] + a[5] * a[6]) / det;
-  B.a[6] = ( a[3] * a[7] - a[4] * a[6]) / det;
-  B.a[1] = (-a[1] * a[8] + a[2] * a[7]) / det;
-  B.a[4] = ( a[0] * a[8] - a[2] * a[6]) / det;
-  B.a[7] = (-a[0] * a[7] + a[1] * a[6]) / det;
-  B.a[2] = ( a[1] * a[5] - a[2] * a[4]) / det;
-  B.a[5] = (-a[0] * a[5] + a[2] * a[3]) / det;
-  B.a[8] = ( a[0] * a[4] - a[1] * a[3]) / det;
+  B.a[0][0] = ( a[1][1] * a[2][2] - a[1][2] * a[2][1]) / det;
+  B.a[1][0] = (-a[1][0] * a[2][2] + a[1][2] * a[2][0]) / det;
+  B.a[2][0] = ( a[1][0] * a[2][1] - a[1][1] * a[2][0]) / det;
+  B.a[0][1] = (-a[0][1] * a[2][2] + a[0][2] * a[2][1]) / det;
+  B.a[1][1] = ( a[0][0] * a[2][2] - a[0][2] * a[2][0]) / det;
+  B.a[2][1] = (-a[0][0] * a[2][1] + a[0][1] * a[2][0]) / det;
+  B.a[0][2] = ( a[0][1] * a[1][2] - a[0][2] * a[1][1]) / det;
+  B.a[1][2] = (-a[0][0] * a[1][2] + a[0][2] * a[1][0]) / det;
+  B.a[2][2] = ( a[0][0] * a[1][1] - a[0][1] * a[1][0]) / det;
   
   *this = B;
 }
@@ -448,15 +448,15 @@ Matrix3 inverse(const Matrix3& A)
 
 Matrix3& Matrix3::operator+=(const Matrix3& rhs)
 {
-  a[0] += rhs.a[0];
-  a[3] += rhs.a[3];
-  a[6] += rhs.a[6];
-  a[1] += rhs.a[1];
-  a[4] += rhs.a[4];
-  a[7] += rhs.a[7];
-  a[2] += rhs.a[2];
-  a[5] += rhs.a[5];
-  a[8] += rhs.a[8];
+  a[0][0] += rhs.a[0][0];
+  a[1][0] += rhs.a[1][0];
+  a[2][0] += rhs.a[2][0];
+  a[0][1] += rhs.a[0][1];
+  a[1][1] += rhs.a[1][1];
+  a[2][1] += rhs.a[2][1];
+  a[0][2] += rhs.a[0][2];
+  a[1][2] += rhs.a[1][2];
+  a[2][2] += rhs.a[2][2];
   return *this;
 }
 
@@ -469,15 +469,15 @@ Matrix3 operator+(const Matrix3& A, const Matrix3& B)
 
 Matrix3& Matrix3::operator-=(const Matrix3& rhs)
 {
-  a[0] -= rhs.a[0];
-  a[3] -= rhs.a[3];
-  a[6] -= rhs.a[6];
-  a[1] -= rhs.a[1];
-  a[4] -= rhs.a[4];
-  a[7] -= rhs.a[7];
-  a[2] -= rhs.a[2];
-  a[5] -= rhs.a[5];
-  a[8] -= rhs.a[8];
+  a[0][0] -= rhs.a[0][0];
+  a[1][0] -= rhs.a[1][0];
+  a[2][0] -= rhs.a[2][0];
+  a[0][1] -= rhs.a[0][1];
+  a[1][1] -= rhs.a[1][1];
+  a[2][1] -= rhs.a[2][1];
+  a[0][2] -= rhs.a[0][2];
+  a[1][2] -= rhs.a[1][2];
+  a[2][2] -= rhs.a[2][2];
   return *this;
 }
 
@@ -490,15 +490,15 @@ Matrix3 operator-(const Matrix3& A, const Matrix3& B)
 
 Matrix3& Matrix3::operator*=(double f)
 {
-  a[0] *= f;
-  a[3] *= f;
-  a[6] *= f;
-  a[1] *= f;
-  a[4] *= f;
-  a[7] *= f;
-  a[2] *= f;
-  a[5] *= f;
-  a[8] *= f;
+  a[0][0] *= f;
+  a[1][0] *= f;
+  a[2][0] *= f;
+  a[0][1] *= f;
+  a[1][1] *= f;
+  a[2][1] *= f;
+  a[0][2] *= f;
+  a[1][2] *= f;
+  a[2][2] *= f;
   return *this;
 }
 
@@ -518,15 +518,15 @@ Matrix3 operator*(double a, const Matrix3& A)
 
 Matrix3& Matrix3::operator/=(double f)
 {
-  a[0] /= f;
-  a[3] /= f;
-  a[6] /= f;
-  a[1] /= f;
-  a[4] /= f;
-  a[7] /= f;
-  a[2] /= f;
-  a[5] /= f;
-  a[8] /= f;
+  a[0][0] /= f;
+  a[1][0] /= f;
+  a[2][0] /= f;
+  a[0][1] /= f;
+  a[1][1] /= f;
+  a[2][1] /= f;
+  a[0][2] /= f;
+  a[1][2] /= f;
+  a[2][2] /= f;
   return *this;
 }
 
@@ -540,9 +540,9 @@ Matrix3 operator/(const Matrix3& A, double a)
 //Multiply a matrix with a column vector, resulting in a column vector
 Vector3 operator*(const Matrix3& A, const Vector3& v)
 {
-  Vector3 w(A.a[0] * v.x + A.a[3] * v.y + A.a[6] * v.z,
-            A.a[1] * v.x + A.a[4] * v.y + A.a[7] * v.z,
-            A.a[2] * v.x + A.a[5] * v.y + A.a[8] * v.z);
+  Vector3 w(A.a[0][0] * v.x + A.a[1][0] * v.y + A.a[2][0] * v.z,
+            A.a[0][1] * v.x + A.a[1][1] * v.y + A.a[2][1] * v.z,
+            A.a[0][2] * v.x + A.a[1][2] * v.y + A.a[2][2] * v.z);
   return w;
 }
 
@@ -550,24 +550,24 @@ Vector3 operator*(const Matrix3& A, const Vector3& v)
 /*//Multiply a vector with a row matrix, resulting in a row vector
 Vector3 operator*(const Vector3& v, Matrix3 A)
 {
-  Vector3 w(A.a[0] * v.x + A.a[1] * v.y + A.a[2] * v.z,
-            A.a[3] * v.x + A.a[4] * v.y + A.a[5] * v.z,
-            A.a[6] * v.x + A.a[7] * v.y + A.a[8] * v.z);
+  Vector3 w(A.a[0][0] * v.x + A.a[0][1] * v.y + A.a[0][2] * v.z,
+            A.a[1][0] * v.x + A.a[1][1] * v.y + A.a[1][2] * v.z,
+            A.a[2][0] * v.x + A.a[2][1] * v.y + A.a[2][2] * v.z);
   return w;
 }*/
 
 Matrix3& Matrix3::operator*=(const Matrix3& rhs)
 {
   Matrix3 temp;
-  temp.a[0] = a[0]*rhs.a[0] + a[3]*rhs.a[1] + a[6]*rhs.a[2];
-  temp.a[1] = a[1]*rhs.a[0] + a[4]*rhs.a[1] + a[7]*rhs.a[2];
-  temp.a[2] = a[2]*rhs.a[0] + a[5]*rhs.a[1] + a[8]*rhs.a[2];
-  temp.a[3] = a[0]*rhs.a[3] + a[3]*rhs.a[4] + a[6]*rhs.a[5];
-  temp.a[4] = a[1]*rhs.a[3] + a[4]*rhs.a[4] + a[7]*rhs.a[5];
-  temp.a[5] = a[2]*rhs.a[3] + a[5]*rhs.a[4] + a[8]*rhs.a[5];
-  temp.a[6] = a[0]*rhs.a[6] + a[3]*rhs.a[7] + a[6]*rhs.a[8];
-  temp.a[7] = a[1]*rhs.a[6] + a[4]*rhs.a[7] + a[7]*rhs.a[8];
-  temp.a[8] = a[2]*rhs.a[6] + a[5]*rhs.a[7] + a[8]*rhs.a[8];
+  temp.a[0][0] = a[0][0]*rhs.a[0][0] + a[1][0]*rhs.a[0][1] + a[2][0]*rhs.a[0][2];
+  temp.a[0][1] = a[0][1]*rhs.a[0][0] + a[1][1]*rhs.a[0][1] + a[2][1]*rhs.a[0][2];
+  temp.a[0][2] = a[0][2]*rhs.a[0][0] + a[1][2]*rhs.a[0][1] + a[2][2]*rhs.a[0][2];
+  temp.a[1][0] = a[0][0]*rhs.a[1][0] + a[1][0]*rhs.a[1][1] + a[2][0]*rhs.a[1][2];
+  temp.a[1][1] = a[0][1]*rhs.a[1][0] + a[1][1]*rhs.a[1][1] + a[2][1]*rhs.a[1][2];
+  temp.a[1][2] = a[0][2]*rhs.a[1][0] + a[1][2]*rhs.a[1][1] + a[2][2]*rhs.a[1][2];
+  temp.a[2][0] = a[0][0]*rhs.a[2][0] + a[1][0]*rhs.a[2][1] + a[2][0]*rhs.a[2][2];
+  temp.a[2][1] = a[0][1]*rhs.a[2][0] + a[1][1]*rhs.a[2][1] + a[2][1]*rhs.a[2][2];
+  temp.a[2][2] = a[0][2]*rhs.a[2][0] + a[1][2]*rhs.a[2][1] + a[2][2]*rhs.a[2][2];
   *this = temp;
   return *this;
 }
@@ -576,22 +576,22 @@ Matrix3 operator*(const Matrix3& A, const Matrix3& B)
 {
   //not implemented in terms of operator*= because there already is a copy in there...
   Matrix3 C;
-  C.a[0] = A.a[0]*B.a[0] + A.a[3]*B.a[1] + A.a[6]*B.a[2];
-  C.a[1] = A.a[1]*B.a[0] + A.a[4]*B.a[1] + A.a[7]*B.a[2];
-  C.a[2] = A.a[2]*B.a[0] + A.a[5]*B.a[1] + A.a[8]*B.a[2];
-  C.a[3] = A.a[0]*B.a[3] + A.a[3]*B.a[4] + A.a[6]*B.a[5];
-  C.a[4] = A.a[1]*B.a[3] + A.a[4]*B.a[4] + A.a[7]*B.a[5];
-  C.a[5] = A.a[2]*B.a[3] + A.a[5]*B.a[4] + A.a[8]*B.a[5];
-  C.a[6] = A.a[0]*B.a[6] + A.a[3]*B.a[7] + A.a[6]*B.a[8];
-  C.a[7] = A.a[1]*B.a[6] + A.a[4]*B.a[7] + A.a[7]*B.a[8];
-  C.a[8] = A.a[2]*B.a[6] + A.a[5]*B.a[7] + A.a[8]*B.a[8];
+  C.a[0][0] = A.a[0][0]*B.a[0][0] + A.a[1][0]*B.a[0][1] + A.a[2][0]*B.a[0][2];
+  C.a[0][1] = A.a[0][1]*B.a[0][0] + A.a[1][1]*B.a[0][1] + A.a[2][1]*B.a[0][2];
+  C.a[0][2] = A.a[0][2]*B.a[0][0] + A.a[1][2]*B.a[0][1] + A.a[2][2]*B.a[0][2];
+  C.a[1][0] = A.a[0][0]*B.a[1][0] + A.a[1][0]*B.a[1][1] + A.a[2][0]*B.a[1][2];
+  C.a[1][1] = A.a[0][1]*B.a[1][0] + A.a[1][1]*B.a[1][1] + A.a[2][1]*B.a[1][2];
+  C.a[1][2] = A.a[0][2]*B.a[1][0] + A.a[1][2]*B.a[1][1] + A.a[2][2]*B.a[1][2];
+  C.a[2][0] = A.a[0][0]*B.a[2][0] + A.a[1][0]*B.a[2][1] + A.a[2][0]*B.a[2][2];
+  C.a[2][1] = A.a[0][1]*B.a[2][0] + A.a[1][1]*B.a[2][1] + A.a[2][1]*B.a[2][2];
+  C.a[2][2] = A.a[0][2]*B.a[2][0] + A.a[1][2]*B.a[2][1] + A.a[2][2]*B.a[2][2];
   return C;
 }
 
 //Transformation3 functions
 
 /*
-Note: 
+Note:
 Every function that changes u, v or dir should use "generateMatrix();" at the end,
 unless that function already calls another one that generates it, at the end.
 */
@@ -600,18 +600,17 @@ Transformation3::Transformation3(double posx, double posy, double posz, double u
   pos.x = posx;
   pos.y = posy;
   pos.z = posz;
-  u.x = ux;
-  u.y = uy;
-  u.z = uz;
-  v.x = vx;
-  v.y = vy;
-  v.z = vz;
-  dir.x = dirx;
-  dir.y = diry;
-  dir.z = dirz;
+  trans[0][0] = ux;
+  trans[0][1] = uy;
+  trans[0][2] = uz;
+  trans[1][0] = vx;
+  trans[1][1] = vy;
+  trans[1][2] = vz;
+  trans[2][0] = dirx;
+  trans[2][1] = diry;
+  trans[2][2] = dirz;
   this->nearClip = nearClip;
   this->farClip = farClip;
-  matrixUpToDate = false;
   invMatrixUpToDate = false;
   generateMatrix();
   planetGroundPlaneType = XZ;
@@ -623,18 +622,17 @@ Transformation3::Transformation3()
   pos.x = 0.0;
   pos.y = 0.0;
   pos.z = 0.0;
-  u.x = 1.0;
-  u.y = 0.0;
-  u.z = 0.0;
-  v.x = 0.0;
-  v.y = 1.0;
-  v.z = 0.0;
-  dir.x = 0.0;
-  dir.y = 0.0;
-  dir.z = 1.0;
+  trans[0][0] = 1.0;
+  trans[0][1] = 0.0;
+  trans[0][2] = 0.0;
+  trans[1][0] = 0.0;
+  trans[1][1] = 1.0;
+  trans[1][2] = 0.0;
+  trans[2][0] = 0.0;
+  trans[2][1] = 0.0;
+  trans[2][2] = 1.0;
   nearClip = 0.1;
   farClip = 1000000.0;
-  matrixUpToDate = false;
   invMatrixUpToDate = false;
   generateMatrix();
   planetGroundPlaneType = XZ;
@@ -642,17 +640,17 @@ Transformation3::Transformation3()
 
 Vector3& Transformation3::getU()
 {
-  return u;
+  return trans[0];
 }
 
 Vector3& Transformation3::getV()
 {
-  return v;
+  return trans[1];
 }
 
 Vector3& Transformation3::getDir()
 {
-  return dir;
+  return trans[2];
 }
 
 Vector3& Transformation3::getPos()
@@ -662,19 +660,19 @@ Vector3& Transformation3::getPos()
 
 void Transformation3::setU(const Vector3& newU)
 {
-  u = newU;
+  trans[0] = newU;
   generateMatrix();
 }
 
 void Transformation3::setV(const Vector3& newV)
 {
-  v = newV;
+  trans[1] = newV;
   generateMatrix();
 }
 
 void Transformation3::setDir(const Vector3& newDir)
 {
-  dir = newDir;
+  trans[2] = newDir;
   generateMatrix();
 }
 
@@ -693,9 +691,9 @@ rotate around the center of this transformation, around certain axis through thi
 */
 void Transformation3::rotate(const Vector3& axis, double angle)
 {
-  u = rotateAroundArbitrary(u, axis, angle);
-  v = rotateAroundArbitrary(v, axis, angle);
-  dir = rotateAroundArbitrary(dir, axis, angle);
+  trans[0] = rotateAroundArbitrary(trans[0], axis, angle);
+  trans[1] = rotateAroundArbitrary(trans[1], axis, angle);
+  trans[2] = rotateAroundArbitrary(trans[2], axis, angle);
   generateMatrix();
 }
 
@@ -711,9 +709,9 @@ void Transformation3::rotate(const Vector3& a, const Vector3& b, double angle)
   pos = pos - a;
   Vector3 axis = b - a;
   
-  u = rotateAroundArbitrary(u, axis, angle);
-  v = rotateAroundArbitrary(v, axis, angle);
-  dir = rotateAroundArbitrary(dir, axis, angle);
+  trans[0] = rotateAroundArbitrary(trans[0], axis, angle);
+  trans[1] = rotateAroundArbitrary(trans[1], axis, angle);
+  trans[2] = rotateAroundArbitrary(trans[2], axis, angle);
   pos = rotateAroundArbitrary(pos, axis, angle);
   pos = pos + rotateAroundArbitrary(a, axis, angle); //now a itself is also rotated, the translation over which the vectors were moved is rotated
   
@@ -735,10 +733,10 @@ Vector3 getSomePerpendicularVector(const Vector3& v)
 void Transformation3::setLookDir(const Vector3& newDir)
 {
   //calculate the rotation axis
-  Vector3 axis = cross(dir, newDir);
-  if(axis.length() == 0) axis = getSomePerpendicularVector(dir); //this happens if dir is equal to newDir or the opposite, and then you rotate either 0 or 180 degrees, so the direction of the axis doesn't matter, it just must be perpendicular
+  Vector3 axis = cross(trans[2], newDir);
+  if(axis.length() == 0) axis = getSomePerpendicularVector(trans[2]); //this happens if dir is equal to newDir or the opposite, and then you rotate either 0 or 180 degrees, so the direction of the axis doesn't matter, it just must be perpendicular
 
-  double angle = -vectorAngle(newDir, dir);
+  double angle = -vectorAngle(newDir, trans[2]);
   if(angle != 0) rotate(axis, angle);
   
   generateMatrix();
@@ -754,10 +752,10 @@ void Transformation3::lookAt(const Vector3& lookAtMe)
 void Transformation3::setGroundPlane(const Vector3& n)
 {
   //calculate the rotation axis
-  Vector3 axis = cross(v, -n);
-  if(axis.length() == 0) axis = getSomePerpendicularVector(v); //see in setLookDir function for explanation of this
+  Vector3 axis = cross(trans[1], -n);
+  if(axis.length() == 0) axis = getSomePerpendicularVector(trans[1]); //see in setLookDir function for explanation of this
 
-  double angle = -vectorAngle(-n, v);
+  double angle = -vectorAngle(-n, trans[1]);
   if(angle != 0) rotate(axis, angle);
   
   generateMatrix();
@@ -780,54 +778,54 @@ void Transformation3::setDist(const Vector3& point, double dist)
 void Transformation3::zoom(double a)
 {
   //increasing length of dir or decreasing length of the plane (u and v) = zoom IN
-  u = u / a;
-  v = v / a;
+  trans[0] = trans[0] / a;
+  trans[1] = trans[1] / a;
   generateMatrix();
 }
 
 void Transformation3::zoomU(double a)
 {
-  u = u / a;
+  trans[0] = trans[0] / a;
   generateMatrix();
 }
 
 void Transformation3::zoomV(double a)
 {
-  v = v / a;
+  trans[1] = trans[1] / a;
   generateMatrix();
 }
 
 double Transformation3::getZoomU() const
 {
-  return(dir.length() / u.length());
+  return(trans[2].length() / trans[0].length());
 }
 
 double Transformation3::getZoomV() const
 {
-  return(dir.length() / v.length());
+  return(trans[2].length() / trans[1].length());
 }
 
 void Transformation3::setZoomU(double a)
 {
-  u = u / (a / getZoomU());
+  trans[0] = trans[0] / (a / getZoomU());
   generateMatrix();
 }
 
 void Transformation3::setZoomV(double a)
 {
-  v = v / (a / getZoomV());
+  trans[1] = trans[1] / (a / getZoomV());
   generateMatrix();
 }
 
 double Transformation3::getFOVU(double w, double h)
 {
   //NOTE: it's multiplied by w and divided through h, because only then it's correct for the opengl projection system used
-  return(w * 2.0 * atan2(u.length(), dir.length()) / h);
+  return(w * 2.0 * atan2(trans[0].length(), trans[2].length()) / h);
 }
 
 double Transformation3::getFOVV(double /*w*/, double /*h*/)
 {
-  return(2.0 * atan2(v.length(), dir.length()));
+  return(2.0 * atan2(trans[1].length(), trans[2].length()));
 }
 
 void Transformation3::setFOVU(double angle)
@@ -865,8 +863,8 @@ W -----+-----> E  Looking in the direction X = East (+90 deg., +1.57 rad)
 double Transformation3::getYaw()
 {
   //the atan2 function returns the angle of a 2D point (like from polar coordinates), so here it gives angle of dir projected on XZ plane, which is what we want for the yaw
-  if(planetGroundPlaneType == XZ) return(atan2(dir.x, dir.z));
-  else /*if(planetGroundPlaneType == XY)*/ return(atan2(dir.x, dir.y));
+  if(planetGroundPlaneType == XZ) return(atan2(trans[2].x, trans[2].z));
+  else /*if(planetGroundPlaneType == XY)*/ return(atan2(trans[2].x, trans[2].y));
 }
 
 //setYaw can be used to make you look at a certain wind direction (where the ground is the XZ plane)
@@ -894,7 +892,7 @@ void Transformation3::yawPlanet(double angle)
 //rotates camera around camera v axis with given angle (this one makes sense in space, but not on a planet, on a planet your camera would start getting a "roll")
 void Transformation3::yawSpace(double angle)
 {
-  rotate(v, angle);
+  rotate(trans[1], angle);
 }
 
 /*
@@ -911,8 +909,8 @@ double Transformation3::getPitch()
   //Then find angle between dir and projected dir   
   //With atan2: angle of the point (lengthof2Dvector(dir.x, dir.z), dir.y)
   
-  if(planetGroundPlaneType == XZ) return atan2(dir.y, std::sqrt(dir.x * dir.x + dir.z * dir.z));
-  else /*if(planetGroundPlaneType == XY)*/ return atan2(dir.z, std::sqrt(dir.x * dir.x + dir.y * dir.y));
+  if(planetGroundPlaneType == XZ) return atan2(trans[2].y, std::sqrt(trans[2].x * trans[2].x + trans[2].z * trans[2].z));
+  else /*if(planetGroundPlaneType == XY)*/ return atan2(trans[2].z, std::sqrt(trans[2].x * trans[2].x + trans[2].y * trans[2].y));
 }
 
 /*
@@ -924,13 +922,13 @@ void Transformation3::setPitch(double angle)
 {
   double currentAngle = getPitch();
   //to change pitch, you have to rotate around the horizontal vector of the camera
-  rotate(u, angle - currentAngle);
+  rotate(trans[0], angle - currentAngle);
 }
 
 //pitches the camera over a certain amount
 void Transformation3::pitch(double angle)
 {
-  rotate(u, angle);
+  rotate(trans[0], angle);
 }
 
 /*
@@ -950,14 +948,14 @@ double Transformation3::getRoll()
   
   if(planetGroundPlaneType == XZ)
   {
-    double roll = vectorAngle(cross(Vector3(0, 1, 0), dir), cross(v, dir));
-    if(u.y < 0) roll = -roll;
+    double roll = vectorAngle(cross(Vector3(0, 1, 0), trans[2]), cross(trans[1], trans[2]));
+    if(trans[0].y < 0) roll = -roll;
     return roll;
   }
   else /*if(planetGroundPlaneType == XY)*/
   {
-    double roll = vectorAngle(cross(Vector3(0, 0, 1), dir), cross(v, dir));
-    if(u.z < 0) roll = -roll;
+    double roll = vectorAngle(cross(Vector3(0, 0, 1), trans[2]), cross(trans[1], trans[2]));
+    if(trans[0].z < 0) roll = -roll;
     return roll;
   }
 }
@@ -966,13 +964,13 @@ void Transformation3::setRoll(double angle)
 {
   double currentAngle = getRoll();
   //to change roll, you have to rotate around the direction vector of the camera
-  rotate(dir, angle - currentAngle);
+  rotate(trans[2], angle - currentAngle);
 }
 
 //rolls the camera by rotating it around the direction vector (only makes sense in space or for "shaking" effects)
 void Transformation3::roll(double angle)
 {
-  rotate(dir, angle);
+  rotate(trans[2], angle);
 }
 
 //makes u, v and dir perpendicular by using cross product, maintains exact direction and roll if only v was skewed
@@ -980,8 +978,8 @@ void Transformation3::resetSkewU()
 {
   double oldZoomU = getZoomU(); 
   double oldZoomV = getZoomV();
-  u = cross(dir, v);
-  v = cross(dir, -u);
+  trans[0] = cross(trans[2], trans[1]);
+  trans[1] = cross(trans[2], -trans[0]);
   setZoomU(oldZoomU);
   setZoomV(oldZoomV);
   generateMatrix();
@@ -992,8 +990,8 @@ void Transformation3::resetSkewV()
 {
   double oldZoomU = getZoomU(); 
   double oldZoomV = getZoomV();
-  v = cross(dir, u);
-  u = cross(dir, -v);
+  trans[1] = cross(trans[2], trans[0]);
+  trans[0] = cross(trans[2], -trans[1]);
   setZoomU(oldZoomU);
   setZoomV(oldZoomV);
   generateMatrix();
@@ -1002,82 +1000,63 @@ void Transformation3::resetSkewV()
 //get and set screen ratios of the camera (ratio of length of u and v, e.g. 4:3, 16:9, 640:480, ...)
 double Transformation3::getRatioUV()
 {
-  return u.length() / v.length();
+  return trans[0].length() / trans[1].length();
 }
 
 double Transformation3::getRatioVU()
 {
-  return v.length() / u.length();
+  return trans[1].length() / trans[0].length();
 }
 
 //changes V  
 void Transformation3::setRatioUV(double ratio)
 {
-  v.normalize();
-  v = v * u.length() / ratio;
+  trans[1].normalize();
+  trans[1] = trans[1] * trans[0].length() / ratio;
   generateMatrix();
 }
 
 //changes U
 void Transformation3::setRatioVU(double ratio)
 {
-  u.normalize();
-  u = u * (v.length() / ratio);
+  trans[0].normalize();
+  trans[0] = trans[0] * (trans[1].length() / ratio);
   generateMatrix();
 }
 
 //scale U, V and Dir without changing what you see
 double Transformation3::getScale()
 {
-  return dir.length();
+  return trans[2].length();
 }
 
 void Transformation3::setScale(double dirLength)
 {
-  scale(dir.length() / dirLength);
+  scale(trans[2].length() / dirLength);
 }
 
-void Transformation3::scale(double factor)  
+void Transformation3::scale(double factor) 
 {
-  dir = dir * factor;
-  u = u * factor;
-  v = v * factor;
+  trans *= factor;
   generateMatrix();
 }
 
 void Transformation3::generateMatrix()
 {
   //instead of generating it here, it's just set that it's not up to date anymore and it'll be generated only as soon as it's actually needed, in the get functions. Always use the get functions, even inside this class, to make sure up to date matrices are always used.
-  matrixUpToDate = false;
   invMatrixUpToDate = false;
 }
 
 const Matrix3& Transformation3::getMatrix()
 {
-  if(!matrixUpToDate)
-  {
-    //the cameraMatrix is generated, this is the matrix with 3 column vectors: u, v and dir
-    //it has to be generated everytime u, v or dir are changed  
-    transMatrix.a[0] = u.x;
-    transMatrix.a[1] = u.y;
-    transMatrix.a[2] = u.z;
-    transMatrix.a[3] = v.x;
-    transMatrix.a[4] = v.y;
-    transMatrix.a[5] = v.z;
-    transMatrix.a[6] = dir.x;
-    transMatrix.a[7] = dir.y;
-    transMatrix.a[8] = dir.z;
-    matrixUpToDate = true;
-  }
-  
-  return transMatrix;
+  return trans;
 }
 
 Matrix3 Transformation3::getInvMatrix()
 {
   if(!invMatrixUpToDate)
   {
-    //this is the inverse of the transMatrix, to use for transformations
+    //this is the inverse of the trans, to use for transformations
     invCamMatrix = inverse(getMatrix());
     invMatrixUpToDate = true;
   }
@@ -1088,15 +1067,7 @@ void Transformation3::setMatrix(const Matrix3& matrix)
 {
   //to make sure the vectors and the matrix are according to each other, set the vectors to the given matrix 
   //and then use generateMatrix with these new vectors
-  u.x = matrix.a[0];
-  u.y = matrix.a[1];
-  u.z = matrix.a[2];
-  v.x = matrix.a[3];
-  v.y = matrix.a[4];
-  v.z = matrix.a[5];
-  dir.x = matrix.a[6];
-  dir.y = matrix.a[7];
-  dir.z = matrix.a[8];
+  trans = matrix;
   generateMatrix();
 }
 
@@ -1501,7 +1472,7 @@ std::ostream& operator<<(std::ostream& ostr, const Vector3& v)
 
 std::ostream& operator<<(std::ostream& ostr, const Matrix3& m)
 {
-  return ostr << "[" << m.a[0] << " " << m.a[3] << " " << m.a[6] << " ; " << m.a[1] << " " << m.a[4] << " " << m.a[7] << " ; " << m.a[2] << " " << m.a[5] << " " << m.a[8] << "]";
+  return ostr << "[" << m.a[0][0] << " " << m.a[1][0] << " " << m.a[2][0] << " ; " << m.a[0][1] << " " << m.a[1][1] << " " << m.a[2][1] << " ; " << m.a[0][2] << " " << m.a[1][2] << " " << m.a[2][2] << "]";
 }
 
 } //end of namespace lpi

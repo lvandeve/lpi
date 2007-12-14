@@ -26,7 +26,7 @@ namespace lpi
 {
 
 void initBuiltInFontTextures(); //link time dependency to init the built in font textures
-namespace gui { void initBuiltInGuiTextures(); } //link time dependency to init the built in gui textures
+namespace gui { void initBuiltInGui(); } //link time dependency to init the built in gui textures
 
 namespace
 {
@@ -104,7 +104,7 @@ void screen(int width, int height, bool fullscreen, const char* text)
   //plane.create(RGB_Black, w, h);
   
   initBuiltInFontTextures();
-  gui::initBuiltInGuiTextures();
+  gui::initBuiltInGui();
 }
 
 int screenWidth()

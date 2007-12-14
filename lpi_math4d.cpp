@@ -75,7 +75,7 @@ void Matrix4::subMatrix(Matrix3& out, int i, int j )
     si = di + ( ( di >= i ) ? 1 : 0 );
     sj = dj + ( ( dj >= j ) ? 1 : 0 );
     // copy element
-    out.a[di * 3 + dj] = a[si * 4 + sj];
+    out.a[di][dj] = a[si * 4 + sj];
   }
 }
 

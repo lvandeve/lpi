@@ -31,13 +31,16 @@ namespace lpi
 // 3D Vector Class  [ y ]                                                     //
 //                  [ z ]                                                     //
 ////////////////////////////////////////////////////////////////////////////////
-class Vector3
+class Vector3 //memory: exactly 3 doubles
 {
   public:
   
   double x;
   double y;
   double z;
+  
+  const double& operator[](int i) const { return *(&x + i); }
+  double& operator[](int i) { return *(&x + i); }
   
   Vector3();
   Vector3(double x, double y, double z);
@@ -93,11 +96,14 @@ std::ostream& operator<<(std::ostream& ostr, const Vector3& v);
 // Matrix Class  [ 1 4 7 ]                                                    //
 //               [ 2 5 8 ]                                                    //
 ////////////////////////////////////////////////////////////////////////////////
-class Matrix3
+class Matrix3 //memory: exactly 9 doubles
 {
   public:
     
-  double a[9];
+  Vector3 a[3];
+  
+  const Vector3& operator[](int i) const { return a[i]; }
+  Vector3& operator[](int i) { return a[i]; }
   
   Matrix3(double a0, double a1, double a2, double a3, double a4, double a5, double a6, double a7, double a8);
   Matrix3();
@@ -254,10 +260,8 @@ class Transformation3
   protected:
   //the camera plane, described by the vectors u and v, is described by "z = 0" in camera space
   Vector3 pos; //the location of the camera
-  Vector3 u; //horizontal vector, horizontal side of computer screen
-  Vector3 v; //vertical "up" vector, vertical side of computer screen
-  Vector3 dir; //direction of the camera, direction of the projection
-  Matrix3 transMatrix; //the camera matrix, is nothing more than the column vectors u, v and dir in one matrix
+  Matrix3 trans; //the camera matrix, is nothing more than the column vectors u, v and dir in one matrix
+
   Matrix3 invCamMatrix; //the inverse of the camera matrix
   bool matrixUpToDate;
   bool invMatrixUpToDate;

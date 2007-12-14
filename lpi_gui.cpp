@@ -27,6 +27,8 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_draw2dgl.h"
 #include "lpi_draw2d.h"
 
+#include "lpi_xml.h"
+
 #include <SDL/SDL.h>
 
 namespace lpi
@@ -56,73 +58,101 @@ MouseState::MouseState()
 ////////////////////////////////////////////////////////////////////////////////
 
 /*
-A PNG image, encoded in base64, containing all the GUI images
+PNG images, encoded in base64, containing all the GUI images
 First use the function decodeBase64
 Then use the function LodePNG::Decoder::decode
 And you get the pixels in a buffer
 */
-const std::string builtInTextureData = "\
-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\n\
-rkJggg==\
+const std::string builtInGuiData = "\
+<gui>\n\
+\n\
+  <textures_small>\n\
+iVBORw0KGgoAAAANSUhEUgAAAIAAAABgCAMAAADipIp7AAAAclBMVEUAAAABAQGAgICEhISFhYWJ\n\
+iYmKioqNjY2Pj4+RkZGUlJSVlZWZmZmampqenp6ioqKmpqanp6erq6usrKyvr6+xsbGzs7O2tra3\n\
+t7e7u7u8vLzAwMDHx8fPz8/X19fg4ODo6Ojw8PD4+Pj/AAD/AP////9MjY55AAAD5UlEQVRo3u2Z\n\
+27baOAyG/6gpZRialKEMpdpnWe//inNhK3GclCST01p7oQuxtAXShy1L3gSqqiK1BgCRWqe2m1mg\n\
+zCzCphVNGyAiETK9AUCe5yK5aTjnUEmIMdIeCbDb7UR2puEcrpfzqSyOh/0Ozo23Y1EHSaQFsN/v\n\
+Rfam5wVQ6gB4enoSeTINHA4HkYPpWQGUurbg+flZ5Nk0cDweRY6mhwIgsbkDQKmzBl5eXkReTANF\n\
+UYgUpuEcrqGkqgTsJUoIoAHAzC0AJee0A+D19VXk1TRQlqVIadqvAAAgSsDMzJF91x/npw6At7c3\n\
+kTfTwOl0EjmZRv837FuhRv6OInx/fxd5Nw2cz2eRs2n07/GgIrT8HQAfHx8iH6aBy+UicjE90ymw\n\
+/F010JwNwPV6Fbmangegyk8DAG63m8jN9CytOMo/ACDpjDPMnzi/w+bj2G0sGwGohhfF2Pk9k5Bz\n\
+5JwSYdz8nnMRwjF0Dlf4hKhap7d5h1VqANcLTmVxRDQ8TmVx5EVWQP3Wq6p/teFSFmgMl7LgZbaA\n\
+yDny4ojqGkim26ljfi9YA6sCxH2wBlhvC8Lx0wCgqxdhVQka9YFNjmFSA+s1onYNrNuKVcmpktrr\n\
+6sPIzn/UBzaS6krWvJAQNf8dp/5m3pDoj8P86ZWMKLmi9ebnW120uV9R4HtR/vApoA0Jfn/3WgoA\n\
+f/39vSh//PMT3QBoGrMD4JsB/IsuADQt6ZHRAPhaA/xCGwCJuTnA3FuALzHAb6QAbfsBsDXA4xRs\n\
+3og+YSseOYzS8UvJ7wWLj2NOpDdBR0BfqqFgybl2Eaf3uxEArXOeLnl6gSFtAcRb0tqiqQDJjcp1\n\
+ADSKslWkk1egtQUpQPNYto7pVIDeRpY0plaj+nQA6Ra0hlNqPwA+HcDjFGzeiFZvxQMApg2jvnHc\n\
+vkPquHHcO+8XttG3xIvbD4BPA4DE5oaN5P3cAkASkEcCIAHgBCCJz5wAIAnAjQDV0/BgV0/DowT3\n\
+Pn/XD77Vz/vtDfa83+wh/mPiTwGQAHAEsOg3HLQCA/a4p0am1sD2p+DRiLYD2HwcTw7oJU+uMYPt\n\
+9F4+2g7x0Mww3AY4/gmnK+F9f4jHjQwj7CEAWeadWeb9RN5HFABysMYZcjAn9h/9wwAyn78CIJ8/\n\
+AORg1ShD7mPEtiLxk/kHbUGWZUF5PxEZBix/TZBbiNpWAA2/h88H10CWZX4Zgt8/9/M1kFcRfMS8\n\
+jmC2AjVByG8EA4sw5K/8lp+RRwEYeZyfg63hyFZ+oppgMsA6K3BvC9aogftFuPwp6DuGK/SBnka0\n\
+dCfsb8XTZsEcw2jCNJxpHP9v+Q/413JTkDduzAAAAABJRU5ErkJggg==\n\
+  </textures_small>\n\
+\n\
+  <icons_small>\n\
+iVBORw0KGgoAAAANSUhEUgAAAIAAAABACAMAAADlCI9NAAABaFBMVEX/AP8AAADnyQD////YuQAA\n\
+tJHd2gAA011ojutmi+lfheXVAAAAGQoAAgAAAgEAAwEABAEAAQCaAACkAADGAAABAQECAgIEBAQF\n\
+BQUGBgYDAwMHBwcODg4UFBQXFxcTExMNDQ0LCwsYGBgmJiY0NDQ8PDwlJSUPDw8MDAwcHBxRUVFr\n\
+a2t4eHhqampQUFAfHx9BQUFHR0dCQkIxMTFNTU0hISEICAhcXFyIiIirq6u+vr4jIyNDQ0NwcHCX\n\
+l5d6enp7e3thYWHg4ODu7u7t7e12dnbIyMi7u7uLi4u2trZ3d3ff39/39/f9/f01NTWqqqq/v7+5\n\
+ubmzs7PExMR9fX3+/v69vb0+Pj5xcXHAwMDX19fR0dGdnZ1KSkoSEhI6OjqcnJzJycnNzc1fX19k\n\
+ZGQQEBAuLi58fHyfn5+goKCFhYVGRkZZWVmWlpaDg4ONjY1/f39ISEgREREVFRUtLS07OztFRUUZ\n\
+GRlOIfSlAAADCklEQVRo3u2Xi1NSQRTGOSJSUJnYXt4gcAF5+lYulhag5oNSQbMs097vt/Xvt6/L\n\
+Xaecrsy424x84z16hmG+3+45Z/fqcDCBQ62gDxT796klUA2A/UEpAe4AUNkFZPWgcgtUA5AO7GPh\n\
+YgJQay5Q5w/KCJQDKC8BJrDkuKByOnsAat2dPFxUgF4P/A8APfXUU0/8pegc83/a9xN1vgLgIhLy\n\
+ASIhdxMJ+aXLHo9HyL1EthGYPUVgucsUzwdM8dxtiufY20MfnmNvL33gjP6MAMjaXSzACX9GAGTt\n\
+QB9KwP07BHT54GW/bALQGpDAAIgzDxSAIOAIJoC5BcABmD8h4ABA/MHmFpjePAgFYEWg7tSc/iUU\n\
+gBWB7r4V6AaAFc5WAQYg/J/AAcQa2AGw1B2A04l/yGMXwJIUgCsd+6unAdDtsw9gMsApACYD8B24\n\
+hjV4fXBoqLMD1NAC4OeA13YXguVPp4ADmFPACTpT4Hb7hm8M+9ynjaFZBbA9hv10BeI5QACEc4B+\n\
+bp0DmMDnc1sAQgUcJ5oAuj0J2QjYPwkFf5EApN0FzL7bu0D9baj+VQBp/kDQH0LwF8kA0MKRaCwW\n\
+HwlrAgJC0gBCiWRKT6f1TCzBXBHKIi2iseT8AdBoTs8XisVSWc8lGMDY+MTk1Pj0zKgUgNmkPlcx\n\
+qlWjMqcnZwnB/M1bhYXC4u07Y0gCgJZN5SvVWr1Rq1bKmWwIYGR8yVheubu6sJYbRecPEIjqJWN9\n\
+o9ncqBklPe7HHXCvcH9za7tltCeRBIBgMl2sNpo7O836bjGdDOKZfLD3cPvR/uPWwpMIyAHYrROA\n\
+RpUCwMHTtcOj/e1nrfa0jB7wx3EJaqQE67gE0QAuwfMXxtbm0dZqe0pGCULZTBk3YaOOmzCfymqA\n\
+Xr56/WZ5ZeXw7bv3BxJ2AJ0cQ3IMzH9Y+rj36fOXrzNyDqJETi+XisVCXidjh/Xt+4+J45/Hx7+Q\n\
+HACUiGXIUZxKJkLmPaBFEIoiOQB47sIj8VgsGglrf1xFcm5DQCF/MODXlFzHvwEO+F56+iRSPQAA\n\
+AABJRU5ErkJggg==\n\
+  </icons_small>\n\
+\n\
+</gui>\n\
 ";
 
-void initBuiltInGuiTextures()
+void initBuiltInGui()
+{
+  initBuiltInGui(builtInGuiData);
+}
+
+void initBuiltInGui(const std::string& xmlgui)
+{
+  xml::XMLTree tree;
+  tree.parse(xmlgui);
+  
+  for(size_t i = 0; i < tree.children.size(); i++)
+  {
+    if(tree.children[i]->content.name == "textures_small")
+    {
+      initBuiltInGuiTexturesSmall(tree.children[i]->content.value);
+    }
+    else if(tree.children[i]->content.name == "icons_small")
+    {
+      initBuiltInGuiIconsSmall(tree.children[i]->content.value);
+    }
+  }
+}
+
+void initBuiltInGuiTexturesSmall(const std::string& png_base64)
 {
   LodePNG::Decoder pngdec;
 
   std::vector<unsigned char> decoded64;
-  
-  const int GDW = 80; //width of the gui data
-  const int GDH = 96; //height of the gui data
-
-  //read the data string into buffer
   std::vector<unsigned char> dataBuffer;
-  dataBuffer.resize(GDH * GDW * 4);
 
-  decodeBase64(decoded64, builtInTextureData);
+  decodeBase64(decoded64, png_base64);
   pngdec.decode(dataBuffer, decoded64);
+  
+  const int GDW = pngdec.getWidth(); //width of the gui data
+  const int GDH = pngdec.getHeight(); //height of the gui data
 
   /*
     Below the built in gui textures are loaded from the buffer.
@@ -130,117 +160,103 @@ void initBuiltInGuiTextures()
   */
   
   //panel
-  builtInTexture[0].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 0, 0, 2, 2);
-  builtInTexture[1].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 2, 0, 3, 2);
-  builtInTexture[2].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 3, 0, 5, 2);
-  builtInTexture[3].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 0, 2, 2, 3);
-  builtInTexture[4].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 2, 2, 3, 3);
-  builtInTexture[5].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 3, 2, 5, 3);
-  builtInTexture[6].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 0, 3, 2, 5);
-  builtInTexture[7].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 2, 3, 3, 5);
-  builtInTexture[8].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 3, 3, 5, 5);
+  builtInTexture[0].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  0,  0,  4,  4);
+  builtInTexture[1].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  6,  0, 10,  4);
+  builtInTexture[2].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 12,  0, 16,  4);
+  builtInTexture[3].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  0,  6,  4, 10);
+  builtInTexture[4].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  6,  6, 10, 10);
+  builtInTexture[5].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 12,  6, 16, 10);
+  builtInTexture[6].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  0, 12,  4, 16);
+  builtInTexture[7].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  6, 12, 10, 16);
+  builtInTexture[8].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 12, 12, 16, 16);
   for(size_t i = 0; i < 9; i++) builtInGuiSet.windowTextures[i] = &builtInTexture[i];
   
   //button normal
-  builtInTexture[9].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 16, 0, 18, 2);
-  builtInTexture[10].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 18, 0, 19, 2);
-  builtInTexture[11].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 19, 0, 21, 2);
-  builtInTexture[12].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 16, 2, 18, 3);
-  builtInTexture[13].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 18, 2, 19, 3);
-  builtInTexture[14].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 19, 2, 21, 3);
-  builtInTexture[15].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 16, 3, 18, 5);
-  builtInTexture[16].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 18, 3, 19, 5);
-  builtInTexture[17].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 19, 3, 21, 5);
+  builtInTexture[ 9].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  0, 32,  4, 36);
+  builtInTexture[10].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  6, 32, 10, 36);
+  builtInTexture[11].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 12, 32, 16, 36);
+  builtInTexture[12].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  0, 38,  4, 42);
+  builtInTexture[13].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  6, 38, 10, 42);
+  builtInTexture[14].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 12, 38, 16, 42);
+  builtInTexture[15].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  0, 44,  4, 48);
+  builtInTexture[16].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  6, 44, 10, 48);
+  builtInTexture[17].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 12, 44, 16, 48);
   for(size_t i = 0; i < 9; i++) builtInGuiSet.buttonTextures[i] = &builtInTexture[i + 9];
   for(size_t i = 0; i < 9; i++) builtInGuiSet.buttonOverTextures[i] = &builtInTexture[i + 9];
   
   //button pressed
-  builtInTexture[18].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 32, 0, 34, 2);
-  builtInTexture[19].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 34, 0, 35, 2);
-  builtInTexture[20].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 35, 0, 37, 2);
-  builtInTexture[21].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 32, 2, 34, 3);
-  builtInTexture[22].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 34, 2, 35, 3);
-  builtInTexture[23].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 35, 2, 37, 3);
-  builtInTexture[24].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 32, 3, 34, 5);
-  builtInTexture[25].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 34, 3, 35, 5);
-  builtInTexture[26].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 35, 3, 37, 5);
+  builtInTexture[18].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 32, 20, 36);
+  builtInTexture[19].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 22, 32, 26, 36);
+  builtInTexture[20].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 28, 32, 32, 36);
+  builtInTexture[21].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 38, 20, 42);
+  builtInTexture[22].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 22, 38, 26, 42);
+  builtInTexture[23].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 28, 38, 32, 42);
+  builtInTexture[24].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 44, 20, 48);
+  builtInTexture[25].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 22, 44, 26, 48);
+  builtInTexture[26].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 28, 44, 32, 48);
   for(size_t i = 0; i < 9; i++) builtInGuiSet.buttonDownTextures[i] = &builtInTexture[i + 18];
   
   //button arrow up
-  builtInTexture[27].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 0, 16, 16, 32);
+  builtInTexture[27].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 64, 16, 80);
   builtInGuiSet.arrowN = &builtInTexture[27];
   //button arrow down
-  builtInTexture[28].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 16, 16, 32, 32);
+  builtInTexture[28].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 64, 48, 80);
   builtInGuiSet.arrowS = &builtInTexture[28];
   //button arrow left
-  builtInTexture[29].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 32, 16, 48, 32);
+  builtInTexture[29].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 64, 64, 80, 80);
   builtInGuiSet.arrowW = &builtInTexture[29];
   //button arrow right
-  builtInTexture[30].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 48, 16, 64, 32);
+  builtInTexture[30].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 96, 64, 112, 80);
   builtInGuiSet.arrowE = &builtInTexture[30];
   
-  //empty button & scroller
-  builtInTexture[31].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 64, 32, 80, 48);
+  //scroller
+  builtInTexture[31].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 48, 48, 64);
   builtInGuiSet.emptyButton = &builtInTexture[31];
   builtInGuiSet.scroller = &builtInTexture[31];
   //scrollbar background
-  builtInTexture[32].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 0, 48, 16, 64);
+  builtInTexture[32].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 48, 16, 64);
   builtInGuiSet.scrollbarBackground = &builtInTexture[32];
   builtInGuiSet.scrollBarPairCorner = &builtInTexture[32];
   
   //check box unchecked
-  builtInTexture[33].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 0, 32, 16, 48);
+  builtInTexture[33].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 80, 16, 96);
   builtInGuiSet.checkBox[0] = &builtInTexture[33];
   //check box checked
-  builtInTexture[34].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 16, 32, 32, 48);
+  builtInTexture[34].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 80, 48, 96);
   builtInGuiSet.checkBox[1] = &builtInTexture[34];
   
   //bullet unchecked
-  builtInTexture[35].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 32, 32, 48, 48);
+  builtInTexture[35].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 64, 80, 80, 96);
   builtInGuiSet.bullet[0] = &builtInTexture[35];
   //bullet checked
-  builtInTexture[36].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 48, 32, 64, 48);
+  builtInTexture[36].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 96, 80, 112, 96);
   builtInGuiSet.bullet[1] = &builtInTexture[36];
   
-  //image (smiley :D)
-  builtInTexture[37].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 16, 48, 32, 64);
-  builtInGuiSet.smiley = &builtInTexture[37];
-  
   //horizontal line
-  builtInTexture[41].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 48, 0, 50, 2);
-  builtInTexture[42].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 50, 0, 51, 2);
-  builtInTexture[43].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 51, 0, 53, 2);
+  builtInTexture[41].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 116, 16, 120, 20);
+  builtInTexture[42].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 116, 20, 120, 24);
+  builtInTexture[43].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 112, 20, 116, 24);
   for(size_t i = 0; i < 3; i++) builtInGuiSet.hline[i] = &builtInTexture[i + 41];
   
   //vertical line
-  builtInTexture[44].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 64, 0, 66, 2);
-  builtInTexture[45].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 64, 2, 66, 3);
-  builtInTexture[46].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 64, 3, 66, 5);
+  builtInTexture[44].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 120, 16, 124, 20);
+  builtInTexture[45].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 120, 24, 124, 28);
+  builtInTexture[46].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 112, 24, 116, 28);
   for(size_t i = 0; i < 3; i++) builtInGuiSet.vline[i] = &builtInTexture[i + 44];
   
   //window top bar (also a horizontal line)
-  builtInTexture[47].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 32, 48, 33, 64);
-  builtInTexture[48].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 33, 48, 34, 64);
-  builtInTexture[49].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 34, 48, 35, 64);
+  builtInTexture[47].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 0, 20, 16);
+  builtInTexture[48].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 22, 0, 26, 16);
+  builtInTexture[49].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 28, 0, 32, 16);
   for(size_t i = 0; i < 3; i++) builtInGuiSet.windowTop[i] = &builtInTexture[i + 47];
   
-  //crosshair
-  builtInTexture[50].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 64, 48, 72, 56);
-  builtInGuiSet.crossHair = &builtInTexture[50];
-  
   //round button
-  builtInTexture[51].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 48, 48, 64, 64);
+  builtInTexture[51].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 96, 48, 112, 64);
   builtInGuiSet.roundButton = &builtInTexture[51];
   builtInGuiSet.slider = &builtInTexture[51];
   
-  //particle 1
-  builtInTexture[52].create(&dataBuffer[0], GDW, GDH, AE_Particle, 0, 64, 16, 80);
-  
-  //particle 2
-  builtInTexture[53].create(&dataBuffer[0], GDW, GDH, AE_Particle, 16, 64, 32, 80);
-  
   //close button
-  builtInTexture[54].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 64, 16, 80, 32);
+  builtInTexture[54].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 16, 16, 32);
   builtInGuiSet.closeButton = &builtInTexture[54];
 
   //minimize button
@@ -253,7 +269,7 @@ void initBuiltInGuiTextures()
   //57
   
   //resizer of window (corner at bottom right)
-  builtInTexture[58].create(&dataBuffer[0], GDW, GDH, AE_GreenKey, 0, 80, 16, 96);
+  builtInTexture[58].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 112, 0, 128, 16);
   builtInGuiSet.resizer = &builtInTexture[58];
   
   //panels
@@ -284,6 +300,36 @@ void initBuiltInGuiTextures()
   builtInGuiSet.textButtonMarkup[0] = TS_Shadow;
   builtInGuiSet.textButtonMarkup[1] = TS_RShadow;
   builtInGuiSet.textButtonMarkup[2] = TS_RShadow;
+}
+
+void initBuiltInGuiIconsSmall(const std::string& png_base64)
+{
+  LodePNG::Decoder pngdec;
+
+  std::vector<unsigned char> decoded64;
+  std::vector<unsigned char> dataBuffer;
+
+  decodeBase64(decoded64, png_base64);
+  pngdec.decode(dataBuffer, decoded64);
+  
+  const int GDW = pngdec.getWidth(); //width of the gui data
+  const int GDH = pngdec.getHeight(); //height of the gui data
+
+  //image (smiley :D)
+  builtInTexture[37].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 32, 32, 48);
+  builtInGuiSet.smiley = &builtInTexture[37];
+  
+  //crosshair
+  builtInTexture[50].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 16, 16, 32);
+  builtInGuiSet.crossHair = &builtInTexture[50];
+  
+  //particle 1
+  builtInTexture[52].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 48, 16, 64);
+  
+  //particle 2
+  builtInTexture[53].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 48, 32, 64);
+
+
 }
 
 Texture& TextureSet::operator[](int index)
@@ -1414,6 +1460,11 @@ void Container::insertAt(size_t pos, Element* element, int x, int y, double left
   remove(element); //prevent duplicates
   this->element.insert(this->element.begin() + pos, element);
   initElement(element, x, y, leftSticky, topSticky, rightSticky, bottomSticky);
+}
+
+void Container::centerElement(Element* element)
+{
+  element->moveCenterTo(getCenterx(), getCentery());
 }
 
 void Container::initElement(Element* element, int x, int y, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
