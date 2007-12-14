@@ -73,19 +73,19 @@ void transformGLMatrix(Matrix3 m3, const Vector3& pos)
   //matrix multiplication
   double m[16];
   
-  m[0] = m3.a[0];
-  m[1] = m3.a[1];
-  m[2] = m3.a[2];
+  m[0] = m3.a[0][0];
+  m[1] = m3.a[0][1];
+  m[2] = m3.a[0][2];
   m[3] = 0.0;
   
-  m[4] = m3.a[3];
-  m[5] = m3.a[4];
-  m[6] = m3.a[5];
+  m[4] = m3.a[1][0];
+  m[5] = m3.a[1][1];
+  m[6] = m3.a[1][2];
   m[7] = 0.0;
   
-  m[8] = m3.a[6];
-  m[9] = m3.a[7];
-  m[10] = m3.a[8];
+  m[8] = m3.a[2][0];
+  m[9] = m3.a[2][1];
+  m[10] = m3.a[2][2];
   m[11] = 0.0;
   
   m[12] = 0.0;
@@ -117,19 +117,19 @@ void transformGLMatrixInvZ(Matrix3 m3, const Vector3& pos)
   //matrix multiplication
   double m[16];
   
-  m[0] = m3.a[0];
-  m[1] = m3.a[1];
-  m[2] = -m3.a[2];
+  m[0] = m3.a[0][0];
+  m[1] = m3.a[0][1];
+  m[2] = -m3.a[0][2];
   m[3] = 0.0f;
   
-  m[4] = m3.a[3];
-  m[5] = m3.a[4];
-  m[6] = -m3.a[5];
+  m[4] = m3.a[1][0];
+  m[5] = m3.a[1][1];
+  m[6] = -m3.a[1][2];
   m[7] = 0.0f;
   
-  m[8] = m3.a[6];
-  m[9] = m3.a[7];
-  m[10] = -m3.a[8];
+  m[8] = m3.a[2][0];
+  m[9] = m3.a[2][1];
+  m[10] = -m3.a[2][2];
   m[11] = 0.0f;
   
   m[12] = 0.0f;

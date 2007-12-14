@@ -97,7 +97,7 @@ then it isn't always mentioned that A indirectly depends on C.
 
 *) lpi_general: SDL, lpi_color
 
-*) lpi_gui: SDL, OpenGL, lodepng, lpi_general, lpi_event, lpi_text, lpi_texture, lpi_screen, lpi_color, lpi_drawgl, lpi_unittest
+*) lpi_gui: SDL, OpenGL, lodepng, lpi_general, lpi_event, lpi_text, lpi_texture, lpi_screen, lpi_color, lpi_drawgl, lpi_xml, lpi_unittest
   TODO: remove lpi_unittest dependency, make the gui unit test optional
 
 *) lpi_screen: SDL, OpenGL, lpi_color

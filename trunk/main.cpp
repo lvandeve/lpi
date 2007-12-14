@@ -52,6 +52,7 @@ gprof > gprof.txt
 #include "lpi_draw2dgl.h"
 #include "lpi_audio.h"
 #include "lpi_bignums.h"
+#include "lpi_tools.h"
 #include "lodepng.h"
 #include "lodewav.h"
 #include <vector>
@@ -144,7 +145,6 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     lpi::redraw();
     lpi::cls(lpi::RGB_Darkgreen);
   }
-  
   
   return 0;
 }
