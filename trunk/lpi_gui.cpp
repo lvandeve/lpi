@@ -956,7 +956,7 @@ Element::Element() : selfActivate(false),
   totallyEnable();
 }
 
-void Element::drawBorder(const ColorRGB& color)
+void Element::drawBorder(const ColorRGB& color) const
 {
   drawLine(x0    , y0    , x0    , y1 - 1, color);
   drawLine(x1 - 1, y0    , x1 - 1, y1 - 1, color);
