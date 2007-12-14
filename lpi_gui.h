@@ -484,7 +484,7 @@ class Element : public BasicElement
     virtual bool hasElementOver() const;
 
     ////special visible parts, for example for debugging
-    void drawBorder(const ColorRGB& color = RGB_White);
+    void drawBorder(const ColorRGB& color = RGB_White) const;
     
     //add background rectangle
     void addBackgroundRectangle(const ColorRGB& color) { this->hasBackgroundRectangle = true; this->backgroundRectangleColor = color; }
