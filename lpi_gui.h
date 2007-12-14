@@ -38,8 +38,12 @@ namespace gui
 {
 
 void initBuiltInGui(const std::string& xmlgui);
-void initBuiltInGuiTexturesSmall(const std::string& png_base64);
-void initBuiltInGuiIconsSmall(const std::string& png_base64);
+void initBuiltInGuiTexturesSmall64(const std::string& png_base64);
+void initBuiltInGuiIconsSmall64(const std::string& png_base64);
+void initBuiltInGuiTexturesSmall(const std::vector<unsigned char>& png);
+void initBuiltInGuiIconsSmall(const std::vector<unsigned char>& png);
+void initBuiltInGuiTexturesSmall(const std::string& png_file_name);
+void initBuiltInGuiIconsSmall(const std::string& png_file_name);
 
 ////////////////////////////////////////////////////////////////////////////////
 //ENUMS/////////////////////////////////////////////////////////////////////////
@@ -476,7 +480,7 @@ class Element : public BasicElement
     void drawToolTip() const;
     
     
-    virtual void setElementOver(bool state); //ALL gui types that have gui elements inside of them, must set elementOver of all gui elements inside of them too! ==> overload this virtual function for those
+    virtual void setElementOver(bool state); //ALL gui types that have gui elements inside of them, must set elementOver of all gui elements inside of them too! ==> override this virtual function for those
     virtual bool hasElementOver() const;
 
     ////special visible parts, for example for debugging
