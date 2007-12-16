@@ -5125,6 +5125,9 @@ void Painter::drawWidget() const
       case 4: 
         drawRectangle(stack[i].x0 + x0, stack[i].y0 + y0, stack[i].x1 + x0, stack[i].y1 + y0, stack[i].color);
         break;
+      case 5:
+        print(stack[i].text, stack[i].x0 + x0, stack[i].y0 + y0, stack[i].textMarkup);
+        break;
       default: break;
     }
   }
@@ -5190,6 +5193,20 @@ void Painter::queueRectangle(int x0, int y0, int x1, int y1, const ColorRGB& col
   stack[i].y1 = y1;
   stack[i].color = color;
   stack[i].type = 4;
+}
+
+void Painter::queueText(int x, int y, const std::string& text, const Markup& markup)
+{
+  int i = stack.size();
+  stack.resize(stack.size() + 1);
+  
+  stack[i].x0 = x;
+  stack[i].y0 = y;
+  stack[i].x1 = x;
+  stack[i].y1 = y;
+  stack[i].text = text;
+  stack[i].textMarkup = markup;
+  stack[i].type = 5;
 }
 
 

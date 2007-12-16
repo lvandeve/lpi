@@ -22,6 +22,8 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_math2d.h"
 #include <iostream>
 
+namespace { const double pi = 3.14159265358979323846264338327950288419716939937510; }
+
 namespace lpi
 {
 
@@ -255,11 +257,8 @@ double vectorAngle(const Vector3& v, const Vector3& w)
 {
   //dot product(v,w) = length(v)*length(w)*cos(angle) ==> angle = acos(dot/(length(v)*length(w))) = acos(dot(norm(v)*norm(w)));
   double cosineOfAngle = dot(normalize(v), normalize(w));
-  //for acos, the value has to be between -1.0 and 1.0, but due to numerical imprecisions it sometimes comes outside this range
-  if(cosineOfAngle > 1.0) cosineOfAngle = 1.0;
-  if(cosineOfAngle < -1.0) cosineOfAngle = -1.0;
-  //return -acos(cosineOfAngle); //waarom is die min hier?????
-  return acos(cosineOfAngle);
+  cosineOfAngle = std::min(std::max(cosineOfAngle, -1.0), 1.0); //avoid acos giving nan due to numerical imprecisions
+  return std::acos(cosineOfAngle);
 }
 
 /*
@@ -1162,12 +1161,12 @@ bool Transformation3::camSpaceToScreen(const Vector3& point, int& x, int& y, int
 //Swap between radians and degrees
 double radToDeg(double rad)
 {
-  return 360.0 * rad / (3.14159 * 2.0);
+  return 360.0 * rad / (pi * 2.0);
 }
 
 double degToRad(double deg)
 {
-  return (3.14159 * 2.0) * deg / 360.0;
+  return (pi * 2.0) * deg / 360.0;
 }
 
 Vector3 normalOfTriangle(const Vector3& a, const Vector3& b, const Vector3& c)
@@ -1227,6 +1226,11 @@ bool sideOfPlaneGivenByNormal(const Vector3& p, const Vector3& n)
   
   //if it's negative, it's on the one site, if it's positive, it's on the other side
   return (pproj >= 0);
+}
+
+double angleWithPlaneGivenByTwoVectors(const Vector3& v, const Vector3& X, const Vector3& Y)
+{
+  return vectorAngle(v, cross(X, Y)) - pi / 2.0;
 }
 
 /*
