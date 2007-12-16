@@ -376,6 +376,22 @@ class BasicElement //more basic than "Element" - only describes the shape and mo
     MouseState mouse_state_for_containers; //for bookkeeping of containers that contain this element
 };
 
+class Element;
+
+class ToolTipManager //this is made to draw the tooltip at the very end to avoid other gui items to be drawn over it
+{
+  public:
+    void registerMe(const Element* element); //can register only one per frame (last one to register will get drawn); guiElements should do this in the draw function.
+    void draw() const; //this will call the drawTooltip function of the one registered element, call this after drawing all gui elements
+    void enableToolTips(bool set) { enabled = set; }
+    ToolTipManager() : element(0), enabled(true) {}
+  private:
+    const Element* element;
+    bool enabled;
+};
+
+extern ToolTipManager defaultTooltipManager;
+
 /*
 Possible things to check if your gui::Elements aren't behaving as they should:
 
@@ -475,9 +491,10 @@ class Element : public BasicElement
     ////optional tooltip. Drawing it must be controlled by a higher layer, e.g. see the Container's implementation.
     std::string tooltip;
     bool tooltipenabled;
-    void addToolTip(const std::string& text) { tooltipenabled = true; tooltip = text; }
+    void addToolTip(const std::string& text, ToolTipManager* tooltipmanager = &defaultTooltipManager) { tooltipenabled = true; tooltip = text; this->tooltipmanager = tooltipmanager;}
     void removeToolTip() { tooltipenabled = false; }
     void drawToolTip() const;
+    ToolTipManager* tooltipmanager;
     
     
     virtual void setElementOver(bool state); //ALL gui types that have gui elements inside of them, must set elementOver of all gui elements inside of them too! ==> override this virtual function for those
@@ -815,7 +832,6 @@ class Container : public Element
 {
   private:
     bool keepElementsInside; //will not allow you to drag elements outside (if the element is dragged(), it'll be kept inside the container)
-    bool enableTooltips; //whether or not to display tooltips of elements in this if they have it (default is true)
     void initElement(Element* element, int x, int y, double leftSticky, double topSticky, double rightSticky, double bottomSticky);
   public:
     std::vector<Element*> element;
@@ -851,7 +867,6 @@ class Container : public Element
               int areax = 0, int areay = 0, int areasizex = -1, int areasizey = -1, //areax and areay are relative to the container!
               double areaLeftSticky = 0, double areaTopSticky = 0, double areaRightSticky = 1, double areaBottomSticky = 1);
     
-    void enableToolTips(bool enable) { enableTooltips = enable; }
     void setKeepElementsInside(bool set) { keepElementsInside = set; }
     
     void getRelativeElementPos(Element& element, int& ex, int& ey) const;
@@ -1606,7 +1621,7 @@ class OkWindow : public Window
   void make(int x, int y, int sizex, int sizey, const std::string& text);
 };
 
-//a painting canvas that allows you to paint with the mouse
+//a painting canvas that allows you to paint with the mouse --> TODO: make this more general usable as per-pixel plotting tool
 class Canvas : public Element
 {
   private:

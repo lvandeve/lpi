@@ -936,6 +936,23 @@ BasicElement::BasicElement() : x0(0),
 {}
 
 ////////////////////////////////////////////////////////////////////////////////
+//TOOLTIPMANAGER                                                              //
+////////////////////////////////////////////////////////////////////////////////
+
+void ToolTipManager::registerMe(const Element* element)
+{
+  this->element = element;
+}
+
+void ToolTipManager::draw() const
+{
+  if(enabled && element)
+    element->drawToolTip();
+}
+
+ToolTipManager defaultTooltipManager;
+
+////////////////////////////////////////////////////////////////////////////////
 //GUIELEMENT////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -974,12 +991,26 @@ void Element::drawToolTip() const
 {
   if(tooltipenabled && mouseOver())
   {
+    int numlines = 1;
+    int linelength = 0;
+    int longestline = 0;
+    for(size_t i = 0; i < tooltip.size(); i++)
+    {
+      if(tooltip[i] == 10 || (tooltip[i] == 13 && (i == 0 || tooltip[i - 1] != 10)))
+      {
+        numlines++;
+        if(linelength > longestline) longestline = linelength;
+        linelength = 0;
+      }
+      else linelength++;
+    }
+    if(linelength > longestline) longestline = linelength;
+    int sizex = longestline * TS_Black6.getWidth() + 4;
+    int sizey = 2 +  TS_Black6.getHeight() * numlines;
     int x = globalMouseX;
-    int y = globalMouseY - 6;
-    int sizex = tooltip.size() * 6 + 4;
-    int sizey = 8;
+    int y = globalMouseY - sizey;
     drawRectangle(x, y, x + sizex, y + sizey, RGBA_Lightyellow(224));
-    print(tooltip, x + 2, y + 2, TS_Black6);
+    printText(tooltip, x + 2, y + 2, TS_Black6);
   }
 }
 
@@ -1013,6 +1044,8 @@ void Element::draw() const
   
   drawWidget();
   drawLabel();
+  
+  if(tooltipenabled && mouseOver()) tooltipmanager->registerMe(this);
 }
 
 /*void Element::drawWidget() const
@@ -1178,7 +1211,7 @@ void Container::setScrollSizeToElements()
   area.resizeSticky(newx0, newy0, newx1, newy1);
 }
 
-Container::Container() : keepElementsInside(false), enableTooltips(true)
+Container::Container() : keepElementsInside(false)
 {
   clear(); //clear the element list
   totallyEnable();
@@ -1406,21 +1439,15 @@ void Container::drawWidget() const
 {
   setSmallestScissor(getVisibleX0(), getVisibleY0(), getVisibleX1(), getVisibleY1()); //currently does same as setScissor (because otherwise there's weird bug, to reproduce: resize the red window and look at smiley in the small grey window), so elements from container in container are still drawn outside container. DEBUG THIS ASAP!!!
   
-  Element* tooltipelement = 0;
-  
   for(unsigned long i = 0; i < size(); i++)
   {
     if(!element[i]->isNotDrawnByContainer())
     {
       element[i]->draw();
-      if(enableTooltips && element[i]->tooltipenabled && element[i]->mouseOver()) tooltipelement = element[i];
     }
   }
   
   resetScissor();
-  
-  //tooltip (only 1 can be active at the same time)
-  if(enableTooltips && tooltipelement) tooltipelement->drawToolTip();
   
   bars.draw();
 }

@@ -199,9 +199,9 @@ Markup operator/(Markup ts, int a);
 
 void drawLetter(unsigned char n, int x, int y, const Markup& markup);
 
-//internally used to print a string
+//used to print a string without newlines
 int printString(std::string text, int x = 0, int y = 0, const Markup& markup = TS_W, unsigned long forceLength=0);
-//internally used to print a text
+//used to print a text with newlines
 int printText(std::string text, int x = 0, int y = 0, const Markup& markup = TS_W, unsigned long forceLength=0);
 
 //print something (string, int, float, ...)
