@@ -855,6 +855,8 @@ class Container : public Element
     void pushBottomAt(Element* element, int x, int y, double leftSticky=0.0, double topSticky=0.0, double rightSticky=0.0, double bottomSticky=0.0);
     void insertAt(size_t pos, Element* element, int x, int y, double leftSticky=0.0, double topSticky=0.0, double rightSticky=0.0, double bottomSticky=0.0);
 
+    void bringToTop(Element* element); //precondition: element must already be in the list
+    
     void centerElement(Element* element);
 
     void remove(Element* element);
@@ -997,6 +999,8 @@ class Window : public Element
     void pushBottomAt(Element* element, int x, int y, double leftSticky=0.0, double topSticky=0.0, double rightSticky=0.0, double bottomSticky=0.0);
     void insertAt(size_t pos, Element* element, int x, int y, double leftSticky=0.0, double topSticky=0.0, double rightSticky=0.0, double bottomSticky=0.0);
 
+    void bringToTop(Element* element); //precondition: element must already be in the list
+    
     void remove(Element* element);
     int size();
     void putInside(int i);

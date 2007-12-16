@@ -1383,7 +1383,7 @@ void Container::handleWidget()
     else
     {
       element[j]->setElementOver(0);
-      if(element[j]->isContainer() && element[j]->mouseDownHere(element[j]->getMouseStateForContainer())) pushTop(element[j]);
+      if(element[j]->isContainer() && element[j]->mouseDownHere(element[j]->getMouseStateForContainer())) bringToTop(element[j]);
     }
   }
   //else setElementOver(true); //some elements may be left without element over status...
@@ -1466,6 +1466,12 @@ void Container::remove(Element* element)
       this->element.erase(this->element.begin() + i);
     }
   }
+}
+
+void Container::bringToTop(Element* element) //precondition: element must already be in the list
+{
+  remove(element); //remove it from the list before putting it to the top
+  this->element.push_back(element);
 }
 
 void Container::pushTop(Element* element, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
@@ -2054,6 +2060,11 @@ int Window::size()
 void Window::remove(Element* element)
 {
   container.remove(element);
+}
+
+void Window::bringToTop(Element* element) //precondition: element must already be in the list
+{
+  container.bringToTop(element);
 }
 
 void Window::pushTopAt(Element* element, int x, int y, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
