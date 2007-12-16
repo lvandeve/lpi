@@ -1482,7 +1482,9 @@ struct PainterStack
   int y1;
   ColorRGB color;
   Texture* texture;
-  int type; //0: point, 1: line, 2: texture (coord = top left), 3: centered texture
+  std::string text;
+  Markup textMarkup;
+  int type; //0: point, 1: line, 2: texture (coord = top left), 3: centered texture, 4: text
 };
 
 class Painter : public Element
@@ -1498,6 +1500,7 @@ class Painter : public Element
     void queueRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color = RGB_White);
     void queueTexture(int x, int y, Texture* texture, const ColorRGB& colorMod = RGB_White);
     void queueTextureCentered(int x, int y, Texture* texture, const ColorRGB& colorMod = RGB_White);
+    void queueText(int x, int y, const std::string& text, const Markup& markup);
     
   private:
     mutable std::vector<PainterStack> stack; //mutable because it's emptied everytime after drawing

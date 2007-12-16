@@ -56,6 +56,7 @@ int floatMod(double f, int m);
 int gcd(int a, int b);
 
 static const double pi = 3.14159265358979323846264338327950288419716939937510; //why isn't this in standard C++ anyway
+static const double twopi = 6.283185307179586477;
 
 inline int intdown(double f) //intdown(0.5) becomes 0, intdown(-0.5) becomes -1, intdown(0.0) becomes something unknown, it's a border
 {

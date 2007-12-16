@@ -170,28 +170,28 @@ Markup operator/(Markup ts, int a);
 #define TS_Font16  Markup(lpi::RGB_White, lpi::RGB_Black, 0, &font[1]) //the first bitmap font
 #define TS_Grey6  Markup(lpi::RGB_Grey, lpi::RGB_Black, 0, &lpi::builtInFont6x6)
 
-#define TS_White4  Markup(lpi::RGB_White, lpi::RGB_Black, 0, &lpi::builtInFont4x4) //default white text
-#define TS_Black4  Markup(lpi::RGB_Black, lpi::RGB_White, 0, &lpi::builtInFont4x4) //default black text
-#define TS_W4  Markup(lpi::RGB_White, lpi::RGB_Black, 0, &lpi::builtInFont4x4) //shortcut for default white text
-#define TS_B4  Markup(lpi::RGB_Black, lpi::RGB_White, 0, &lpi::builtInFont4x4) //shortcut for default black text
-#define TS_BG4  Markup(lpi::RGB_White, lpi::RGB_Black, 1, &lpi::builtInFont4x4) //default white text on black background
-#define TS_Shadow4  Markup(lpi::RGB_White, lpi::RGB_Black, 18, &lpi::builtInFont4x4) //white text with black shadow bottom right
-#define TS_Red4  Markup(lpi::RGB_Red, lpi::RGB_Black, 0, &lpi::builtInFont4x4) //default red text
-#define TS_Green4  Markup(lpi::RGB_Green, lpi::RGB_Black, 0, &lpi::builtInFont4x4) //default green text
-#define TS_Grey4  Markup(lpi::RGB_Grey, lpi::RGB_Black, 0, &lpi::builtInFont4x4) //default grey text
-#define TS_Blue4  Markup(lpi::RGB_Blue, lpi::RGB_Black, 0, &lpi::builtInFont4x4) //default blue text
-#define TS_RShadow4  Markup(lpi::RGB_Red, lpi::RGB_Black, 18, &lpi::builtInFont4x4) //default red text with shadow
-#define TS_Bold4  Markup(lpi::RGB_White, lpi::RGB_Black, 512, &lpi::builtInFont4x4) //default white text, bold
-#define TS_BBold4  Markup(lpi::RGB_Black, lpi::RGB_Black, 512, &lpi::builtInFont4x4) //default black text, bold
-#define TS_Italic4  Markup(lpi::RGB_White, lpi::RGB_Black, 1024, &lpi::builtInFont4x4) //default white text, italic
-#define TS_BItalic4  Markup(lpi::RGB_Black, lpi::RGB_Black, 1024, &lpi::builtInFont4x4) //default black text, italic
-#define TS_Alpha4  Markup(lpi::RGBA_White(128), lpi::RGBA_Black(128), 0, &lpi::builtInFont4x4) //translucent white text
-#define TS_Rainbow4  Markup(lpi::RGB_Magenta, lpi::RGB_Yellow, 18, &lpi::builtInFont4x4) //colorful text
-#define TS_Yellow4  Markup(lpi::RGB_Yellow, lpi::RGB_Black, 0, &lpi::builtInFont4x4)
-#define TS_Olive4  Markup(lpi::RGB_Olive, lpi::RGB_Black, 0, &lpi::builtInFont4x4)
-#define TS_Maroon4  Markup(lpi::RGB_Maroon, lpi::RGB_Black, 0, &lpi::builtInFont4x4)
+#define TS_White4  Markup(lpi::RGB_White, lpi::RGB_Black, 0, &lpi::builtInFont4x5) //default white text
+#define TS_Black4  Markup(lpi::RGB_Black, lpi::RGB_White, 0, &lpi::builtInFont4x5) //default black text
+#define TS_W4  Markup(lpi::RGB_White, lpi::RGB_Black, 0, &lpi::builtInFont4x5) //shortcut for default white text
+#define TS_B4  Markup(lpi::RGB_Black, lpi::RGB_White, 0, &lpi::builtInFont4x5) //shortcut for default black text
+#define TS_BG4  Markup(lpi::RGB_White, lpi::RGB_Black, 1, &lpi::builtInFont4x5) //default white text on black background
+#define TS_Shadow4  Markup(lpi::RGB_White, lpi::RGB_Black, 18, &lpi::builtInFont4x5) //white text with black shadow bottom right
+#define TS_Red4  Markup(lpi::RGB_Red, lpi::RGB_Black, 0, &lpi::builtInFont4x5) //default red text
+#define TS_Green4  Markup(lpi::RGB_Green, lpi::RGB_Black, 0, &lpi::builtInFont4x5) //default green text
+#define TS_Grey4  Markup(lpi::RGB_Grey, lpi::RGB_Black, 0, &lpi::builtInFont4x5) //default grey text
+#define TS_Blue4  Markup(lpi::RGB_Blue, lpi::RGB_Black, 0, &lpi::builtInFont4x5) //default blue text
+#define TS_RShadow4  Markup(lpi::RGB_Red, lpi::RGB_Black, 18, &lpi::builtInFont4x5) //default red text with shadow
+#define TS_Bold4  Markup(lpi::RGB_White, lpi::RGB_Black, 512, &lpi::builtInFont4x5) //default white text, bold
+#define TS_BBold4  Markup(lpi::RGB_Black, lpi::RGB_Black, 512, &lpi::builtInFont4x5) //default black text, bold
+#define TS_Italic4  Markup(lpi::RGB_White, lpi::RGB_Black, 1024, &lpi::builtInFont4x5) //default white text, italic
+#define TS_BItalic4  Markup(lpi::RGB_Black, lpi::RGB_Black, 1024, &lpi::builtInFont4x5) //default black text, italic
+#define TS_Alpha4  Markup(lpi::RGBA_White(128), lpi::RGBA_Black(128), 0, &lpi::builtInFont4x5) //translucent white text
+#define TS_Rainbow4  Markup(lpi::RGB_Magenta, lpi::RGB_Yellow, 18, &lpi::builtInFont4x5) //colorful text
+#define TS_Yellow4  Markup(lpi::RGB_Yellow, lpi::RGB_Black, 0, &lpi::builtInFont4x5)
+#define TS_Olive4  Markup(lpi::RGB_Olive, lpi::RGB_Black, 0, &lpi::builtInFont4x5)
+#define TS_Maroon4  Markup(lpi::RGB_Maroon, lpi::RGB_Black, 0, &lpi::builtInFont4x5)
 #define TS_Font14  Markup(v_White, lpi::RGB_Black, 0, &font[1]) //the first bitmap font
-#define TS_Grey4  Markup(lpi::RGB_Grey, lpi::RGB_Black, 0, &lpi::builtInFont4x4)
+#define TS_Grey4  Markup(lpi::RGB_Grey, lpi::RGB_Black, 0, &lpi::builtInFont4x5)
 
 ////////////////////////////////////////////////////////////////////////////////
 //TEXT FUNCTIONS////////////////////////////////////////////////////////////////

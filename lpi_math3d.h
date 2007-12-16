@@ -280,6 +280,7 @@ bool hasOppositeDirection(const Vector3& v, const Vector3& w);
 bool sideOfPlaneGivenByNormal(const Vector3& p, const Vector3& n);
 bool sideOfPlaneGivenByThreePoints(const Vector3& p, const Vector3& a, const Vector3& b, const Vector3& c);
 bool sideOfPlaneGivenByTwoVectors(const Vector3& p, const Vector3& X, const Vector3& Y);
+double angleWithPlaneGivenByTwoVectors(const Vector3& v, const Vector3& X, const Vector3& Y);
 double distance(const Vector3& p, const Vector3& a, const Vector3& b);
 double distance(const Vector3& p, const Vector3& a, const Vector3& b, const Vector3& c);
 bool linesegmentThroughSphere(const Vector3& a, const Vector3& b, const Vector3& p, double radius);
