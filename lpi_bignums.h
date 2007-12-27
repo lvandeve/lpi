@@ -285,6 +285,13 @@ bool getMSB(const uint32* a)
   return a[size - 1] > 2147483647;
 }
 
+template<int size>
+void setMSB(uint32* a, bool bit)
+{
+  if(bit) a[size - 1] |= 2147483648U;
+  else a[size - 1] &= 2147483647;
+}
+
 /*
 getBit functions:
 gets a bit from the given bignum.
@@ -363,6 +370,30 @@ void makeZero(uint32* a)
   for(int i = 0; i < size; i++) a[i] = 0U;
 }
 
+template<int size>
+bool isZero(const uint32* a)
+{
+  for(int i = 0; i < size; i++) if(a[i] != 0U) return false;
+  return true;
+}
+
+template<int sizeo, int sizea, int sizeb>
+void multiply_unsigned(uint32* out, const uint32* a, const uint32* b)
+{
+  makeZero<sizeo>(out);
+  
+  //the copy is needed because add doesn't support bitshifted input, and the sign bits must be correct for more uints
+  uint32 b_copy[sizeo];
+  for(int i = 0; i < sizeb; i++) b_copy[i] = b[i];
+  for(int i = sizeb; i < sizeo; i++) b_copy[i] = 0U;
+  
+  for(int j = 0; j < sizeo * 32; j++)
+  {
+    if(lpi::getBit_unsigned<sizea>(a, j)) add<sizeo, 0, sizeo, 0>(out, out, b_copy);
+    leftshift<sizeo>(b_copy, 1U);
+  }
+}
+
 /*
 sizeo = size of output in uint32's
 sizea and sizeb = size of inputs
@@ -388,22 +419,201 @@ void multiply_signed(uint32* out, const uint32* a, const uint32* b)
   }
 }
 
-template<int sizeo, int sizea, int sizeb>
-void multiply_unsigned(uint32* out, const uint32* a, const uint32* b)
+template<int size>
+bool greaterthan_unsigned(const uint32* a, const uint32* b) //returns a > b
 {
-  makeZero<sizeo>(out);
-  
-  //the copy is needed because add doesn't support bitshifted input, and the sign bits must be correct for more uints
-  uint32 b_copy[sizeo];
-  for(int i = 0; i < sizeb; i++) b_copy[i] = b[i];
-  for(int i = sizeb; i < sizeo; i++) b_copy[i] = 0U;
-  
-  for(int j = 0; j < sizeo * 32; j++)
+  for(int i = size - 1; i >= 0; i--) if(a[i] != b[i]) return a[i] > b[i];
+  return false; //they're equal
+}
+
+template<int sizea, int fraca, int sizeb, int fracb>
+bool greaterthan_unsigned(const uint32* a, const uint32* b) //returns a > b
+{
+  int shift = fraca - fracb;
+  if(sizea - fraca > sizeb - fracb) //a has bigger MSB
   {
-    if(lpi::getBit_unsigned<sizea>(a, j)) add<sizeo, 0, sizeo, 0>(out, out, b_copy);
-    leftshift<sizeo>(b_copy, 1U);
+    for(int i = sizea - 1; i >= 0; i--)
+    {
+      uint32 bi = (i - shift >= 0 && i - shift < sizeb) ? b[i - shift] : 0;
+      if(a[i] != bi) return a[i] > bi;
+    }
+    //now there are maybe some b's left
+    //if(shift < 0) for(int i = -shift - 1; i >= 0; i--) if(b[i] != 0) return false;
+    return false; //they're equal OR b is bigger
+  }
+  else //b has bigger MSB
+  {
+    for(int i = sizeb - 1; i >= 0; i--)
+    {
+      uint32 ai = (i + shift >= 0 && i - shift < sizea) ? a[i + shift] : 0;
+      if(b[i] != ai) return ai > b[i];
+    }
+    //now there are maybe some a's left
+    if(shift > 0) for(int i = shift - 1; i >= 0; i--) if(a[i] != 0) return true;
+    return false; //they're equal
   }
 }
+
+template<int size>
+bool smallerthan_unsigned(const uint32* a, const uint32* b)
+{
+  return greaterthan_unsigned<size>(b, a);
+}
+
+template<int sizea, int fraca, int sizeb, int fracb>
+bool smallerthan_unsigned(const uint32* a, const uint32* b)
+{
+  return greaterthan_unsigned<sizea, fraca, sizeb, fracb>(b, a);
+}
+
+template<int size>
+bool greaterthan_signed(const uint32* a, const uint32* b)
+{
+  if(sign<size>(a) && !sign<size>(b)) return false;
+  if(!sign<size>(a) && sign<size>(b)) return true;
+  
+  return(greaterthan_unsigned<size>(a, b));
+}
+
+template<int sizea, int fraca, int sizeb, int fracb>
+bool greaterthan_signed(const uint32* a, const uint32* b)
+{
+  if(sign<sizea>(a) && !sign<sizeb>(b)) return false;
+  if(!sign<sizea>(a) && sign<sizeb>(b)) return true;
+  
+  return greaterthan_unsigned<sizea, fraca, sizeb, fracb>(a, b);
+}
+
+template<int size>
+bool smallerthan_signed(const uint32* a, const uint32* b)
+{
+  return greaterthan_signed<size>(b, a);
+}
+
+template<int sizea, int fraca, int sizeb, int fracb>
+bool smallerthan_signed(const uint32* a, const uint32* b)
+{
+  return greaterthan_signed<sizea, fraca, sizeb, fracb>(b, a);
+}
+
+/*
+If some of the uint32's are fractional:
+interpret the resulting bits as fractional and non fractional bits correctly yourself.
+sizeo must be at least sizea
+in fact sizeb must also be as big as sizea, or the step "left shift dividor until it is greater than or equal to divident" doesn't work
+so remove the sizes or make 1 input size
+the inputs are not const and will be modified! make copy yourself if needed.
+*/
+template<int sizeo, int sizea, int sizeb>
+void divide_unsigned(uint32* out, uint32* divident, uint32* dividor)
+{
+  //quotient = divident / dividor
+  
+  int shift = 0;
+  
+  makeZero<sizeo>(out);
+  
+  if(!isZero<sizeb>(dividor)) //avoid division through 0
+  {
+    /*left shift dividor until it is greater than or equal to divident
+    the comparision includes checks for the extra MSBs*/
+    bool lostbit = false;
+    while(smallerthan_unsigned<sizeb, 0, sizea, 0>(dividor, divident))
+    {
+      lostbit = getMSB<sizeb>(dividor);
+      leftshift<sizeb>(dividor, 1);
+      shift++;
+      if(shift >= sizeb * 32) break; //shifted too much?
+    }
+
+    //if the dividor is now larger than the divident, right shift it again once
+    if(lostbit || greaterthan_unsigned<sizeb, 0, sizea, 0>(divident, dividor))
+    {
+      rightshift_unsigned<sizeb>(dividor, 1);
+      setMSB<sizeb>(dividor, lostbit);
+      shift--;
+    }
+    
+    while(shift >= 0)
+    {
+      leftshift<sizeo>(out, 1);
+      
+      if(!greaterthan_unsigned<sizeb, 0, sizea, 0>(dividor, divident)) //if dividor <= divident...
+      {
+        subtract<sizea, 0, sizeb, 0>(divident, divident, dividor);
+        addLSB<sizeo>(out); //increment the LSB from the quotient, carrying the bit if needed
+      }
+      
+      rightshift_unsigned<sizeb>(dividor, 1);
+      shift--;
+    }
+  }
+}
+
+// /*
+// If some of the uint32's are fractional:
+// interpret the resulting bits as fractional and non fractional bits correctly yourself.
+// sizeo must be at least sizea
+// */
+// template<int sizeo, int sizea, int sizeb>
+// void divide_unsigned(uint32* out, const uint32* a, const uint32* b)
+// {
+//   //quotient = divident / dividor
+//   //     out =        a /       b
+//   /*
+//   Without precaution, the result will exclude the digits behind the point.
+//   So to solve: the divident is multiplied with 4 billion compared to the dividor
+//   */
+//   
+//   uint32 dividor[sizeb]; for(int i = 0; i < sizeb; i++) dividor[i] = b[i];
+//   uint32 divident[sizea]; for(int i = 0; i < sizea; i++) divident[i] = a[i];
+//   
+//   int shift = 0;
+//   
+//   uint32 thisMSB = 0U; //extra uint32 for *this (extra MSB's)
+//   makeZero<sizeo>(out);
+//   
+//   if(!isZero<sizeb>(dividor)) //avoid division through 0
+//   {
+//     /*left shift dividor until it is greater than or equal to divident
+//     the comparision includes checks for the extra MSBs*/
+//     //while(b[sizeb - 1] < a[sizea - 1] || (dividorMSB == dividentMSB && dividor < divident))
+//     while(smallerthan_unsigned<sizeb, 0, sizea, 0>(dividor, divident))
+//     {
+//       leftshift<sizeb>(dividor, 1);
+//       shift++;
+//     }
+// 
+//     //if the dividor is now larger than the divident, right shift it again once
+//     //if(dividorMSB > dividentMSB || (dividorMSB == dividentMSB && dividor > divident))
+//     if(greaterthan_unsigned<sizeb, 0, sizea, 0>(divident, dividor))
+//     {
+//       rightshift_unsigned<sizeb>(dividor, 1);
+//       shift--;
+//     }
+//     
+//     while(shift >= 0)
+//     {
+//       //left shift quotient
+//       leftshift<sizeo>(out, 1);
+//       
+//       //if(!(dividorMSB > dividentMSB || (dividorMSB == dividentMSB && dividor > divident))) //if dividor <= divident...
+//       if(!greaterthan_unsigned<sizeb, 0, sizea, 0>(dividor, divident)) //if dividor <= divident...
+//       {
+//         //subtract dividor from divident
+//         subtract<sizea, 0, sizeb, 0>(divident, divident, dividor);
+// 
+//         //increment the LSB from the quotient, carrying to the whole left if needed
+//         addLSB<sizeo>(out);
+//       }
+//       
+//       //right shift dividor 
+//       rightshift_unsigned<sizeb>(dividor, 1);
+// 
+//       shift--;
+//     }
+//   }
+// }
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////

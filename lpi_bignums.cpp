@@ -237,85 +237,15 @@ void ufixed96q32::takeSqrt()
 
 ufixed96q32& ufixed96q32::operator/=(const ufixed96q32& rhs)
 {
-  //divident / dividor = quotient (= *this)
   /*
   Without precaution, the result will exclude the digits behind the point.
   So to solve: the divident is multiplied with 4 billion compared to the dividor
   */
-  ufixed96q32 dividor = rhs;
-  uint32 dividorMSB = 0U;
-  uint32 dividentMSB = data[3]; //MSB's for the divident
-  ufixed96q32 divident = ((*this) << 32U);
-  
-  int shift = 0;
-  
-  uint32 thisMSB = 0U; //extra uint32 for *this (extra MSB's)
-  makeZero();
-  
-  if(!dividor.isZero()) //avoid division through 0
-  {
-    /*left shift dividor until it is greater than or equal to divident
-    the comparision includes checks for the extra MSBs*/
-    while(dividorMSB < dividentMSB || (dividorMSB == dividentMSB && dividor < divident))
-    {
-      dividorMSB <<= 1; if(dividor.data[3] & 2147483648U) dividorMSB |= 1; else dividorMSB &= 4294967294U;
-      dividor <<= 1;
-      shift++;
-    }
-
-    //if the dividor is now larger than the divident, right shift it again once
-    if(dividorMSB > dividentMSB || (dividorMSB == dividentMSB && dividor > divident))
-    {
-      dividor >>= 1;
-      if(dividorMSB & 1U) dividor.data[3] |= 2147483648U; else dividor.data[3] &= 2147483647U;
-      dividorMSB >>= 1; dividorMSB &= 2147483647U; //make extra sure the left bit is 0
-      
-      shift--;
-    }
-    
-    while(shift >= 0)
-    {
-      //left shift quotient
-      thisMSB <<= 1; if(data[3] & 2147483648U) thisMSB |= 1; else thisMSB &= 4294967294U;
-      (*this) <<= 1;
-      
-      if(!(dividorMSB > dividentMSB || (dividorMSB == dividentMSB && dividor > divident))) //if dividor <= divident...
-      {
-        //subtract dividor from divident, operator- implemented here including the extra MSBs
-        {
-          bool borrow = false;
-          for(int i = 0; i < 4; i++)
-          {
-            if(borrow)
-            {
-              borrow = dividor.data[i] >= divident.data[i];
-              divident.data[i] -= (dividor.data[i] + 1U);
-            }
-            else
-            {
-              borrow = dividor.data[i] > divident.data[i] ;
-              divident.data[i] -= dividor.data[i];
-            }
-          }
-          //the MSBs from divident
-          if(borrow) dividentMSB -= (dividorMSB + 1U);
-          else dividentMSB -= dividorMSB;
-        }
-
-        //increment the LSB from the quotient, carrying to the whole left if needed
-        addLSB();
-        if(isZero()) thisMSB++;
-      }
-      
-      //right shift dividor 
-      dividor >>= 1;
-      if(dividorMSB & 1U) dividor.data[3] |= 2147483648U; else dividor.data[3] &= 2147483647U;
-      dividorMSB >>= 1; dividorMSB &= 2147483647U; //make extra sure the left bit is 0
-
-      shift--;
-    }
-  }
-  
+  uint32 dividor[5] = { rhs.data[0], rhs.data[1], rhs.data[2], rhs.data[3], 0 };
+  uint32 divident[5] = { 0, data[0], data[1], data[2], data[3] };
+  uint32 out[5];
+  divide_unsigned<5, 5, 5>(out, divident, dividor);
+  for(int i = 0; i < 4; i++) data[i] = out[i];
   return *this;
 }
 
@@ -405,36 +335,14 @@ bool ufixed96q32::operator==(uint32 rhs) const
 
 bool ufixed96q32::operator>(const ufixed96q32& rhs) const
 {
-  if(data[3] == rhs.data[3])
-  {
-    if(data[2] == rhs.data[2])
-    {
-      if(data[1] == rhs.data[1])
-      {
-        return data[0] > rhs.data[0];
-      }
-      else return data[1] > rhs.data[1];
-    }
-    else return data[2] > rhs.data[2];
-  }
-  else return data[3] > rhs.data[3];
+  return greaterthan_unsigned<4>(data, rhs.data);
+  //return greaterthan_unsigned<4, 1, 4, 1>(data, rhs.data);
 }
 
 bool ufixed96q32::operator<(const ufixed96q32& rhs) const
 {
-  if(data[3] == rhs.data[3])
-  {
-    if(data[2] == rhs.data[2])
-    {
-      if(data[1] == rhs.data[1])
-      {
-        return data[0] < rhs.data[0];
-      }
-      else return data[1] < rhs.data[1];
-    }
-    else return data[2] < rhs.data[2];
-  }
-  else return data[3] < rhs.data[3];
+  return smallerthan_unsigned<4>(data, rhs.data);
+  //return smallerthan_unsigned<4, 1, 4, 1>(data, rhs.data);
 }
 
 bool ufixed96q32::operator>=(const ufixed96q32& rhs) const
@@ -879,90 +787,19 @@ void fixed96q32::takeSqrt()
 
 fixed96q32& fixed96q32::operator/=(const fixed96q32& rhs)
 {
-  //divident / dividor = quotient (= *this)
+  bool s = sign() != rhs.sign();
+  if(sign()) negate();
   /*
   Without precaution, the result will exclude the digits behind the point.
   So to solve: the divident is multiplied with 4 billion compared to the dividor
   */
-  bool negative = false; //sign
-  if(sign()) { negative = !negative; negate(); }
-  ufixed96q32 dividor = rhs;
-  if(dividor.sign()) { negative = !negative; dividor.negate(); }
-  uint32 dividorMSB = 0U;
-  uint32 dividentMSB = data[3]; //MSB's for the divident
-  ufixed96q32 divident = ((*this) << 32U);
-  
-  int shift = 0;
-  
-  uint32 thisMSB = 0U; //extra uint32 for *this (extra MSB's)
-  makeZero();
-  
-  if(!dividor.isZero()) //avoid division through 0
-  {
-    /*left shift dividor until it is greater than or equal to divident
-    the comparision includes checks for the extra MSBs*/
-    while(dividorMSB < dividentMSB || (dividorMSB == dividentMSB && dividor < divident))
-    {
-      dividorMSB <<= 1; if(dividor.data[3] & 2147483648U) dividorMSB |= 1; else dividorMSB &= 4294967294U;
-      dividor <<= 1;
-      shift++;
-    }
-
-    //if the dividor is now larger than the divident, right shift it again once
-    if(dividorMSB > dividentMSB || (dividorMSB == dividentMSB && dividor > divident))
-    {
-      dividor >>= 1;
-      if(dividorMSB & 1U) dividor.data[3] |= 2147483648U; else dividor.data[3] &= 2147483647U;
-      dividorMSB >>= 1; dividorMSB &= 2147483647U; //make extra sure the left bit is 0
-      
-      shift--;
-    }
-    
-    while(shift >= 0)
-    {
-      //left shift quotient
-      thisMSB <<= 1; if(data[3] & 2147483648U) thisMSB |= 1; else thisMSB &= 4294967294U;
-      (*this) <<= 1;
-      
-      if(!(dividorMSB > dividentMSB || (dividorMSB == dividentMSB && dividor > divident))) //if dividor <= divident...
-      {
-        //subtract dividor from divident, operator- implemented here including the extra MSBs
-        {
-          bool borrow = false;
-          for(int i = 0; i < 4; i++)
-          {
-            if(borrow)
-            {
-              borrow = dividor.data[i] >= divident.data[i];
-              divident.data[i] -= (dividor.data[i] + 1U);
-            }
-            else
-            {
-              borrow = dividor.data[i] > divident.data[i] ;
-              divident.data[i] -= dividor.data[i];
-            }
-          }
-          //the MSBs from divident
-          if(borrow) dividentMSB -= (dividorMSB + 1U);
-          else dividentMSB -= dividorMSB;
-        }
-
-        //increment the LSB from the quotient, carrying to the whole left if needed
-        addLSB();
-        if(isZero()) thisMSB++;
-      }
-      
-      //right shift dividor 
-      dividor >>= 1;
-      if(dividorMSB & 1U) dividor.data[3] |= 2147483648U; else dividor.data[3] &= 2147483647U;
-      dividorMSB >>= 1; dividorMSB &= 2147483647U; //make extra sure the left bit is 0
-
-      shift--;
-    }
-
-  if(negative) negate();
-  }
-  
+  uint32 dividor[5] = { rhs.data[0], rhs.data[1], rhs.data[2], rhs.data[3], 0 };
+  if(rhs.sign()) lpi::negate<4>(dividor); //don't touch the 5th uint32
+  uint32 divident[5] = { 0, data[0], data[1], data[2], data[3] };
+  uint32 out[5];
+  divide_unsigned<5, 5, 5>(out, divident, dividor);
+  for(int i = 0; i < 4; i++) data[i] = out[i];
+  if(s) negate();
   return *this;
 }
 
@@ -1051,42 +888,14 @@ bool fixed96q32::operator==(uint32 rhs) const
 
 bool fixed96q32::operator>(const fixed96q32& rhs) const
 {
-  if(sign() && !rhs.sign()) return false;
-  if(!sign() && rhs.sign()) return true;
-  
-  if(data[3] == rhs.data[3])
-  {
-    if(data[2] == rhs.data[2])
-    {
-      if(data[1] == rhs.data[1])
-      {
-        return data[0] > rhs.data[0];
-      }
-      else return data[1] > rhs.data[1];
-    }
-    else return data[2] > rhs.data[2];
-  }
-  else return data[3] > rhs.data[3];
+  return greaterthan_signed<4>(this->data, rhs.data);
+  //return greaterthan_signed<4, 1, 4, 1>(this->data, rhs.data);
 }
 
 bool fixed96q32::operator<(const fixed96q32& rhs) const
 {
-  if(sign() && !rhs.sign()) return true;
-  if(!sign() && rhs.sign()) return false;
-  
-  if(data[3] == rhs.data[3])
-  {
-    if(data[2] == rhs.data[2])
-    {
-      if(data[1] == rhs.data[1])
-      {
-        return data[0] < rhs.data[0];
-      }
-      else return data[1] < rhs.data[1];
-    }
-    else return data[2] < rhs.data[2];
-  }
-  else return data[3] < rhs.data[3];
+  return smallerthan_signed<4>(this->data, rhs.data);
+  //return smallerthan_signed<4, 1, 4, 1>(this->data, rhs.data);
 }
 
 bool fixed96q32::operator>=(const fixed96q32& rhs) const
@@ -1447,30 +1256,34 @@ class Testfixed96q32
     std::cout<<std::endl;
   }
   
+  void testltgt(const lpi::fixed96q32& a, const lpi::fixed96q32& b, const lpi::fixed96q32& c, const lpi::fixed96q32& d)
+  {
+    std::cout<<(a < b)<<" ";
+    std::cout<<(a < c)<<" ";
+    std::cout<<(c < d)<<" ";
+    std::cout<<(b < a)<<" ";
+    std::cout<<(c < a)<<" ";
+    std::cout<<(d < c)<<" ";
+    std::cout << "- ";
+    std::cout<<(a > b)<<" ";
+    std::cout<<(a > c)<<" ";
+    std::cout<<(c > d)<<" ";
+    std::cout<<(b > a)<<" ";
+    std::cout<<(c > a)<<" ";
+    std::cout<<(d > c)<<" ";
+    std::cout<<std::endl;
+  }
+  
   void testltgt()
   {
     std::cout.precision(30);
     
     std::cout << "testing lesser than and greater than" << std::endl;
     
-    lpi::fixed96q32 a = +5.0;
-    lpi::fixed96q32 b = +6.0;
-    lpi::fixed96q32 c = -5.0;
-    lpi::fixed96q32 d = -6.0;
-    
-    std::cout<<(a < b)<<std::endl;
-    std::cout<<(a < c)<<std::endl;
-    std::cout<<(c < d)<<std::endl;
-    std::cout<<(b < a)<<std::endl;
-    std::cout<<(c < a)<<std::endl;
-    std::cout<<(d < c)<<std::endl;
-    std::cout << std::endl;
-    std::cout<<(a > b)<<std::endl;
-    std::cout<<(a > c)<<std::endl;
-    std::cout<<(c > d)<<std::endl;
-    std::cout<<(b > a)<<std::endl;
-    std::cout<<(c > a)<<std::endl;
-    std::cout<<(d > c)<<std::endl;
+    testltgt(+5.0, +6.0, -5.0, -6.0);
+    testltgt(+0.5, +0.6, -0.5, -0.6);
+    testltgt(+500000000.0, +600000000.0, -500000000.0, -600000000.0);
+    testltgt(+0.5, +600000000.0, -0.5, -600000000.0);
     std::cout<<std::endl;
   }
   
@@ -1510,7 +1323,7 @@ class Testfixed96q32
     std::cout<<(double)b<<std::endl;
     
     lpi::fixed96q32 c = 0.005;
-    c /= 2.0;
+    c /= -2.0;
     std::cout<<(double)c<<std::endl;
     
     
@@ -1521,6 +1334,40 @@ class Testfixed96q32
     std::cout<<(double)e<<std::endl;
     
     lpi::fixed96q32 d = 4U;
+    d <<= 64U;
+    d /= 2.0;
+    d >>= 64U;
+    std::cout<<(double)d<<std::endl;
+    
+    std::cout<<std::endl;
+  }
+  
+  void testudiv()
+  {
+    std::cout.precision(30);
+    
+    std::cout << "testing unsigned division" << std::endl;
+    
+    lpi::ufixed96q32 a = 3.0;
+    a /= 2.0;
+    std::cout<<(double)a<<std::endl;
+    
+    lpi::ufixed96q32 b = 8000000000000000000000000000.0;
+    b /= 2.0;
+    std::cout<<(double)b<<std::endl;
+    
+    lpi::ufixed96q32 c = 0.005;
+    c /= 2.0;
+    std::cout<<(double)c<<std::endl;
+    
+    
+    lpi::ufixed96q32 e = 4U;
+    e <<= 32U;
+    e /= 2.0;
+    e >>= 32U;
+    std::cout<<(double)e<<std::endl;
+    
+    lpi::ufixed96q32 d = 4U;
     d <<= 64U;
     d /= 2.0;
     d >>= 64U;
@@ -1553,6 +1400,7 @@ class Testfixed96q32
     testltgt();
     testsqrt();
     testdiv();
+    testudiv();
     testint();
     
     /*
@@ -1620,19 +1468,10 @@ class Testfixed96q32
     0
     
     testing lesser than and greater than
-    1
-    0
-    0
-    0
-    1
-    1
-    
-    0
-    1
-    1
-    1
-    0
-    0
+    1 0 0 0 1 1 - 0 1 1 1 0 0
+    1 0 0 0 1 1 - 0 1 1 1 0 0
+    1 0 0 0 1 1 - 0 1 1 1 0 0
+    1 0 0 0 1 1 - 0 1 1 1 0 0
     
     testing square root
     40000
@@ -1642,6 +1481,13 @@ class Testfixed96q32
     testing division
     1.5
     -8000000000000
+    -0.0024999999441206455230712890625
+    2
+    2
+    
+    testing unsigned division
+    1.5
+    4000000000000000053150220288
     0.0024999999441206455230712890625
     2
     2

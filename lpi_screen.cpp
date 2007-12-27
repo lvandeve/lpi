@@ -176,6 +176,8 @@ void set3DScreen(double near, double far)
   
   lastNear = near;
   lastFar = far;
+  
+  glMatrixMode(GL_MODELVIEW); //make sure nothing else changed the projection matrix, which may be used only for the projection, not the camera.
 }
 
 //Initialize OpenGL: set up the camera and settings to emulate 2D graphics
