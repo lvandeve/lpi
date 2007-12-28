@@ -1060,6 +1060,13 @@ void Element::move(int x, int y)
   this->x1 += x;
   this->y1 += y;
   
+  for(int i = 0;;i++)
+  {
+    Element* element = getAutoSubElement(i);
+    if(!element) break;
+    else element->move(x, y);
+  }
+  
   moveWidget(x, y);
 }
 
@@ -1098,17 +1105,23 @@ void Element::handle()
   if(!active) return;
   
   handleWidget();
-  //no stuff needed for most elements
 }
 
 void Element::handleWidget()
 {
   //no stuff needed for most elements
-}  
+}
 
 void Element::setElementOver(bool state)
 {
   elementOver = state;
+  
+  for(int i = 0;;i++)
+  {
+    Element* element = getAutoSubElement(i);
+    if(!element) break;
+    else element->setElementOver(state);
+  }
 }
 
 bool Element::hasElementOver() const
@@ -1144,6 +1157,13 @@ void Element::resize(int x0, int y0, int x1, int y1)
   this->y0 = y0;
   this->x1 = x1;
   this->y1 = y1;
+  
+  for(int i = 0;;i++)
+  {
+    Element* element = getAutoSubElement(i);
+    if(!element) break;
+    else element->resize(x0, y0, x1, y1);
+  }
   
   resizeWidget();
 }
@@ -2759,11 +2779,15 @@ void Scrollbar::handleWidget()
   else scroller.moveTo(int(x0 + getSliderStart() + (getSliderSize() * scrollPos) / scrollSize), scroller.getY0());
 }
 
-void Scrollbar::resizeWidget()
+Element* Scrollbar::getAutoSubElement(int i)
 {
-  scroller.resizeSticky(x0, y0, x1, y1);  
-  buttonUp.resizeSticky(x0, y0, x1, y1);
-  buttonDown.resizeSticky(x0, y0, x1, y1);
+  switch(i)
+  {
+    case 0: return &scroller;
+    case 1: return &buttonUp;
+    case 2: return &buttonDown;
+    default: return 0;
+  }
 }
 
 //from an external source, use this function only BEFORE using the handle() function or getTicks() - oldTime will be zero
@@ -2805,21 +2829,6 @@ void Scrollbar::setRelativePosition(float position)
 void Scrollbar::setRelativeScrollSpeed()
 {
   absoluteSpeed = scrollSize / (scrollSpeed);
-}
-
-void Scrollbar::moveWidget(int x, int y)
-{
-  scroller.move(x, y);
-  buttonUp.move(x, y);
-  buttonDown.move(x, y);
-}
-
-void Scrollbar::setElementOver(bool state)
-{
-  Element::setElementOver(state);
-  scroller.setElementOver(state);
-  buttonUp.setElementOver(state);
-  buttonDown.setElementOver(state);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2983,11 +2992,6 @@ Slider::Slider()
   this->active = 0;
 }
 
-void Slider::resizeWidget()
-{
-  slider.resizeSticky(x0, y0, x1, y1);
-}
-
 void Slider::makeHorizontal(int x, int y, int length, double scrollSize, const GuiSet* set)
 {
   this->totallyEnable();
@@ -3132,15 +3136,10 @@ void Slider::handleWidget()
   }
 }
 
-void Slider::moveWidget(int x, int y)
+Element* Slider::getAutoSubElement(int i)
 {
-  slider.move(x, y);
-}
-
-void Slider::setElementOver(bool state)
-{
-  Element::setElementOver(state);
-  slider.setElementOver(state);
+  if(i == 0) return &slider;
+  else return 0;
 }
 
 double Slider::getValue() const

@@ -430,7 +430,7 @@ class Element : public BasicElement
     void handle();
     virtual void handleWidget();
     void move(int x, int y);
-    virtual void moveWidget(int /*x*/, int /*y*/);
+    virtual void moveWidget(int /*x*/, int /*y*/); //Override this if you have subelements, unless you use getAutoSubElement.
     
     void autoActivate();
     
@@ -445,11 +445,11 @@ class Element : public BasicElement
     void growSizeY0(int sizey) { resize(x0        , y1 - sizey, x1        , y1        ); }
     void growSizeX1(int sizex) { resize(x0        , y0        , x0 + sizex, y1        ); }
     void growSizeY1(int sizey) { resize(x0        , y0        , x1        , y0 + sizey); }
-    virtual void resizeWidget(); //always called after resize, will resize the other elements to the correct size
+    virtual void resizeWidget(); //always called after resize, will resize the other elements to the correct size. Override this if you have subelements, unless you use getAutoSubElement.
     virtual bool isContainer() const; //returns 0 if the type of element isn't a container, 1 if it is (Window, Container, ...); this value is used by for example Container: it brings containers to the top of the screen if you click on them. Actually so far it's only been used for that mouse test. It's something for containers, by containers :p
     void putInScreen(); //puts element in screen if it's outside
 
-    ////initial position of this element relative to it's container or master (if it has one), these variables are only used by it's master if this master needs them and are never updated or changed by this element itself
+    ////initial position of this element relative to it's container or master (if it has one), these variables are only used by its master if this master needs them and are never updated or changed by this element itself
     int ix0;
     int iy0;
     int ix1;
@@ -497,8 +497,8 @@ class Element : public BasicElement
     ToolTipManager* tooltipmanager;
     
     
-    virtual void setElementOver(bool state); //ALL gui types that have gui elements inside of them, must set elementOver of all gui elements inside of them too! ==> override this virtual function for those
-    virtual bool hasElementOver() const;
+    virtual void setElementOver(bool state); //ALL gui types that have gui elements inside of them, must set elementOver of all gui elements inside of them too! ==> override this virtual function for those. Override this if you have subelements, unless you use getAutoSubElement.
+    bool hasElementOver() const;
 
     ////special visible parts, for example for debugging
     void drawBorder(const ColorRGB& color = RGB_White) const;
@@ -508,6 +508,18 @@ class Element : public BasicElement
     
     bool isNotDrawnByContainer() { return notDrawnByContainer; }
     void setNotDrawnByContainer(bool set) { notDrawnByContainer = set; }
+    
+    protected:
+    
+    /*
+    override this to return sub elements (0 if i >= amount of sub elements) to automatically do
+    resizeWidget, moveWidget and setElementOver for these elements. That can save you from having
+    to override those 3 other functions instead.
+    Draw and handle are not called by this, because those usually require more manual tweaking.
+    Make sure to return 0 if i >= amount of sub elements, or it causes an infinite loop!
+    E.g. in a scrollbar, getAutoSubElement could return its buttons and so on.
+    */
+    virtual Element* getAutoSubElement(int /*i*/) { return 0; }
     
     private:
     
@@ -637,7 +649,6 @@ class Scrollbar : public Element
     
     virtual void handleWidget();
     virtual void drawWidget() const;
-    virtual void resizeWidget();
 
     Direction direction; //0 = vertical, 1 = horizontal
     //int sizeButton; //size of the up and down button
@@ -678,12 +689,9 @@ class Scrollbar : public Element
                         double scrollSize = 100, double scrollPos = 0, double offset = 0, double scrollSpeed = 1,
                         const GuiSet* set = &builtInGuiSet, int speedMode = 1);
     void showValue(int x, int y, const Markup& valueMarkup, int type); //type: 0=don't, 1=float, 2=int
-    virtual void moveWidget(int x, int y);
     
     void scroll(int dir); //make it scroll from an external command
     
-    virtual void setElementOver(bool state); //scrollbar has buttons in it that need to be set inactive too so has its own function for this defined
-
     double offset; //used as an offset of ScrollPos to get/set the scroll value with offset added with the functions below
     double getValue() const;
     void setValue(double value);
@@ -693,6 +701,9 @@ class Scrollbar : public Element
     Markup valueMarkup; //text style of the value
     int valueX; //x position of the value (relative)
     int valueY; //y position of the value (relative)
+    
+    protected:
+    virtual Element* getAutoSubElement(int i);
 };
 
 class ScrollbarPair : public Element
@@ -756,9 +767,9 @@ class Slider : public Element
 
     virtual void drawWidget() const;
     virtual void handleWidget();
-    virtual void moveWidget(int x, int y);
-    virtual void resizeWidget();
-    virtual void setElementOver(bool state);
+    
+    protected:
+    virtual Element* getAutoSubElement(int i);
 };
 
 class Invisible : public Element
