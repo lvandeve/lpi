@@ -1060,7 +1060,7 @@ void Element::move(int x, int y)
   this->x1 += x;
   this->y1 += y;
   
-  for(int i = 0;;i++)
+  for(unsigned long i = 0;;i++)
   {
     Element* element = getAutoSubElement(i);
     if(!element) break;
@@ -1116,7 +1116,7 @@ void Element::setElementOver(bool state)
 {
   elementOver = state;
   
-  for(int i = 0;;i++)
+  for(unsigned long i = 0;;i++)
   {
     Element* element = getAutoSubElement(i);
     if(!element) break;
@@ -1158,11 +1158,11 @@ void Element::resize(int x0, int y0, int x1, int y1)
   this->x1 = x1;
   this->y1 = y1;
   
-  for(int i = 0;;i++)
+  for(unsigned long i = 0;;i++)
   {
     Element* element = getAutoSubElement(i);
     if(!element) break;
-    else element->resize(x0, y0, x1, y1);
+    else element->resizeSticky(this->x0, this->y0, this->x1, this->y1);
   }
   
   resizeWidget();
@@ -2056,23 +2056,7 @@ void Window::setTitle(const std::string& title)
   this->title = title;
 }
 
-void Window::moveWidget(int x, int y)
-{
-  container.move(x, y);
-  top.move(x, y);
-  closeButton.move(x, y);
-  resizer.move(x, y);
-}
-
-void Window::resizeWidget()
-{
-  container.resizeSticky(x0, y0, x1, y1);
-  top.resizeSticky(x0, y0, x1, y1);
-  closeButton.resizeSticky(x0, y0, x1, y1);
-  resizer.resizeSticky(x0, y0, x1, y1);
-}
-
-int Window::size()
+unsigned long Window::size() const
 {
   return container.size();
 }
@@ -2132,15 +2116,17 @@ void Window::insertRelative(size_t pos, Element* element, double leftSticky, dou
   container.insertRelative(pos, element, leftSticky, topSticky, rightSticky, bottomSticky);
 }
 
-void Window::setElementOver(bool state)
+Element* Window::getAutoSubElement(unsigned long i)
 {
-  Element::setElementOver(state);
-  top.setElementOver(state);
-  resizer.setElementOver(state);
-  container.setElementOver(state); //this has to be done too, otherwise the container of this window (and thus all elements inside) will be accessible to the mouse through other windows that are on top of it
-  closeButton.setElementOver(state);
+  switch(i)
+  {
+    case 0: return &top;
+    case 1: return &resizer;
+    case 2: return &container;
+    case 3: return &closeButton;
+    default: return 0;
+  }
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 //GUIBUTTON/////////////////////////////////////////////////////////////////////
@@ -2779,7 +2765,7 @@ void Scrollbar::handleWidget()
   else scroller.moveTo(int(x0 + getSliderStart() + (getSliderSize() * scrollPos) / scrollSize), scroller.getY0());
 }
 
-Element* Scrollbar::getAutoSubElement(int i)
+Element* Scrollbar::getAutoSubElement(unsigned long i)
 {
   switch(i)
   {
@@ -2855,12 +2841,6 @@ int ScrollbarPair::getVisibley() const
 {
   if(venabled) return y1 - y0 - hbar.getSizey();
   else return y1 - y0;
-}
-
-void ScrollbarPair::moveWidget(int x, int y)
-{
-  vbar.move(x, y);
-  hbar.move(x, y);
 }
 
 void ScrollbarPair::make(int x, int y, int sizex, int sizey, double scrollSizeH, double scrollSizeV,
@@ -2965,17 +2945,14 @@ void ScrollbarPair::drawWidget() const
   if((venabled && henabled && !conserveCorner) || ((venabled || henabled) && conserveCorner)) txCorner->draw(x1 - txCorner->getU(), y1 - txCorner->getV());
 }
 
-void ScrollbarPair::resizeWidget()
+Element* ScrollbarPair::getAutoSubElement(unsigned long i)
 {
-  vbar.resizeSticky(x0, y0, x1, y1);
-  hbar.resizeSticky(x0, y0, x1, y1);
-}
-
-void ScrollbarPair::setElementOver(bool state)
-{
-  Element::setElementOver(state);
-  vbar.setElementOver(state);
-  hbar.setElementOver(state);
+  switch(i)
+  {
+    case 0: return &vbar;
+    case 1: return &hbar;
+    default: return 0;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3136,7 +3113,7 @@ void Slider::handleWidget()
   }
 }
 
-Element* Slider::getAutoSubElement(int i)
+Element* Slider::getAutoSubElement(unsigned long i)
 {
   if(i == 0) return &slider;
   else return 0;
@@ -3387,15 +3364,10 @@ int DropMenu::checkIdentity()
   return 0;
 }
 
-void DropMenu::moveWidget(int x, int y)
+Element* DropMenu::getAutoSubElement(unsigned long i)
 {
-  for(unsigned long i = 0; i < menuButton.size(); i++) menuButton[i].move(x, y);
-}
-
-void DropMenu::setElementOver(bool state)
-{
-  Element::setElementOver(state);
-  for(unsigned long i = 0; i < menuButton.size(); i++) menuButton[i].setElementOver(state);
+  if(i < menuButton.size()) return &menuButton[i];
+  else return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3635,21 +3607,13 @@ void Droplist::close()
   setSizey(sizeyc);
 }
 
-void Droplist::moveWidget(int x, int y)
+Element* Droplist::getAutoSubElement(unsigned long i)
 {
-  for(unsigned long i = 0; i < textButton.size(); i++) textButton[i].move(x, y);
-  listButton.move(x, y);
-  bar.move(x, y);
+  if(i == 0) return &listButton;
+  else if(i == 1) return &bar;
+  else if(i < textButton.size() + 2U) return &textButton[i - 2];
+  else return 0;
 }
-
-void Droplist::setElementOver(bool state)
-{
-  Element::setElementOver(state);
-  for(unsigned long i = 0; i < textButton.size(); i++) textButton[i].setElementOver(state);
-  listButton.setElementOver(state);
-  bar.setElementOver(state);
-}
-
 
 ////////////////////////////////////////////////////////////////////////////////
 //GUIINPUTLINE//////////////////////////////////////////////////////////////////
@@ -4091,16 +4055,10 @@ void InputBox::handleWidget()
   
 }
 
-void InputBox::moveWidget(int x, int y)
+Element* InputBox::getAutoSubElement(unsigned long i)
 {
-  bar.move(x, y);
-}
-
-void InputBox::setElementOver(bool state)
-{
-  Element::setElementOver(state);
-  
-  bar.setElementOver(state);
+  if(i == 0) return &bar;
+  else return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -4532,10 +4490,10 @@ you first make() the prototype, and make() the bulletlist. Then all checkboxes h
 style you  want!
 */
 
-void BulletList::setElementOver(bool state)
+Element* BulletList::getAutoSubElement(unsigned long i)
 {
-  Element::setElementOver(state);
-  for(unsigned long i = 0; i < bullet.size(); i++) bullet[i].setElementOver(state);
+  if(i < bullet.size()) return &bullet[i];
+  else return 0;
 }
 
 BulletList::BulletList()
@@ -4650,14 +4608,6 @@ void BulletList::drawWidget() const
   for(unsigned long i = 0; i < bullet.size(); i++)
   {
     bullet[i].draw();
-  }
-}
-
-void BulletList::moveWidget(int x, int y)
-{
-  for(unsigned long i = 0; i < bullet.size(); i++)
-  {
-    bullet[i].move(x, y);
   }
 }
 
@@ -4973,23 +4923,12 @@ int TextArea::getNumLines() const
 void TextArea::resizeWidget()
 {
   this->text.splitWords(getSizex());
-  
-  if(scrollEnabled)
-  {
-    scrollbar.resizeSticky(x0, y0, x1, y1);
-    setScrollbarSize();
-  }
 }
 
-void TextArea::moveWidget(int x, int y)
+Element* TextArea::getAutoSubElement(unsigned long i)
 {
-  if(scrollEnabled) scrollbar.move(x, y);
-}
-
-void TextArea::setElementOver(bool state)
-{
-  Element::setElementOver(state);
-  scrollbar.setElementOver(state);
+  if(i == 0) return &scrollbar;
+  else return 0;
 }
 
 void TextArea::handleWidget()

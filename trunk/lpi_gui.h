@@ -519,7 +519,7 @@ class Element : public BasicElement
     Make sure to return 0 if i >= amount of sub elements, or it causes an infinite loop!
     E.g. in a scrollbar, getAutoSubElement could return its buttons and so on.
     */
-    virtual Element* getAutoSubElement(int /*i*/) { return 0; }
+    virtual Element* getAutoSubElement(unsigned long /*i*/) { return 0; }
     
     private:
     
@@ -703,7 +703,7 @@ class Scrollbar : public Element
     int valueY; //y position of the value (relative)
     
     protected:
-    virtual Element* getAutoSubElement(int i);
+    virtual Element* getAutoSubElement(unsigned long i);
 };
 
 class ScrollbarPair : public Element
@@ -722,9 +722,6 @@ class ScrollbarPair : public Element
         
     virtual void handleWidget();
     virtual void drawWidget() const;
-    virtual void resizeWidget();
-    virtual void moveWidget(int x, int y);
-    virtual void setElementOver(bool state);
     
     bool venabled;
     bool henabled;
@@ -739,6 +736,9 @@ class ScrollbarPair : public Element
     //size of the area without the scrollbars
     int getVisiblex() const; //returns x1 - x0 - vbar.getWidth()  if there's a vbar, or x1 - x0 if there's no vbar
     int getVisibley() const; //returns y1 - y0 - hbar.getHeight() if there's a hbar, or y1 - y0 if there's no hbar
+    
+  protected:
+    virtual Element* getAutoSubElement(unsigned long i);
 };
 
 //the Slider is a simplified version of the scrollbar (no up and down buttons) that also looks different
@@ -769,7 +769,7 @@ class Slider : public Element
     virtual void handleWidget();
     
     protected:
-    virtual Element* getAutoSubElement(int i);
+    virtual Element* getAutoSubElement(unsigned long i);
 };
 
 class Invisible : public Element
@@ -1013,7 +1013,7 @@ class Window : public Element
     void bringToTop(Element* element); //precondition: element must already be in the list
     
     void remove(Element* element);
-    int size();
+    unsigned long size() const;
     void putInside(int i);
     
     //these scrollbars will be part of the container
@@ -1059,12 +1059,9 @@ class Window : public Element
     
     ////overloaded functions
     virtual void drawWidget() const;
-    virtual void moveWidget(int x, int y);
     
     virtual void handleWidget();
     virtual bool isContainer() const;
-    virtual void setElementOver(bool state); //window has top bar in it that needs to be set inactive too so has it's own function for this defined
-    virtual void resizeWidget();
     ////other functions
     void initContainer();
     
@@ -1074,6 +1071,9 @@ class Window : public Element
     void toggleClose() { if(closed) unClose(); else close(); }
     
     void setColor(const ColorRGB& color) { panel.colorMod = color; }
+    
+    protected:
+    virtual Element* getAutoSubElement(unsigned long i);
 };
 
 
@@ -1131,11 +1131,12 @@ class DropMenu : public Element
     the identity of the button if one with an identity was pressed
     */
     int checkIdentity();
-    virtual void moveWidget(int x, int y);
-    virtual void setElementOver(bool state);
     void addOption(const std::string& text, int id = 0); //id is an optional identity
     
     bool autoDisable; //if true, the menu will totallyDisable itself if you click anywhere not on the menu
+    
+  protected:
+    virtual Element* getAutoSubElement(unsigned long i);
 };
 
 
@@ -1185,9 +1186,10 @@ class Droplist : public Element
     std::string checkText();
     virtual void handleWidget();
 
-    virtual void moveWidget(int x, int y);
-    virtual void setElementOver(bool state);
     void addOption(const std::string& text);
+    
+  protected:
+    virtual Element* getAutoSubElement(unsigned long i);
 };
 
 
@@ -1263,9 +1265,6 @@ class InputBox : public Element
     void makeScrollbar(const GuiSet* set = &builtInGuiSet);
     const std::string& getText() const { return text; }
     
-    virtual void moveWidget(int x, int y);
-    virtual void setElementOver(bool state);
-    
     virtual void drawWidget() const;
     virtual void handleWidget();
     
@@ -1286,6 +1285,9 @@ class InputBox : public Element
     
     Markup markup;
     ColorRGB cursorColor;
+    
+  protected:
+    virtual Element* getAutoSubElement(unsigned long i);
 };
 
 //The Checkbox
@@ -1388,16 +1390,16 @@ class BulletList : public Element
     void setCorrectSize();
     //set style of the bullets by using prototype.make([checkbox parameters where x and y will be ignored])
     int check(); //returns which one is checked
-    virtual void moveWidget(int x, int y);
     int xDiff; //just added for "book keeping"
     int yDiff; //just added for "book keeping"
-    
-    virtual void setElementOver(bool state); //all subelements of this must also be made to the same mouse activiness
 
     std::string getText(unsigned long i) const;
     const std::string& getCurrentText() const;
     void addText(const std::string& text, unsigned long i);
     void set(unsigned long i);
+    
+  protected:
+    virtual Element* getAutoSubElement(unsigned long i);
     
   private:
     int lastChecked; //remember which one was checked, so it can know when a new one is checked, which one that is
@@ -1470,8 +1472,6 @@ class TextArea : public Element
     virtual void drawWidget() const;
     virtual void handleWidget();
     virtual void resizeWidget();
-    virtual void moveWidget(int x, int y);
-    virtual void setElementOver(bool state);
 
     TextArea();
     void make(int x, int y, int sizex, int sizey, const std::string& text, const Markup& markup = TS_W);
@@ -1482,6 +1482,9 @@ class TextArea : public Element
     bool scrollEnabled;
     void addScrollbar();
     void setScrollbarSize();
+    
+  protected:
+    virtual Element* getAutoSubElement(unsigned long i);
 };
 
 class Image : public Element

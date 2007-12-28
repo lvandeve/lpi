@@ -1,5 +1,5 @@
 /*
-LodePNG version 20070830
+LodePNG version 20071228
 
 Copyright (c) 2005-2007 Lode Vandevenne
 
@@ -31,7 +31,7 @@ freely, subject to the following restrictions:
 #include <string>
 #include <fstream>
 
-#define VERSION_STRING "20070830"
+#define VERSION_STRING "20071228"
 
 namespace LodeFlate //Deflate
 {
@@ -108,8 +108,33 @@ class HuffmanTree
     lengths = bitlen;
     numcodes = (unsigned long)bitlen.size(); //number of symbols
     this->maxbitlen = maxbitlen;
-    
     return makeFromLengths();
+  }
+  
+  //terminology used for the package-merge algorithm and the coin collector's problem
+  struct Coin //a coin can be multiple coins (when they're merged)
+  {
+    std::vector<unsigned long> symbols;
+    float weight; //the sum of all weights in this coin
+
+    void operator+=(const Coin& c)
+    {
+      for(size_t i = 0; i < c.symbols.size(); i++) symbols.push_back(c.symbols[i]);
+      weight += c.weight;
+    }
+  };
+  
+  void fillInCoins(std::vector<Coin>& coins, const std::vector<unsigned long>& frequencies, float sum)
+  {
+    for(unsigned long i = 0; i < frequencies.size(); i++)
+    {
+      if(frequencies[i] == 0) continue; //it's important to exclude symbols that aren't present
+      Coin c;
+      c.weight = frequencies[i] / sum;
+      c.symbols.push_back(i);
+      coins.push_back(c);
+    }
+    if(coins.size()) sort(&coins[0], coins.size());
   }
   
   /*
@@ -134,26 +159,15 @@ class HuffmanTree
     float sum = 0.0f;
     for(size_t i = 0; i < numcodes; i++) sum += frequencies[i];
     
-    std::vector<float> p(numcodes); //normalized frequencies
-    for(size_t i = 0; i < numcodes; i++)  p[i] += frequencies[i] / sum;
-    
     std::vector<Coin> prev_row; //the previous row of coins
     std::vector<Coin> coins; //the coins of the currently calculated row
-  
+
     //first row, lowest denominator
-    for(int i = 0; i < (int)numcodes; i++)
-    {
-      if(frequencies[i] == 0) continue; //it's important to exclude symbols that aren't present
-      Coin c;
-      c.weight = p[i];
-      c.symbols.push_back(i);
-      coins.push_back(c);
-    }
-    if(coins.size()) sort(&coins[0], coins.size());
+    fillInCoins(coins, frequencies, sum);
 
     for(size_t j = 1; j <= maxbitlen; j++) //each of the remaining rows
     {
-      prev_row = coins;
+      prev_row.swap(coins);
       coins.clear();
 
       for(size_t i = 0; i + 1 < prev_row.size(); i += 2)
@@ -163,15 +177,7 @@ class HuffmanTree
       }
       if(j < maxbitlen)
       {
-        for(int i = 0; i < (int)numcodes; i++)
-        {
-          if(frequencies[i] == 0) continue; //it's important to exclude symbols that aren't present
-          Coin c;
-          c.weight = p[i];
-          c.symbols.push_back(i);
-          coins.push_back(c);
-        }
-        if(coins.size()) sort(&coins[0], coins.size());
+        fillInCoins(coins, frequencies, sum);
       }
     }
     
@@ -256,19 +262,6 @@ class HuffmanTree
     return 0;
   }
   
-  //terminology used for the package-merge algorithm and the coin collector's problem
-  struct Coin //a coin can be multiple coins (when they're merged)
-  {
-    std::vector<int> symbols;
-    float weight; //the sum of all weights in this coin
-
-    void operator+=(const Coin& c)
-    {
-      for(size_t i = 0; i < c.symbols.size(); i++) symbols.push_back(c.symbols[i]);
-      weight += c.weight;
-    }
-  };
-  
   void sort(Coin* data, size_t amount) //combsort
   {
     size_t gap = amount;
@@ -304,7 +297,6 @@ class HuffmanTree
     for(size_t bits = 1; bits <= maxbitlen; bits++) nextcode[bits] = (nextcode[bits - 1] + blcount[bits - 1]) << 1;
     //step 3: generate all the codes
     for(size_t n = 0; n < numcodes; n++) if(lengths[n] != 0) tree1d[n] = nextcode[lengths[n]]++;
-
     return make2DTree();
   }
   
@@ -729,7 +721,7 @@ unsigned int getHash(const unsigned char* data, size_t size, size_t pos)
   unsigned int result = 0;
   if(pos >= size) return 0;
   size_t amount = HASH_NUM_CHARACTERS; if(pos + amount >= size) amount = size - pos;
-  for(size_t i = 0; i < amount; i++) result ^= (data[pos + i] << ((amount - i - 1) * HASH_SHIFT));
+  for(size_t i = 0; i < amount; i++) result ^= (data[pos + i] << (i * HASH_SHIFT));
   return result % HASH_NUM_VALUES;
 }
 
@@ -906,22 +898,22 @@ class Deflator
     addBitToStream(bp, out, BFINAL);
     addBitToStream(bp, out, 0); //first bit of BTYPE "dynamic"
     addBitToStream(bp, out, 1); //second bit of BTYPE "dynamic"
-    std::vector<unsigned long> lldl_; //lit/len & dist code lenghts
+    std::vector<unsigned long> lldll; //lit/len & dist code lenghts
     unsigned long numcodes = (unsigned long)codes.size();
     if(numcodes > 286) numcodes = 286;
     unsigned long numcodesD = (unsigned long)codesD.size();
     if(numcodesD > 30) numcodesD = 30;
-    for(unsigned long i = 0; i < numcodes; i++) lldl_.push_back(codes.getLength(i));
-    for(unsigned long i = 0; i < numcodesD; i++) lldl_.push_back(codesD.getLength(i));
+    for(unsigned long i = 0; i < numcodes; i++) lldll.push_back(codes.getLength(i));
+    for(unsigned long i = 0; i < numcodesD; i++) lldll.push_back(codesD.getLength(i));
     
     //make lldl smaller by using repeat codes 16 (copy length 3-6 times), 17 (3-10 zeroes), 18 (11-138 zeroes)
     std::vector<unsigned long> lldl;
-    for(unsigned long i = 0; i < (unsigned long)lldl_.size(); i++)
+    for(unsigned long i = 0; i < (unsigned long)lldll.size(); i++)
     {
       unsigned long j = 0;
-      while(i + j + 1 < (unsigned long)lldl_.size() && lldl_[i + j + 1] == lldl_[i]) j++;
+      while(i + j + 1 < (unsigned long)lldll.size() && lldll[i + j + 1] == lldll[i]) j++;
       
-      if(lldl_[i] == 0 && j >= 2)
+      if(lldll[i] == 0 && j >= 2)
       {
         j++; //include the first zero
         if(j <= 10) { lldl.push_back(17); lldl.push_back(j - 3); }
@@ -934,14 +926,14 @@ class Deflator
       }
       else if(j >= 3)
       {
-        lldl.push_back(lldl_[i]);
+        lldl.push_back(lldll[i]);
         unsigned long num = j / 6, rest = j % 6;
         for(size_t k = 0; k < num; k++) { lldl.push_back(16); lldl.push_back(   6 - 3); }
         if(rest >= 3)                   { lldl.push_back(16); lldl.push_back(rest - 3); }
         else j -= rest;
         i += j;
       }
-      else lldl.push_back(lldl_[i]);
+      else lldl.push_back(lldll[i]);
     }
     //huffman tree voor de length codes van lit/len en dist codes genereren
     HuffmanTree codelengthcodes;

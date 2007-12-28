@@ -1,5 +1,5 @@
 /*
-LodePNG version 20070830
+LodePNG version 20071228
 
 Copyright (c) 2005-2007 Lode Vandevenne
 
@@ -980,6 +980,7 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 28 dec 2007: hardly anything changed
 *) 30 aug 2007: bug fixed which makes this Borland C++ compatible
 *) 09 aug 2007: some VS2005 warnings removed again
 *) 21 jul 2007: deflate code placed in new namespace separate from zlib code
