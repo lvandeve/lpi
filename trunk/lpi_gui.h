@@ -893,12 +893,14 @@ class Container : public Element
     ////everything concerning the scrollability
     ScrollbarPair bars;
 
+    //the zone where elements are drawn: the size of this container excluding the scrollbarpair's bars
     int getVisibleSizex() const;
     int getVisibleSizey() const;
     int getVisibleX0() const;
     int getVisibleY0() const;
     int getVisibleX1() const;
     int getVisibleY1() const;
+    bool mouseInVisibleZone() const; //is the mouse in the zone where elements are drawn
     
     //the scrollable area "behind" or "inside" the container
     Invisible area; //the area that can be scrolled will be represented by this, so it's move function and such can easily be called while you scroll
