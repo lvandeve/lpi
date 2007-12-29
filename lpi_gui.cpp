@@ -1360,15 +1360,23 @@ int Container::getVisibleSizey() const
   return getVisibleY1() - getVisibleY0();
 }
 
+bool Container::mouseInVisibleZone() const
+{
+  if(!mouseOver()) return false;
+  return globalMouseX >= getVisibleX0()
+      && globalMouseX < getVisibleX1()
+      && globalMouseY >= getVisibleY0()
+      && globalMouseY < getVisibleY1();
+}
+
 void Container::handleWidget()
 {
   //if(mouseOver())
-  if(!elementOver)
+  if(!elementOver && mouseInVisibleZone())
   {
     int topElement = -1;
     
     //priority to mouseGrabbed over mouseOver
-    //for(size_t i = 0; i < size(); i++)
     for(int i = size() - 1; i >= 0; i--)
     {
       element[i]->setElementOver(0);
@@ -1392,45 +1400,16 @@ void Container::handleWidget()
       }
       element[i]->setElementOver(1);
     }
-    //if(topElement >= 0) std::cout << size() << " " << topElement << "\n";
-    //for(int j = 0; j < int(size()); j++)
-    for(int j = size() - 1; j >= 0; j--)
-    if(j != topElement)
+
+    //make all elements unresponsive to the mouse by setting "elementover", except the topElement
+    for(size_t i = 0; i < size(); i++) element[i]->setElementOver(1);
+    if(topElement >= 0 && topElement < (int)size())
     {
-      element[j]->setElementOver(1);
-      //element[j]->unGrab(mouse_state_for_containers);
-    }
-    else
-    {
-      element[j]->setElementOver(0);
-      if(element[j]->isContainer() && element[j]->mouseDownHere(element[j]->getMouseStateForContainer())) bringToTop(element[j]);
+      element[topElement]->setElementOver(0);
+      if(element[topElement]->isContainer() && element[topElement]->mouseDownHere(element[topElement]->getMouseStateForContainer())) bringToTop(element[topElement]);
     }
   }
-  //else setElementOver(true); //some elements may be left without element over status...
-  
-  
-  /*if(mouseOver())
-  for(int i = size() - 1; i >= 0; i--)
-  {
-    element[i]->setElementOver(0);
-    //element[i]->autoActivate(); //let the self activate system of the element work now, otherwise the element will never get selfactivated because the mouseover test below returns false if the element is not active
-    if(element[i]->mouseOver() || element[i]->mouseGrabbed(mouse_state_for_containers)) //forceActive of mouseOver is enabled, so that this test also works if the element isn't active (mouseActive should be handled even if the element is inactive). Note that the container itself must be mouseActive too; the mouseOver test is because I don't want elements outside the container to react to the mouse (but they should be able to react to the keyboard if they're an active textinput box)
-    {
-      topElement = i;
-      for(int j = topElement - 1; j >= 0; j--) element[j]->setElementOver(1); //make elements below top NOT mouseactive. After all, the topElement is on top of those.
-      break; //it's very important to stop the loop now, so that this is the ONLY top element under mouse pointer with mouseActive = true!
-    }
-    else
-    {
-      element[i]->setElementOver(1); //this element isn't under the mouse, so may not react on mouse (during this frame)
-    }
-  }
-  else for(int j = size() - 1; j >= 0; j--) element[j]->setElementOver(1); //if this container isn't mouseActive, none of its elements should be.
-  
-  if(topElement >= 0 && topElement < int(element.size()) && element[topElement]->isContainer() && (element[topElement]->mouseDownHere(mouse_state_for_containers))))
-  {
-    pushTop(element[topElement]); //bring window on which you clicked to the top
-  }*/
+  else if(!elementOver) for(size_t i = 0; i < size(); i++) element[i]->setElementOver(1); //mouse is over the bars!
   
   if(keepElementsInside)
   for(unsigned long i = 0; i < size(); i++)
@@ -1638,7 +1617,6 @@ bool Group::mouseOver() const
 {
   if(!present) return false;
   if(elementOver) return false; //there is another element over this element, so says the container containing this element
-
   
   for(int i = size() - 1; i >= 0; i--)
   {
@@ -2019,7 +1997,7 @@ void Window::handleWidget()
   if(!enableTop && mouseGrabbed()) moveTo(globalMouseX - mouseGetRelGrabX(), globalMouseY - mouseGetRelGrabY()); //um this means a window without top can always be dragged?? maybe I should turn this off? in case you want a non moveable window...
   if(enableTop && top.mouseGrabbed())
   {
-    moveTo(globalMouseX - top.mouseGetRelGrabX(), globalMouseY - top.mouseGetRelGrabY());
+    moveTo(globalMouseX - top.mouseGetRelGrabX() - (top.getX0() - getX0()), globalMouseY - top.mouseGetRelGrabY() - (top.getY0() - getY0()));
   }
   
   //the scrollbar's conserveCorner should be the same as this window's resizerOverContainer
@@ -6208,6 +6186,27 @@ void unitTest()
     LUT_SUB_ASSERT_TRUE(A.mouseOver())
     LUT_SUB_ASSERT_TRUE(!B.mouseOver())
   
+  LUT_CASE_END
+  
+  //dragging a window that has a top that is shifted: when starting to drag, the window may not "jump" (but I once had)
+  LUT_CASE("dragging of a window with shifted top")
+  
+    Container c;
+    Window w;
+    w.make(0, 0, 100, 100);
+    w.addTop(&lpi::gui::builtInTexture[47], 2, 2, 2); //could cause jump of two pixels when the bug was there
+    c.pushTop(&w, 0, 0);
+    
+    int mx = w.top.getCenterx();
+    int my = w.top.getCentery();
+    
+    //grab the window
+    debugSetMousePos(mx, my);
+    debugSetLMB(1);
+    
+    c.handle();
+    
+    LUT_SUB_ASSERT_TRUE(w.getX0() == 0 && w.getY0() == 0); //NOT shifted over two pixels
   LUT_CASE_END
 
   LUT_END_UNIT_TEST
