@@ -638,8 +638,7 @@ class Button : public Element
 class Scrollbar : public Element
 {
   private:
-    float oldTime;
-    //bool scrollTimeTrigger;
+    double oldTime;
     void init();
   public:
     //get length and begin and end coordinates of the slider part (the part between the up and down buttons) (relative to x, y of the scrollbar)
@@ -651,8 +650,6 @@ class Scrollbar : public Element
     virtual void drawWidget() const;
 
     Direction direction; //0 = vertical, 1 = horizontal
-    //int sizeButton; //size of the up and down button
-    //int sizeScroller; //size of the center button
     double scrollSize; //length of the total scrollbar (in steps)
     double scrollPos; //position of the scroller on the bar (in steps)
     double scrollSpeed; //if speedMode == 0: steps / second, if speedMode == 1: seconds / whole bar

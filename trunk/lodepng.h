@@ -1,5 +1,5 @@
 /*
-LodePNG version 20071228
+LodePNG version 20071229
 
 Copyright (c) 2005-2007 Lode Vandevenne
 
@@ -31,7 +31,6 @@ freely, subject to the following restrictions:
 
 namespace LodeZlib
 {
-
   struct DecompressSettings
   {
     bool ignoreAdler32;
@@ -44,16 +43,16 @@ namespace LodeZlib
   struct CompressSettings
   {
     //LZ77 related settings
-    unsigned long btype; //the block type for LZ
+    unsigned btype; //the block type for LZ
     bool useLZ77; //whether or not to use LZ77
-    unsigned long windowSize; //the maximum is 32768
+    unsigned windowSize; //the maximum is 32768
     
     CompressSettings();
   };
   
   const CompressSettings defaultCompressSettings;
   
-  int decompress(std::vector<unsigned char>& out, const std::vector<unsigned char>& in, const DecompressSettings& settings = defaultDecompressSettings); //return value is the error
+  unsigned decompress(std::vector<unsigned char>& out, const std::vector<unsigned char>& in, const DecompressSettings& settings = defaultDecompressSettings); //return value is the error
   void compress(std::vector<unsigned char>& out, const std::vector<unsigned char>& in, const CompressSettings& settings = defaultCompressSettings);
 
 } //end of namespace LodeZlib
@@ -63,23 +62,23 @@ namespace LodePNG
   struct Info  //information used for both raw and PNG images
   {
     //header (IHDR)
-    unsigned long colorType; //color type
-    unsigned long bitDepth;  //bits per sample
+    unsigned colorType; //color type
+    unsigned bitDepth;  //bits per sample
   
     //palette (PLTE)
     std::vector<unsigned char> palette; //palette in RGBARGBA... order
     
     //transparent color key (tRNS)
-    bool          key_defined; //is a transparent color key given?
-    unsigned long key_r;       //red component of color key
-    unsigned long key_g;       //green component of color key
-    unsigned long key_b;       //blue component of color key
+    bool     key_defined; //is a transparent color key given?
+    unsigned key_r;       //red component of color key
+    unsigned key_g;       //green component of color key
+    unsigned key_b;       //blue component of color key
     
     //additional color info
-    unsigned long getBpp() const;      //bits per pixel
-    unsigned long getChannels() const; //amount of channels
-    bool          isGreyscaleType() const; //is it a greyscale type? (colorType 0 or 4)
-    bool          isAlphaType() const;     //has it an alpha channel? (colorType 2 or 6)
+    unsigned getBpp() const;      //bits per pixel
+    unsigned getChannels() const; //amount of channels
+    bool     isGreyscaleType() const; //is it a greyscale type? (colorType 0 or 4)
+    bool     isAlphaType() const;     //has it an alpha channel? (colorType 2 or 6)
     
     Info();
   };
@@ -89,17 +88,17 @@ namespace LodePNG
     InfoPng();
     
     //header (IHDR)
-    unsigned long width;             //width of the image in pixels
-    unsigned long height;            //height of the image in pixels
+    unsigned      width;             //width of the image in pixels
+    unsigned      height;            //height of the image in pixels
     unsigned char compressionMethod; //compression method of the original file
     unsigned char filterMethod;      //filter method of the original file
     unsigned char interlaceMethod;   //interlace method of the original file
     
     //suggested background color (bKGD)
-    bool          background_defined; //is a suggested background color given?
-    unsigned long background_r;       //red component of sugg. background color
-    unsigned long background_g;       //green component of sugg. background color
-    unsigned long background_b;       //blue component of sugg. background color
+    bool     background_defined; //is a suggested background color given?
+    unsigned background_r;       //red component of suggested background color
+    unsigned background_g;       //green component of suggested background color
+    unsigned background_b;       //blue component of suggested background color
     
     //text chunks (tEXt)
     std::vector<std::string> text_keys; //the key word of a text chunk (e.g. "Comment")
@@ -117,19 +116,19 @@ namespace LodePNG
     Decoder();
     
     //decoding functions
-    void decode(std::vector<unsigned char>& out, const unsigned char* in, unsigned long size);
+    void decode(std::vector<unsigned char>& out, const unsigned char* in, unsigned size);
     void decode(std::vector<unsigned char>& out, const std::vector<unsigned char>& in);
     
-    void inspect(const unsigned char* in, unsigned long size);
+    void inspect(const unsigned char* in, unsigned size);
     void inspect(const std::vector<unsigned char>& in);
     
     //error checking after decoding
     bool hasError() const;
-    int getError() const;
+    unsigned getError() const;
     
     //get image size after decoding
-    unsigned long getWidth() const; //the width in pixels
-    unsigned long getHeight() const; //the height in pixels
+    unsigned getWidth() const; //the width in pixels
+    unsigned getHeight() const; //the height in pixels
     
     struct Settings
     {
@@ -158,13 +157,13 @@ namespace LodePNG
     InfoRaw infoRaw;
     Settings settings;
   
-    int error; //the error value of the decode attempt
+    unsigned error; //the error value of the decode attempt
   
     void readPngHeader(const unsigned char* in, size_t inlength);
     void unFilterScanline(unsigned char* recon, const unsigned char* scanline, const unsigned char* precon, size_t bytewidth, unsigned char filterType, size_t length);
-    void adam7Pass(unsigned char* out, unsigned char* linen, unsigned char* lineo, const unsigned char* in, unsigned long w, size_t passleft, size_t passtop, size_t spacex, size_t spacey, size_t passw, size_t passh, unsigned long bpp);
+    void adam7Pass(unsigned char* out, unsigned char* linen, unsigned char* lineo, const unsigned char* in, unsigned w, size_t passleft, size_t passtop, size_t spacex, size_t spacey, size_t passw, size_t passh, unsigned bpp);
     void resetParameters();
-    void decodeGeneric(std::vector<unsigned char>& out, const unsigned char* in, unsigned long size);
+    void decodeGeneric(std::vector<unsigned char>& out, const unsigned char* in, unsigned size);
   };
   
   class Encoder
@@ -176,9 +175,9 @@ namespace LodePNG
       bool autoLeaveOutAlphaChannel; //automatically use color type without alpha instead of given one, if given image is opaque
   
       //LZ77 related settings
-      unsigned long btype; //the block type for LZ
+      unsigned btype; //the block type for LZ
       bool useLZ77; //whether or not to use LZ77
-      unsigned long windowSize; //the maximum is 32768
+      unsigned windowSize; //the maximum is 32768
       
       bool force_palette; //force creating a PLTE chunk if colortype is 2 or 6 (= a suggested palette). If colortype is 3, PLTE is _always_ created.
       
@@ -187,8 +186,8 @@ namespace LodePNG
       Settings();
     };
     
-    void encode(std::vector<unsigned char>& out, const unsigned char* image, unsigned long w, unsigned long h);
-    void encode(std::vector<unsigned char>& out, const std::vector<unsigned char>& image, unsigned long w, unsigned long h);
+    void encode(std::vector<unsigned char>& out, const unsigned char* image, unsigned w, unsigned h);
+    void encode(std::vector<unsigned char>& out, const std::vector<unsigned char>& image, unsigned w, unsigned h);
     
     void setSettings(const Settings& settings);
     const Settings& getSettings() const;
@@ -203,7 +202,7 @@ namespace LodePNG
     InfoRaw& getInfoRaw();
     
     bool hasError() const;
-    int getError() const;
+    unsigned getError() const;
     
     Encoder();
     
@@ -212,21 +211,21 @@ namespace LodePNG
     InfoPng infoPng; //the info used by the encoder, generated out of user_infoPng
     Settings settings; //the settings specified by the user may not be changed by the encoder
     InfoRaw infoRaw;
-    int error;
+    unsigned error;
   
     void resetParameters();
-    void addChunk(std::vector<unsigned char>& out, const std::string& chunkName, unsigned char* data, unsigned long length);
+    void addChunk(std::vector<unsigned char>& out, const std::string& chunkName, unsigned char* data, unsigned length);
     void writeSignature(std::vector<unsigned char>& out);
     void writeChunk_tEXt(std::vector<unsigned char>& out, const std::string& keyword, const std::string& textstring);
-    void writeChunk_IHDR(std::vector<unsigned char>& out, unsigned long w, unsigned long h, unsigned long bitDepth, unsigned long colorType);
+    void writeChunk_IHDR(std::vector<unsigned char>& out, unsigned w, unsigned h, unsigned bitDepth, unsigned colorType);
     void writeChunk_PLTE(std::vector<unsigned char>& out, const Info& info); //writes the palette that is in the given info
     void writeChunk_tRNS(std::vector<unsigned char>& out, const Info& info); //writes colorkey or palette alpha channel depending on color type
     void writeChunk_IDAT(std::vector<unsigned char>& out, const std::vector<unsigned char>& data);
     void writeChunk_IEND(std::vector<unsigned char>& out);
     void writeChunk_bKGD(std::vector<unsigned char>& out, const InfoPng& info);
     void filterScanline(unsigned char* out, const unsigned char* scanline, const unsigned char* prevline, size_t length, size_t bytewidth, unsigned char filterType);
-    void filter(std::vector<unsigned char>& out, const unsigned char* image, unsigned long size, unsigned long w, unsigned long h); //will filter scanline per scanline and add filter type in front
-    void dontFilter(std::vector<unsigned char>& out, const unsigned char* image, unsigned long size, unsigned long w, unsigned long h);
+    void filter(std::vector<unsigned char>& out, const unsigned char* image, unsigned size, unsigned w, unsigned h); //will filter scanline per scanline and add filter type in front
+    void dontFilter(std::vector<unsigned char>& out, const unsigned char* image, unsigned size, unsigned w, unsigned h);
   };
   
   //global functions allowing to load and save a file from/to harddisk
@@ -234,14 +233,14 @@ namespace LodePNG
   void saveFile(const std::vector<unsigned char>& buffer, const std::string& filename);
   
   //simple functions for encoding/decoding the PNG in one call (RAW image always 32-bit)
-  int decode(std::vector<unsigned char>& out, unsigned long& w, unsigned long& h, const unsigned char* in, unsigned long size, unsigned long colorType = 6, unsigned long bitDepth = 8);
-  int decode(std::vector<unsigned char>& out, unsigned long& w, unsigned long& h, const std::vector<unsigned char>& in, unsigned long colorType = 6, unsigned long bitDepth = 8);
-  int decode(std::vector<unsigned char>& out, unsigned long& w, unsigned long& h, const std::string& filename, unsigned long colorType = 6, unsigned long bitDepth = 8);
+  unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h, const unsigned char* in, unsigned size, unsigned colorType = 6, unsigned bitDepth = 8);
+  unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h, const std::vector<unsigned char>& in, unsigned colorType = 6, unsigned bitDepth = 8);
+  unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h, const std::string& filename, unsigned colorType = 6, unsigned bitDepth = 8);
   
-  int encode(std::vector<unsigned char>& out, const unsigned char* in, unsigned long w, unsigned long h, unsigned long colorType = 6, unsigned long bitDepth = 8);
-  int encode(std::vector<unsigned char>& out, const std::vector<unsigned char>& in, unsigned long w, unsigned long h, unsigned long colorType = 6, unsigned long bitDepth = 8);
-  int encode(const std::string& filename, const unsigned char* in, unsigned long w, unsigned long h, unsigned long colorType = 6, unsigned long bitDepth = 8);
-  int encode(const std::string& filename, const std::vector<unsigned char>& in, unsigned long w, unsigned long h, unsigned long colorType = 6, unsigned long bitDepth = 8);
+  unsigned encode(std::vector<unsigned char>& out, const unsigned char* in, unsigned w, unsigned h, unsigned colorType = 6, unsigned bitDepth = 8);
+  unsigned encode(std::vector<unsigned char>& out, const std::vector<unsigned char>& in, unsigned w, unsigned h, unsigned colorType = 6, unsigned bitDepth = 8);
+  unsigned encode(const std::string& filename, const unsigned char* in, unsigned w, unsigned h, unsigned colorType = 6, unsigned bitDepth = 8);
+  unsigned encode(const std::string& filename, const std::vector<unsigned char>& in, unsigned w, unsigned h, unsigned colorType = 6, unsigned bitDepth = 8);
 
 } //end of namespace LodePNG
 
@@ -256,7 +255,7 @@ TODO:
 [ ] partial decoding (stream processing)
 [ ] let the "isFullyOpaque" function check color keys and transparent palettes too
 [ ] better name for "codes", "codesD", "codelengthcodes", "clcl" and "lldl"
-[ ] more consistency in types like "unsigned long", "size_t" and "int"
+[ ] more consistency in types like "unsigned", "size_t" and "unsigned"
 [ ] support zTXt chunks
 [ ] support iTXt chunks
 [ ] check compatibility with vareous compilers
@@ -373,9 +372,9 @@ everything in 1 call (instead of you having to declare a class).
 
 For decoding a PNG there are:
 
-int decode(std::vector<unsigned char>& out, unsigned long& w, unsigned long& h, const unsigned char* in, unsigned long size);
-int decode(std::vector<unsigned char>& out, unsigned long& w, unsigned long& h, const std::vector<unsigned char>& in);
-int decode(std::vector<unsigned char>& out, unsigned long& w, unsigned long& h, const std::string& filename);
+unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h, const unsigned char* in, unsigned size);
+unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h, const std::vector<unsigned char>& in);
+unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h, const std::string& filename);
   
 These store the pixel data as 32-bit RGBA color in the out vector, and the width
 and height of the image in w and h.
@@ -385,10 +384,10 @@ filename in case you want to load the PNG from disk instead of from a buffer.
   
 For encoding a PNG there are:
   
-int encode(std::vector<unsigned char>& out, const unsigned char* in, unsigned long w, unsigned long h);
-int encode(std::vector<unsigned char>& out, const std::vector<unsigned char>& in, unsigned long w, unsigned long h);
-int encode(const std::string& filename, const std::vector<unsigned char>& in, unsigned long w, unsigned long h);
-int encode(const std::string& filename, const unsigned char* in, unsigned long w, unsigned long h);
+unsigned encode(std::vector<unsigned char>& out, const unsigned char* in, unsigned w, unsigned h);
+unsigned encode(std::vector<unsigned char>& out, const std::vector<unsigned char>& in, unsigned w, unsigned h);
+unsigned encode(const std::string& filename, const std::vector<unsigned char>& in, unsigned w, unsigned h);
+unsigned encode(const std::string& filename, const unsigned char* in, unsigned w, unsigned h);
 
 Specify the width and height of the input image with w and h.
 You can choose to get the output in an std::vector or stored in a file, and
@@ -897,7 +896,7 @@ More complex examples can be found in lodepng_examples.cpp
 #include "lodepng.h"
 #include <iostream>
 
-int main(int argc, char *argv[])
+unsigned main(unsigned argc, char *argv[])
 {
   const char* filename = argc > 1 ? argv[1] : "test.png";
   
@@ -905,7 +904,7 @@ int main(int argc, char *argv[])
   std::vector<unsigned char> buffer, image;
   LodePNG::loadFile(buffer, filename); //load the image file with given filename
   LodePNG::Decoder decoder;
-  decoder.decode(image, buffer.size() ? &buffer[0] : 0, (unsigned long)buffer.size()); //decode the png
+  decoder.decode(image, buffer.size() ? &buffer[0] : 0, (unsigned)buffer.size()); //decode the png
   
   //if there's an error, display it
   if(decoder.hasError()) std::cout << "error: " << decoder.getError() << std::endl;
@@ -914,14 +913,14 @@ int main(int argc, char *argv[])
 }
 
 //alternative version using the "simple" function
-int main(int argc, char *argv[])
+unsigned main(unsigned argc, char *argv[])
 {
   const char* filename = argc > 1 ? argv[1] : "test.png";
   
   //load and decode
   std::vector<unsigned char> image;
-  unsigned long w, h;
-  int error = LodePNG::decode(image, w, h, filename);
+  unsigned w, h;
+  unsigned error = LodePNG::decode(image, w, h, filename);
   
   //if there's an error, display it
   if(error != 0) std::cout << "error: " << error << std::endl;
@@ -938,7 +937,7 @@ int main(int argc, char *argv[])
 #include "lodepng.h"
 #include <iostream>
 
-int main(int argc, char *argv[])
+unsigned main(unsigned argc, char *argv[])
 {
   //check if user gave a filename
   if(argc <= 1)
@@ -950,8 +949,8 @@ int main(int argc, char *argv[])
   //generate some image
   std::vector<unsigned char> image;
   image.resize(512 * 512 * 4);
-  for(int y = 0; y < 512; y++)
-  for(int x = 0; x < 512; x++)
+  for(unsigned y = 0; y < 512; y++)
+  for(unsigned x = 0; x < 512; x++)
   {
     image[4 * 512 * y + 4 * x + 0] = 255 * !(x & y);
     image[4 * 512 * y + 4 * x + 1] = x ^ y;
@@ -980,7 +979,7 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
-*) 28 dec 2007: hardly anything changed
+*) 29 dec 2007: (!) changed most integer types to unsigned int + other tweaks
 *) 30 aug 2007: bug fixed which makes this Borland C++ compatible
 *) 09 aug 2007: some VS2005 warnings removed again
 *) 21 jul 2007: deflate code placed in new namespace separate from zlib code
@@ -1031,10 +1030,10 @@ symbol.
     example allows easy debugging by displaying the PNG and its transparency.
 *) 22 jun 2006: (!) Changed way to obtain error value. Added
     loadFile function for convenience. Made decodePNG32 faster.
-*) 21 jun 2006: (!) Changed type of info vector to unsigned long.
+*) 21 jun 2006: (!) Changed type of info vector to unsigned.
     Changed position of palette in info vector. Fixed an important bug that
     happened on PNGs with an uncompressed block.
-*) 16 jun 2006: Internally changed int into unsigned long where
+*) 16 jun 2006: Internally changed unsigned into unsigned where
     needed, and performed some optimizations.
 *) 07 jun 2006: (!) Renamed functions to decodePNG and placed them
     in LodePNG namespace. Changed the order of the parameters. Rewrote the

@@ -32,6 +32,8 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include <SDL/SDL.h>
 
+#include <iostream>
+
 namespace lpi
 {
 namespace gui
@@ -2661,12 +2663,12 @@ void Scrollbar::makeHorizontal(int x, int y, int length,
   this->scrollSpeed = scrollSpeed;
   this->offset = offset;
   
-  this->txUp = set->arrowE;
-  this->txDown = set->arrowW;
+  this->txUp = set->arrowW;
+  this->txDown = set->arrowE;
   this->txScroller = set->scroller;;
   this->txBack = set->scrollbarBackground;
-  this->txUpOver = set->arrowE;
-  this->txDownOver = set->arrowW;
+  this->txUpOver = set->arrowW;
+  this->txDownOver = set->arrowE;
   this->txScrollerOver = set->scroller;;
   this->colorMod = set->mainColor;
   this->colorModOver = set->mouseOverColor;
@@ -2707,9 +2709,12 @@ void Scrollbar::handleWidget()
 
   if(direction == V)
   {
+    //grabbed must be checked every frame to work properly, not from inside nested ifs
+    bool buttonUp_grabbed = buttonUp.mouseGrabbed();
+    bool buttonDown_grabbed = buttonDown.mouseGrabbed();
     if(scroller.mouseGrabbed())
-    scrollPos = (scrollSize * (globalMouseY - y0 - getSliderStart() - txScroller->getV() / 2)) / getSliderSize();
-    else if(mouseDownHere() && !scroller.mouseGrabbed() && !buttonUp.mouseGrabbed() && !buttonDown.mouseGrabbed())
+      scrollPos = (scrollSize * (globalMouseY - y0 - getSliderStart() - txScroller->getV() / 2)) / getSliderSize();
+    else if(mouseDownHere() && !scroller.mouseGrabbed() && !buttonUp_grabbed && !buttonDown_grabbed)
     {
       scrollPos = (scrollSize * (globalMouseY - y0 - getSliderStart() - txScroller->getV() / 2)) / getSliderSize();
       scroller.mouseGrab();
@@ -2719,9 +2724,12 @@ void Scrollbar::handleWidget()
   }
   else
   {
+    //grabbed must be checked every frame to work properly, not from inside nested ifs
+    bool buttonUp_grabbed = buttonUp.mouseGrabbed();
+    bool buttonDown_grabbed = buttonDown.mouseGrabbed();
     if(scroller.mouseGrabbed())
-    scrollPos = (scrollSize * (globalMouseX - x0 - getSliderStart() - txScroller->getU() / 2)) / getSliderSize();
-    else if(mouseDownHere() && !scroller.mouseGrabbed() && !buttonUp.mouseGrabbed() && !buttonDown.mouseGrabbed())
+      scrollPos = (scrollSize * (globalMouseX - x0 - getSliderStart() - txScroller->getU() / 2)) / getSliderSize();
+    else if(mouseDownHere() && !scroller.mouseGrabbed() && !buttonUp_grabbed && !buttonDown_grabbed)
     {
       scrollPos = (scrollSize * (globalMouseX - x0 - getSliderStart() - txScroller->getU() / 2)) / getSliderSize();
       scroller.mouseGrab();
@@ -2730,9 +2738,9 @@ void Scrollbar::handleWidget()
   
   if(scrollDir != 0)
   {
-    scrollPos += scrollDir * absoluteSpeed * ((getTicks() - oldTime) / 1000.0);
+    scrollPos += scrollDir * absoluteSpeed * ((getSeconds() - oldTime));
   }
-  oldTime = getTicks();
+  oldTime = getSeconds();
 
   if(scrollPos < 0) scrollPos = 0;
   if(scrollPos > scrollSize) scrollPos = scrollSize;
