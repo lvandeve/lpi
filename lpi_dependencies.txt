@@ -40,6 +40,7 @@ lpi_pathfind: A* path finding, useful for some games
 lpi_screen: SDL + OpenGL screen related functions
 lpi_text: font and text drawing --> TODO: should split this up in the non-screen dependent stuff and the screen dependent stuff
 lpi_texture: class for textures for use in OpenGL or SDL screen. They can be drawn in 2D on screen, or used in 3D to map on OpenGL vertices.
+lpi_tools: tools for developing lpi more easily
 lpi_unittest: unit testing ability
 lpi_xml: XML parsing and generating
 

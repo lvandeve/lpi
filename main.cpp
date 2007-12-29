@@ -61,7 +61,7 @@ gprof > gprof.txt
 
 int main(int, char*[]) //the arguments have to be given here, or DevC++ can't link to SDL for some reason
 {
-  lpi::screen(1024, 768, 0, "Lode's GUI system");
+  lpi::screen(1024, 768, 0, "lpi GUI demo");
   
   lpi::gui::Container c;
   
@@ -69,9 +69,13 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   sound_button.makeTextPanel(20, 500, "sound");
   c.pushTop(&sound_button);
   
-  lpi::gui::Scrollbar bar;
-  bar.makeVertical(700, 20, 200);
-  c.pushTop(&bar);
+  lpi::gui::Scrollbar hbar;
+  hbar.makeHorizontal(716, 220, 200);
+  c.pushTop(&hbar);
+  
+  lpi::gui::Scrollbar vbar;
+  vbar.makeVertical(700, 20, 200);
+  c.pushTop(&vbar);
   
   lpi::gui::Slider sli;
   sli.makeVertical(650, 20, 200);
@@ -127,8 +131,6 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   
   while(lpi::frame(true, true))
   {
-    SDL_Delay(5);
-    
     lpi::print("lpi GUI demo");
     
     lpi::drawGradientDisk(600, 400, 100, lpi::ColorRGB(128, 255, 128, 255), lpi::ColorRGB(255, 128, 128, 128));
