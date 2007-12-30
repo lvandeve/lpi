@@ -729,17 +729,17 @@ unsigned getHash(const unsigned char* data, size_t size, size_t pos)
 void encodeLZ77(std::vector<unsigned>& out, const unsigned char* in, size_t size, unsigned windowSize)
 {
   ///generate hash table
-  std::vector<std::vector<size_t> > table(HASH_NUM_VALUES); //HASH_NUM_VALUES vectors
+  std::vector<std::vector<unsigned> > table(HASH_NUM_VALUES); //HASH_NUM_VALUES vectors
   
   //remember start and end positions in the tables to searching in
-  std::vector<size_t> tablepos1(HASH_NUM_VALUES, 0);
-  std::vector<size_t> tablepos2(HASH_NUM_VALUES, 0);
+  std::vector<unsigned> tablepos1(HASH_NUM_VALUES, 0);
+  std::vector<unsigned> tablepos2(HASH_NUM_VALUES, 0);
   
   //using pointer instead of vector for input makes it faster when NOT using optimization when compiling; no influence if optimization is used
-  for(size_t pos = 0; pos < size; pos++)
+  for(unsigned pos = 0; pos < size; pos++)
   {
-    size_t length = 0, offset = 0; //the length and offset found for the current position
-    size_t max_offset = pos < windowSize ? pos : windowSize; //how far back to test
+    unsigned length = 0, offset = 0; //the length and offset found for the current position
+    unsigned max_offset = pos < windowSize ? pos : windowSize; //how far back to test
   
     ///search for the longest string
     //first find out where in the table to start (the first value that is in the range from "pos - max_offset" to "pos")
@@ -749,15 +749,15 @@ void encodeLZ77(std::vector<unsigned>& out, const unsigned char* in, size_t size
     while(table[hash][tablepos1[hash]] < pos - max_offset) tablepos1[hash]++; //it now points to the first value in the table for which the index is larger than or equal to pos - max_offset
     while(table[hash][tablepos2[hash]] < pos) tablepos2[hash]++; //it now points to the first value in the table for which the index is larger than or equal to pos
 
-    for(size_t tablepos = tablepos2[hash] - 1; tablepos >= tablepos1[hash] && tablepos < tablepos2[hash]; tablepos--)
+    for(unsigned tablepos = tablepos2[hash] - 1; tablepos >= tablepos1[hash] && tablepos < tablepos2[hash]; tablepos--)
     {
-      size_t backpos = table[hash][tablepos];
-      size_t current_offset = pos - backpos;
+      unsigned backpos = table[hash][tablepos];
+      unsigned current_offset = pos - backpos;
 
       //test the next characters
-      size_t current_length = 0;
-      size_t backtest = backpos;
-      size_t foretest = pos;
+      unsigned current_length = 0;
+      unsigned backtest = backpos;
+      unsigned foretest = pos;
       while(foretest < size && in[backtest] == in[foretest] && current_length < MAX_SUPPORTED_DEFLATE_LENGTH) //maximum supporte length by deflate is max length
       {
         if(backpos >= pos) backpos -= current_offset; //continue as if we work on the decoded bytes after pos by jumping back before pos
@@ -782,7 +782,7 @@ void encodeLZ77(std::vector<unsigned>& out, const unsigned char* in, size_t size
     {
       addLengthDistance(out, length, offset);
       //pos += (length - 1);
-      for(size_t j = 0; j < length - 1; j++)
+      for(unsigned j = 0; j < length - 1; j++)
       {
         pos++;
         table[getHash(in, size, pos)].push_back(pos);
@@ -868,7 +868,11 @@ class Deflator
     
     std::vector<unsigned> lz77_encoded;
     if(useLZ77) encodeLZ77(lz77_encoded, data.empty() ? 0 : &data[0], data.size(), windowSize); //LZ77 encoded
-    else for(size_t i = 0; i < data.size(); i++) lz77_encoded[i] = data[i]; //no LZ77, but still will be Huffman compressed
+    else
+    {
+      lz77_encoded.resize(data.size());
+      for(size_t i = 0; i < data.size(); i++) lz77_encoded[i] = data[i]; //no LZ77, but still will be Huffman compressed
+    }
 
     
     std::vector<unsigned> frequencies(286, 0);
