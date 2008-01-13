@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080107
+LodePNG version 20080113
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
@@ -270,12 +270,15 @@ namespace LodePNG
     
     const LodePNG_DecodeSettings& getSettings() const;
     LodePNG_DecodeSettings& getSettings();
+    void setSettings(const LodePNG_DecodeSettings& info);
     
     const LodePNG_InfoPng& getInfoPng() const;
     LodePNG_InfoPng& getInfoPng();
+    void setInfoPng(const LodePNG_InfoPng& info);
     
     const LodePNG_InfoRaw& getInfoRaw() const;
     LodePNG_InfoRaw& getInfoRaw();
+    void setInfoRaw(const LodePNG_InfoRaw& info);
   };
   
   class Encoder : public LodePNG_Encoder
@@ -301,12 +304,15 @@ namespace LodePNG
     
     const LodePNG_EncodeSettings& getSettings() const;
     LodePNG_EncodeSettings& getSettings();
+    void setSettings(const LodePNG_EncodeSettings& info);
     
     const LodePNG_InfoPng& getInfoPng() const;
     LodePNG_InfoPng& getInfoPng();
+    void setInfoPng(const LodePNG_InfoPng& info);
     
     const LodePNG_InfoRaw& getInfoRaw() const;
     LodePNG_InfoRaw& getInfoRaw();
+    void setInfoRaw(const LodePNG_InfoRaw& info);
   };
   
   /*global functions allowing to load and save a file from/to harddisk*/
@@ -332,15 +338,16 @@ TODO:
 [ ] converting color to 16-bit types
 [ ] read some other chunks, like gamma (but don't make them influence the RGB values)
 [ ] add option to decoder to store ignored chunks in LodePNG_InfoPng, and let encoder include those in the result
-[ ] encoding PNGs with Adam7 interlace
+[X] encoding PNGs with Adam7 interlace
 [ ] make sure encoder generates no chunks with size > (2^31)-1
 [ ] partial decoding (stream processing)
 [ ] let the "isFullyOpaque" function check color keys and transparent palettes too
 [ ] better name for "codes", "codesD", "codelengthcodes", "clcl" and "lldl"
 [ ] support zTXt chunks
 [ ] support iTXt chunks
-[ ] check compatibility with vareous compilers
-[ ] don't stop decoding on errors like 69, 57, 58
+[ ] check compatibility with vareous compilers (done but needs to be redone for every newer version)
+[ ] don't stop decoding on errors like 69, 57, 58 (make warnings that the decoder stores in the error at the very end?)
+[ ] make option to choose if the raw image with non multiple of 8 bits per scanline should have padding bits or not, if people like storing raw images that way
 */
 
 #endif
@@ -427,6 +434,7 @@ The following features are supported by the decoder:
 
 *) decoding of PNGs with any color type, bit depth and interlace mode
 *) encoding of PNGs, with 24-bit, 32-bit color or greyscale
+*) Adam7 interlace and deinterlace
 *) (auto) conversion of color types, from any color type, to 24-bit, 32-bit, ...
 *) loading the image from harddisk or decoding it from a buffer
 *) support for translucent PNG's, including translucent palettes and color key
@@ -495,7 +503,7 @@ For all LodePNG, LodeFlate and LodeZlib structs in C:
 The C++ wrapper has classes that handle all this using RAII. More specifically, the Encoder and Decoder classes have
 a constructor, destructor and operator= that use the init, cleanup and copy functions on all their members and themselves.
 
-If you discover a possible exploit, please let me know.
+If you discover a possible exploit, please let me know, because they have to be eliminated at all cost.
 
 
 4. "Simple" Functions
@@ -659,7 +667,8 @@ settings. Currently the following options are supported to convert to:
 Palette of LodePNG_InfoRaw isn't used by the Decoder, when converting from palette color
 to palette color, the values of the pixels are left untouched so that the colors
 will change if the palette is different. Color key of LodePNG_InfoRaw is not used by the
-Decoder. If setting color_convert is false then LodePNG_InfoRaw is completely ignored.
+Decoder. If setting color_convert is false then LodePNG_InfoRaw is completely ignored,
+but it will be modified to match the color type of the PNG so will be overwritten.
 
 By default, 32-bit color is used for the result.
 
@@ -747,16 +756,17 @@ tEXt chunks you want the PNG to contain, etc... For an explanation of all the
 values in LodePNG_InfoPng see a further section. Not all PNG color types are supported
 by the Encoder.
 
-Note that the encoder will only TRY to match the LodePNG_InfoPng struct you give. A lot
-of things are ignored by the encoder. The width and height of LodePNG_InfoPng are
+Note that the encoder will only TRY to match the LodePNG_InfoPng struct you give.
+Some things are ignored by the encoder. The width and height of LodePNG_InfoPng are
 ignored as well, because instead the width and height of the raw image you give
-in the input are used In fact the encoder currently uses only the following
+in the input are used. In fact the encoder currently uses only the following
 settings from it:
 -colorType: the ones it supports
 -text chunks, that you can add to the LodePNG_InfoPng with "addText"
 -the color key, if applicable for the given color type
 -the palette, if you encode to a PNG with colorType 3
 -the background color: it'll add a bKGD chunk to the PNG if one is given
+-the interlaceMethod: None (0) or Adam7 (1)
 
 When encoding to a PNG with colorType 3, the encoder will generate a PLTE chunk.
 If the palette contains any colors for which the alpha channel is not 255 (so
@@ -842,6 +852,7 @@ To avoid some confusion:
 between the color types is done if the color types are supported
 
 Supported color types:
+-It's possible to load PNGs from any colortype and to save PNGs of any colorType.
 -Both encoder and decoder use the same converter. So both encoder and decoder
 suport the same color types at the input and the output. So the decoder supports
 any type of PNG image and can convert it to certain types of raw image, while the
@@ -867,6 +878,16 @@ infoRaw are then ignored.
 
 The function LodePNG_convert does this, which is available in the interface but
 normally isn't needed since the encoder and decoder already call it.
+
+=More Notes=
+
+In the PNG file format, if a less than 8-bit per pixel color type is used and the scanlines
+have a bit amount that isn't a multiple of 8, then padding bits are used so that each
+scanline starts at a fresh byte.
+However: The input image you give to the encoder, and the output image you get from the decoder
+will NOT have these padding bits in that case, e.g. in the case of a 1-bit image with a width
+of 7 pixels, the first pixel of the second scanline will the the 8th bit of the first byte,
+not the first bit of a new byte.
 
 8. info values
 --------------
@@ -943,7 +964,7 @@ num_texts: the amount of texts in the above char** buffers
 LodePNG_InfoPng_clearText: use this to clear the texts again after you filled them in
 LodePNG_InfoPng_addText: this function can be used to push back a keyword and text at the same time
 In the C++ version the Encoder class also has the above functions available directly in its interface.
-The char** buffers are used like the argv parameter of a main() function, and num_texts takes the role
+The char** buffer is used like the argv parameter of a main() function, and num_texts takes the role
 of argc.
 
 Don't allocate these text buffers yourself. Use the init/cleanup functions
@@ -1054,6 +1075,7 @@ through each other):
 *) 68: tried to encode a PLTE chunk with a palette that has less than 1 or more than 256 colors
 *) 69: unknown chunk type with "critical" flag encountered by the decoder
 *) 70: insufficient memory error
+*) 71: unexisting interlace mode given to encoder (must be 0 or 1)
 
 
 10. file IO
@@ -1275,6 +1297,9 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 13 jan 2008: improved filtering code of encoder. Added ability to
+    encode Adam7-interlaced images (before, it could only decode them).
+*) 12 jan 2008: refactored the Adam7 code. Much nicer now.
 *) 07 jan 2008: (!) changed LodePNG to use ISO C90 instead of C++. A
     C++ wrapper around this provides an interface almost identical to before.
     Having LodePNG be pure ISO C90 makes it more portable. The C and C++ code

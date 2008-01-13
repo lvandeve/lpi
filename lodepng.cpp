@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080107
+LodePNG version 20080113
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
@@ -30,7 +30,7 @@ You are free to name this file lodepng.cpp or lodepng.c depending on your usage.
 
 #include "lodepng.h"
 
-#define VERSION_STRING "20080107"
+#define VERSION_STRING "20080113"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Tools For C                                                            / */
@@ -271,6 +271,16 @@ static void string_concat(char** out, const char* in) /*concatenate*/
   insize = strlen(in);
   outsize = strlen(*out);
   if(string_resize(out, outsize + insize)) for(i = 0; i < insize; i++) (*out)[outsize + i] = in[i];
+}
+
+static unsigned string_equal(const char* a, const char* b)
+{
+  size_t asize, bsize, i;
+  asize = strlen(a);
+  bsize = strlen(b);
+  if(asize != bsize) return 0;
+  for(i = 0; i < asize; i++) if(a[i] != b[i]) return 0;
+  return 1;
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
@@ -1490,6 +1500,7 @@ unsigned LodeZlib_decompress(unsigned char** out, size_t* outsize, const unsigne
 
 unsigned LodeZlib_compress(unsigned char** out, size_t* outsize, const unsigned char* in, size_t insize, const LodeZlib_DeflateSettings* settings)
 {
+  /*initially, *out must be NULL and outsize 0, if you just give some random *out that's pointing to a non allocated buffer, this'll crash*/
   ucvector deflatedata, outv;
   size_t i;
   
@@ -1523,6 +1534,9 @@ unsigned LodeZlib_compress(unsigned char** out, size_t* outsize, const unsigned 
 }
 
 
+
+/* ////////////////////////////////////////////////////////////////////////// */
+/* ////////////////////////////////////////////////////////////////////////// */
 /* ////////////////////////////////////////////////////////////////////////// */
 /* ////////////////////////////////////////////////////////////////////////// */
 /* ////////////////////////////////////////////////////////////////////////// */
@@ -1530,6 +1544,32 @@ unsigned LodeZlib_compress(unsigned char** out, size_t* outsize, const unsigned 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* ////////////////////////////////////////////////////////////////////////// */
 /* ////////////////////////////////////////////////////////////////////////// */
+/* ////////////////////////////////////////////////////////////////////////// */
+/* ////////////////////////////////////////////////////////////////////////// */
+
+
+
+/*
+The two functions below (LodePNG_decompress and LodePNG_compress) directly call the
+LodeZlib_decompress and LodeZlib_compress functions. The only purpose of the functions
+below, is to provide the ability to let LodePNG use a different Zlib encoder by only
+changing the two functions below, instead of changing it inside the vareous places
+in the other LodePNG functions.
+
+*out must be NULL and *outsize must be 0 initially, and after the function is done,
+*out must point to the decompressed data, *outsize must be the size of it, and must
+be the size of the useful data in bytes, not the alloc size.
+*/
+
+static unsigned LodePNG_decompress(unsigned char** out, size_t* outsize, const unsigned char* in, size_t insize, const LodeZlib_DecompressSettings* settings)
+{
+  return LodeZlib_decompress(out, outsize, in, insize, settings);
+}
+
+static unsigned LodePNG_compress(unsigned char** out, size_t* outsize, const unsigned char* in, size_t insize, const LodeZlib_DeflateSettings* settings)
+{
+  return LodeZlib_compress(out, outsize, in, insize, settings);
+}
 
 
 /* ////////////////////////////////////////////////////////////////////////// */
@@ -1597,9 +1637,18 @@ static unsigned readBitsFromReversedStream(size_t* bitpointer, const unsigned ch
   return result;
 }
 
+static void setBitOfReversedStream0(size_t* bitpointer, unsigned char* bitstream, unsigned char bit)
+{
+  /*the current bit in bitstream must be 0 for this to work*/
+  if(bit) bitstream[(*bitpointer) >> 3] |=  (bit << (7 - ((*bitpointer) & 0x7))); /*earlier bit of huffman code is in a lesser significant bit of an earlier byte*/
+  (*bitpointer)++;
+}
+
 static void setBitOfReversedStream(size_t* bitpointer, unsigned char* bitstream, unsigned char bit)
 {
-  bitstream[(*bitpointer) >> 3] |=  (bit << (7 - ((*bitpointer) & 0x7))); /*earlier bit of huffman code is in a lesser significant bit of an earlier byte*/
+  /*the current bit in bitstream may be 0 or 1 for this to work*/
+  if(bit == 0) bitstream[(*bitpointer) >> 3] &=  (unsigned char)(~(1 << (7 - ((*bitpointer) & 0x7))));
+  else bitstream[(*bitpointer) >> 3] |=  (1 << (7 - ((*bitpointer) & 0x7)));
   (*bitpointer)++;
 }
 
@@ -1617,7 +1666,7 @@ static void LodePNG_add32bitInt(ucvector* buffer, unsigned value)
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
-/* / LodePNG                                                                / */
+/* / Color types and such                                                   / */
 /* ////////////////////////////////////////////////////////////////////////// */
 
 /*return type is a LodePNG error code*/
@@ -1694,7 +1743,7 @@ void LodePNG_InfoColor_addPalette(LodePNG_InfoColor* info, unsigned char r, unsi
   info->palettesize++;
 }
 
-unsigned LodePNG_InfoColor_getBpp(const LodePNG_InfoColor* info) { return getBpp(info->colorType, info->bitDepth); }
+unsigned LodePNG_InfoColor_getBpp(const LodePNG_InfoColor* info) { return getBpp(info->colorType, info->bitDepth); } /*calculate bits per pixel out of colorType and bitDepth*/
 unsigned LodePNG_InfoColor_getChannels(const LodePNG_InfoColor* info) { return getNumColorChannels(info->colorType); }
 unsigned LodePNG_InfoColor_isGreyscaleType(const LodePNG_InfoColor* info) { return info->colorType == 0 || info->colorType == 4; }
 unsigned LodePNG_InfoColor_isAlphaType(const LodePNG_InfoColor* info) { return (info->colorType & 4) != 0; }
@@ -1709,6 +1758,9 @@ void LodePNG_InfoPng_init(LodePNG_InfoPng* info)
 {
   LodePNG_InfoColor_init(&info->color);
   info->background_defined = 0;
+  info->interlaceMethod = 0;
+  info->compressionMethod = 0;
+  info->filterMethod = 0;
   
   info->num_texts = 0;
   info->text_keys = NULL;
@@ -1794,7 +1846,8 @@ void LodePNG_InfoRaw_copy(LodePNG_InfoRaw* dest, const LodePNG_InfoRaw* source)
 
 /*
 converts from any color type to 24-bit or 32-bit (later maybe more supported). return value = LodePNG error code
-the out buffer must have (w * h * bpp + 7) / 8, where bpp is the bits per pixel of the output color type (LodePNG_InfoColor_getBpp)
+the out buffer must have (w * h * bpp + 7) / 8 bytes, where bpp is the bits per pixel of the output color type (LodePNG_InfoColor_getBpp)
+for < 8 bpp images, there may _not_ be padding bits at the end of scanlines.
 */
 unsigned LodePNG_convert(unsigned char* out, const unsigned char* in, LodePNG_InfoColor* infoOut, LodePNG_InfoColor* infoIn, unsigned w, unsigned h)
 {
@@ -2000,6 +2053,36 @@ static int paethPredictor(int a, int b, int c)
   else return c;
 }
 
+/*shared values used by multiple Adam7 related functions*/
+
+static const unsigned ADAM7_IX[7] = { 0, 4, 0, 2, 0, 1, 0 }; /*x start values*/
+static const unsigned ADAM7_IY[7] = { 0, 0, 4, 0, 2, 0, 1 }; /*y start values*/
+static const unsigned ADAM7_DX[7] = { 8, 8, 4, 4, 2, 2, 1 }; /*x delta values*/
+static const unsigned ADAM7_DY[7] = { 8, 8, 8, 4, 4, 2, 2 }; /*y delta values*/
+
+static void Adam7_getpassvalues(size_t passw[7], size_t passh[7], size_t filter_passstart[8], size_t padded_passstart[8], size_t passstart[8], unsigned w, unsigned h, unsigned bpp)
+{
+  /*the passstart values have 8 values: the 8th one actually indicates the byte after the end of the 7th (= last) pass*/
+  unsigned i;
+  
+  /*calculate width and height in pixels of each pass*/
+  for(i = 0; i < 7; i++)
+  {
+    passw[i] = (w + ADAM7_DX[i] - ADAM7_IX[i] - 1) / ADAM7_DX[i];
+    passh[i] = (h + ADAM7_DY[i] - ADAM7_IY[i] - 1) / ADAM7_DY[i];
+    if(passw[i] == 0) passh[i] = 0;
+    if(passh[i] == 0) passw[i] = 0;
+  }
+  
+  filter_passstart[0] = padded_passstart[0] = passstart[0] = 0;
+  for(i = 0; i < 7; i++)
+  {
+    filter_passstart[i + 1] = filter_passstart[i] + ((passw[i] && passh[i]) ? passh[i] * (1 + (passw[i] * bpp + 7) / 8) : 0); /*if passw[i] is 0, it's 0 bytes, not 1 (no filtertype-byte)*/
+    padded_passstart[i + 1] = padded_passstart[i] + passh[i] * ((passw[i] * bpp + 7) / 8); /*bits padded if needed to fill full byte at end of each scanline*/
+    passstart[i + 1] = passstart[i] + (passh[i] * passw[i] * bpp + 7) / 8; /*only padded at end of reduced image*/
+  }
+}
+
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / PNG Decoder                                                            / */
 /* ////////////////////////////////////////////////////////////////////////// */
@@ -2041,10 +2124,16 @@ void LodePNG_inspect(LodePNG_Decoder* decoder, const unsigned char* in, size_t i
   decoder->error = checkColorValidity(decoder->infoPng.color.colorType, decoder->infoPng.color.bitDepth);
 }
 
-/*filter a PNG image scanline by scanline. when the pixels are smaller than 1 byte, the filter works byte per byte (bytewidth = 1)*/
-/*precon is the previous filtered scanline, recon the result, scanline the current one*/
-static unsigned unFilterScanline(unsigned char* recon, const unsigned char* scanline, const unsigned char* precon, size_t bytewidth, unsigned char filterType, size_t length)
+static unsigned unfilterScanline(unsigned char* recon, const unsigned char* scanline, const unsigned char* precon, size_t bytewidth, unsigned char filterType, size_t length)
 {
+  /*
+  For PNG filter method 0
+  unfilter a PNG image scanline by scanline. when the pixels are smaller than 1 byte, the filter works byte per byte (bytewidth = 1)
+  precon is the previous unfiltered scanline, recon the result, scanline the current one
+  the incoming scanlines do NOT include the filtertype byte, that one is given in the parameter filterType instead
+  recon and scanline MAY be the same memory address! precon must be disjoint.
+  */
+  
   size_t i;
   switch(filterType)
   {
@@ -2088,143 +2177,159 @@ static unsigned unFilterScanline(unsigned char* recon, const unsigned char* scan
   return 0;
 }
 
-/*filter and reposition the pixels into the output when the image is Adam7 interlaced. This function can only do it after the full image is already decoded. The out buffer must have the correct allocated memory size already.*/
-static unsigned adam7Pass(unsigned char* out, unsigned char* linen, unsigned char* lineo, const unsigned char* in, unsigned w, size_t passleft, size_t passtop, size_t spacex, size_t spacey, size_t passw, size_t passh, unsigned bpp)
+static unsigned unfilter(unsigned char* out, const unsigned char* in, unsigned w, unsigned h, unsigned bpp)
 {
-  size_t x, y, bytewidth = (bpp + 7) / 8;
-  unsigned char* temp;
-  if(passw == 0) return 0; /*empty pass, no data, no filtertype*/
-  for(y = 0; y < passh; y++)
+  /*
+  For PNG filter method 0
+  this function unfilters a single image (e.g. without interlacing this is called once, with Adam7 it's called 7 times)
+  out must have enough bytes allocated already, in must have the scanlines + 1 filtertype byte per scanline
+  w and h are image dimensions or dimensions of reduced image, bpp is bits per pixel
+  in and out are allowed to be the same memory address!
+  */
+  
+  unsigned y;
+  unsigned char* prevline = 0;
+  
+  size_t bytewidth = (bpp + 7) / 8; /*bytewidth is used for filtering, is 1 when bpp < 8, number of bytes per pixel otherwise*/
+  size_t linebytes = (w * bpp + 7) / 8;
+  
+  for(y = 0; y < h; y++)
   {
-    size_t linelength = 1 + ((bpp * passw + 7) / 8); /*filterbyte + pixel bytes*/
-    size_t linestart = y * linelength; /*position where we read the filterType: at the start of the scanline*/
-    size_t i, b;
-    unsigned char filterType = in[linestart];
+    size_t outindex = linebytes * y;
+    size_t inindex = (1 + linebytes) * y; /*the extra filterbyte added to each row*/
+    unsigned char filterType = in[inindex];
     
-    unsigned char* prevline = (y == 0) ? 0 : lineo;
-    unsigned error = unFilterScanline(linen, &in[linestart + 1], prevline,  bytewidth, filterType, (w * bpp + 7) / 8);
+    unsigned error = unfilterScanline(&out[outindex], &in[inindex + 1], prevline, bytewidth, filterType, linebytes);
     if(error) return error;
     
-    /*put the filtered pixels in the output image*/
-    if(bpp >= 8)
-    {
-      for(i = 0; i < passw; i++)
-      for(b = 0; b < bytewidth; b++) /*b = current byte of this pixel*/
-      {
-        out[bytewidth * w * (passtop + spacey * y) + bytewidth * (passleft + spacex * i) + b] = linen[bytewidth * i + b];
-      }
-    }
-    else
-    {
-      for(x = 0; x < passw; x++)
-      {
-        size_t obp = bpp * w * (passtop + spacey * y) + bpp * (passleft + spacex * x);
-        size_t bp = x * bpp;
-        
-        for(b = 0; b < bpp; b++) /*b = current bit of this pixel*/
-        {
-          unsigned char bit = readBitFromReversedStream(&bp, &linen[0]);
-          setBitOfReversedStream(&obp, out, bit);
-        }
-      }
-    }
-
-    /*swap the two buffer pointers "line old" and "line new"*/
-    temp = linen;
-    linen = lineo;
-    lineo = temp;
+    prevline = &out[outindex];
   }
   
   return 0;
 }
 
-/*out must be buffer big enough to contain full image!*/
-static unsigned postProcessScanlines(unsigned char* out, ucvector* scanlines, const LodePNG_InfoPng* infoPng) /*return value is error*/
+static void Adam7_deinterlace(unsigned char* out, const unsigned char* in, unsigned w, unsigned h, unsigned bpp)
 {
-  unsigned bpp = LodePNG_InfoColor_getBpp(&infoPng->color);
-  unsigned error = 0;
+  /*Note: this function works on image buffers WITHOUT padding bits at end of scanlines with non-multiple-of-8 bit amounts, only between reduced images is padding
+  out must be big enough AND must be 0 everywhere if bpp < 8 in the current implementation (because that's likely a little bit faster)*/
+  size_t passw[7], passh[7], filter_passstart[8], padded_passstart[8], passstart[8];
+  unsigned i;
+
+  Adam7_getpassvalues(passw, passh, filter_passstart, padded_passstart, passstart, w, h, bpp);
   
-  /*filter and interlace*/
-  size_t y, bytewidth = (bpp + 7) / 8; /*bytewidth is used for filtering, is 1 when bpp < 8, number of bytes per pixel otherwise*/
+  if(bpp >= 8)
+  {
+    for(i = 0; i < 7; i++)
+    {
+      unsigned x, y, b;
+      size_t bytewidth = bpp / 8;
+      for(y = 0; y < passh[i]; y++)
+      for(x = 0; x < passw[i]; x++)
+      {
+        size_t pixelinstart = passstart[i] + (y * passw[i] + x) * bytewidth;
+        size_t pixeloutstart = ((ADAM7_IY[i] + y * ADAM7_DY[i]) * w + ADAM7_IX[i] + x * ADAM7_DX[i]) * bytewidth;
+        for(b = 0; b < bytewidth; b++)
+        {
+          out[pixeloutstart + b] = in[pixelinstart + b];
+        }
+      }
+    }
+  }
+  else /*bpp < 8: Adam7 with pixels < 8 bit is a bit trickier: with bit pointers*/
+  {
+    for(i = 0; i < 7; i++)
+    {
+      unsigned x, y, b;
+      unsigned ilinebits = bpp * passw[i];
+      unsigned olinebits = bpp * w;
+      size_t obp, ibp; /*bit pointers (for out and in buffer)*/
+      for(y = 0; y < passh[i]; y++)
+      for(x = 0; x < passw[i]; x++)
+      {
+        ibp = (8 * passstart[i]) + (y * ilinebits + x * bpp);
+        obp = (ADAM7_IY[i] + y * ADAM7_DY[i]) * olinebits + (ADAM7_IX[i] + x * ADAM7_DX[i]) * bpp;
+        for(b = 0; b < bpp; b++)
+        {
+          unsigned char bit = readBitFromReversedStream(&ibp, in);
+          setBitOfReversedStream0(&obp, out, bit); /*note that this function assumes the out buffer is completely 0, use setBitOfReversedStream otherwise*/
+        }
+      }
+    }
+  }
+}
+
+static void removePaddingBits(unsigned char* out, const unsigned char* in, size_t olinebits, size_t ilinebits, unsigned h)
+{
+  /*
+  After filtering there are still padding bits if scanlines have non multiple of 8 bit amounts. They need to be removed (except at last scanline of (Adam7-reduced) image) before working with pure image buffers for the Adam7 code, the color convert code and the output to the user.
+  in and out are allowed to be the same buffer, in may also be higher but still overlapping; in must have >= ilinebits*h bits, out must have >= olinebits*h bits, olinebits must be <= ilinebits
+  also used to move bits after earlier such operations happened, e.g. in a sequence of reduced images from Adam7
+  only useful if (ilinebits - olinebits) is a value in the range 1..7
+  */
+  unsigned y;
+  size_t diff = ilinebits - olinebits;
+  size_t obp = 0, ibp = 0; /*bit pointers*/
+  for(y = 0; y < h; y++)
+  {
+    size_t x;
+    for(x = 0; x < olinebits; x++)
+    {
+      unsigned char bit = readBitFromReversedStream(&ibp, in);
+      setBitOfReversedStream(&obp, out, bit);
+    }
+    ibp += diff;
+  }
+}
+
+/*out must be buffer big enough to contain full image, and in must contain the full decompressed data from the IDAT chunks*/
+static unsigned postProcessScanlines(unsigned char* out, unsigned char* in, const LodePNG_InfoPng* infoPng) /*return value is error*/
+{
+  /*
+  This function converts the filtered-padded-interlaced data into pure 2D image buffer with the PNG's colortype. Steps:
+  *) if no Adam7: 1) unfilter 2) remove padding bits (= posible extra bits per scanline if bpp < 8)
+  *) if adam7: 1) 7x unfilter 2) 7x remove padding bits 3) Adam7_deinterlace
+  NOTE: the in buffer will be overwritten with intermediate data!
+  */
+  unsigned bpp = LodePNG_InfoColor_getBpp(&infoPng->color);
+  unsigned w = infoPng->width;
+  unsigned h = infoPng->height;
+  unsigned error = 0;
   
   if(infoPng->interlaceMethod == 0)
   {
-    size_t linestart = 0; /*start of current scanline*/
-    size_t linelength = (infoPng->width * bpp + 7) / 8; /*length in bytes of a scanline, excluding the filtertype byte*/
-    
-    if(bpp >= 8) /*byte per byte*/
+    if(bpp < 8 && w * bpp != ((w * bpp + 7) / 8) * 8)
     {
-      for(y = 0; y < infoPng->height; y++)
-      {
-        unsigned char filterType = scanlines->data[linestart];
-        const unsigned char* prevline = (y == 0) ? 0 : &out[(y - 1) * infoPng->width * bytewidth];
-        error = unFilterScanline(&out[linestart - y], &scanlines->data[linestart + 1], prevline, bytewidth, filterType,  linelength);
-        if(error) return error;
-        linestart += (1 + linelength); /*go to start of next scanline*/
-      }
-    }
-    else /*less than 8 bits per pixel, so fill it up bit per bit*/
-    {
-      size_t bp, obp = 0; /*out bit pointer, only used if bpp < 8*/
-      unsigned char* templine = (unsigned char*)malloc((infoPng->width * bpp + 7) >> 3);
-      if(!templine) return 70; /*error: insufficient memory*/
-      for(y = 0; y < infoPng->height; y++)
-      {
-        unsigned char filterType = scanlines->data[linestart];
-        const unsigned char* prevline = (y == 0) ? 0 : &out[(y - 1) * infoPng->width * bytewidth];
-        error = unFilterScanline(templine, &scanlines->data[linestart + 1], prevline, bytewidth, filterType, linelength);
-        if(error) break;
-
-        bp = 0;
-        while(bp < infoPng->width * bpp)
-        {
-          unsigned char bit = readBitFromReversedStream(&bp, &templine[0]);
-          setBitOfReversedStream(&obp, out, bit);
-        }
-        linestart += (1 + linelength); /*go to start of next scanline*/
-      }
-      free(templine);
+      error = unfilter(in, in, w, h, bpp);
       if(error) return error;
+      removePaddingBits(out, in, w * bpp, ((w * bpp + 7) / 8) * 8, h);
     }
+    else error = unfilter(out, in, w, h, bpp); /*we can immediatly filter into the out buffer, no other steps needed*/
   }
   else /*interlaceMethod is 1 (Adam7)*/
   {
-    size_t passw[7], passh[7], passstart[7];
+    size_t passw[7], passh[7], filter_passstart[8], padded_passstart[8], passstart[8];
     unsigned i;
-    unsigned char *scanlineo, *scanlinen;
     
-    passw[0] = (infoPng->width + 7) / 8; passh[0] = (infoPng->height + 7) / 8;
-    passw[1] = (infoPng->width + 3) / 8; passh[1] = (infoPng->height + 7) / 8;
-    passw[2] = (infoPng->width + 3) / 4; passh[2] = (infoPng->height + 3) / 8;
-    passw[3] = (infoPng->width + 1) / 4; passh[3] = (infoPng->height + 3) / 4;
-    passw[4] = (infoPng->width + 1) / 2; passh[4] = (infoPng->height + 1) / 4;
-    passw[5] = (infoPng->width + 0) / 2; passh[5] = (infoPng->height + 1) / 2;
-    passw[6] = (infoPng->width + 0) / 1; passh[6] = (infoPng->height + 0) / 2;
+    Adam7_getpassvalues(passw, passh, filter_passstart, padded_passstart, passstart, w, h, bpp);
     
-    passstart[0] = 0;
-    for(i = 0; i < 6; i++)
-      passstart[i + 1] = passstart[i] + passh[i] * ((passw[i] ? 1 : 0) + (passw[i] * bpp + 7) / 8); /*if passw[i] is 0, it's 0 bytes, not 1 (no filtertype-byte)*/
+    for(i = 0; i < 7; i++)
+    {
+      error = unfilter(&in[padded_passstart[i]], &in[filter_passstart[i]], passw[i], passh[i], bpp);
+      if(error) return error;
+      if(bpp < 8) /*TODO: possible efficiency improvement: if in this reduced image the bits fit nicely in 1 scanline, move bytes instead of bits or move not at all*/
+      {
+        /*remove padding bits in scanlines; after this there still may be padding bits between the different reduced images: each reduced image still starts nicely at a byte*/
+        removePaddingBits(&in[passstart[i]], &in[padded_passstart[i]], passw[i] * bpp, ((passw[i] * bpp + 7) / 8) * 8, passh[i]);
+      }
+    }
     
-    scanlineo = (unsigned char*)malloc((infoPng->width * bpp + 7) / 8); /*"old" scanline*/
-    scanlinen = (unsigned char*)malloc((infoPng->width * bpp + 7) / 8); /*"new" scanline*/
-    if(!scanlineo || !scanlinen) return 70; /*error: insufficient memory*/
-    
-    adam7Pass(out, scanlinen, scanlineo, &scanlines->data[passstart[0]], infoPng->width, 0, 0, 8, 8, passw[0], passh[0], bpp);
-    adam7Pass(out, scanlinen, scanlineo, &scanlines->data[passstart[1]], infoPng->width, 4, 0, 8, 8, passw[1], passh[1], bpp);
-    adam7Pass(out, scanlinen, scanlineo, &scanlines->data[passstart[2]], infoPng->width, 0, 4, 4, 8, passw[2], passh[2], bpp);
-    adam7Pass(out, scanlinen, scanlineo, &scanlines->data[passstart[3]], infoPng->width, 2, 0, 4, 4, passw[3], passh[3], bpp);
-    adam7Pass(out, scanlinen, scanlineo, &scanlines->data[passstart[4]], infoPng->width, 0, 2, 2, 4, passw[4], passh[4], bpp);
-    adam7Pass(out, scanlinen, scanlineo, &scanlines->data[passstart[5]], infoPng->width, 1, 0, 2, 2, passw[5], passh[5], bpp);
-    adam7Pass(out, scanlinen, scanlineo, &scanlines->data[passstart[6]], infoPng->width, 0, 1, 1, 2, passw[6], passh[6], bpp);
-    
-    free(scanlineo);
-    free(scanlinen);
+    Adam7_deinterlace(out, in, w, h, bpp);
   }
   
-  return 0;
+  return error;
 }
 
-/*read a PNG, the result will be in the same color type as the PNG*/
+/*read a PNG, the result will be in the same color type as the PNG (hence "generic")*/
 static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t* outsize, const unsigned char* in, size_t size)
 {
   unsigned char IEND = 0;
@@ -2382,14 +2487,14 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
     ucvector scanlines;
     ucvector_init(&scanlines);
     ucvector_resize(&scanlines, ((decoder->infoPng.width * (decoder->infoPng.height * LodePNG_InfoColor_getBpp(&decoder->infoPng.color) + 7)) / 8) + decoder->infoPng.height); /*maximum final image length is already reserved in the vector's length - this is not really necessary*/
-    decoder->error = LodeZlib_decompress(&scanlines.data, &scanlines.size, idat.data, idat.size, &decoder->settings.zlibsettings); /*decompress with the Zlib decompressor*/
+    decoder->error = LodePNG_decompress(&scanlines.data, &scanlines.size, idat.data, idat.size, &decoder->settings.zlibsettings); /*decompress with the Zlib decompressor*/
     
     if(!decoder->error)
     {
       ucvector outv;
       ucvector_init(&outv);
       ucvector_resizev(&outv, (decoder->infoPng.height * decoder->infoPng.width * LodePNG_InfoColor_getBpp(&decoder->infoPng.color) + 7) / 8, 0);
-      decoder->error = postProcessScanlines(outv.data, &scanlines, &decoder->infoPng);
+      decoder->error = postProcessScanlines(outv.data, scanlines.data, &decoder->infoPng);
       *out = outv.data;
       *outsize = outv.size;
     }
@@ -2408,6 +2513,9 @@ void LodePNG_decode(LodePNG_Decoder* decoder, unsigned char** out, size_t* outsi
   if(!decoder->settings.color_convert || LodePNG_InfoColor_equal(&decoder->infoRaw.color, &decoder->infoPng.color))
   {
     /*same color type, no copying or converting of data needed*/
+    /*store the infoPng color settings on the infoRaw so that the infoRaw still reflects what colorType
+    the raw image has to the end user*/
+    if(!decoder->settings.color_convert) LodePNG_InfoColor_copy(&decoder->infoRaw.color, &decoder->infoPng.color);
   }
   else
   {
@@ -2528,7 +2636,7 @@ static void writeSignature(ucvector* out)
   ucvector_push_back(out, 10);
 }
 
-static void writeChunk_IHDR(ucvector* out, unsigned w, unsigned h, unsigned bitDepth, unsigned colorType)
+static void writeChunk_IHDR(ucvector* out, unsigned w, unsigned h, unsigned bitDepth, unsigned colorType, unsigned interlaceMethod)
 {
   ucvector header;
   ucvector_init(&header);
@@ -2539,7 +2647,7 @@ static void writeChunk_IHDR(ucvector* out, unsigned w, unsigned h, unsigned bitD
   ucvector_push_back(&header, (unsigned char)colorType); /*color type*/
   ucvector_push_back(&header, 0); /*compression method*/
   ucvector_push_back(&header, 0); /*filter method*/
-  ucvector_push_back(&header, 0); /*interlace method*/
+  ucvector_push_back(&header, interlaceMethod); /*interlace method*/
   
   addChunk(out, "IHDR", header.data, header.size);
   ucvector_cleanup(&header);
@@ -2610,7 +2718,7 @@ static unsigned writeChunk_IDAT(ucvector* out, const unsigned char* data, size_t
   
   /*compress with the Zlib compressor*/
   ucvector_init(&zlibdata);
-  error = LodeZlib_compress(&zlibdata.data, &zlibdata.size, data, datasize, zlibsettings);
+  error = LodePNG_compress(&zlibdata.data, &zlibdata.size, data, datasize, zlibsettings);
   addChunk(out, "IDAT", zlibdata.data, zlibdata.size);
   ucvector_cleanup(&zlibdata);
   
@@ -2648,24 +2756,6 @@ static void writeChunk_bKGD(ucvector* out, const LodePNG_InfoPng* info)
   addChunk(out, "bKGD", bKGD.data, bKGD.size);
   ucvector_cleanup(&bKGD);
 }
-
-#if 0
-static void dontFilter(unsigned char* out, const unsigned char* image, unsigned w, unsigned h, const LodePNG_InfoColor* info)
-{
-  /*out must be a buffer with as size: h + (w * h * LodePNG_InfoColor_getBpp(info) + 7) / 8, because there are the scanlines with 1 extra byte per scanline*/
-  
-  /*the width of a scanline in bytes, not including the filter type*/
-  size_t y, scanwidth = (w * LodePNG_InfoColor_getBpp(info) + 7) / 8;
-
-  /*generate the literal data out of given image vector. filterType has to be added per scanline.*/
-  for(y = 0; y < h; y++)
-  {
-    size_t x, begin = y * (scanwidth + 1);
-    out[begin] = 0; /*filterType 0 for this scanline*/
-    for(x = 0; x < scanwidth; x++) out[begin + 1 + x] = image[y * scanwidth + x];
-  }
-}
-#endif
 
 static void filterScanline(unsigned char* out, const unsigned char* scanline, const unsigned char* prevline, size_t length, size_t bytewidth, unsigned char filterType)
 {
@@ -2720,64 +2810,253 @@ static void filterScanline(unsigned char* out, const unsigned char* scanline, co
   }
 }
 
-static void filter(unsigned char* out, const unsigned char* image, unsigned w, unsigned h, const LodePNG_InfoColor* info)
+static void filter(unsigned char* out, const unsigned char* in, unsigned w, unsigned h, const LodePNG_InfoColor* info)
 {
   /*
-  For filtering it uses the heuristic described here: http://www.cs.toronto.edu/~cosmin/pngtech/optipng.html
-   *  If the image type is Palette, or the bit depth is smaller than 8, then do not filter the image (i.e. use fixed filtering, with the filter None).
-   * (The other case) If the image type is Grayscale or RGB (with or without Alpha), and the bit depth is not smaller than 8, then use adaptive filtering as follows: independently for each row, apply all five filters and select the filter that produces the smallest sum of absolute values per row.
-  Here, the image is RGB(A) and bit depth 8, so the one with smallest sum is used.
+  For PNG filter method 0
+  out must be a buffer with as size: h + (w * h * bpp + 7) / 8, because there are the scanlines with 1 extra byte per scanline
   
-  out must be a buffer with as size: h + (w * h * LodePNG_InfoColor_getBpp(info) + 7) / 8, because there are the scanlines with 1 extra byte per scanline
+  There is a nice heuristic described here: http://www.cs.toronto.edu/~cosmin/pngtech/optipng.html. It says:
+   *  If the image type is Palette, or the bit depth is smaller than 8, then do not filter the image (i.e. use fixed filtering, with the filter None).
+   * (The other case) If the image type is Grayscale or RGB (with or without Alpha), and the bit depth is not smaller than 8, then use adaptive filtering heuristic as follows: independently for each row, apply all five filters and select the filter that produces the smallest sum of absolute values per row.
+  
+  Here the above method is used mostly. Note though that it appears to be better to use the adaptive filtering on the plasma 8-bit palette example, but that image isn't the best reference for palette images in general.
   */
   
-  /*the width of a scanline in bytes, not including the filter type*/
   unsigned bpp = LodePNG_InfoColor_getBpp(info);
-  size_t scanwidth = (w * bpp + 7) / 8;
+  
+  size_t linebytes = (w * bpp + 7) / 8; /*the width of a scanline in bytes, not including the filter type*/
   size_t bytewidth = (bpp + 7) / 8; /*bytewidth is used for filtering, is 1 when bpp < 8, number of bytes per pixel otherwise*/
   
-  size_t x, y;
-  unsigned i, j;
+  const unsigned char* prevline = 0;
+  unsigned x, y;
   
-  unsigned sum[5];
-  ucvector attempt[5]; /*five filtering attempts, one for each filter type*/
-  for(i = 0; i < 5; i++)
+  unsigned heuristic;
+  
+  /*choose heuristic as described above*/
+  if(info->colorType == 3 || info->bitDepth < 8) heuristic = 0;
+  else heuristic = 1;
+  
+  if(heuristic == 0) /*None filtertype for everything*/
   {
-    ucvector_init(&attempt[i]);
-    ucvector_resize(&attempt[i], scanwidth);
+    for(y = 0; y < h; y++)
+    {
+      size_t outindex = (1 + linebytes) * y; /*the extra filterbyte added to each row*/
+      size_t inindex = linebytes * y;
+      const unsigned TYPE = 0;
+      out[outindex] = TYPE; /*filter type byte*/
+      filterScanline(&out[outindex + 1], &in[inindex], prevline, linebytes, bytewidth, TYPE);
+      prevline = &in[inindex];
+    }
   }
+  else if(heuristic == 1) /*adaptive filtering*/
+  {
+    size_t sum[5];
+    ucvector attempt[5]; /*five filtering attempts, one for each filter type*/
+    size_t smallest = 0;
+    unsigned type, bestType = 0;
+    
+    for(type = 0; type < 5; type++)
+    {
+      ucvector_init(&attempt[type]);
+      ucvector_resize(&attempt[type], linebytes);
+    }
+    
+    for(y = 0; y < h; y++)
+    {
+      /*try the 5 filter types*/
+      for(type = 0; type < 5; type++)
+      {
+        filterScanline(attempt[type].data, &in[y * linebytes], prevline, linebytes, bytewidth, type);
+        
+        /*calculate the sum of the result*/
+        sum[type] = 0;
+        for(x = 0; x < attempt[type].size; x+=3) sum[type] += attempt[type].data[x]; /*note that not all pixels are checked to speed this up while still having probably the best choice*/
+      
+        /*check if this is smallest sum (or if type == 0 it's the first case so always store the values)*/
+        if(type == 0 || sum[type] < smallest)
+        {
+          bestType = type;
+          smallest = sum[type];
+        }
+      }
+      
+      prevline = &in[y * linebytes];
   
+      /*now fill the out values*/
+      out[y * (linebytes + 1)] = bestType; /*the first byte of a scanline will be the filter type*/
+      for(x = 0; x < linebytes; x++) out[y * (linebytes + 1) + 1 + x] = attempt[bestType].data[x];
+    }
+    
+    for(type = 0; type < 5; type++) ucvector_cleanup(&attempt[type]);
+  }
+  #if 0 /*deflate the scanline with a fixed tree after every filter attempt to see which one deflates best. This is slow, and _does not work as expected_: the heuristic gives smaller result!*/
+  else if(heuristic == 2) /*adaptive filtering by using deflate*/
+  {
+    size_t size[5];
+    ucvector attempt[5]; /*five filtering attempts, one for each filter type*/
+    size_t smallest;
+    unsigned type = 0, bestType = 0;
+    unsigned char* dummy;
+    LodeZlib_DeflateSettings deflatesettings = LodeZlib_defaultDeflateSettings;
+    deflatesettings.btype = 1; /*use fixed tree on the attempts so that the tree is not adapted to the filtertype on purpose, to simulate the true case where the tree is the same for the whole image*/
+    for(type = 0; type < 5; type++) { ucvector_init(&attempt[type]); ucvector_resize(&attempt[type], linebytes); }
+    for(y = 0; y < h; y++) /*try the 5 filter types*/
+    {
+      for(type = 0; type < 5; type++)
+      {
+        filterScanline(attempt[type].data, &in[y * linebytes], prevline, linebytes, bytewidth, type);
+        size[type] = 0; dummy = 0;
+        LodePNG_compress(&dummy, &size[type], attempt[type].data, attempt[type].size, &deflatesettings);
+        free(dummy);
+        /*check if this is smallest size (or if type == 0 it's the first case so always store the values)*/
+        if(type == 0 || size[type] < smallest) { bestType = type; smallest = size[type]; }
+      }
+      prevline = &in[y * linebytes];
+      out[y * (linebytes + 1)] = bestType; /*the first byte of a scanline will be the filter type*/
+      for(x = 0; x < linebytes; x++) out[y * (linebytes + 1) + 1 + x] = attempt[bestType].data[x];
+    }
+    for(type = 0; type < 5; type++) ucvector_cleanup(&attempt[type]);
+  }
+  #endif
+}
+
+static void addPaddingBits(unsigned char* out, const unsigned char* in, size_t olinebits, size_t ilinebits, unsigned h)
+{
+  /*The opposite of the removePaddingBits function
+  olinebits must be >= ilinebits*/
+  unsigned y;
+  size_t diff = olinebits - ilinebits;
+  size_t obp = 0, ibp = 0; /*bit pointers*/
   for(y = 0; y < h; y++)
   {
-    unsigned smallest, smallestType;
-    /*try the 5 filter types*/
-    for(i = 0; i < 5; i++)
+    size_t x;
+    for(x = 0; x < ilinebits; x++)
     {
-      const unsigned char* prevline = (y == 0) ? 0 : &image[(y - 1) * scanwidth];
-      filterScanline(&attempt[i].data[0], &image[y * scanwidth], prevline, scanwidth, bytewidth, i);
-      
-      /*calculate the sum of the result*/
-      sum[i] = 0;
-      for(j = 0; j < 5; j++) sum[i] += attempt[i].data[j];
+      unsigned char bit = readBitFromReversedStream(&ibp, in);
+      setBitOfReversedStream(&obp, out, bit);
+    }
+    obp += diff;
+  }
+}
+
+static void Adam7_interlace(unsigned char* out, const unsigned char* in, unsigned w, unsigned h, unsigned bpp)
+{
+  /*Note: this function works on image buffers WITHOUT padding bits at end of scanlines with non-multiple-of-8 bit amounts, only between reduced images is padding*/
+  size_t passw[7], passh[7], filter_passstart[8], padded_passstart[8], passstart[8];
+  unsigned i;
+
+  Adam7_getpassvalues(passw, passh, filter_passstart, padded_passstart, passstart, w, h, bpp);
+  
+  if(bpp >= 8)
+  {
+    for(i = 0; i < 7; i++)
+    {
+      unsigned x, y, b;
+      size_t bytewidth = bpp / 8;
+      for(y = 0; y < passh[i]; y++)
+      for(x = 0; x < passw[i]; x++)
+      {
+        size_t pixelinstart = ((ADAM7_IY[i] + y * ADAM7_DY[i]) * w + ADAM7_IX[i] + x * ADAM7_DX[i]) * bytewidth;
+        size_t pixeloutstart = passstart[i] + (y * passw[i] + x) * bytewidth;
+        for(b = 0; b < bytewidth; b++)
+        {
+          out[pixeloutstart + b] = in[pixelinstart + b];
+        }
+      }
+    }
+  }
+  else /*bpp < 8: Adam7 with pixels < 8 bit is a bit trickier: with bit pointers*/
+  {
+    for(i = 0; i < 7; i++)
+    {
+      unsigned x, y, b;
+      unsigned ilinebits = bpp * passw[i];
+      unsigned olinebits = bpp * w;
+      size_t obp, ibp; /*bit pointers (for out and in buffer)*/
+      for(y = 0; y < passh[i]; y++)
+      for(x = 0; x < passw[i]; x++)
+      {
+        ibp = (ADAM7_IY[i] + y * ADAM7_DY[i]) * olinebits + (ADAM7_IX[i] + x * ADAM7_DX[i]) * bpp;
+        obp = (8 * passstart[i]) + (y * ilinebits + x * bpp);
+        for(b = 0; b < bpp; b++)
+        {
+          unsigned char bit = readBitFromReversedStream(&ibp, in);
+          setBitOfReversedStream(&obp, out, bit);
+        }
+      }
+    }
+  }
+}
+
+/*out must be buffer big enough to contain uncompressed IDAT chunk data, and in must contain the full image*/
+static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const unsigned char* in, const LodePNG_InfoPng* infoPng) /*return value is error*/
+{
+  /*
+  This function converts the pure 2D image with the PNG's colortype, into filtered-padded-interlaced data. Steps:
+  *) if no Adam7: 1) add padding bits (= posible extra bits per scanline if bpp < 8) 2) filter
+  *) if adam7: 1) Adam7_interlace 2) 7x add padding bits 3) 7x filter
+  */
+  unsigned bpp = LodePNG_InfoColor_getBpp(&infoPng->color);
+  unsigned w = infoPng->width;
+  unsigned h = infoPng->height;
+  unsigned error = 0;
+  
+  if(infoPng->interlaceMethod == 0)
+  {
+    *outsize = h + (h * ((w * bpp + 7) / 8)); /*image size plus an extra byte per scanline + possible padding bits*/
+    *out = (unsigned char*)malloc(*outsize);
+
+    if(bpp < 8 && w * bpp != ((w * bpp + 7) / 8) * 8) /*non multiple of 8 bits per scanline, padding bits needed per scanline*/
+    {
+      ucvector padded;
+      ucvector_init(&padded);
+      ucvector_resize(&padded, h * ((w * bpp + 7) / 8));
+      addPaddingBits(padded.data, in, ((w * bpp + 7) / 8) * 8, w * bpp, h);
+      filter(*out, padded.data, w, h, &infoPng->color);
+      /*filter(out, in, w, h, &infoPng->color);*/
+      ucvector_cleanup(&padded);
+    }
+    else filter(*out, in, w, h, &infoPng->color); /*we can immediatly filter into the out buffer, no other steps needed*/
+  }
+  else /*interlaceMethod is 1 (Adam7)*/
+  {
+    size_t passw[7], passh[7], filter_passstart[8], padded_passstart[8], passstart[8];
+    unsigned i;
+    unsigned char* adam7 = (unsigned char*)malloc((h * w * bpp + 7) / 8);
+    
+    Adam7_getpassvalues(passw, passh, filter_passstart, padded_passstart, passstart, w, h, bpp);
+    
+    *outsize = filter_passstart[7]; /*image size plus an extra byte per scanline + possible padding bits*/
+    *out = (unsigned char*)malloc(*outsize);
+    
+    Adam7_interlace(adam7, in, w, h, bpp);
+    
+    for(i = 0; i < 7; i++)
+    {
+      if(bpp < 8)
+      {
+        ucvector padded;
+        ucvector_init(&padded);
+        ucvector_resize(&padded, h * ((w * bpp + 7) / 8));
+        addPaddingBits(&padded.data[padded_passstart[i]], &adam7[passstart[i]], ((passw[i] * bpp + 7) / 8) * 8, passw[i] * bpp, passh[i]);
+        
+        filter(&(*out)[filter_passstart[i]], &padded.data[padded_passstart[i]], passw[i], passh[i], &infoPng->color);
+        
+        ucvector_cleanup(&padded);
+      }
+      else
+      {
+        filter(&(*out)[filter_passstart[i]], &adam7[padded_passstart[i]], passw[i], passh[i], &infoPng->color);
+      }
     }
     
-    /*find smallest sum*/
-    smallest = sum[0];
-    smallestType = 0;
-    for(i = 1; i < 5; i++)
-    if(sum[i] < smallest)
-    {
-      smallestType = i;
-      smallest = sum[i];
-    }
-    
-    /*now fill the out values*/
-    out[y * (scanwidth + 1)] = smallestType; /*the first byte of a scanline will be the filter type*/
-    for(x = 0; x < scanwidth; x++) out[y * (scanwidth + 1) + 1 + x] = attempt[smallestType].data[x];
+    free(adam7);
   }
   
-  for(i = 0; i < 5; i++) ucvector_cleanup(&attempt[i]);
+  return error;
 }
+
 
 /*palette must have 4 * palettesize bytes allocated*/
 static unsigned isPaletteFullyOpaque(const unsigned char* palette, size_t palettesize) /*palette given in format RGBARGBARGBARGBA...*/
@@ -2833,7 +3112,8 @@ void LodePNG_encode(LodePNG_Encoder* encoder, unsigned char** out, size_t* outsi
 {
   LodePNG_InfoPng internal_infoPng;
   ucvector outv;
-  ucvector data;
+  unsigned char* data; /*uncompressed version of the IDAT chunk data*/
+  size_t datasize;
   size_t i;
   
   /*provide some proper output values if error will happen*/
@@ -2844,6 +3124,8 @@ void LodePNG_encode(LodePNG_Encoder* encoder, unsigned char** out, size_t* outsi
   
   internal_infoPng = encoder->infoPng; /*UNSAFE copy to avoid having to cleanup! but we will only change primitive parameters, and not invoke the cleanup function nor touch the palette's buffer so we use it safely*/
   
+  internal_infoPng.width = w;
+  internal_infoPng.height = h;
   if(encoder->settings.autoLeaveOutAlphaChannel && isFullyOpaque(image, w, h, &encoder->infoRaw.color))
   {
     /*go to a color type without alpha channel*/
@@ -2851,24 +3133,21 @@ void LodePNG_encode(LodePNG_Encoder* encoder, unsigned char** out, size_t* outsi
     else if(internal_infoPng.color.colorType == 4) internal_infoPng.color.colorType = 0;
   }
   
-  if(encoder->settings.zlibsettings.windowSize > 32768) { encoder->error = 60; return; }
-  if(encoder->settings.zlibsettings.btype > 2) { encoder->error = 61; return; }
-  
-  ucvector_init(&data);
-  ucvector_resize(&data, h + (w * h * LodePNG_InfoColor_getBpp(&internal_infoPng.color) + 7) / 8); /*image size plus an extra byte per scanline*/
+  if(encoder->settings.zlibsettings.windowSize > 32768) { encoder->error = 60; return; } /*error: windowsize larger than allowed*/
+  if(encoder->settings.zlibsettings.btype > 2) { encoder->error = 61; return; } /*error: unexisting btype*/
+  if(encoder->infoPng.interlaceMethod > 1) { encoder->error = 71; return; } /*error: unexisting interlace mode*/
   
   if(!LodePNG_InfoColor_equal(&encoder->infoRaw.color, &internal_infoPng.color))
   {
-    ucvector converted;
+    unsigned char* converted;
     
     if((internal_infoPng.color.colorType != 6 && internal_infoPng.color.colorType != 2) || (internal_infoPng.color.bitDepth != 8)) { encoder->error = 59; return; } /*for the output image, only these types are supported*/
-    ucvector_init(&converted);
-    ucvector_resize(&converted, (w * h * LodePNG_InfoColor_getBpp(&internal_infoPng.color) + 7) / 8);
-    encoder->error = LodePNG_convert(converted.data, image, &internal_infoPng.color, &encoder->infoRaw.color, w, h);
-    if(!encoder->error) filter(data.data, converted.data, w, h, &internal_infoPng.color);
-    ucvector_cleanup(&converted);
+    converted = (unsigned char*)malloc((w * h * LodePNG_InfoColor_getBpp(&internal_infoPng.color) + 7) / 8);
+    encoder->error = LodePNG_convert(converted, image, &internal_infoPng.color, &encoder->infoRaw.color, w, h);
+    if(!encoder->error) preProcessScanlines(&data, &datasize, converted, &internal_infoPng);/*filter(data.data, converted.data, w, h, LodePNG_InfoColor_getBpp(&internal_infoPng.color));*/
+    free(converted);
   }
-  else filter(data.data, image, w, h, &internal_infoPng.color);
+  else preProcessScanlines(&data, &datasize, image, &internal_infoPng);/*filter(data.data, image, w, h, LodePNG_InfoColor_getBpp(&internal_infoPng.color));*/
   
   ucvector_init(&outv);
   while(!encoder->error) /*not really a while loop, this is only used to break out if an error happens to avoid goto's to do the ucvector cleanup*/
@@ -2876,7 +3155,7 @@ void LodePNG_encode(LodePNG_Encoder* encoder, unsigned char** out, size_t* outsi
     /*write signature and chunks*/
     writeSignature(&outv);
     /*IHDR*/
-    writeChunk_IHDR(&outv, w, h, internal_infoPng.color.bitDepth, internal_infoPng.color.colorType);
+    writeChunk_IHDR(&outv, w, h, internal_infoPng.color.bitDepth, internal_infoPng.color.colorType, internal_infoPng.interlaceMethod);
     /*PLTE and tRNS*/
     if(internal_infoPng.color.colorType == 3)
     {
@@ -2893,7 +3172,7 @@ void LodePNG_encode(LodePNG_Encoder* encoder, unsigned char** out, size_t* outsi
     /*bKGD*/
     if(internal_infoPng.background_defined) writeChunk_bKGD(&outv, &internal_infoPng);
     /*IDAT*/
-    encoder->error = writeChunk_IDAT(&outv, data.data, data.size, &encoder->settings.zlibsettings);
+    encoder->error = writeChunk_IDAT(&outv, data, datasize, &encoder->settings.zlibsettings);
     if(encoder->error) break;
     /*tEXt*/
     for(i = 0; i < internal_infoPng.num_texts; i++)
@@ -2905,12 +3184,21 @@ void LodePNG_encode(LodePNG_Encoder* encoder, unsigned char** out, size_t* outsi
     /*id*/
     if(encoder->settings.add_id)
     {
-      char* s;
-      string_init(&s);
-      string_set(&s, "LodePNG ");
-      string_concat(&s, VERSION_STRING);
-      writeChunk_tEXt(&outv, "Encoder", s);
-      string_cleanup(&s);
+      unsigned alread_added_Encoder_text = 0;
+      
+      for(i = 0; i < internal_infoPng.num_texts; i++)
+      {
+        if(string_equal(internal_infoPng.text_keys[i], "Encoder")) { alread_added_Encoder_text = 1; break; }
+      }
+      if(alread_added_Encoder_text == 0)
+      {
+        char* s;
+        string_init(&s);
+        string_set(&s, "LodePNG ");
+        string_concat(&s, VERSION_STRING);
+        writeChunk_tEXt(&outv, "Encoder", s);
+        string_cleanup(&s);
+      }
     }
     /*IEND*/
     writeChunk_IEND(&outv);
@@ -2918,7 +3206,7 @@ void LodePNG_encode(LodePNG_Encoder* encoder, unsigned char** out, size_t* outsi
     break; /*this isn't really a while loop; no error happened so break out now!*/
   }
   
-  ucvector_cleanup(&data);
+  free(data);
   /*instead of cleaning the vector up, give it to the output*/
   *out = outv.data;
   *outsize = outv.size;
@@ -3093,12 +3381,15 @@ namespace LodePNG
   
   const LodePNG_DecodeSettings& Decoder::getSettings() const { return settings; }
   LodePNG_DecodeSettings& Decoder::getSettings() { return settings; }
+  void Decoder::setSettings(const LodePNG_DecodeSettings& settings) { this->settings = settings; }
   
   const LodePNG_InfoPng& Decoder::getInfoPng() const { return infoPng; }
   LodePNG_InfoPng& Decoder::getInfoPng() { return infoPng; }
+  void Decoder::setInfoPng(const LodePNG_InfoPng& info) { LodePNG_InfoPng_copy(&this->infoPng, &info); }
   
   const LodePNG_InfoRaw& Decoder::getInfoRaw() const { return infoRaw; }
   LodePNG_InfoRaw& Decoder::getInfoRaw() { return infoRaw; }
+  void Decoder::setInfoRaw(const LodePNG_InfoRaw& info) { LodePNG_InfoRaw_copy(&this->infoRaw, &info); }
   
   /* ////////////////////////////////////////////////////////////////////////// */
   
@@ -3133,12 +3424,15 @@ namespace LodePNG
   
   const LodePNG_EncodeSettings& Encoder::getSettings() const { return settings; }
   LodePNG_EncodeSettings& Encoder::getSettings() { return settings; }
+  void Encoder::setSettings(const LodePNG_EncodeSettings& settings) { this->settings = settings; }
   
   const LodePNG_InfoPng& Encoder::getInfoPng() const { return infoPng; }
   LodePNG_InfoPng& Encoder::getInfoPng() { return infoPng; }
+  void Encoder::setInfoPng(const LodePNG_InfoPng& info) { LodePNG_InfoPng_copy(&this->infoPng, &info); }
   
   const LodePNG_InfoRaw& Encoder::getInfoRaw() const { return infoRaw; }
   LodePNG_InfoRaw& Encoder::getInfoRaw() { return infoRaw; }
+  void Encoder::setInfoRaw(const LodePNG_InfoRaw& info) { LodePNG_InfoRaw_copy(&this->infoRaw, &info); }
   
   /* ////////////////////////////////////////////////////////////////////////// */
   
