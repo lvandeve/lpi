@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080113
+LodePNG version 20080114
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
@@ -30,7 +30,7 @@ You are free to name this file lodepng.cpp or lodepng.c depending on your usage.
 
 #include "lodepng.h"
 
-#define VERSION_STRING "20080113"
+#define VERSION_STRING "20080114"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Tools For C                                                            / */
@@ -2060,7 +2060,7 @@ static const unsigned ADAM7_IY[7] = { 0, 0, 4, 0, 2, 0, 1 }; /*y start values*/
 static const unsigned ADAM7_DX[7] = { 8, 8, 4, 4, 2, 2, 1 }; /*x delta values*/
 static const unsigned ADAM7_DY[7] = { 8, 8, 8, 4, 4, 2, 2 }; /*y delta values*/
 
-static void Adam7_getpassvalues(size_t passw[7], size_t passh[7], size_t filter_passstart[8], size_t padded_passstart[8], size_t passstart[8], unsigned w, unsigned h, unsigned bpp)
+static void Adam7_getpassvalues(unsigned passw[7], unsigned passh[7], size_t filter_passstart[8], size_t padded_passstart[8], size_t passstart[8], unsigned w, unsigned h, unsigned bpp)
 {
   /*the passstart values have 8 values: the 8th one actually indicates the byte after the end of the 7th (= last) pass*/
   unsigned i;
@@ -2212,7 +2212,7 @@ static void Adam7_deinterlace(unsigned char* out, const unsigned char* in, unsig
 {
   /*Note: this function works on image buffers WITHOUT padding bits at end of scanlines with non-multiple-of-8 bit amounts, only between reduced images is padding
   out must be big enough AND must be 0 everywhere if bpp < 8 in the current implementation (because that's likely a little bit faster)*/
-  size_t passw[7], passh[7], filter_passstart[8], padded_passstart[8], passstart[8];
+  unsigned passw[7], passh[7]; size_t filter_passstart[8], padded_passstart[8], passstart[8];
   unsigned i;
 
   Adam7_getpassvalues(passw, passh, filter_passstart, padded_passstart, passstart, w, h, bpp);
@@ -2307,7 +2307,7 @@ static unsigned postProcessScanlines(unsigned char* out, unsigned char* in, cons
   }
   else /*interlaceMethod is 1 (Adam7)*/
   {
-    size_t passw[7], passh[7], filter_passstart[8], padded_passstart[8], passstart[8];
+    unsigned passw[7], passh[7]; size_t filter_passstart[8], padded_passstart[8], passstart[8];
     unsigned i;
     
     Adam7_getpassvalues(passw, passh, filter_passstart, padded_passstart, passstart, w, h, bpp);
@@ -2943,7 +2943,7 @@ static void addPaddingBits(unsigned char* out, const unsigned char* in, size_t o
 static void Adam7_interlace(unsigned char* out, const unsigned char* in, unsigned w, unsigned h, unsigned bpp)
 {
   /*Note: this function works on image buffers WITHOUT padding bits at end of scanlines with non-multiple-of-8 bit amounts, only between reduced images is padding*/
-  size_t passw[7], passh[7], filter_passstart[8], padded_passstart[8], passstart[8];
+  unsigned passw[7], passh[7]; size_t filter_passstart[8], padded_passstart[8], passstart[8];
   unsigned i;
 
   Adam7_getpassvalues(passw, passh, filter_passstart, padded_passstart, passstart, w, h, bpp);
@@ -3021,7 +3021,7 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
   }
   else /*interlaceMethod is 1 (Adam7)*/
   {
-    size_t passw[7], passh[7], filter_passstart[8], padded_passstart[8], passstart[8];
+    unsigned passw[7], passh[7]; size_t filter_passstart[8], padded_passstart[8], passstart[8];
     unsigned i;
     unsigned char* adam7 = (unsigned char*)malloc((h * w * bpp + 7) / 8);
     
