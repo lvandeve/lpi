@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080114
+LodePNG version 20080117
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
@@ -192,6 +192,7 @@ typedef struct LodePNG_EncodeSettings
   unsigned autoLeaveOutAlphaChannel; /*automatically use color type without alpha instead of given one, if given image is opaque*/
   unsigned force_palette; /*force creating a PLTE chunk if colortype is 2 or 6 (= a suggested palette). If colortype is 3, PLTE is _always_ created.*/
   unsigned add_id; /*add LodePNG version as text chunk*/
+  unsigned text_compression; /*encode text chunks as zTXt chunks instead of tEXt chunks (zTXt is more efficient for long texts, but worse for short texts; default is tEXt)*/
 
 }
 LodePNG_EncodeSettings;
@@ -343,11 +344,12 @@ TODO:
 [ ] partial decoding (stream processing)
 [ ] let the "isFullyOpaque" function check color keys and transparent palettes too
 [ ] better name for "codes", "codesD", "codelengthcodes", "clcl" and "lldl"
-[ ] support zTXt chunks
+[X] support zTXt chunks
 [ ] support iTXt chunks
 [ ] check compatibility with vareous compilers (done but needs to be redone for every newer version)
 [ ] don't stop decoding on errors like 69, 57, 58 (make warnings that the decoder stores in the error at the very end?)
 [ ] make option to choose if the raw image with non multiple of 8 bits per scanline should have padding bits or not, if people like storing raw images that way
+[ ] editor / chunk iterator
 */
 
 #endif
@@ -449,6 +451,7 @@ The following features are supported by the decoder:
     tRNS (transparency for palettized images)
     bKGD (suggested background color)
     tEXt (textual information)
+    zTXt (compressed textual information)
 
 
 1.2. features not supported
@@ -460,7 +463,7 @@ The following features are _not_ supported:
     encoder, but ignored chunks will then be gone from the original image)
 *) partial loading. All data must be available and is processed in one call.
 *) The following optional chunks are ignored and discarded by the decoder:
-    cHRM, gAMA, iCCP, sRGB, sBIT, zTXt, iTXt, hIST, pHYs, sPLT, tIME
+    cHRM, gAMA, iCCP, sRGB, sBIT, iTXt, hIST, pHYs, sPLT, tIME
 
 
 2. C and C++ version
@@ -796,6 +799,10 @@ channel, resulting in a smaller PNG image.
    chunk if force_palette is true. This can used as suggested palette to convert
    to by viewers that don't support more than 256 colors (if those still exist)
 *) add_id: add text chunk "Encoder: LodePNG <version>" to the image.
+*) text_compression: default 0. If 1, it'll store texts as zTXt instead of tEXt chunks.
+  zTXt chunks use zlib compression on the text. This gives a smaller result on
+  large texts but a larger result on small texts (such as a single program name).
+  It's all tEXt or all zTXt though, there's no separate setting per text yet.
 
 
 7. color conversions
@@ -982,7 +989,7 @@ Software, Disclaimer, Warning, Source, Comment. It's allowed to use other keys.
 The keyword is minimum 1 character and maximum 79 characters long. It's
 discouraged to use a single line length longer than 79 characters for texts.
 
-LodePNG currently only supports tEXt chunks, no iTXt or zTXt chunks.
+LodePNG currently only supports tEXt and zTXt chunks, no iTXt chunks.
 
 *) additional color info
 
@@ -1076,7 +1083,7 @@ through each other):
 *) 69: unknown chunk type with "critical" flag encountered by the decoder
 *) 70: insufficient memory error
 *) 71: unexisting interlace mode given to encoder (must be 0 or 1)
-
+*) 72: while decoding, unexisting compression method encountering in zTXt chunk (it must be 0)
 
 10. file IO
 -----------
@@ -1297,6 +1304,7 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 17 jan 2008: ability to encode and decode zTXt chunks added (no iTXt though)
 *) 13 jan 2008: improved filtering code of encoder. Added ability to
     encode Adam7-interlaced images (before, it could only decode them).
 *) 12 jan 2008: refactored the Adam7 code. Much nicer now.
