@@ -1024,7 +1024,7 @@ through each other):
 *) 17: while inflating: end of out buffer memory reached
 *) 18: while inflating: invalid distance code
 *) 19: while inflating: end of out buffer memory reached
-*) 20: invalid deflate block BTYPE encountered
+*) 20: invalid deflate block BTYPE encountered while decoding
 *) 21: NLEN is not ones complement of LEN in a deflate block
 *) 22: while inflating: end of out buffer memory reached.
    This can happen if the inflated deflate data is longer than the amount of bytes required to fill up
@@ -1064,7 +1064,7 @@ through each other):
 *) 53: size of zlib data too small
 *) 55: jumped past tree while generating huffman tree, this could be when the
        tree will have more leaves than symbols after generating it out of the
-       given lenghts. They call this an over-subscribed set of lenghts in zlib.
+       given lenghts. They call this an oversubscribed dynamic bit lengths tree in zlib.
 *) 56: given output image colorType or bitDepth not supported for color conversion
 *) 57: invalid CRC encountered (checking CRC can be disabled)
 *) 58: invalid ADLER32 encountered (checking ADLER32 can be disabled)
@@ -1075,8 +1075,7 @@ through each other):
        leaves the choice of RGB to greyscale conversion formula to the user.
 *) 63: length of a chunk too long, max allowed for PNG is 2147483647 bytes per chunk (2^31-1)
 *) 64: the length of the "end" symbol 256 in the Huffman tree is 0, resulting in the inability of a deflated
-       block to ever contain an end code, making it impossible to decode in a proper way that follows the
-       specification.
+       block to ever contain an end code. It must be at least 1.
 *) 66: the length of a text chunk keyword given to the encoder is longer than the maximum 79 bytes.
 *) 67: the length of a text chunk keyword given to the encoder is smaller than the minimum 1 byte.
 *) 68: tried to encode a PLTE chunk with a palette that has less than 1 or more than 256 colors
@@ -1304,7 +1303,8 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
-*) 17 jan 2008: ability to encode and decode zTXt chunks added (no iTXt though)
+*) 17 jan 2008: ability to encode and decode zTXt chunks added (no iTXt though).
+    Also vareous fixes, such as in the deflate and the padding bits code.
 *) 13 jan 2008: improved filtering code of encoder. Added ability to
     encode Adam7-interlaced images (before, it could only decode them).
 *) 12 jan 2008: refactored the Adam7 code. Much nicer now.
