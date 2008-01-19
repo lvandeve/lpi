@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080117
+LodePNG version 20080118
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
@@ -85,8 +85,7 @@ typedef struct LodePNG_InfoColor /*info about the color type of an image*/
   unsigned key_r;       /*red component of color key*/
   unsigned key_g;       /*green component of color key*/
   unsigned key_b;       /*blue component of color key*/
-}
-LodePNG_InfoColor;
+} LodePNG_InfoColor;
 
 void LodePNG_InfoColor_init(LodePNG_InfoColor* info);
 void LodePNG_InfoColor_cleanup(LodePNG_InfoColor* info);
@@ -102,16 +101,28 @@ unsigned LodePNG_InfoColor_getChannels(const LodePNG_InfoColor* info); /*amount 
 unsigned LodePNG_InfoColor_isGreyscaleType(const LodePNG_InfoColor* info); /*is it a greyscale type? (colorType 0 or 4)*/
 unsigned LodePNG_InfoColor_isAlphaType(const LodePNG_InfoColor* info);     /*has it an alpha channel? (colorType 2 or 6)*/
 
+typedef struct LodePNG_Time /*LodePNG's encoder does not generate the current time. To make it add a time chunk the correct time has to be provided*/
+{
+  unsigned      year;    /*2 bytes*/
+  unsigned char month;   /*1-12*/
+  unsigned char day;     /*1-31*/
+  unsigned char hour;    /*0-23*/
+  unsigned char minute;  /*0-59*/
+  unsigned char second;  /*0-60 (to allow for leap seconds)*/
+} LodePNG_Time;
+
 typedef struct LodePNG_InfoPng /*information about the PNG image*/
 {
-  LodePNG_InfoColor color;
-  
-  /*header (IHDR)*/
+  /*header (IHDR), palette (PLTE) and transparency (tRNS)*/
   unsigned width;             /*width of the image in pixels*/
   unsigned height;            /*height of the image in pixels*/
   unsigned compressionMethod; /*compression method of the original file*/
   unsigned filterMethod;      /*filter method of the original file*/
   unsigned interlaceMethod;   /*interlace method of the original file*/
+  LodePNG_InfoColor color;    /*color type and bits, palette, transparency*/
+  
+  /*pixel data (IDAT)*/
+  /*nothing stored here, the pixels are given in a separate buffer*/
   
   /*suggested background color (bKGD)*/
   unsigned background_defined; /*is a suggested background color given?*/
@@ -123,8 +134,18 @@ typedef struct LodePNG_InfoPng /*information about the PNG image*/
   size_t num_texts;
   char** text_keys; /*the key word of a text chunk (e.g. "Comment")*/
   char** text_strings; /*the actual text*/
-}
-LodePNG_InfoPng;
+  
+  /*time chunk (tIME)*/
+  unsigned char time_defined; /*if 0, no tIME chunk was or will be generated in the PNG image*/
+  LodePNG_Time time;
+  
+  /*phys chunk (pHYs)*/
+  unsigned      phys_defined; /*is pHYs chunk defined?*/
+  unsigned      phys_x;
+  unsigned      phys_y;
+  unsigned char phys_unit; /*may be 0 (unknown) or 1 (metre)*/
+  
+} LodePNG_InfoPng;
 
 void LodePNG_InfoPng_init(LodePNG_InfoPng* info);
 void LodePNG_InfoPng_cleanup(LodePNG_InfoPng* info);
@@ -137,8 +158,7 @@ void LodePNG_InfoPng_addText(LodePNG_InfoPng* info, const char* key, const char*
 typedef struct LodePNG_InfoRaw /*contains user-chosen information about the raw image data, which is independent of the PNG image*/
 {
   LodePNG_InfoColor color;
-}
-LodePNG_InfoRaw;
+} LodePNG_InfoRaw;
 
 void LodePNG_InfoRaw_init(LodePNG_InfoRaw* info);
 void LodePNG_InfoRaw_cleanup(LodePNG_InfoRaw* info);
@@ -435,11 +455,11 @@ because unknown chunks are discarded.
 The following features are supported by the decoder:
 
 *) decoding of PNGs with any color type, bit depth and interlace mode
-*) encoding of PNGs, with 24-bit, 32-bit color or greyscale
-*) Adam7 interlace and deinterlace
+*) encoding of PNGs, from any raw image to 24 or 32-bit color, or from specific raw images to any PNG color type
+*) Adam7 interlace and deinterlace for any color type
 *) (auto) conversion of color types, from any color type, to 24-bit, 32-bit, ...
-*) loading the image from harddisk or decoding it from a buffer
-*) support for translucent PNG's, including translucent palettes and color key
+*) loading the image from harddisk or decoding it from a buffer from other sources than harddisk
+*) support for alpha channels, including translucent palettes and color key
 *) zlib decompression (inflate)
 *) zlib compression (deflate)
 *) CRC32 and ADLER32 checksums
@@ -449,10 +469,11 @@ The following features are supported by the decoder:
     IDAT (pixel data)
     IEND (the final chunk)
     tRNS (transparency for palettized images)
-    bKGD (suggested background color)
     tEXt (textual information)
     zTXt (compressed textual information)
-
+    bKGD (suggested background color)
+    pHYs (physical dimensions)
+    tIME (modification time)
 
 1.2. features not supported
 ---------------------------
@@ -463,7 +484,7 @@ The following features are _not_ supported:
     encoder, but ignored chunks will then be gone from the original image)
 *) partial loading. All data must be available and is processed in one call.
 *) The following optional chunks are ignored and discarded by the decoder:
-    cHRM, gAMA, iCCP, sRGB, sBIT, iTXt, hIST, pHYs, sPLT, tIME
+    cHRM, gAMA, iCCP, sRGB, sBIT, iTXt, hIST, sPLT
 
 
 2. C and C++ version
@@ -1006,6 +1027,23 @@ These values are calculated out of color type and bit depth of InfoColor.
 The difference between bits per pixel and bit depth is that bit depth is the
 number of bits per color channel, while a pixel can have multiple channels.
 
+*) pHYs chunk (image dimensions)
+
+phys_defined: if 0, there is no pHYs chunk and the values are undefined, if 1 else there is one
+phys_x: pixels per unit in x direction
+phys_y: pixels per unit in y direction
+phys_unit: the unit, 0 is no unit (x and y only give the ratio), 1 is metre
+
+*) tIME chunk (modification time)
+
+time_defined: if 0, there is no tIME chunk and the values are undefined, if 1 there is one
+time: this struct contains year as a 2-byte number (0-65535), month, day, hour, minute,
+second as 1-byte numbers that must be in the correct range
+
+Note: to make the encoder add a time chunk, set time_defined to 1 and fill in
+the correct values in all the time parameters, LodePNG will not fill the current
+time in these values itself, all it does is copy them over into the chunk bytes.
+
 
 9. error values
 ---------------
@@ -1083,6 +1121,8 @@ through each other):
 *) 70: insufficient memory error
 *) 71: unexisting interlace mode given to encoder (must be 0 or 1)
 *) 72: while decoding, unexisting compression method encountering in zTXt chunk (it must be 0)
+*) 73: invalid tIME chunk size
+*) 74: invalid pHYs chunk size
 
 10. file IO
 -----------
@@ -1303,6 +1343,7 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 18 jan 2008: support for tIME and pHYs chunks added to encoder and decoder.
 *) 17 jan 2008: ability to encode and decode zTXt chunks added (no iTXt though).
     Also vareous fixes, such as in the deflate and the padding bits code.
 *) 13 jan 2008: improved filtering code of encoder. Added ability to
