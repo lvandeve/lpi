@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080117
+LodePNG version 20080118
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
@@ -30,7 +30,7 @@ You are free to name this file lodepng.cpp or lodepng.c depending on your usage.
 
 #include "lodepng.h"
 
-#define VERSION_STRING "20080117"
+#define VERSION_STRING "20080118"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Tools For C                                                            / */
@@ -274,16 +274,6 @@ static void string_concat(char** out, const char* in) /*concatenate*/
   if(string_resize(out, outsize + insize)) for(i = 0; i < insize; i++) (*out)[outsize + i] = in[i];
 }
 #endif
-
-static unsigned string_equal(const char* a, const char* b)
-{
-  size_t asize, bsize, i;
-  asize = strlen(a);
-  bsize = strlen(b);
-  if(asize != bsize) return 0;
-  for(i = 0; i < asize; i++) if(a[i] != b[i]) return 0;
-  return 1;
-}
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Reading and writing single bits and bytes from/to stream for Deflate   / */
@@ -1799,6 +1789,9 @@ void LodePNG_InfoPng_init(LodePNG_InfoPng* info)
   info->num_texts = 0;
   info->text_keys = NULL;
   info->text_strings = NULL;
+  
+  info->time_defined = 0;
+  info->phys_defined = 0;
 }
 
 void LodePNG_InfoPng_cleanup(LodePNG_InfoPng* info)
@@ -2384,31 +2377,35 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
   
   while(!IEND) /*loop through the chunks, ignoring unknown chunks and stopping at IEND chunk. IDAT data is put at the start of the in buffer*/
   {
+    char chunkType[5];
     size_t chunkLength; /*length of the data of the chunk, excluding the length bytes, chunk type and CRC bytes*/
     /*get chunk length*/
     if(pos + 8 >= size) { decoder->error = 30; break; } /*error: size of the in buffer too small to contain next chunk*/
     chunkLength = LodePNG_read32bitInt(&in[pos]); pos += 4;
     if(chunkLength > 2147483647) { decoder->error = 63; break; }
     if(pos + chunkLength >= size) { decoder->error = 35; break; } /*error: size of the in buffer too small to contain next chunk*/
+    
+    /*read chunk type*/
+    for(i = 0; i < 4; i++) chunkType[i] = in[pos + i];
+    chunkType[4] = 0;
+    pos += 4; /*go after the 4 letters*/
+
     /*IDAT chunk, containing compressed image data*/
-    if(in[pos + 0] == 'I' && in[pos + 1] == 'D' && in[pos + 2] == 'A' && in[pos + 3] == 'T')
+    if(!strcmp(chunkType, "IDAT"))
     {
       size_t oldsize = idat.size;
-      pos += 4;
       ucvector_resize(&idat, oldsize + chunkLength);
       for(i = 0; i < chunkLength; i++) idat.data[oldsize + i] = in[pos + i];
       pos += chunkLength;
     }
     /*IEND chunk*/
-    else if(in[pos + 0] == 'I' && in[pos + 1] == 'E' && in[pos + 2] == 'N' && in[pos + 3] == 'D')
+    else if(!strcmp(chunkType, "IEND"))
     {
-      pos += 4;
       IEND = 1;
     }
     /*palette chunk (PLTE)*/
-    else if(in[pos + 0] == 'P' && in[pos + 1] == 'L' && in[pos + 2] == 'T' && in[pos + 3] == 'E')
+    else if(!strcmp(chunkType, "PLTE"))
     {
-      pos += 4; /*go after the 4 letters*/
       if(decoder->infoPng.color.palette) free(decoder->infoPng.color.palette);
       decoder->infoPng.color.palettesize = chunkLength / 3;
       decoder->infoPng.color.palette = (unsigned char*)malloc(4 * decoder->infoPng.color.palettesize);
@@ -2423,9 +2420,8 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
       }
     }
     /*palette transparency chunk (tRNS)*/
-    else if(in[pos + 0] == 't' && in[pos + 1] == 'R' && in[pos + 2] == 'N' && in[pos + 3] == 'S')
+    else if(!strcmp(chunkType, "tRNS"))
     {
-      pos += 4; /*go after the 4 letters*/
       if(decoder->infoPng.color.colorType == 3)
       {
         if(chunkLength > decoder->infoPng.color.palettesize) { decoder->error = 39; break; } /*error: more alpha values given than there are palette entries*/
@@ -2448,9 +2444,8 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
       else { decoder->error = 42; break; } /*error: tRNS chunk not allowed for other color models*/
     }
     /*background color chunk (bKGD)*/
-    else if(in[pos + 0] == 'b' && in[pos + 1] == 'K' && in[pos + 2] == 'G' && in[pos + 3] == 'D')
+    else if(!strcmp(chunkType, "bKGD"))
     {
-      pos += 4; /*go after the 4 letters*/
       if(decoder->infoPng.color.colorType == 3)
       {
         if(chunkLength != 1) { decoder->error = 43; break; } /*error: this chunk must be 1 byte for indexed color image*/
@@ -2473,9 +2468,8 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
       }
     }
     /*text chunk (tEXt)*/
-    else if(in[pos + 0] == 't' && in[pos + 1] == 'E' && in[pos + 2] == 'X' && in[pos + 3] == 't')
+    else if(!strcmp(chunkType, "tEXt"))
     {
-      pos += 4; /*go after the 4 letters*/
       if(decoder->settings.readTextChunks)
       {
         size_t chunk_end = pos + chunkLength, stringlength;
@@ -2499,9 +2493,8 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
       }
     }
     /*compressed text chunk (zTXt)*/
-    else if(in[pos + 0] == 'z' && in[pos + 1] == 'T' && in[pos + 2] == 'X' && in[pos + 3] == 't')
+    else if(!strcmp(chunkType, "zTXt"))
     {
-      pos += 4; /*go after the 4 letters*/
       if(decoder->settings.readTextChunks)
       {
         size_t chunk_end = pos + chunkLength, length;
@@ -2538,10 +2531,29 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
       }
       else pos += chunkLength;
     }
+    else if(!strcmp(chunkType, "tIME"))
+    {
+      if(chunkLength != 7) { decoder->error = 73; break; }
+      decoder->infoPng.time_defined = 1;
+      decoder->infoPng.time.year = 256 * in[pos] + in[pos + 1]; pos += 2;
+      decoder->infoPng.time.month = in[pos++];
+      decoder->infoPng.time.day = in[pos++];
+      decoder->infoPng.time.hour = in[pos++];
+      decoder->infoPng.time.minute = in[pos++];
+      decoder->infoPng.time.second = in[pos++];
+    }
+    else if(!strcmp(chunkType, "pHYs"))
+    {
+      if(chunkLength != 9) { decoder->error = 74; break; }
+      decoder->infoPng.phys_defined = 1;
+      decoder->infoPng.phys_x = 16777216 * in[pos] + 65536 * in[pos + 1] + 256 * in[pos + 2] + in[pos]; pos += 4;
+      decoder->infoPng.phys_y = 16777216 * in[pos] + 65536 * in[pos + 1] + 256 * in[pos + 2] + in[pos]; pos += 4;
+      decoder->infoPng.phys_unit = in[pos++];
+    }
     else /*it's not an implemented chunk type, so ignore it: skip over the data*/
     {
-      if(!(in[pos + 0] & 32)) { decoder->error = 69; break; } /*error: unknown critical chunk (5th bit of first byte of chunk type is 0)*/
-      pos += (chunkLength + 4); /*skip 4 letters and uninterpreted data of unimplemented chunk*/
+      if(!(chunkType[0] & 32)) { decoder->error = 69; break; } /*error: unknown critical chunk (5th bit of first byte of chunk type is 0)*/
+      pos += chunkLength; /*skip data of unimplemented chunk*/
       known_type = 0;
     }
     
@@ -2865,6 +2877,37 @@ static unsigned writeChunk_bKGD(ucvector* out, const LodePNG_InfoPng* info)
   
   addChunk(out, "bKGD", bKGD.data, bKGD.size);
   ucvector_cleanup(&bKGD);
+  
+  return 0;
+}
+
+static unsigned writeChunk_tIME(ucvector* out, const LodePNG_Time* time)
+{
+  unsigned char* data = (unsigned char*)malloc(7);
+  if(!data) return 70;
+  data[0] = (unsigned char)(time->year / 256);
+  data[1] = (unsigned char)(time->year % 256);
+  data[2] = time->month;
+  data[3] = time->day;
+  data[4] = time->hour;
+  data[5] = time->minute;
+  data[6] = time->second;
+  addChunk(out, "tIME", data, 7);
+  free(data);
+  return 0;
+}
+
+static unsigned writeChunk_pHYs(ucvector* out, const LodePNG_InfoPng* info)
+{
+  ucvector data;
+  ucvector_init(&data);
+  
+  LodePNG_add32bitInt(&data, info->phys_x);
+  LodePNG_add32bitInt(&data, info->phys_y);
+  ucvector_push_back(&data, info->phys_unit);
+  
+  addChunk(out, "pHYs", data.data, data.size);
+  ucvector_cleanup(&data);
   
   return 0;
 }
@@ -3301,10 +3344,14 @@ void LodePNG_encode(LodePNG_Encoder* encoder, unsigned char** out, size_t* outsi
     {
       unsigned alread_added_id_text = 0;
       for(i = 0; i < internal_infoPng.num_texts; i++)
-        if(string_equal(internal_infoPng.text_keys[i], "LodePNG")) { alread_added_id_text = 1; break; }
+        if(!strcmp(internal_infoPng.text_keys[i], "LodePNG")) { alread_added_id_text = 1; break; }
       if(alread_added_id_text == 0)
         writeChunk_tEXt(&outv, "LodePNG", VERSION_STRING); /*it's shorter as tEXt than as zTXt chunk*/
     }
+    /*tIME*/
+    if(internal_infoPng.time_defined) writeChunk_tIME(&outv, &internal_infoPng.time);
+    /*pHYs*/
+    if(internal_infoPng.phys_defined) writeChunk_pHYs(&outv, &internal_infoPng);
     /*IEND*/
     writeChunk_IEND(&outv);
     
