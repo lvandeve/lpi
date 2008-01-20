@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080118
+LodePNG version 20080120
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
@@ -111,6 +111,53 @@ typedef struct LodePNG_Time /*LodePNG's encoder does not generate the current ti
   unsigned char second;  /*0-60 (to allow for leap seconds)*/
 } LodePNG_Time;
 
+
+/*LodePNG_chunk functions: all these functions take as input an unsigned char* pointer
+to the start of the chunk, with data until the end of the chunk.
+Use the chunk functions with care! They do not check for allocated memory boundaries*/
+
+unsigned LodePNG_chunk_length(const unsigned char* chunk); /*get the length of the data of the chunk. Total chunk length has 12 bytes more.*/
+
+void LodePNG_chunk_type(char type[5], const unsigned char* chunk); /*puts the 4-byte type in null terminated string*/
+unsigned char LodePNG_chunk_type_equals(const unsigned char* chunk, const char* type); /*check if the type is the given type*/
+
+/*properties of PNG chunks gotten from capitalization of chunk type name, as defined by the standard*/
+unsigned char LodePNG_chunk_critical(const unsigned char* chunk); /*0: ancillary chunk, 1: it's one of the critical chunk types*/
+unsigned char LodePNG_chunk_private(const unsigned char* chunk); /*0: public, 1: private*/
+unsigned char LodePNG_chunk_safetocopy(const unsigned char* chunk); /*0: the chunk is unsafe to copy, 1: the chunk is safe to copy*/
+
+unsigned char* LodePNG_chunk_data(unsigned char* chunk); /*get pointer to the data of the chunk*/
+const unsigned char* LodePNG_chunk_data_const(const unsigned char* chunk); /*get pointer to the data of the chunk*/
+
+unsigned LodePNG_chunk_check_crc(const unsigned char* chunk); /*returns 0 if the crc is correct, 1 if it's incorrect*/
+void LodePNG_chunk_generate_crc(unsigned char* chunk); /*generates the correct CRC from the data and puts it in the last 4 bytes of the chunk*/
+
+unsigned char* LodePNG_chunk_next(unsigned char* chunk); /*don't use on IEND chunk, as there is no next chunk then*/
+const unsigned char* LodePNG_chunk_next_const(const unsigned char* chunk); /*don't use on IEND chunk, as there is no next chunk then*/
+
+/*add chunks to out buffer. It reallocs the buffer.*/
+unsigned char* LodePNG_append_chunk(unsigned char** out, size_t* outlength, const unsigned char* chunk); /*appends chunk that was already created, to the data. Returns pointer to start of appended chunk, or NULL if error happened*/
+unsigned char* LodePNG_create_chunk(unsigned char** out, size_t* outlength, unsigned length, const char* type, const unsigned char* data); /*appends new chunk to out. Returns pointer to start of appended chunk, or NULL if error happened; may change memory address of out buffer*/
+
+typedef struct LodePNG_UnknownChunks /*unknown chunks read from the PNG, or extra chunks the user wants to have added in the encoded PNG*/
+{
+  /*there are 3 buffers, one for each position in the PNG where unknown chunks can appear
+  each buffer contains all unknown chunks for that position consecutively
+  The 3 buffers are the unknown chunks between certain critical chunks:
+  0: ihdr-plte, 1: plte-idat, 2: idat-iend*/
+  unsigned char* data[3];
+  size_t datasize[3]; /*size in bytes of the unknown chunks, given for protection*/
+
+} LodePNG_UnknownChunks;
+
+void LodePNG_UnknownChunks_init(LodePNG_UnknownChunks* chunks);
+void LodePNG_UnknownChunks_cleanup(LodePNG_UnknownChunks* chunks);
+void LodePNG_UnknownChunks_copy(LodePNG_UnknownChunks* dest, const LodePNG_UnknownChunks* src);
+
+/*
+LodePNG_InfoPng: all information about the PNG image except the pixels and sometimes the size in pixels is stored in here
+*/
+
 typedef struct LodePNG_InfoPng /*information about the PNG image*/
 {
   /*header (IHDR), palette (PLTE) and transparency (tRNS)*/
@@ -130,7 +177,7 @@ typedef struct LodePNG_InfoPng /*information about the PNG image*/
   unsigned background_g;       /*green component of suggested background color*/
   unsigned background_b;       /*blue component of suggested background color*/
   
-  /*text chunks (tEXt)*/
+  /*text chunks (tEXt and zTXt)*/
   size_t num_texts;
   char** text_keys; /*the key word of a text chunk (e.g. "Comment")*/
   char** text_strings; /*the actual text*/
@@ -143,7 +190,10 @@ typedef struct LodePNG_InfoPng /*information about the PNG image*/
   unsigned      phys_defined; /*is pHYs chunk defined?*/
   unsigned      phys_x;
   unsigned      phys_y;
-  unsigned char phys_unit; /*may be 0 (unknown) or 1 (metre)*/
+  unsigned char phys_unit; /*may be 0 (unknown unit) or 1 (metre)*/
+  
+  /*unknown chunks*/
+  LodePNG_UnknownChunks unknown_chunks;
   
 } LodePNG_InfoPng;
 
@@ -177,9 +227,9 @@ typedef struct LodePNG_DecodeSettings
   
   unsigned ignoreCrc; /*ignore CRC checksums*/
   unsigned color_convert;
-  unsigned readTextChunks;
-}
-LodePNG_DecodeSettings;
+  unsigned readTextChunks; /*if false but rememberUnknownChunks is true, they're stored in the unknown chunks*/
+  unsigned rememberUnknownChunks; /*store all bytes from unknown chunks in the InfoPng (off by default, useful for a png editor)*/
+} LodePNG_DecodeSettings;
 
 void LodePNG_DecodeSettings_init(LodePNG_DecodeSettings* settings);
 
@@ -189,8 +239,7 @@ typedef struct LodePNG_Decoder
   LodePNG_InfoRaw infoRaw;
   LodePNG_InfoPng infoPng; /*info of the PNG image obtained after decoding*/
   unsigned error;
-}
-LodePNG_Decoder;
+} LodePNG_Decoder;
 
 void LodePNG_Decoder_init(LodePNG_Decoder* decoder);
 void LodePNG_Decoder_cleanup(LodePNG_Decoder* decoder);
@@ -214,8 +263,7 @@ typedef struct LodePNG_EncodeSettings
   unsigned add_id; /*add LodePNG version as text chunk*/
   unsigned text_compression; /*encode text chunks as zTXt chunks instead of tEXt chunks (zTXt is more efficient for long texts, but worse for short texts; default is tEXt)*/
 
-}
-LodePNG_EncodeSettings;
+} LodePNG_EncodeSettings;
 
 void LodePNG_EncodeSettings_init(LodePNG_EncodeSettings* settings);
 
@@ -225,8 +273,7 @@ typedef struct LodePNG_Encoder
   LodePNG_InfoPng infoPng; /*the info specified by the user may not be changed by the encoder. The encoder will try to generate a PNG close to the given info.*/
   LodePNG_InfoRaw infoRaw; /*put the properties of the input raw image in here*/
   unsigned error;
-}
-LodePNG_Encoder;
+} LodePNG_Encoder;
 
 void LodePNG_Encoder_init(LodePNG_Encoder* encoder);
 void LodePNG_Encoder_cleanup(LodePNG_Encoder* encoder);
@@ -296,6 +343,7 @@ namespace LodePNG
     const LodePNG_InfoPng& getInfoPng() const;
     LodePNG_InfoPng& getInfoPng();
     void setInfoPng(const LodePNG_InfoPng& info);
+    void swapInfoPng(LodePNG_InfoPng& info); /*faster than copying with setInfoPng*/
     
     const LodePNG_InfoRaw& getInfoRaw() const;
     LodePNG_InfoRaw& getInfoRaw();
@@ -330,6 +378,7 @@ namespace LodePNG
     const LodePNG_InfoPng& getInfoPng() const;
     LodePNG_InfoPng& getInfoPng();
     void setInfoPng(const LodePNG_InfoPng& info);
+    void swapInfoPng(LodePNG_InfoPng& info); /*faster than copying with setInfoPng*/
     
     const LodePNG_InfoRaw& getInfoRaw() const;
     LodePNG_InfoRaw& getInfoRaw();
@@ -357,8 +406,8 @@ TODO:
 [ ] test if there are no leaks or exploits if a function returns in the middle due to an error
 [ ] LZ77 encoder more like the one described in zlib - to make sure it's patentfree
 [ ] converting color to 16-bit types
-[ ] read some other chunks, like gamma (but don't make them influence the RGB values)
-[ ] add option to decoder to store ignored chunks in LodePNG_InfoPng, and let encoder include those in the result
+[ ] read all public PNG chunk types (but never let the color profile and gamma ones ever touch RGB values, that is very annoying for textures as well as images in a browser)
+[X] add option to decoder to store ignored chunks in LodePNG_InfoPng, and let encoder include those in the result
 [X] encoding PNGs with Adam7 interlace
 [ ] make sure encoder generates no chunks with size > (2^31)-1
 [ ] partial decoding (stream processing)
@@ -367,9 +416,8 @@ TODO:
 [X] support zTXt chunks
 [ ] support iTXt chunks
 [ ] check compatibility with vareous compilers (done but needs to be redone for every newer version)
-[ ] don't stop decoding on errors like 69, 57, 58 (make warnings that the decoder stores in the error at the very end?)
+[ ] don't stop decoding on errors like 69, 57, 58 (make warnings that the decoder stores in the error at the very end? and make some errors just let it stop with this one chunk but still do the next ones)
 [ ] make option to choose if the raw image with non multiple of 8 bits per scanline should have padding bits or not, if people like storing raw images that way
-[ ] editor / chunk iterator
 */
 
 #endif
@@ -395,13 +443,14 @@ LodePNG Documentation
   8. info values
   9. error values
   10. file IO
-  11. compiler support
-  12. examples
-   12.1. decoder example
-   12.2. encoder example
-  13. LodeZlib
-  14. changes
-  15. contact information
+  11. chunks and PNG editing
+  12. compiler support
+  13. examples
+   13.1. decoder example
+   13.2. encoder example
+  14. LodeZlib
+  15. changes
+  16. contact information
 
 
 1. about
@@ -1123,6 +1172,7 @@ through each other):
 *) 72: while decoding, unexisting compression method encountering in zTXt chunk (it must be 0)
 *) 73: invalid tIME chunk size
 *) 74: invalid pHYs chunk size
+*) 75: no null termination char found while decoding any kind of text chunk
 
 10. file IO
 -----------
@@ -1146,8 +1196,110 @@ Both C and C++ versions of the loadFile and saveFile functions are available.
 For the C version of loadFile, you need to free() the buffer after use. The
 C++ versions use std::vectors so they clean themselves automatically.
 
+11. chunks and PNG editing
+--------------------------
 
-11. compiler support
+If you want to add extra chunks to a PNG you encode, or use LodePNG for a PNG
+editor that should follow the rules about handling of unknown chunks, or if you
+program is able to read other types of chunks than the ones handled by LodePNG,
+then that's possible with the chunk functions of LodePNG.
+
+A PNG chunk has the following layout:
+
+4 bytes length
+4 bytes type name
+length bytes data
+4 bytes CRC
+
+11.1 iterating through chunks
+-----------------------------
+
+If you have a buffer containing the PNG image data, then the first chunk (the
+IHDR chunk) starts at byte number 8 of that buffer. The first 8 bytes are the
+signature of the PNG and are not part of a chunk. But if you start at byte 8
+then you have a chunk, and can check the following things of it.
+
+NOTE: none of these functions check for memory buffer boundaries. To avoid
+exploits, always make sure the buffer contains all the data of the chunks.
+When using LodePNG_chunk_next, make sure the returned value is within the
+allocated memory.
+
+unsigned LodePNG_chunk_length(const unsigned char* chunk):
+
+Get the length of the chunk's data. The total chunk length is this length + 12.
+
+void LodePNG_chunk_type(char type[5], const unsigned char* chunk):
+unsigned char LodePNG_chunk_type_equals(const unsigned char* chunk, const char* type):
+
+Get the type of the chunk or compare if it's a certain type
+
+unsigned char LodePNG_chunk_critical(const unsigned char* chunk):
+unsigned char LodePNG_chunk_private(const unsigned char* chunk):
+unsigned char LodePNG_chunk_safetocopy(const unsigned char* chunk):
+
+Check if the chunk is critical in the PNG standard (only IHDR, PLTE, IDAT and IEND are).
+Check if the chunk is private (public chunks are part of the standard, private ones not).
+Check if the chunk is safe to copy. If it's not, then, when modifying data in a critical
+chunk, unsafe to copy chunks of the old image may NOT be saved in the new one if your
+program doesn't handle that type of unknown chunk.
+
+unsigned char* LodePNG_chunk_data(unsigned char* chunk):
+const unsigned char* LodePNG_chunk_data_const(const unsigned char* chunk):
+
+Get a pointer to the start of the data of the chunk.
+
+unsigned LodePNG_chunk_check_crc(const unsigned char* chunk):
+void LodePNG_chunk_generate_crc(unsigned char* chunk):
+
+Check if the crc is correct or generate a correct one.
+
+unsigned char* LodePNG_chunk_next(unsigned char* chunk):
+const unsigned char* LodePNG_chunk_next_const(const unsigned char* chunk):
+
+Iterate to the next chunk. This works if you have a buffer with consecutive chunks. Note that these
+functions do no boundary checking of the allocated data whatsoever, so make sure there is enough
+data available in the buffer to be able to go to the next chunk.
+
+unsigned char* LodePNG_append_chunk(unsigned char** out, size_t* outlength, const unsigned char* chunk):
+unsigned char* LodePNG_create_chunk(unsigned char** out, size_t* outlength, unsigned length, const char* type, const unsigned char* data):
+
+These functions are used to create new chunks that are appended to the data in *out that has
+length *outlength. The append function appends an existing chunk to the new data. The create
+function creates a new chunk with the given parameters and appends it. Type is the 4-letter
+name of the chunk.
+
+11.2 chunks in infoPng
+----------------------
+
+The LodePNG_InfoPng struct contains a struct LodePNG_UnknownChunks in it. This
+struct has 3 buffers (each with size) to contain 3 types of unknown chunks:
+the ones that come before the PLTE chunk, the ones that come between the PLTE
+and the IDAT chunks, and the ones that come after the IDAT chunks.
+It's necessary to make the distionction between these 3 cases because the PNG
+standard forces to keep the ordering of unknown chunks compared to the critical
+chunks, but does not force any other ordering rules.
+
+infoPng.unknown_chunks.data[0] is the chunks before PLTE
+infoPng.unknown_chunks.data[1] is the chunks after PLTE, before IDAT
+infoPng.unknown_chunks.data[2] is the chunks after IDAT
+
+The chunks in these 3 buffers can be iterated through and read by using the same
+way described in the previous subchapter.
+
+When using the decoder to decode a PNG, you can make it store all unknown chunks
+if you set the option settings.rememberUnknownChunks to 1. By default, this option
+is off and is 0.
+
+The encoder will always encode unknown chunks that are stored in the infoPng. If
+you need it to add a particular chunk that isn't known by LodePNG, you can use
+LodePNG_append_chunk or LodePNG_create_chunk to the chunk data in
+infoPng.unknown_chunks.data[x].
+
+Chunks that are known by LodePNG should not be added in that way. E.g. to make
+LodePNG add a bKGD chunk, set background_defined to true and add the correct
+parameters there and LodePNG will generate the chunk.
+
+12. compiler support
 --------------------
 
 No libraries other than the current standard C library are needed to compile
@@ -1212,7 +1364,7 @@ the required modification to support the compiler requires using non standard or
 lesser C/C++ code or headers, I won't support it.
 
 
-12. examples
+13. examples
 ------------
 
 This decoder and encoder example show the most basic usage of LodePNG (using the
@@ -1222,7 +1374,7 @@ More complex examples can be found in:
 -lodepng_examples.c: 6 different examples in C, such as showing the image with SDL, ...
 -lodepng_examples.cpp: the exact same examples in C++ using the C++ wrapper of LodePNG
 
-12.1. decoder C++ example
+13.1. decoder C++ example
 -------------------------
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1263,7 +1415,7 @@ int main(int argc, char *argv[])
 ////////////////////////////////////////////////////////////////////////////////
 
 
-12.2 encoder C++ example
+13.2 encoder C++ example
 ------------------------
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1302,7 +1454,7 @@ int main(int argc, char *argv[])
 }
 ////////////////////////////////////////////////////////////////////////////////
 
-12.3 Decoder C example
+13.3 Decoder C example
 ----------------------
 
 This example loads the PNG in 1 function call
@@ -1322,7 +1474,7 @@ int main(int argc, char *argv[])
   free(image);
 }
 
-13. LodeZlib
+14. LodeZlib
 ------------
 
 Also available in the interface is LodeZlib. Both C and C++ versions of these
@@ -1334,7 +1486,7 @@ used to create gzip files however. Also, it only supports the part of zlib
 that is required for PNG, it does not support compression and decompression
 with dictionaries.
 
-14. changes
+15. changes
 -----------
 
 The version number of LodePNG is the date of the change given in the format
@@ -1343,6 +1495,7 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 20 jan 2008: support for unknown chunks allowing using LodePNG for an editor.
 *) 18 jan 2008: support for tIME and pHYs chunks added to encoder and decoder.
 *) 17 jan 2008: ability to encode and decode zTXt chunks added (no iTXt though).
     Also vareous fixes, such as in the deflate and the padding bits code.
@@ -1417,7 +1570,7 @@ symbol.
 *) 12 aug 2005: Initial release
 
 
-15. contact information
+16. contact information
 -----------------------
 
 Feel free to contact me with suggestions, problems, comments, ... concerning
