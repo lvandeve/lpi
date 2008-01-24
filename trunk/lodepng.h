@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080123
+LodePNG version 20080124
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
@@ -1476,7 +1476,7 @@ This decoder and encoder example show the most basic usage of LodePNG (using the
 classes, not the simple functions, which would be trivial)
 
 More complex examples can be found in:
--lodepng_examples.c: 6 different examples in C, such as showing the image with SDL, ...
+-lodepng_examples.c: 9 different examples in C, such as showing the image with SDL, ...
 -lodepng_examples.cpp: the exact same examples in C++ using the C++ wrapper of LodePNG
 
 13.1. decoder C++ example

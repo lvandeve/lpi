@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080123
+LodePNG version 20080124
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
@@ -30,7 +30,7 @@ You are free to name this file lodepng.cpp or lodepng.c depending on your usage.
 
 #include "lodepng.h"
 
-#define VERSION_STRING "20080123"
+#define VERSION_STRING "20080124"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Tools For C                                                            / */
@@ -3172,7 +3172,7 @@ static void filterScanline(unsigned char* out, const unsigned char* scanline, co
         for(i = bytewidth; i <    length; i++) out[i] = scanline[i] - scanline[i - bytewidth];
       }
       break;
-    case 2: 
+    case 2:
       if(prevline) for(i = 0; i < length; i++) out[i] = scanline[i] - prevline[i];
       else         for(i = 0; i < length; i++) out[i] = scanline[i];
       break;
