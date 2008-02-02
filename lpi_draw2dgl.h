@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2007 Lode Vandevenne
+Copyright (c) 2005-2008 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -27,7 +27,6 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include <vector>
 #include <cmath>
 
-#include "lpi_screen.h"
 #include "lpi_color.h"
 
 namespace lpi
@@ -35,7 +34,8 @@ namespace lpi
 
 void pset(int x, int y, const ColorRGB& color);
 void drawPoint(int x, int y, const ColorRGB& color); //same as pset but with other name
-void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color, int clipx1 = 0, int clipy1 = 0, int clipx2 = screenWidth(), int clipy2 = screenHeight());
+void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color, int clipx1, int clipy1, int clipx2, int clipy2);
+void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color);
 void drawRectangle(int x1, int y1, int x2, int y2, const ColorRGB& color = RGB_White);
 void drawDisk(int x, int y, double radius, const ColorRGB& color);
 void gradientLine(int x1, int y1, int x2, int y2, const ColorRGB& color1, const ColorRGB& color2);

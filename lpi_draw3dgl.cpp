@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2007 Lode Vandevenne
+Copyright (c) 2005-2008 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -19,6 +19,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 */
 
 #include "lpi_draw3dgl.h"
+#include <GL/gl.h>
 
 namespace { static const double pi = 3.141592653589793238; }
 

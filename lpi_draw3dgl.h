@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2007 Lode Vandevenne
+Copyright (c) 2005-2008 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -27,7 +27,6 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include <vector>
 #include <cmath>
 
-#include "lpi_screen.h"
 #include "lpi_color.h"
 #include "lpi_math3d.h"
 

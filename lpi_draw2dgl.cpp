@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2007 Lode Vandevenne
+Copyright (c) 2005-2008 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -20,7 +20,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include "lpi_draw2dgl.h"
 #include "lpi_draw2d.h"
-
+#include "lpi_gl.h"
 #include <vector>
 
 namespace lpi
@@ -58,6 +58,10 @@ void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color, int clipx1,
     glVertex2d(x1, y1);
     glVertex2d(x2, y2);
   glEnd();
+}
+void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color)
+{
+  drawLine(x1, y1, x2, y2, color, 0, 0, screenWidth(), screenHeight());
 }
 
 void pset(int x, int y, const ColorRGB& color)

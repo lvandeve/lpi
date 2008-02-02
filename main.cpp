@@ -53,6 +53,7 @@ gprof > gprof.txt
 #include "lpi_audio.h"
 #include "lpi_bignums.h"
 #include "lpi_tools.h"
+#include "lpi_gl.h"
 #include "lodepng.h"
 #include "lodewav.h"
 #include <vector>

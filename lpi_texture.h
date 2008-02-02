@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2007 Lode Vandevenne
+Copyright (c) 2005-2008 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -21,7 +21,6 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #ifndef LPI_TEXTURE_H_INCLUDED
 #define LPI_TEXTURE_H_INCLUDED
 
-#include <SDL/SDL.h>
 #include <GL/gl.h>
 #include <iostream>
 #include <cmath>
@@ -170,7 +169,6 @@ void loadTextures(std::vector<unsigned char>& buffer, std::vector<Texture>& text
 void loadTextures(const std::string& filename, std::vector<Texture>& textures, int widths, int heights, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
 void loadTexturesAlpha(std::vector<unsigned char>& buffer, std::vector<Texture>& textures, int widths, int heights, int w, int h);
 void loadTexturesAlpha(const std::string& filename, std::vector<Texture>& textures, int widths, int heights);
-
 void loadTexturesFromBase64PNG(std::vector<Texture>& textures, const std::string& base64, int widths, int heights, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
 
 extern Texture emptyTexture; //default texture for initializing pointers

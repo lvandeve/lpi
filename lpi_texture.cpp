@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2007 Lode Vandevenne
+Copyright (c) 2005-2008 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -21,8 +21,8 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_texture.h"
 
 #include "lodepng.h"
-#include "lpi_screen.h"
-#include "lpi_general.h"
+#include "lpi_gl.h"
+#include "lpi_base64.h"
 
 namespace lpi
 {
@@ -133,7 +133,13 @@ void Texture::create(unsigned char * buffer, int w, int h, const AlphaEffect& ef
   upload();
 }
 
-
+namespace
+{
+  bool isPowerOfTwo(int n) //does not work properly if n is <= 0, then an extra test n > 0 should be added
+  {
+    return !(n & (n - 1)); //this checks if the integer n is a power of two or not
+  }
+}
 
 /*
 Load the texture from a file
@@ -867,7 +873,6 @@ AlphaEffect::AlphaEffect(int style, unsigned char alpha, const ColorRGB& alphaCo
   this->alpha = alpha;
   this->alphaColor = alphaColor;
 }
-
 
 void loadTexturesFromBase64PNG(std::vector<Texture>& textures, const std::string& base64, int widths, int heights, const AlphaEffect& effect)
 {

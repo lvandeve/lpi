@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2007 Lode Vandevenne
+Copyright (c) 2005-2008 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -23,14 +23,12 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include "lodepng.h"
 #include "lpi_general.h"
-#include "lpi_screen.h"
+#include "lpi_gl.h"
 #include "lpi_draw2dgl.h"
 #include "lpi_draw2d.h"
 #include "lpi_file.h"
-
+#include "lpi_base64.h"
 #include "lpi_xml.h"
-
-#include <SDL/SDL.h>
 
 #include <iostream>
 
@@ -5793,6 +5791,9 @@ int MultiLineText::charAtCursorPos(unsigned long cline, unsigned long column) co
   return pos;
 }
 
+//#define ENABLE_UNIT_TEST
+#ifdef ENABLE_UNIT_TEST
+
 #include "lpi_unittest.h"
 
 #define LUT_MY_RESET \
@@ -6219,6 +6220,12 @@ void unitTest()
 
   LUT_END_UNIT_TEST
 }
+#else
+void unitTest()
+{
+  std::cout<<"gui unit test disabled at compile time. #define ENABLE_UNIT_TEST in " << __FILE__ << std::endl;
+}
+#endif //ENABLE_UNIT_TEST
 
 } //namespace gui
 } //namespace lpi

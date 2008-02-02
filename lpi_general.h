@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2007 Lode Vandevenne
+Copyright (c) 2005-2008 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -29,8 +29,6 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include <algorithm> //std::min and std::max
 #include <sstream>
 #include <iomanip>
-
-#include "lpi_color.h"
 
 namespace lpi
 {
@@ -146,9 +144,6 @@ class GameTime
   }
   
 };
-
-void encodeBase64(std::string& out, const std::vector<unsigned char>& in);
-void decodeBase64(std::vector<unsigned char>& out, const std::string& in);
 
 } //namespace lpi
 
