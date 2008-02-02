@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080124
+LodePNG version 20080202
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
@@ -61,11 +61,9 @@ typedef struct LodeZlib_DecompressSettings
 
 extern const LodeZlib_DecompressSettings LodeZlib_defaultDecompressSettings;
 void LodeZlib_DecompressSettings_init(LodeZlib_DecompressSettings* settings);
-
 #endif /*LODEPNG_COMPILE_DECODER*/
 
 #ifdef LODEPNG_COMPILE_ENCODER
-
 typedef struct LodeZlib_DeflateSettings /*deflate = compress*/
 {
   /*LZ77 related settings*/
@@ -76,7 +74,6 @@ typedef struct LodeZlib_DeflateSettings /*deflate = compress*/
 
 extern const LodeZlib_DeflateSettings LodeZlib_defaultDeflateSettings;
 void LodeZlib_DeflateSettings_init(LodeZlib_DeflateSettings* settings);
-
 #endif /*LODEPNG_COMPILE_ENCODER*/
 
 #ifdef LODEPNG_COMPILE_ZLIB
@@ -86,21 +83,17 @@ void LodeZlib_DeflateSettings_init(LodeZlib_DeflateSettings* settings);
 /* ////////////////////////////////////////////////////////////////////////// */
 
 #ifdef LODEPNG_COMPILE_DECODER
-
 /*This function reallocs the out buffer and appends the data.
 Either, *out must be NULL and *outsize must be 0, or, *out must be a valid buffer and *outsize its size in bytes.
 After using the *out data, *out must be free'd to avoid memory leaks.*/
 unsigned LodeZlib_decompress(unsigned char** out, size_t* outsize, const unsigned char* in, size_t insize, const LodeZlib_DecompressSettings* settings);
-
 #endif /*LODEPNG_COMPILE_DECODER*/
 
 #ifdef LODEPNG_COMPILE_ENCODER
-
 /*This function reallocs the out buffer and appends the data.
 Either, *out must be NULL and *outsize must be 0, or, *out must be a valid buffer and *outsize its size in bytes.
 After using the *out data, *out must be free'd to avoid memory leaks.*/
 unsigned LodeZlib_compress(unsigned char** out, size_t* outsize, const unsigned char* in, size_t insize, const LodeZlib_DeflateSettings* settings);
-
 #endif /*LODEPNG_COMPILE_ENCODER*/
 
 #endif /*LODEPNG_COMPILE_ZLIB*/
@@ -110,53 +103,6 @@ unsigned LodeZlib_compress(unsigned char** out, size_t* outsize, const unsigned 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* LodePNG                                                                    */
 /* ////////////////////////////////////////////////////////////////////////// */
-
-typedef struct LodePNG_InfoColor /*info about the color type of an image*/
-{
-  /*header (IHDR)*/
-  unsigned colorType; /*color type*/
-  unsigned bitDepth;  /*bits per sample*/
-
-  /*palette (PLTE)*/
-  unsigned char* palette; /*palette in RGBARGBA... order*/
-  size_t palettesize; /*palette size in number of colors (amount of bytes is 4 * palettesize)*/
-  
-  /*transparent color key (tRNS)*/
-  unsigned key_defined; /*is a transparent color key given?*/
-  unsigned key_r;       /*red component of color key*/
-  unsigned key_g;       /*green component of color key*/
-  unsigned key_b;       /*blue component of color key*/
-} LodePNG_InfoColor;
-
-void LodePNG_InfoColor_init(LodePNG_InfoColor* info);
-void LodePNG_InfoColor_cleanup(LodePNG_InfoColor* info);
-void LodePNG_InfoColor_copy(LodePNG_InfoColor* dest, const LodePNG_InfoColor* source);
-
-/*it's adviced to use these functions instead of alloc'ing palette yourself*/
-void LodePNG_InfoColor_clearPalette(LodePNG_InfoColor* info);
-void LodePNG_InfoColor_addPalette(LodePNG_InfoColor* info, unsigned char r, unsigned char g, unsigned char b, unsigned char a); /*add 1 color to the palette*/
-
-/*additional color info*/
-unsigned LodePNG_InfoColor_getBpp(const LodePNG_InfoColor* info);      /*bits per pixel*/
-unsigned LodePNG_InfoColor_getChannels(const LodePNG_InfoColor* info); /*amount of channels*/
-unsigned LodePNG_InfoColor_isGreyscaleType(const LodePNG_InfoColor* info); /*is it a greyscale type? (colorType 0 or 4)*/
-unsigned LodePNG_InfoColor_isAlphaType(const LodePNG_InfoColor* info);     /*has it an alpha channel? (colorType 2 or 6)*/
-
-#ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
-
-typedef struct LodePNG_Time /*LodePNG's encoder does not generate the current time. To make it add a time chunk the correct time has to be provided*/
-{
-  unsigned      year;    /*2 bytes*/
-  unsigned char month;   /*1-12*/
-  unsigned char day;     /*1-31*/
-  unsigned char hour;    /*0-23*/
-  unsigned char minute;  /*0-59*/
-  unsigned char second;  /*0-60 (to allow for leap seconds)*/
-} LodePNG_Time;
-
-#endif /*LODEPNG_COMPILE_ANCILLARY_CHUNKS*/
-
-
 
 /*LodePNG_chunk functions: all these functions take as input an unsigned char* pointer
 to the start of the chunk, with data until the end of the chunk.
@@ -185,6 +131,85 @@ const unsigned char* LodePNG_chunk_next_const(const unsigned char* chunk);
 /*add chunks to out buffer. It reallocs the buffer to append the data.*/
 unsigned char* LodePNG_append_chunk(unsigned char** out, size_t* outlength, const unsigned char* chunk); /*appends chunk that was already created, to the data. Returns pointer to start of appended chunk, or NULL if error happened*/
 unsigned char* LodePNG_create_chunk(unsigned char** out, size_t* outlength, unsigned length, const char* type, const unsigned char* data); /*appends new chunk to out. Returns pointer to start of appended chunk, or NULL if error happened; may change memory address of out buffer*/
+
+
+typedef struct LodePNG_InfoColor /*info about the color type of an image*/
+{
+  /*header (IHDR)*/
+  unsigned colorType; /*color type*/
+  unsigned bitDepth;  /*bits per sample*/
+
+  /*palette (PLTE)*/
+  unsigned char* palette; /*palette in RGBARGBA... order*/
+  size_t palettesize; /*palette size in number of colors (amount of bytes is 4 * palettesize)*/
+  
+  /*transparent color key (tRNS)*/
+  unsigned key_defined; /*is a transparent color key given?*/
+  unsigned key_r;       /*red component of color key*/
+  unsigned key_g;       /*green component of color key*/
+  unsigned key_b;       /*blue component of color key*/
+} LodePNG_InfoColor;
+
+void LodePNG_InfoColor_init(LodePNG_InfoColor* info);
+void LodePNG_InfoColor_cleanup(LodePNG_InfoColor* info);
+void LodePNG_InfoColor_copy(LodePNG_InfoColor* dest, const LodePNG_InfoColor* source);
+
+/*it's advised to use these functions instead of alloc'ing palette manually*/
+void LodePNG_InfoColor_clearPalette(LodePNG_InfoColor* info);
+void LodePNG_InfoColor_addPalette(LodePNG_InfoColor* info, unsigned char r, unsigned char g, unsigned char b, unsigned char a); /*add 1 color to the palette*/
+
+/*additional color info*/
+unsigned LodePNG_InfoColor_getBpp(const LodePNG_InfoColor* info);      /*bits per pixel*/
+unsigned LodePNG_InfoColor_getChannels(const LodePNG_InfoColor* info); /*amount of channels*/
+unsigned LodePNG_InfoColor_isGreyscaleType(const LodePNG_InfoColor* info); /*is it a greyscale type? (colorType 0 or 4)*/
+unsigned LodePNG_InfoColor_isAlphaType(const LodePNG_InfoColor* info);     /*has it an alpha channel? (colorType 2 or 6)*/
+
+#ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
+
+typedef struct LodePNG_Time /*LodePNG's encoder does not generate the current time. To make it add a time chunk the correct time has to be provided*/
+{
+  unsigned      year;    /*2 bytes*/
+  unsigned char month;   /*1-12*/
+  unsigned char day;     /*1-31*/
+  unsigned char hour;    /*0-23*/
+  unsigned char minute;  /*0-59*/
+  unsigned char second;  /*0-60 (to allow for leap seconds)*/
+} LodePNG_Time;
+
+typedef struct LodePNG_Text /*non-international text*/
+{
+  size_t num;
+  char** keys; /*the keyword of a text chunk (e.g. "Comment")*/
+  char** strings; /*the actual text*/
+} LodePNG_Text;
+
+void LodePNG_Text_init(LodePNG_Text* text);
+void LodePNG_Text_cleanup(LodePNG_Text* text);
+void LodePNG_Text_copy(LodePNG_Text* dest, const LodePNG_Text* source);
+
+/*it's advised to use these functions instead of alloc'ing the char**s manually*/
+void LodePNG_Text_clear(LodePNG_Text* text);
+void LodePNG_Text_add(LodePNG_Text* text, const char* key, const char* str); /*push back both texts at once*/
+
+
+typedef struct LodePNG_IText /*international text*/
+{
+  size_t num;
+  char** keys; /*the English keyword of the text chunk (e.g. "Comment")*/
+  char** langtags; /*the language tag for this text's international language, ISO/IEC 646 string, e.g. ISO 639 language tag*/
+  char** transkeys; /*keyword translated to the international language - UTF-8 string*/
+  char** strings; /*the actual international text - UTF-8 string*/
+} LodePNG_IText;
+
+void LodePNG_IText_init(LodePNG_IText* text);
+void LodePNG_IText_cleanup(LodePNG_IText* text);
+void LodePNG_IText_copy(LodePNG_IText* dest, const LodePNG_IText* source);
+
+/*it's advised to use these functions instead of alloc'ing the char**s manually*/
+void LodePNG_IText_clear(LodePNG_IText* text);
+void LodePNG_IText_add(LodePNG_IText* text, const char* key, const char* langtag, const char* transkey, const char* str); /*push back the 4 texts of 1 chunk at once*/
+
+#endif /*LODEPNG_COMPILE_ANCILLARY_CHUNKS*/
 
 #ifdef LODEPNG_COMPILE_UNKNOWN_CHUNKS
 
@@ -226,10 +251,11 @@ typedef struct LodePNG_InfoPng /*information about the PNG image, except pixels 
   unsigned background_g;       /*green component of suggested background color*/
   unsigned background_b;       /*blue component of suggested background color*/
   
-  /*text chunks (tEXt and zTXt)*/
-  size_t num_texts;
-  char** text_keys; /*the key word of a text chunk (e.g. "Comment")*/
-  char** text_strings; /*the actual text*/
+  /*non-international text chunks (tEXt and zTXt)*/
+  LodePNG_Text text;
+  
+  /*international text chunks (iTXt)*/
+  LodePNG_IText itext;
   
   /*time chunk (tIME)*/
   unsigned char time_defined; /*if 0, no tIME chunk was or will be generated in the PNG image*/
@@ -253,10 +279,6 @@ typedef struct LodePNG_InfoPng /*information about the PNG image, except pixels 
 void LodePNG_InfoPng_init(LodePNG_InfoPng* info);
 void LodePNG_InfoPng_cleanup(LodePNG_InfoPng* info);
 void LodePNG_InfoPng_copy(LodePNG_InfoPng* dest, const LodePNG_InfoPng* source);
-
-/*it's adviced to use these functions instead of alloc'ing text_keys and text_strings yourself*/
-void LodePNG_InfoPng_clearText(LodePNG_InfoPng* info);
-void LodePNG_InfoPng_addText(LodePNG_InfoPng* info, const char* key, const char* str); /*push back both texts at once*/
 
 typedef struct LodePNG_InfoRaw /*contains user-chosen information about the raw image data, which is independent of the PNG image*/
 {
@@ -282,9 +304,11 @@ typedef struct LodePNG_DecodeSettings
   
   unsigned ignoreCrc; /*ignore CRC checksums*/
   unsigned color_convert; /*whether to convert the PNG to the color type you want. Default: yes*/
+  
 #ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
   unsigned readTextChunks; /*if false but rememberUnknownChunks is true, they're stored in the unknown chunks*/
 #endif /*LODEPNG_COMPILE_ANCILLARY_CHUNKS*/
+
 #ifdef LODEPNG_COMPILE_UNKNOWN_CHUNKS
   unsigned rememberUnknownChunks; /*store all bytes from unknown chunks in the InfoPng (off by default, useful for a png editor)*/
 #endif /*LODEPNG_COMPILE_UNKNOWN_CHUNKS*/
@@ -325,7 +349,7 @@ typedef struct LodePNG_EncodeSettings
   unsigned force_palette; /*force creating a PLTE chunk if colortype is 2 or 6 (= a suggested palette). If colortype is 3, PLTE is _always_ created.*/
 #ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
   unsigned add_id; /*add LodePNG version as text chunk*/
-  unsigned text_compression; /*encode text chunks as zTXt chunks instead of tEXt chunks (zTXt is more efficient for long texts, but worse for short texts; default is tEXt)*/
+  unsigned text_compression; /*encode text chunks as zTXt chunks instead of tEXt chunks, and use compression in iTXt chunks*/
 #endif /*LODEPNG_COMPILE_ANCILLARY_CHUNKS*/
 } LodePNG_EncodeSettings;
 
@@ -467,6 +491,8 @@ namespace LodePNG
 #ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
     void clearText();
     void addText(const std::string& key, const std::string& str); /*push back both texts at once*/
+    void clearIText();
+    void addIText(const std::string& key, const std::string& langtag, const std::string& transkey, const std::string& str);
 #endif /*LODEPNG_COMPILE_ANCILLARY_CHUNKS*/
     
     const LodePNG_EncodeSettings& getSettings() const;
@@ -517,7 +543,7 @@ TODO:
 [ ] let the "isFullyOpaque" function check color keys and transparent palettes too
 [ ] better name for "codes", "codesD", "codelengthcodes", "clcl" and "lldl"
 [X] support zTXt chunks
-[ ] support iTXt chunks
+[X] support iTXt chunks
 [ ] check compatibility with vareous compilers (done but needs to be redone for every newer version)
 [ ] don't stop decoding on errors like 69, 57, 58 (make warnings that the decoder stores in the error at the very end? and make some errors just let it stop with this one chunk but still do the next ones)
 [ ] make option to choose if the raw image with non multiple of 8 bits per scanline should have padding bits or not, if people like storing raw images that way
@@ -617,16 +643,17 @@ The following features are supported by the decoder:
 *) CRC32 and ADLER32 checksums
 *) handling of unknown chunks, allowing making a PNG editor that stores custom and unknown chunks.
 *) the following chunks are supported (generated/interpreted) by both encoder and decoder:
-    IHDR (header information)
-    PLTE (color palette)
-    IDAT (pixel data)
-    IEND (the final chunk)
-    tRNS (transparency for palettized images)
-    tEXt (textual information)
-    zTXt (compressed textual information)
-    bKGD (suggested background color)
-    pHYs (physical dimensions)
-    tIME (modification time)
+    IHDR: header information
+    PLTE: color palette
+    IDAT: pixel data
+    IEND: the final chunk
+    tRNS: transparency for palettized images
+    tEXt: textual information
+    zTXt: compressed textual information
+    iTXt: international textual information
+    bKGD: suggested background color
+    pHYs: physical dimensions
+    tIME: modification time
 
 1.2. features not supported
 ---------------------------
@@ -634,9 +661,9 @@ The following features are supported by the decoder:
 The following features are _not_ supported:
 
 *) some features needed to make a conformant PNG-Editor might be still missing.
-*) partial loading. All data must be available and is processed in one call.
-*) The following public chunks are treated as unknown chunks by LodePNG
-    cHRM, gAMA, iCCP, sRGB, sBIT, iTXt, hIST, sPLT
+*) partial loading/stream processing. All data must be available and is processed in one call.
+*) The following public chunks are not supported but treated as unknown chunks by LodePNG
+    cHRM, gAMA, iCCP, sRGB, sBIT, hIST, sPLT
 
 
 2. C and C++ version
@@ -1074,7 +1101,7 @@ not the first bit of a new byte.
 8. info values
 --------------
 
-Both the encoder and decoder use a variables of type LodePNG_InfoPng and LodePNG_InfoRaw, which
+Both the encoder and decoder use a variable of type LodePNG_InfoPng and LodePNG_InfoRaw, which
 both also contain a LodePNG_InfoColor. Here's a list of each of the values stored in them:
 
 *) info from the PNG header (IHDR chunk):
@@ -1089,6 +1116,7 @@ interlaceMethod:   interlace method of the original file. 0 is no interlace, 1 i
 
 Note: width and height are only used as information of a decoded PNG image. When encoding one, you don't have
 to specify width and height in an LodePNG_Info struct, but you give them as parameters of the encode function.
+The rest of the LodePNG_Info struct IS used by the encoder though!
 
 *) palette:
 
@@ -1138,33 +1166,43 @@ PNG translucent normally you intend it to be used against any background, on
 websites, as translucent textures in games, ... But you can get the color this
 way if needed.
 
-*) text chunks
+*) text and itext
 
-text_keys:    a char** buffer containing the keywords (see below)
-text_strings: a char** buffer containing the texts (see below)
-num_texts: the amount of texts in the above char** buffers
-LodePNG_InfoPng_clearText: use this to clear the texts again after you filled them in
-LodePNG_InfoPng_addText: this function can be used to push back a keyword and text at the same time
-In the C++ version the Encoder class also has the above functions available directly in its interface.
-The char** buffer is used like the argv parameter of a main() function, and num_texts takes the role
-of argc.
+Non-international text:
+
+-text.keys:    a char** buffer containing the keywords (see below)
+-text.strings: a char** buffer containing the texts (see below)
+-text.num: the amount of texts in the above char** buffers (there may be more texts in itext)
+-LodePNG_InfoText_clearText: use this to clear the texts again after you filled them in
+-LodePNG_InfoText_addText: this function is used to push back a keyword and text
+
+International text: This is stored in separate arrays! The sum text.num and itext.num is the real amount of texts.
+
+-itext.keys: keyword in English
+-itext.langtags: ISO 639 letter code for the language
+-itext.transkeys: keyword in this language
+-itext.strings: the text in this language, in UTF-8
+-itext.num: the amount of international texts in this PNG
+-LodePNG_InfoIText_clearText: use this to clear the itexts again after you filled them in
+-LodePNG_InfoIText_addText: this function is used to push back all 4 parts of an itext
 
 Don't allocate these text buffers yourself. Use the init/cleanup functions
 correctly and use addText and clearText.
 
-There are always the same amount of strings in text_keys and text_strings, becase a text
-and its key always come in pairs.
+In the C++ version the Encoder class also has the above functions available directly in its interface.
+The char** buffers are used like the argv parameter of a main() function, and (i)text.num takes the role
+of argc.
 
-Each text chunk in a PNG image has a key and a string. Both the key and the
-string are text, but the key can be used to specify the type of information that
-is placed in the string. There are a few standard standard keywords recognised
+In a text, there must be as much keys as strings because they always form pairs. In an itext,
+there must always be as much keys, langtags, transkeys and strings.
+
+They keyword of text chunks gives a short description what the actual text
+represents. There are a few standard standard keywords recognised
 by many programs: Title, Author, Description, Copyright, Creation Time,
 Software, Disclaimer, Warning, Source, Comment. It's allowed to use other keys.
 
 The keyword is minimum 1 character and maximum 79 characters long. It's
 discouraged to use a single line length longer than 79 characters for texts.
-
-LodePNG currently only supports tEXt and zTXt chunks, no iTXt chunks.
 
 *) additional color info
 
@@ -1274,10 +1312,11 @@ through each other):
 *) 69: unknown chunk type with "critical" flag encountered by the decoder
 *) 70: insufficient memory error
 *) 71: unexisting interlace mode given to encoder (must be 0 or 1)
-*) 72: while decoding, unexisting compression method encountering in zTXt chunk (it must be 0)
+*) 72: while decoding, unexisting compression method encountering in zTXt or iTXt chunk (it must be 0)
 *) 73: invalid tIME chunk size
 *) 74: invalid pHYs chunk size
-*) 75: no null termination char found while decoding any kind of text chunk
+*) 75: no null termination char found while decoding any kind of text chunk, or wrong length
+*) 76: iTXt chunk too short to contain required bytes
 
 10. file IO
 -----------
@@ -1600,14 +1639,14 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 02 feb 2008: support for international text chunks added (iTXt)
 *) 23 jan 2008: small cleanups, and #defines to divide code in sections
 *) 20 jan 2008: support for unknown chunks allowing using LodePNG for an editor.
 *) 18 jan 2008: support for tIME and pHYs chunks added to encoder and decoder.
-*) 17 jan 2008: ability to encode and decode zTXt chunks added (no iTXt though).
+*) 17 jan 2008: ability to encode and decode compressed zTXt chunks added
     Also vareous fixes, such as in the deflate and the padding bits code.
-*) 13 jan 2008: improved filtering code of encoder. Added ability to
-    encode Adam7-interlaced images (before, it could only decode them).
-*) 12 jan 2008: refactored the Adam7 code. Much nicer now.
+*) 13 jan 2008: Added ability to encode Adam7-interlaced images. Improved
+    filtering code of encoder.
 *) 07 jan 2008: (!) changed LodePNG to use ISO C90 instead of C++. A
     C++ wrapper around this provides an interface almost identical to before.
     Having LodePNG be pure ISO C90 makes it more portable. The C and C++ code
