@@ -18,22 +18,34 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef LPI_GL_H_INCLUDED
+#define LPI_GL_H_INCLUDED
 
-/*
-lpi_tools:
-Tools for lpi itself, e.g. functions that act as programs to convert PNG images
-to/from base64 files, to create built-in textures for GUI and font or extract them.
-*/
-
-#ifndef LPI_TOOLS_H_INCLUDED
-#define LPI_TOOLS_H_INCLUDED
+#include <GL/gl.h>
 
 namespace lpi
 {
 
-  void binaryFileToBase64File(const std::string& outfilename, const std::string& infilename);
-  void base64FileToBinaryFile(const std::string& outfilename, const std::string& infilename);
-  void base64StringToBinaryFile(const std::string& outfilename, const std::string& in);
+void initGL();
+void set2DScreen();
+void set3DScreen(double near, double far);
+
+int screenWidth();
+int screenHeight();
+bool onScreen(int x, int y);
+
+void setScissor(int left, int top, int right, int bottom);
+void setSmallestScissor(int left, int top, int right, int bottom); //same as setScissor, but will new scissor area will be inside the old scissor area, all parts outside are removed
+void setOpenGLScissor();
+void resetScissor();
+
+void enableOneSided();
+void enableTwoSided();
+void enableZBuffer();
+void disableZBuffer();
+void enableSmoothing();
+void disableSmoothing();
+bool enabledSmoothing();
 
 } //namespace lpi
 

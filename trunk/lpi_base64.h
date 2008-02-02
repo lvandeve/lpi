@@ -18,23 +18,16 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef LPI_BASE64_H_INCLUDED
+#define LPI_BASE64_H_INCLUDED
 
-/*
-lpi_tools:
-Tools for lpi itself, e.g. functions that act as programs to convert PNG images
-to/from base64 files, to create built-in textures for GUI and font or extract them.
-*/
-
-#ifndef LPI_TOOLS_H_INCLUDED
-#define LPI_TOOLS_H_INCLUDED
+#include <string>
+#include <vector>
 
 namespace lpi
 {
-
-  void binaryFileToBase64File(const std::string& outfilename, const std::string& infilename);
-  void base64FileToBinaryFile(const std::string& outfilename, const std::string& infilename);
-  void base64StringToBinaryFile(const std::string& outfilename, const std::string& in);
-
+void encodeBase64(std::string& out, const std::vector<unsigned char>& in);
+void decodeBase64(std::vector<unsigned char>& out, const std::string& in);
 } //namespace lpi
 
 #endif

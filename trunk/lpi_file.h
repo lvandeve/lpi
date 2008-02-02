@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2007 Lode Vandevenne
+Copyright (c) v Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.

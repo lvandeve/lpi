@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2007 Lode Vandevenne
+Copyright (c) 2005-2008 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -20,12 +20,22 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include "lpi_text.h"
 
-#include "lpi_screen.h"
+//#include "lpi_screen.h"
 #include "lodepng.h"
 
 
 namespace lpi
 {
+
+namespace
+{
+  int getScreenHeight()
+  {
+    GLint array[4];
+    glGetIntegerv(GL_VIEWPORT, array); //array[3] contains the height in pixels of the viewport
+    return array[3];
+  }
+}
 
 std::vector<Texture> builtInFontTexture8x8;
 std::vector<Texture> builtInFontTexture6x6;
@@ -141,7 +151,7 @@ int printString(std::string text, int x, int y, const Markup& markup, unsigned l
      x += markup.getWidth();
   }
   //return position of a next character, where you may want to start drawing another string
-  return screenHeight() * x + y;
+  return getScreenHeight() * x + y;
 }
 
 //Draws a string of text, and uses some of the ascii control characters, e.g. newline
@@ -174,7 +184,7 @@ int printText(std::string text, int x, int y, const Markup& markup, unsigned lon
      pos++;
   }  
   //return pos;
-  return screenHeight() * drawX + drawY;
+  return getScreenHeight() * drawX + drawY;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -192,7 +202,7 @@ int printFormattedM(std::string text, int x, int y, Markup& markup, const Markup
      symbol = text[pos];
      if(symbol == '#')
      {
-       if(pos + 1 >= text.length()) return screenHeight() * drawX + drawY;
+       if(pos + 1 >= text.length()) return getScreenHeight() * drawX + drawY;
        pos++;
        
        symbol = text[pos];
@@ -213,7 +223,7 @@ int printFormattedM(std::string text, int x, int y, Markup& markup, const Markup
        }
        else if(symbol == 'c')
        {
-         if(pos + 8 >= text.length()) return screenHeight() * drawX + drawY;
+         if(pos + 8 >= text.length()) return getScreenHeight() * drawX + drawY;
          pos++;
          int r1, r2, g1, g2, b1, b2, a1, a2;
          r1 = text[pos] - 48; if(r1 > 9) r1 -= 7; pos++;
@@ -231,7 +241,7 @@ int printFormattedM(std::string text, int x, int y, Markup& markup, const Markup
        }
        else if(symbol == 'b')
        {
-         if(pos + 8 >= text.length()) return screenHeight() * drawX + drawY;
+         if(pos + 8 >= text.length()) return getScreenHeight() * drawX + drawY;
          pos++;
          int r1, r2, g1, g2, b1, b2, a1, a2;
          r1 = text[pos] - 48; if(r1 > 9) r1 -= 7; pos++;
@@ -253,7 +263,7 @@ int printFormattedM(std::string text, int x, int y, Markup& markup, const Markup
        }
        else if(symbol == '?') //draw any of the 256 glyphs, which one is given by 2 hex digits
        {
-         if(pos + 8 >= text.length()) return screenHeight() * drawX + drawY;
+         if(pos + 8 >= text.length()) return getScreenHeight() * drawX + drawY;
          pos++;
          int g1, g2;
          g1 = text[pos] - 48; if(g1 > 9) g1 -= 7; pos++;
@@ -271,7 +281,7 @@ int printFormattedM(std::string text, int x, int y, Markup& markup, const Markup
      pos++;
   }  
 
-  return screenHeight() * drawX + drawY;
+  return getScreenHeight() * drawX + drawY;
 }
 
 int printFormatted(std::string text, int x, int y, const Markup& markup)
