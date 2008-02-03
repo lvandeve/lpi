@@ -55,7 +55,7 @@ void drawCircle(const Vector3& pos, const Vector3& n, double radius, const Color
 this function sets the opengl modelview matrix to the transformation described by the Matrix3 and Vector3 used by my own 3D math functions
 when using camera of type Transformation3: use cam.getInvMatrix() as m3, cam.getPos() as pos for camera
 */
-void setGLMatrix(Matrix3 m3, const Vector3& pos)
+void setGLMatrix(const Matrix3& m3, const Vector3& pos)
 {
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -66,7 +66,7 @@ void setGLMatrix(Matrix3 m3, const Vector3& pos)
 /*
 Same as setGLMatrix, but won't load the identity matrix, so that you can transform the set matrix
 */
-void transformGLMatrix(Matrix3 m3, const Vector3& pos)
+void transformGLMatrix(const Matrix3& m3, const Vector3& pos)
 {
   glMatrixMode(GL_MODELVIEW);
   //glLoadIdentity(); //NIET doen want dan kan je deze functie niet 2x achter elkaar oproepen
@@ -100,7 +100,7 @@ void transformGLMatrix(Matrix3 m3, const Vector3& pos)
   glTranslated(-pos.x, -pos.y, -pos.z);
 }
 
-void setGLMatrixInvZ(Matrix3 m3, const Vector3& pos)
+void setGLMatrixInvZ(const Matrix3& m3, const Vector3& pos)
 {
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -111,7 +111,7 @@ void setGLMatrixInvZ(Matrix3 m3, const Vector3& pos)
 /*
 same as above but with inverted Z axis because OpenGL has it inverted
 */
-void transformGLMatrixInvZ(Matrix3 m3, const Vector3& pos)
+void transformGLMatrixInvZ(const Matrix3& m3, const Vector3& pos)
 {
   glMatrixMode(GL_MODELVIEW);
   

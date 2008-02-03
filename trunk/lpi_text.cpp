@@ -19,8 +19,6 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 */
 
 #include "lpi_text.h"
-
-//#include "lpi_screen.h"
 #include "lodepng.h"
 
 
