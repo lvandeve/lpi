@@ -37,10 +37,10 @@ void drawCircle(const Vector3& pos, const Vector3& n, double radius, const Color
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void setGLMatrix(Matrix3 m3, const Vector3& pos);
-void transformGLMatrix(Matrix3 m3, const Vector3& pos);
-void setGLMatrixInvZ(Matrix3 m3, const Vector3& pos);
-void transformGLMatrixInvZ(Matrix3 m3, const Vector3& pos);
+void setGLMatrix(const Matrix3& m3, const Vector3& pos);
+void transformGLMatrix(const Matrix3& m3, const Vector3& pos);
+void setGLMatrixInvZ(const Matrix3& m3, const Vector3& pos);
+void transformGLMatrixInvZ(const Matrix3& m3, const Vector3& pos);
 
 } //end of namespace lpi
 

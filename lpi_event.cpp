@@ -19,7 +19,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 */
 
 #include "lpi_event.h"
-#include "lpi_general.h"
+#include <cstdlib>
 
 
 namespace lpi
