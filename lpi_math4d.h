@@ -39,21 +39,41 @@ class Vector4
   double z;
   double w;
   
+  Vector4();
+  Vector4(double x, double y, double z, double w);
+  
+  const double& operator[](int i) const { return *(&x + i); }
+  double& operator[](int i) { return *(&x + i); }
+  
   void convertTo(Vector3& v);
   void convertFrom(const Vector3& v);
+  
+  //NOTE: these operators affect w too! This is important to make the Matrix4 implementation that uses Vector4 work correctly
+  //NOTE: this means these operators can't be used if you treat the Vector4 as homogeneous
+  Vector4& operator+=(const Vector4& v);
+  Vector4& operator-=(const Vector4& v);
+  Vector4& operator*=(double a);
+  Vector4& operator/=(double a);
 };
+
+Vector4 operator-(const Vector4& v, const Vector4& w);
+Vector4 operator-(const Vector4& v);
+Vector4 operator+(const Vector4& v, const Vector4& w);
+Vector4 operator*(const Vector4& v, double a);
+Vector4 operator*(double a, const Vector4& v);
+Vector4 operator/(const Vector4& v, double a);
+
+extern Vector4 Vector4_origin; //0001
+extern Vector4 Vector4_0;      //0000
+extern Vector4 Vector4_x;      //1001
+extern Vector4 Vector4_y;      //0101
+extern Vector4 Vector4_z;      //0011
 
 class Matrix4
 {
   public:
   
-  double a[16];
-  ////        ////
-  // 0  4  8 12 //
-  // 1  5  9 13 //
-  // 2  6 10 14 //
-  // 3  7 11 15 //
-  ////        ////
+  Vector4 a[4];
   
   Matrix4();
   Matrix4(const Matrix4& m);

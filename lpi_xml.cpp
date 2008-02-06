@@ -258,18 +258,24 @@ void convert(std::string& out, double in) //double -> double
 
 void convert(std::string& out, const void* in) //NOTE: currently not safe if written by 64-bit PC and read by 32-bit PC
 {
+  //it becomes saved as 64-bit hex string, including "0x" and always 16+2 symbols, e.g. "0x0123456789ABCDEF"
   size_t address = (size_t)in;
-  std::stringstream ss;
-  ss << address;
-  out += ss.str();
+  out += "0x";
+  size_t pos = out.size();
+  out.resize(out.size() + 16);
+  for(int i = 0; i < 16; i++)
+  {
+    char symbol = address % 16;
+    if(symbol < 10) symbol += '0';
+    else symbol += ('A' - 10);
+    out[pos + 16 - i] = symbol;
+    address >>= 4;
+  }
 }
 
 void convert(std::string& out, void* in) //NOTE: currently not safe if written by 64-bit PC and read by 32-bit PC
 {
-  size_t address = (size_t)in;
-  std::stringstream ss;
-  ss << address;
-  out += ss.str();
+  convert(out, (const void*)in);
 }
 
 void convert(std::string& out, const std::string& in) //std::string -> string
@@ -367,20 +373,36 @@ void unconvert(double& out, const std::string& in, size_t pos, size_t end)
 
 void unconvert(const void*& out, const std::string& in, size_t pos, size_t end) //NOTE: currently not safe if written by 64-bit PC and read by 32-bit PC
 {
+  //it was saved as 64-bit hex string, including "0x" and always 16+2 symbols, e.g. "0x0123456789ABCDEF"
   std::string s(in, pos, end - pos);
-  std::stringstream ss(s);
-  size_t address;
-  ss >> address;
+  size_t address = 0;
+std::cout<<"s: "<<s<<" "<<pos<<" "<<end<<std::endl;
+  if(s.size() > 2 && s[0] == '0' && s[1] == 'x') //hex
+  {
+    size_t size = s.size() - 2;
+    for(size_t i = 0; i < size; i++)
+    {
+      char symbol = s[size + 2 - i];
+      if(symbol >= '0' && symbol <= '9') symbol -= '0';
+      else symbol -= ('A' - 10);
+      address |= symbol;
+      address <<= 4;
+    }
+  }
+  else //decimal
+  {
+    std::stringstream ss(s);
+    ss >> address;
+std::cout<<"wuuu: "<<ss.str()<<std::endl;
+  }
+std::cout<<"wiii: "<<address<<std::endl;
   out = (void*)address;
 }
 
 void unconvert(void*& out, const std::string& in, size_t pos, size_t end) //NOTE: currently not safe if written by 64-bit PC and read by 32-bit PC
 {
-  std::string s(in, pos, end - pos);
-  std::stringstream ss(s);
-  size_t address;
-  ss >> address;
-  out = (void*)address;
+  //it was saved as 64-bit hex string, including "0x" and always 16+2 symbols, e.g. "0x0123456789ABCDEF"
+  unconvert((const void*&)out, in, pos, end);
 }
 
 void unconvert(std::string& out, const std::string& in, size_t pos, size_t end)

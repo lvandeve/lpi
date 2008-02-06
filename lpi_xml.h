@@ -202,7 +202,7 @@ enum TagType
   TT_END, // </a>
   TT_SINGLETON, // <a/>, can have attributes
   TT_MIXEDTEXT, // a, this isn't a tag, but is what you encounter while parsing mixed content. Note: text is stored in *name* of "tag"
-  TT_COMMENT, // <--a-->
+  TT_COMMENT, // <!--a-->
   TT_PI, // <?a?>, Processing Instruction
   TT_DECLARATION, // <!a>
   TT_SECTION //<![a[a]]>
@@ -222,10 +222,10 @@ enum ElementType //Element Type is determined by the content, or for special tag
   ET_MIXED, //both values/text and child elements (each value/text starts after whitespace and ends at next tag, all whitespace in between is part of the value/text)
   //these below match TagTypes that aren't TT_START, TT_END and TT_SINGLETON
   ET_MIXEDTEXT, //Note: in this case, text is stored in name, not in value.
-  ET_COMMENT,
-  ET_PI,
-  ET_DECLARATION,
-  ET_SECTION
+  ET_COMMENT, // <!--a-->
+  ET_PI, //Processing Instruction
+  ET_DECLARATION, // <!a>
+  ET_SECTION //<![a[a]]>
 };
 
 /*
