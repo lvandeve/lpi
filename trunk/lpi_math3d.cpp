@@ -27,6 +27,12 @@ namespace { const double pi = 3.141592653589793238462643383279502884197169399375
 namespace lpi
 {
 
+Vector3 Vector3_origin = Vector3(0.0, 0.0, 0.0);
+Vector3 Vector3_0 =      Vector3(0.0, 0.0, 0.0);
+Vector3 Vector3_x =      Vector3(1.0, 0.0, 0.0);
+Vector3 Vector3_y =      Vector3(0.0, 1.0, 0.0);
+Vector3 Vector3_z =      Vector3(0.0, 0.0, 1.0);
+
 ///////////////////////////////////////////////////////////////////////////////
 
 Vector3::Vector3(double x, double y, double z)
@@ -377,9 +383,9 @@ Matrix3::Matrix3()
 ////////////////////////////////////////////////////////////////////////////////
 void Matrix3::transpose()
 {
-  a[0][1] += a[1][0]; a[1][0] = a[0][1] - a[1][0]; a[0][1] -= a[1][0]; //swap b and d
-  a[0][2] += a[2][0]; a[2][0] = a[0][2] - a[2][0]; a[0][2] -= a[2][0]; //swap c and g
-  a[1][2] += a[2][1]; a[2][1] = a[1][2] - a[2][1]; a[1][2] -= a[2][1]; //swap f and h
+  std::swap(a[0][1], a[1][0]);
+  std::swap(a[0][2], a[2][0]);
+  std::swap(a[1][2], a[2][1]);
 }
 
 Matrix3 transpose(const Matrix3& A)
