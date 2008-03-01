@@ -35,16 +35,22 @@ lpi_file: load and save files through simpler interface
 lpi_general: a mix of things that didn't find an own file (yet), such as SDL time, math, ...
 lpi_gl: a few simple OpenGL wrapper functions
 lpi_gui: an OpenGL based gui with buttons, windows, scrollbars, ...
+lpi_gui_draw: used by lpi_gui to draw everything
+lpi_gui_ex: extra/extended GUI widgets for lpi_gui, such as drawing canvas, grid, ...
+lpi_gui_text: text-input related GUI widgets for lpi_gui, such as input line, input box, console, ...
 lpi_math2d: 2D vector math
 lpi_math3d: 3D vector, matrix, transformation and camera math
 lpi_math4d: 4D vector and matrix
+lpi_parse: parsing utilities (they might be considered a bit a weird way of parsing)
 lpi_pathfind: A* path finding, useful for some games
+lpi_reflect: give your class properties/parameters/attributes with string names that can be iterated through by scripts and serialization
 lpi_screen: set up the SDL + OpenGL screen
 lpi_text: font and text drawing --> TODO: should split this up in the non-screen dependent stuff and the screen dependent stuff
 lpi_texture: class for textures for use in OpenGL or SDL screen. They can be drawn in 2D on screen, or used in 3D to map on OpenGL vertices.
 lpi_tools: tools for developing lpi itself more easily
 lpi_unittest: unit testing ability
 lpi_xml: XML parsing and generating
+quickcg: full 2D graphics SDL wrapper library, independent from lpi
 
 External dependencies of lpi
 ----------------------------
@@ -56,7 +62,7 @@ OpenGL
 lpi units that depend only on standard C++
 ------------------------------------------
 
-These can be used as independent libraries whenever needed individually.
+These can be used as independent libraries or tools whenever needed individually.
 
 *) lodepng
 *) lodewav
@@ -66,6 +72,7 @@ These can be used as independent libraries whenever needed individually.
 *) lpi_crypto
 *) lpi_file
 *) lpi_math2d
+*) lpi_parse
 *) lpi_pathfind
 *) lpi_unittest
 *) lpi_xml
@@ -92,6 +99,8 @@ lpi units that depend on SDL and/or OpenGL, but not on other lpi units
 
 *) lpi_gl: OpenGL
 
+*) quickcg: SDL
+
 lpi units that depend on both other lpi units and OpenGL or SDL
 ---------------------------------------------------------------
 
@@ -103,11 +112,17 @@ then it isn't always mentioned that A indirectly depends on C.
 
 *) lpi_draw3dgl: OpenGL, lpi_color, lpi_draw2d, lpi_math3d
 
-*) lpi_gui: SDL, OpenGL, lodepng, lpi_general, lpi_event, lpi_text, lpi_texture, lpi_gl, lpi_color, lpi_draw2dgl, lpi_xml, lpi_file, lpi_base64
+*) lpi_gui: SDL, OpenGL, lpi_gui_draw
+
+*) lpi_gui_draw: SDL, OpenGL, lodepng, lpi_general, lpi_event, lpi_text, lpi_texture, lpi_gl, lpi_color, lpi_draw2dgl, lpi_xml, lpi_file, lpi_base64
+
+*) lpi_gui_ex: SDL, OpenGL, lpi_gui
+
+*) lpi_gui_text: SDL, OpenGL, lpi_gui
 
 *) lpi_screen: SDL, OpenGL, lpi_color
 
-*) lpi_text: OpenGL, lodepng, lpi_texture, lpi_color
+*) lpi_text: OpenGL, lodepng, lpi_texture, lpi_color, lpi_parse
 
 *) lpi_texture: OpenGL, lodepng, lpi_base64, lpi_gl, lpi_color
 
