@@ -49,6 +49,8 @@ gprof > gprof.txt
 #include "lpi_texture.h"
 #include "lpi_screen.h"
 #include "lpi_gui.h"
+#include "lpi_gui_text.h"
+#include "lpi_gui_ex.h"
 #include "lpi_draw2dgl.h"
 #include "lpi_audio.h"
 #include "lpi_bignums.h"
