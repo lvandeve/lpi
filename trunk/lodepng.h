@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080202
+LodePNG version 20080307
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
