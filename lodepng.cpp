@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080202
+LodePNG version 20080307
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
@@ -30,7 +30,7 @@ You are free to name this file lodepng.cpp or lodepng.c depending on your usage.
 
 #include "lodepng.h"
 
-#define VERSION_STRING "20080202"
+#define VERSION_STRING "20080307"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Tools For C                                                            / */
@@ -3244,7 +3244,7 @@ static unsigned addChunk_iTXt(ucvector* out, unsigned compressed, const char* ke
 {
   unsigned error = 0;
   ucvector data, compressed_data;
-  size_t i, textsize;
+  size_t i, textsize = strlen(textstring);
   
   ucvector_init(&data);
   
@@ -3813,7 +3813,7 @@ void LodePNG_encode(LodePNG_Encoder* encoder, unsigned char** out, size_t* outsi
         addChunk_tEXt(&outv, "LodePNG", VERSION_STRING); /*it's shorter as tEXt than as zTXt chunk*/
     }
     /*iTXt*/
-    for(i = 0; i < info.text.num; i++)
+    for(i = 0; i < info.itext.num; i++)
     {
       if(strlen(info.itext.keys[i]) > 79) { encoder->error = 66; break; }
       if(strlen(info.itext.keys[i]) < 1) { encoder->error = 67; break; }
