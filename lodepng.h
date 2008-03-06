@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080307
+LodePNG version 20080306
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
@@ -1639,6 +1639,7 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 06 mar 2008: crash with encoding strings fixed
 *) 02 feb 2008: support for international text chunks added (iTXt)
 *) 23 jan 2008: small cleanups, and #defines to divide code in sections
 *) 20 jan 2008: support for unknown chunks allowing using LodePNG for an editor.
