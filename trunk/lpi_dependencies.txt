@@ -43,7 +43,6 @@ lpi_math3d: 3D vector, matrix, transformation and camera math
 lpi_math4d: 4D vector and matrix
 lpi_parse: parsing utilities (they might be considered a bit a weird way of parsing)
 lpi_pathfind: A* path finding, useful for some games
-lpi_reflect: give your class properties/parameters/attributes with string names that can be iterated through by scripts and serialization
 lpi_screen: set up the SDL + OpenGL screen
 lpi_text: font and text drawing --> TODO: should split this up in the non-screen dependent stuff and the screen dependent stuff
 lpi_texture: class for textures for use in OpenGL or SDL screen. They can be drawn in 2D on screen, or used in 3D to map on OpenGL vertices.

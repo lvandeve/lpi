@@ -724,10 +724,6 @@ void Container::make(int x, int y, int sizex, int sizey)
   this->y0 = y;
   this->setSizex(sizex);
   this->setSizey(sizey);
-  
-  addSubElement(&area, /*STICKYNOTHING*/STICKYFULL); //stickynothing results in the area not being resized with the container. If you add top to a window, the container is made smaller. The area then not. Then a useless scrollbar appears. Therefore, use stickyfull by default!!
-  
-  area.make(this->x0, this->y0, this->x1, this->y1);
 }
 
 void Container::setElementOver(bool state)
@@ -739,7 +735,7 @@ void Container::setElementOver(bool state)
 void Container::handleWidget()
 {
   //if(mouseOver())
-  if(!elementOver && mouseInVisibleZone())
+  if(!elementOver && mouseOver())
   {
     int topElement = -1;
     
@@ -901,14 +897,14 @@ void Container::putInside(unsigned long i)
     
     int newx = ex0, newy = ey0;
     
-    if(ex0 < area.getX0()) newx = area.getX0();
-    if(ey0 < area.getY0()) newy = area.getY0();
-    if(ex1 > area.getX1()) newx = area.getX1() - esx;
-    if(ey1 > area.getY1()) newy = area.getY1() - esy;
+    if(ex0 < getX0()) newx = getX0();
+    if(ey0 < getY0()) newy = getY0();
+    if(ex1 > getX1()) newx = getX1() - esx;
+    if(ey1 > getY1()) newy = getY1() - esy;
     
     //if the size of the element is too large to fit in the window, there's no reason to move it (or it'll warp all the time)
-    if(elements.getElement(i)->getSizex() > area.getSizex()) newx = elements.getElement(i)->getX0();
-    if(elements.getElement(i)->getSizey() > area.getSizey()) newy = elements.getElement(i)->getY0();
+    if(elements.getElement(i)->getSizex() > getSizex()) newx = elements.getElement(i)->getX0();
+    if(elements.getElement(i)->getSizey() > getSizey()) newy = elements.getElement(i)->getY0();
     
     elements.getElement(i)->moveTo(newx, newy);
   }
@@ -929,11 +925,6 @@ void Container::resizeWidget(const Pos<int>& newPos)
 {
   Pos<int> oldPos = { this->x0, this->y0, this->x1, this->y1 };
   elements.resize(oldPos, newPos);
-}
-
-bool Container::mouseInVisibleZone() const
-{
-  return mouseOver();
 }
 
 void Container::setSizeToElements()
@@ -958,200 +949,6 @@ void Container::setSizeToElements()
   y0 = newy0;
   x1 = newx1;
   y1 = newy1;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-//SCROLLCONTAINER///////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-/*
-Container with extra feature:
-Also can have scrollbars if the area of the elements is larger than the container size.
-*/
-
-void ScrollContainer::drawWidget() const
-{
-  setSmallestScissor(getVisibleX0(), getVisibleY0(), getVisibleX1(), getVisibleY1()); //currently does same as setScissor (because otherwise there's weird bug, to reproduce: resize the red window and look at smiley in the small grey window), so elements from container in container are still drawn outside container. DEBUG THIS ASAP!!!
-  drawElements();
-  resetScissor();
-  
-  bars.draw();
-}
-
-void ScrollContainer::resizeWidget(const Pos<int>& newPos)
-{
-  //area.resize(x0, y0, x1, y1);
-  updateBars(); //if this is done at the wrong moment, the bars may appear after resizing the container at times where it isn't desired
-  
-  Container::resizeWidget(newPos);
-}
-
-void ScrollContainer::handleWidget()
-{
-  Container::handleWidget();
-  
-  bars.handle();
-  int scrollx = x0 - int(bars.hbar.scrollPos); //the scrollpos is 0 if a bar is not enabled
-  int scrolly = y0 - int(bars.vbar.scrollPos);
-  moveAreaTo(scrollx, scrolly);
-}
-
-ScrollContainer::ScrollContainer()
-{
-}
-
-void ScrollContainer::make(int x, int y, int sizex, int sizey, 
-            int areax, int areay, int areasizex, int areasizey, //areax and areay are relative to the ScrollContainer
-            const Pos<Sticky>& areasticky)
-{
-  ic.getElements().clear();
-  
-  this->x0 = x;
-  this->y0 = y;
-  this->setSizex(sizex);
-  this->setSizey(sizey);
-  
-  bars.make(x, y, sizex, sizey);
-  bars.disableV();
-  bars.disableH();
-  addSubElement(&bars, STICKYFULL);
-  
-
-  if(areasizex == -1)
-  {
-    areax = 0;
-    areasizex = sizex;
-  }
-  
-  if(areasizey == -1)
-  {
-    areay = 0;
-    areasizey = sizey;
-  }
-  
-  area.make(this->x0 + areax, this->y0 + areay, this->x0 + areax + areasizex, this->y0 + areay + areasizey);
-  
-  addSubElement(&area, areasticky);
-
-  initBars();
-}
-
-void ScrollContainer::moveAreaTo(int x, int y)
-{
-  for(unsigned long i = 0; i < size(); i++) elements.getElement(i)->move(x - area.getX0(), y - area.getY0());
-  area.moveTo(x, y);
-}
-
-void ScrollContainer::initBars()
-{
-  toggleBars();
-
-  bars.vbar.scrollSize = area.getSizey() - getVisibleSizey();
-  bars.hbar.scrollSize = area.getSizex() - getVisibleSizex();
-  bars.vbar.scrollPos = y0 - area.getY0();
-  bars.hbar.scrollPos = x0 - area.getX0();
-}
-
-void ScrollContainer::updateBars()
-{
-  toggleBars();
-
-  bars.hbar.scrollSize = area.getSizex() - getVisibleSizex();
-  bars.vbar.scrollSize = area.getSizey() - getVisibleSizey();
-  if(bars.hbar.scrollSize < 0) bars.hbar.scrollSize = 0;
-  if(bars.vbar.scrollSize < 0) bars.vbar.scrollSize = 0;
-  if(bars.hbar.scrollPos > bars.hbar.scrollSize) bars.hbar.scrollPos = bars.hbar.scrollSize;
-  if(bars.vbar.scrollPos > bars.vbar.scrollSize) bars.vbar.scrollPos = bars.vbar.scrollSize;
-}
-
-int ScrollContainer::getVisibleX0() const
-{
-  return x0;
-}
-
-int ScrollContainer::getVisibleY0() const
-{
-  return y0;
-}
-
-int ScrollContainer::getVisibleX1() const
-{
-  if(bars.venabled) return x1 - bars.vbar.getSizex();
-  else return x1;
-}
-
-int ScrollContainer::getVisibleY1() const
-{
-  if(bars.henabled) return y1 - bars.hbar.getSizey();
-  else return y1;
-}
-
-int ScrollContainer::getVisibleSizex() const
-{
-  return getVisibleX1() - getVisibleX0();
-}
-
-int ScrollContainer::getVisibleSizey() const
-{
-  return getVisibleY1() - getVisibleY0();
-}
-
-bool ScrollContainer::mouseInVisibleZone() const
-{
-  if(!mouseOver()) return false;
-  return globalMouseX >= getVisibleX0()
-      && globalMouseX < getVisibleX1()
-      && globalMouseY >= getVisibleY0()
-      && globalMouseY < getVisibleY1();
-}
-
-
-void ScrollContainer::toggleBars() //turns bars on or of if they're needed or not (depending on visible size and scroll area size) (different than MS Windows where scrollbars become inactive grey when not needed)
-{
-  if(area.getSizex() <= getVisibleSizex() && area.getSizey() <= getVisibleSizey())
-  {
-    bars.disableH();
-    bars.disableV();
-  }
-  else if(area.getSizex() > getVisibleSizex() && area.getSizey() <= getVisibleSizey())
-  {
-    bars.enableH();
-    bars.disableV();
-  }
-  else if(area.getSizex() <= getVisibleSizex() && area.getSizey() > getVisibleSizey())
-  {
-    bars.disableH();
-    bars.enableV();
-  }
-  else if(area.getSizex() > getVisibleSizex() && area.getSizey() > getVisibleSizey())
-  {
-    bars.enableH();
-    bars.enableV();
-  }
-}
-
-void ScrollContainer::setScrollSizeToElements()
-{
-  int newx0 = x0, newy0 = y0, newx1 = x1, newy1 = y1;
-  if(size() > 0)
-  {
-    newx0 = elements.getElement(0)->getX0();
-    newy0 = elements.getElement(0)->getY0();
-    newx1 = elements.getElement(0)->getX1();
-    newy1 = elements.getElement(0)->getY1();
-  }
-  for(unsigned i = 1; i < size(); i++)
-  {
-    if(elements.getElement(i)->getX0() < newx0) newx0 = elements.getElement(i)->getX0();
-    if(elements.getElement(i)->getY0() < newy0) newy0 = elements.getElement(i)->getY0();
-    if(elements.getElement(i)->getX1() > newx1) newx1 = elements.getElement(i)->getX1();
-    if(elements.getElement(i)->getY1() > newy1) newy1 = elements.getElement(i)->getY1();
-  }
-  
-  area.resize(newx0, newy0, newx1, newy1);
-  
-  updateBars();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1735,10 +1532,6 @@ void Window::drawWidget() const
   else container.draw();
 
   if(enableResizer) resizer.draw(); //draw this after the container so the resizer is drawn over scrollbars if that is needed
-
-  //handy for debugging the auto-scrollbars
-  //container.drawBorder(ColorRGB(255, 255, 0, 192));
-  //container.area.drawBorder(ColorRGB(128, 255, 0, 192));
 }
 
 void Window::addTitle(const std::string& title, int titleX, int titleY, const Markup& titleMarkup)
