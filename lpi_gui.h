@@ -604,8 +604,6 @@ class Container : public Element
     
     InternalContainer elements;
     
-    virtual bool mouseInVisibleZone() const; //is the mouse in the zone where elements are drawn
-    
   public:
     
     Container();
