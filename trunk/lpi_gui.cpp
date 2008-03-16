@@ -20,15 +20,10 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 
 #include "lpi_gui.h"
-
-#include "lodepng.h"
-#include "lpi_general.h"
 #include "lpi_gl.h"
 #include "lpi_draw2dgl.h"
-#include "lpi_draw2d.h"
-#include "lpi_file.h"
-#include "lpi_base64.h"
-#include "lpi_xml.h"
+
+#include "lpi_general.h"
 
 #include <iostream>
 
@@ -36,6 +31,114 @@ namespace lpi
 {
 namespace gui
 {
+
+
+void InternalContainer::resize(const Pos<int>& oldPos, const Pos<int>& newPos)
+{
+  int w = newPos.x1 - newPos.x0;
+  int h = newPos.y1 - newPos.y0;
+  int dx0 = newPos.x0 - oldPos.x0;
+  int dy0 = newPos.y0 - oldPos.y0;
+  int dx1 = newPos.x1 - oldPos.x1;
+  int dy1 = newPos.y1 - oldPos.y1;
+  
+  for(size_t i = 0; i < elements.size(); i++)
+  {
+    Element& e = *elements[i];
+    Pos<int> newPos2;
+    
+    if(e.sticky.x0 == TOPLEFT) newPos2.x0 = e.getX0() + dx0;
+    else if(e.sticky.x0 == RELATIVE00) newPos2.x0 = newPos.x0 + (int)(e.relativePos.x0 * w);
+    else if(e.sticky.x0 == RELATIVE11) newPos2.x0 = newPos.x0 + (int)(e.relativePos.x1 * w) - e.getSizex();
+    else if(e.sticky.x0 == BOTTOMRIGHT) newPos2.x0 = e.getX0() + dx1;
+    else /*if(e.sticky.x0 == NOTHING)*/ newPos2.x0 = e.getX0();
+    
+    if(e.sticky.y0 == TOPLEFT) newPos2.y0 = e.getY0() + dy0;
+    else if(e.sticky.y0 == RELATIVE00) newPos2.y0 = newPos.y0 + (int)(e.relativePos.y0 * h);
+    else if(e.sticky.y0 == RELATIVE11) newPos2.y0 = newPos.y0 + (int)(e.relativePos.y1 * h) - e.getSizey();
+    else if(e.sticky.y0 == BOTTOMRIGHT) newPos2.y0 = e.getY0() + dy1;
+    else /*if(e.sticky.x0 == NOTHING)*/ newPos2.y0 = e.getY0();
+    
+    if(e.sticky.x1 == TOPLEFT) newPos2.x1 = e.getX1() + dx0;
+    else if(e.sticky.x1 == RELATIVE11) newPos2.x1 = newPos.x0 + (int)(e.relativePos.x1 * w);
+    else if(e.sticky.x0 == RELATIVE00) newPos2.x1 = newPos.x0 + (int)(e.relativePos.x0 * w) + e.getSizex();
+    else if(e.sticky.x1 == BOTTOMRIGHT) newPos2.x1 = e.getX1() + dx1;
+    else /*if(e.sticky.x0 == NOTHING)*/ newPos2.x1 = e.getX1();
+    
+    if(e.sticky.y1 == TOPLEFT) newPos2.y1 = e.getY1() + dy0;
+    else if(e.sticky.y1 == RELATIVE11) newPos2.y1 = newPos.y0 + (int)(e.relativePos.y1 * h);
+    else if(e.sticky.y0 == RELATIVE00) newPos2.y1 = newPos.y0 + (int)(e.relativePos.y0 * h) + e.getSizey();
+    else if(e.sticky.y1 == BOTTOMRIGHT) newPos2.y1 = e.getY1() + dy1;
+    else /*if(e.sticky.x0 == NOTHING)*/ newPos2.y1 = e.getY1();
+  
+    e.resize(newPos2.x0, newPos2.y0, newPos2.x1, newPos2.y1);
+  }
+}
+
+void InternalContainer::move(int x, int y)
+{
+  for(size_t i = 0; i < elements.size(); i++)
+  {
+    elements[i]->move(x, y);
+  }
+}
+
+void InternalContainer::setElementOver(bool state)
+{
+  for(size_t i = 0; i < elements.size(); i++)
+  {
+    elements[i]->setElementOver(state);
+  }
+}
+
+void InternalContainer::initSubElement(Element* element, const Pos<Sticky>& sticky, Element* parent)
+{
+  element->sticky = sticky;
+  element->relativePos.x0 = (element->getX0() - parent->getX0()) / (double)(parent->getSizex());
+  element->relativePos.y0 = (element->getY0() - parent->getY0()) / (double)(parent->getSizey());
+  element->relativePos.x1 = (element->getX1() - parent->getX0()) / (double)(parent->getSizex());
+  element->relativePos.y1 = (element->getY1() - parent->getY0()) / (double)(parent->getSizey());
+}
+
+void InternalContainer::addSubElement(Element* element, const Pos<Sticky>& sticky, Element* parent)
+{
+  elements.push_back(element);
+  initSubElement(element, sticky, parent);
+}
+
+void InternalContainer::insertSubElement(size_t index, Element* element, const Pos<Sticky>& sticky, Element* parent)
+{
+  initSubElement(element, sticky, parent);
+  elements.insert(elements.begin() + index, element);
+}
+
+
+Pos<Sticky> STICKYTOPLEFT = { TOPLEFT, TOPLEFT, TOPLEFT, TOPLEFT };
+Pos<Sticky> STICKYTOPRIGHT = { BOTTOMRIGHT, TOPLEFT, BOTTOMRIGHT, TOPLEFT };
+Pos<Sticky> STICKYBOTTOMRIGHT = { BOTTOMRIGHT, BOTTOMRIGHT, BOTTOMRIGHT, BOTTOMRIGHT };
+Pos<Sticky> STICKYBOTTOMLEFT = { TOPLEFT, BOTTOMRIGHT, TOPLEFT, BOTTOMRIGHT };
+Pos<Sticky> STICKYFULL = { TOPLEFT, TOPLEFT, BOTTOMRIGHT, BOTTOMRIGHT };
+Pos<Sticky> STICKYNOTHING = { NOTHING, NOTHING, NOTHING, NOTHING };
+Pos<Sticky> STICKYVERTICALLEFT = { TOPLEFT, TOPLEFT, TOPLEFT, BOTTOMRIGHT };
+Pos<Sticky> STICKYVERTICALRIGHT = { BOTTOMRIGHT, TOPLEFT, BOTTOMRIGHT, BOTTOMRIGHT };
+Pos<Sticky> STICKYHORIZONTALTOP = { TOPLEFT, TOPLEFT, BOTTOMRIGHT, TOPLEFT };
+Pos<Sticky> STICKYHORIZONTALBOTTOM = { TOPLEFT, BOTTOMRIGHT, BOTTOMRIGHT, BOTTOMRIGHT };
+Pos<Sticky> STICKYRELATIVE = { RELATIVE00, RELATIVE00, RELATIVE11, RELATIVE11 };
+Pos<Sticky> STICKYRELATIVE00 = { RELATIVE00, RELATIVE00, RELATIVE00, RELATIVE00 };
+Pos<Sticky> STICKYRELATIVE01 = { RELATIVE00, RELATIVE11, RELATIVE00, RELATIVE11 };
+Pos<Sticky> STICKYRELATIVE10 = { RELATIVE11, RELATIVE00, RELATIVE11, RELATIVE00 };
+Pos<Sticky> STICKYRELATIVE11 = { RELATIVE11, RELATIVE11, RELATIVE11, RELATIVE11 };
+Pos<Sticky> STICKYRELATIVEHORIZONTAL0 = { RELATIVE00, RELATIVE00, RELATIVE11, RELATIVE00 };
+Pos<Sticky> STICKYRELATIVEVERTICAL0 = { RELATIVE00, RELATIVE00, RELATIVE00, RELATIVE11 };
+Pos<Sticky> STICKYRELATIVEHORIZONTAL1 = { RELATIVE00, RELATIVE11, RELATIVE11, RELATIVE11 };
+Pos<Sticky> STICKYRELATIVEVERTICAL1 = { RELATIVE11, RELATIVE00, RELATIVE11, RELATIVE11 };
+Pos<Sticky> STICKYRELATIVEHORIZONTALFULL = { RELATIVE00, TOPLEFT, RELATIVE11, BOTTOMRIGHT };
+Pos<Sticky> STICKYRELATIVEVERTICALFULL = { TOPLEFT, RELATIVE00, BOTTOMRIGHT, RELATIVE11 };
+Pos<Sticky> STICKYRELATIVELEFT = { TOPLEFT, RELATIVE00, TOPLEFT, RELATIVE11 };
+Pos<Sticky> STICKYRELATIVETOP = { RELATIVE00, TOPLEFT, RELATIVE11, TOPLEFT };
+Pos<Sticky> STICKYRELATIVERIGHT = { BOTTOMRIGHT, RELATIVE00, BOTTOMRIGHT, RELATIVE11 };
+Pos<Sticky> STICKYRELATIVEBOTTOM = { RELATIVE00, BOTTOMRIGHT, RELATIVE11, BOTTOMRIGHT };
+
 
 MouseState::MouseState()
 {
@@ -63,16 +166,14 @@ int BasicElement::mouseGetRelPosY() const
   return globalMouseY - y0;
 }
 
-bool BasicElement::mouseOver() const
+bool BasicElement::mouseOverShape() const
 {
-  bool over = 0;
+  if(globalMouseX >= x0 && globalMouseX < x1 && globalMouseY >= y0 && globalMouseY < y1) return true;
+  else return false;
   
-  //some variables used during case calculations
-  int relX, relY, symX, symY;
   
-  //only if the mouse is in the rectangle, and the current object is on top, the other shapes should be tested
-  if(globalMouseX >= x0 && globalMouseX < x1 && globalMouseY >= y0 && globalMouseY < y1)
-  switch(shape)
+  //old "shape" code. Now, to get a shape like triangle, make child class of the gui element and override mouseOverShape with the new shape code
+  /*switch(shape)
   {
     case 0: //rectangle
       over = 1;
@@ -103,9 +204,12 @@ bool BasicElement::mouseOver() const
     default: //rectangle
       over = 1;
       break;
-  }
+  }*/
+}
 
-  return over;
+bool BasicElement::mouseOver() const
+{
+  return mouseOverShape();
 }
 
 bool BasicElement::mouseDown(MouseButton button) const
@@ -356,7 +460,6 @@ BasicElement::BasicElement() : x0(0),
                                y0(0),
                                x1(0),
                                y1(0),
-                               shape(0),
                                doubleClickTime(500)
 {}
 
@@ -384,6 +487,11 @@ ToolTipManager defaultTooltipManager;
 /*
 GuiElement is the mother class of all the other GUI classes below.
 */
+
+void Element::addSubElement(Element* element, const Pos<Sticky>& sticky)
+{
+  ic.addSubElement(element, sticky, this);
+}
 
 Element::Element() : selfActivate(false),
                      minSizex(0),
@@ -485,12 +593,7 @@ void Element::move(int x, int y)
   this->x1 += x;
   this->y1 += y;
   
-  for(unsigned long i = 0;;i++)
-  {
-    Element* element = getAutoSubElement(i);
-    if(!element) break;
-    else element->move(x, y);
-  }
+  ic.move(x, y);
   
   moveWidget(x, y);
 }
@@ -541,12 +644,7 @@ void Element::setElementOver(bool state)
 {
   elementOver = state;
   
-  for(unsigned long i = 0;;i++)
-  {
-    Element* element = getAutoSubElement(i);
-    if(!element) break;
-    else element->setElementOver(state);
-  }
+  ic.setElementOver(state);
 }
 
 bool Element::hasElementOver() const
@@ -575,53 +673,26 @@ void Element::putInScreen()
 
 void Element::resize(int x0, int y0, int x1, int y1)
 {
+  
   if(x1 - x0 < minSizex) x1 = x0 + minSizex;
   if(y1 - y0 < minSizey) y1 = y0 + minSizey;
 
+  Pos<int> oldPos = { this->x0, this->y0, this->x1, this->y1 };
+  Pos<int> newPos = { x0, y0, x1, y1 };
+  
+  resizeWidget(newPos);
+  
   this->x0 = x0;
   this->y0 = y0;
   this->x1 = x1;
   this->y1 = y1;
   
-  for(unsigned long i = 0;;i++)
-  {
-    Element* element = getAutoSubElement(i);
-    if(!element) break;
-    else element->resizeSticky(this->x0, this->y0, this->x1, this->y1);
-  }
-  
-  resizeWidget();
+  ic.resize(oldPos, newPos);
 }
 
-void Element::resizeWidget()
+void Element::resizeWidget(const Pos<int>& /*newPos*/)
 {
   //nothing to do. Overload this for guielements that need to do something to sub elements if they resize.
-}
-
-//this function uses ix0, iy0, ix1 and iy1 so only use if those values are properly set!
-void Element::resizeSticky(int x0, int y0, int x1, int y1)
-{
-  int newMasterSizex = x1 - x0;
-  int newMasterSizey = y1 - y0;
-  
-  int ex0, ey0, ex1, ey1; //the new positions for this element that have to be calculated now
-  
-  ex0 = int(x0 + ix0 + (leftSticky * newMasterSizex) - (leftSticky * iMasterSizex));
-  ey0 = int(y0 + iy0 + (topSticky * newMasterSizey) - (topSticky * iMasterSizey));
-  
-  ex1 = int(x0 + ix1 + (rightSticky * newMasterSizex) - (rightSticky * iMasterSizex));
-  ey1 = int(y0 + iy1 + (bottomSticky * newMasterSizey) - (bottomSticky * iMasterSizey));
-  
-  if(leftSticky == -2.0) ex0 = this->x0;
-  else if(leftSticky == -3.0) {ex0 = this->x0; if(ex0 < x0) ex1 = ex1 + (x0 - ex0), ex0 = x0;}
-  if(topSticky == -2.0) ey0 = this->y0;
-  else if(topSticky == -3.0) {ey0 = this->y0; if(ey0 < y0) ey1 = ey1 + (y0 - ey0), ey0 = y0;}
-  if(rightSticky == -2.0) ex1 = this->x1;
-  else if(rightSticky == -3.0) {ex1 = this->x1; if(ex1 > x1) ex0 = ex0 - (ex1 - x1), ex1 = x1;}
-  if(bottomSticky == -2.0) ey1 = this->y1;
-  else if(bottomSticky == -3.0) {ey1 = this->y1; if(ey1 > y1) ey0 = ey0 - (ey1 - y1), ey1 = y1;}
-
-  resize(ex0, ey0, ex1, ey1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -631,32 +702,9 @@ void Element::resizeSticky(int x0, int y0, int x1, int y1)
 /*
 Contains many elements in it and draws them and handles them, and even makes
 sure you can't press the mouse "through" elements on top of other elements.
-
-Also can have scrollbars.
 */
 
-void Container::setScrollSizeToElements()
-{
-  int newx0 = x0, newy0 = y0, newx1 = x1, newy1 = y1;
-  if(size() > 0)
-  {
-    newx0 = element[0]->getX0();
-    newy0 = element[0]->getY0();
-    newx1 = element[0]->getX1();
-    newy1 = element[0]->getY1();
-  }
-  for(unsigned i = 1; i < size(); i++)
-  {
-    if(element[i]->getX0() < newx0) newx0 = element[i]->getX0();
-    if(element[i]->getY0() < newy0) newy0 = element[i]->getY0();
-    if(element[i]->getX1() > newx1) newx1 = element[i]->getX1();
-    if(element[i]->getY1() > newy1) newy1 = element[i]->getY1();
-  }
-  
-  area.resizeSticky(newx0, newy0, newx1, newy1);
-}
-
-Container::Container() : keepElementsInside(false)
+Container::Container()
 {
   clear(); //clear the element list
   totallyEnable();
@@ -668,10 +716,297 @@ Container::Container() : keepElementsInside(false)
   y1 = screenHeight();
 }
 
-void Container::make(int x, int y, int sizex, int sizey, 
-            int areax, int areay, int areasizex, int areasizey, //areax and areay are relative to the container!
-            double areaLeftSticky, double areaTopSticky, double areaRightSticky, double areaBottomSticky)
+void Container::make(int x, int y, int sizex, int sizey)
 {
+  ic.getElements().clear();
+  
+  this->x0 = x;
+  this->y0 = y;
+  this->setSizex(sizex);
+  this->setSizey(sizey);
+  
+  addSubElement(&area, /*STICKYNOTHING*/STICKYFULL); //stickynothing results in the area not being resized with the container. If you add top to a window, the container is made smaller. The area then not. Then a useless scrollbar appears. Therefore, use stickyfull by default!!
+  
+  area.make(this->x0, this->y0, this->x1, this->y1);
+}
+
+void Container::setElementOver(bool state)
+{
+  Element::setElementOver(state);
+  elements.setElementOver(state);
+}
+
+void Container::handleWidget()
+{
+  //if(mouseOver())
+  if(!elementOver && mouseInVisibleZone())
+  {
+    int topElement = -1;
+    
+    //priority to mouseGrabbed over mouseOver
+    for(int i = size() - 1; i >= 0; i--)
+    {
+      elements.getElement(i)->setElementOver(0);
+      if(elements.getElement(i)->mouseGrabbed(elements.getElement(i)->getMouseStateForContainer()))
+      {
+        if(topElement < 0) topElement = i;
+        //break;
+      }
+      elements.getElement(i)->setElementOver(1);
+    }
+    
+    //only now test mouseOver
+    if(topElement == -1)
+    for(int i = size() - 1; i >= 0; i--)
+    {
+      elements.getElement(i)->setElementOver(0);
+      if(elements.getElement(i)->mouseOver())
+      {
+        topElement = i;
+        break;
+      }
+      elements.getElement(i)->setElementOver(1);
+    }
+
+    //make all elements unresponsive to the mouse by setting "elementover", except the topElement
+    for(size_t i = 0; i < size(); i++) elements.getElement(i)->setElementOver(1);
+    if(topElement >= 0 && topElement < (int)size())
+    {
+      elements.getElement(topElement)->setElementOver(0);
+      if(elements.getElement(topElement)->isContainer() && elements.getElement(topElement)->mouseDownHere(elements.getElement(topElement)->getMouseStateForContainer())) bringToTop(elements.getElement(topElement));
+    }
+  }
+  else if(!elementOver) for(size_t i = 0; i < size(); i++) elements.getElement(i)->setElementOver(1); //mouse is over the bars!
+  
+  for(unsigned long i = 0; i < size(); i++)
+  {
+    elements.getElement(i)->handle();
+  }
+}
+
+void Container::drawElements() const
+{
+  for(unsigned long i = 0; i < size(); i++)
+  {
+    if(!elements.getElement(i)->isNotDrawnByContainer())
+    {
+      elements.getElement(i)->draw();
+    }
+  }
+}
+
+void Container::drawWidget() const
+{
+  setSmallestScissor(x0, y0, x1, y1);
+  drawElements();
+  resetScissor();
+}
+
+unsigned long Container::size() const
+{
+  return elements.getElements().size();
+}
+
+void Container::remove(Element* element)
+{
+  size_t index = elements.findElementIndex(element);
+  if(index >= size()) return;
+  elements.getElements().erase(elements.getElements().begin() + index);
+}
+
+void Container::bringToTop(Element* element) //precondition: element must already be in the list
+{
+  size_t index = elements.findElementIndex(element);
+  if(index >= size()) return;
+  elements.getElements().erase(elements.getElements().begin() + index);
+  elements.getElements().push_back(element);
+}
+
+void Container::pushTop(Element* element, const Pos<Sticky>& sticky)
+{
+  pushTopAt(element, element->getX0() - x0, element->getY0() - y0, sticky);
+}
+
+void Container::pushBottom(Element* element, const Pos<Sticky>& sticky)
+{
+  pushBottomAt(element, element->getX0() - x0, element->getY0() - y0, sticky);
+}
+
+void Container::insert(size_t pos, Element* element, const Pos<Sticky>& sticky)
+{
+  insertAt(pos, element, element->getX0() - x0, element->getY0() - y0, sticky);
+}
+
+void Container::pushTopRelative(Element* element, const Pos<Sticky>& sticky)
+{
+  pushTopAt(element, element->getX0(), element->getY0(), sticky);
+}
+
+void Container::pushBottomRelative(Element* element, const Pos<Sticky>& sticky)
+{
+  pushBottomAt(element, element->getX0(), element->getY0(), sticky);
+}
+
+void Container::insertRelative(size_t pos, Element* element, const Pos<Sticky>& sticky)
+{
+  insertAt(pos, element, element->getX0(), element->getY0(), sticky);
+}
+
+void Container::pushTopAt(Element* element, int x, int y, const Pos<Sticky>& sticky)
+{
+  remove(element); //prevent duplicates
+  element->moveTo(x0 + x, y0 + y);
+  elements.addSubElement(element, sticky, this);
+}
+
+void Container::pushBottomAt(Element* element, int x, int y, const Pos<Sticky>& sticky)
+{
+  remove(element); //prevent duplicates
+  element->moveTo(x0 + x, y0 + y);
+  elements.insertSubElement(0, element, sticky, this);
+}
+
+void Container::insertAt(size_t pos, Element* element, int x, int y, const Pos<Sticky>& sticky)
+{
+  remove(element); //prevent duplicates
+  element->moveTo(x0 + x, y0 + y);
+  elements.insertSubElement(pos, element, sticky, this);
+}
+
+void Container::centerElement(Element* element)
+{
+  element->moveCenterTo(getCenterx(), getCentery());
+}
+
+bool Container::isContainer() const
+{
+  return true;
+}
+
+void Container::clear()
+{
+  elements.getElements().clear();
+}
+
+void Container::putInside(unsigned long i)
+{
+  if(i < size())
+  {
+    int ex0 = elements.getElement(i)->getX0();
+    int ey0 = elements.getElement(i)->getY0();
+    int ex1 = elements.getElement(i)->getX1();
+    int ey1 = elements.getElement(i)->getY1();
+    int esx = ex1 - ex0;
+    int esy = ey1 - ey0;
+    
+    int newx = ex0, newy = ey0;
+    
+    if(ex0 < area.getX0()) newx = area.getX0();
+    if(ey0 < area.getY0()) newy = area.getY0();
+    if(ex1 > area.getX1()) newx = area.getX1() - esx;
+    if(ey1 > area.getY1()) newy = area.getY1() - esy;
+    
+    //if the size of the element is too large to fit in the window, there's no reason to move it (or it'll warp all the time)
+    if(elements.getElement(i)->getSizex() > area.getSizex()) newx = elements.getElement(i)->getX0();
+    if(elements.getElement(i)->getSizey() > area.getSizey()) newy = elements.getElement(i)->getY0();
+    
+    elements.getElement(i)->moveTo(newx, newy);
+  }
+}
+
+void Container::moveWidget(int x, int y)
+{
+  elements.move(x, y);
+}
+
+void Container::getRelativeElementPos(Element& element, int& ex, int& ey) const
+{
+  ex = element.getX0() - x0;
+  ey = element.getY0() - y0;
+}
+
+void Container::resizeWidget(const Pos<int>& newPos)
+{
+  Pos<int> oldPos = { this->x0, this->y0, this->x1, this->y1 };
+  elements.resize(oldPos, newPos);
+}
+
+bool Container::mouseInVisibleZone() const
+{
+  return mouseOver();
+}
+
+void Container::setSizeToElements()
+{
+  int newx0 = x0, newy0 = y0, newx1 = x1, newy1 = y1;
+  if(size() > 0)
+  {
+    newx0 = elements.getElement(0)->getX0();
+    newy0 = elements.getElement(0)->getY0();
+    newx1 = elements.getElement(0)->getX1();
+    newy1 = elements.getElement(0)->getY1();
+  }
+  for(unsigned i = 1; i < size(); i++)
+  {
+    if(elements.getElement(i)->getX0() < newx0) newx0 = elements.getElement(i)->getX0();
+    if(elements.getElement(i)->getY0() < newy0) newy0 = elements.getElement(i)->getY0();
+    if(elements.getElement(i)->getX1() > newx1) newx1 = elements.getElement(i)->getX1();
+    if(elements.getElement(i)->getY1() > newy1) newy1 = elements.getElement(i)->getY1();
+  }
+  
+  x0 = newx0;
+  y0 = newy0;
+  x1 = newx1;
+  y1 = newy1;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//SCROLLCONTAINER///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+Container with extra feature:
+Also can have scrollbars if the area of the elements is larger than the container size.
+*/
+
+void ScrollContainer::drawWidget() const
+{
+  setSmallestScissor(getVisibleX0(), getVisibleY0(), getVisibleX1(), getVisibleY1()); //currently does same as setScissor (because otherwise there's weird bug, to reproduce: resize the red window and look at smiley in the small grey window), so elements from container in container are still drawn outside container. DEBUG THIS ASAP!!!
+  drawElements();
+  resetScissor();
+  
+  bars.draw();
+}
+
+void ScrollContainer::resizeWidget(const Pos<int>& newPos)
+{
+  //area.resize(x0, y0, x1, y1);
+  updateBars(); //if this is done at the wrong moment, the bars may appear after resizing the container at times where it isn't desired
+  
+  Container::resizeWidget(newPos);
+}
+
+void ScrollContainer::handleWidget()
+{
+  Container::handleWidget();
+  
+  bars.handle();
+  int scrollx = x0 - int(bars.hbar.scrollPos); //the scrollpos is 0 if a bar is not enabled
+  int scrolly = y0 - int(bars.vbar.scrollPos);
+  moveAreaTo(scrollx, scrolly);
+}
+
+ScrollContainer::ScrollContainer()
+{
+}
+
+void ScrollContainer::make(int x, int y, int sizex, int sizey, 
+            int areax, int areay, int areasizex, int areasizey, //areax and areay are relative to the ScrollContainer
+            const Pos<Sticky>& areasticky)
+{
+  ic.getElements().clear();
+  
   this->x0 = x;
   this->y0 = y;
   this->setSizex(sizex);
@@ -680,8 +1015,8 @@ void Container::make(int x, int y, int sizex, int sizey,
   bars.make(x, y, sizex, sizey);
   bars.disableV();
   bars.disableH();
-  bars.setSticky(0, 0, 1, 1);
-  bars.saveInitialPosition(this->x0, this->y0, this->x1, this->y1);
+  addSubElement(&bars, STICKYFULL);
+  
 
   if(areasizex == -1)
   {
@@ -696,20 +1031,83 @@ void Container::make(int x, int y, int sizex, int sizey,
   }
   
   area.make(this->x0 + areax, this->y0 + areay, this->x0 + areax + areasizex, this->y0 + areay + areasizey);
-  area.setSticky(areaLeftSticky, areaTopSticky, areaRightSticky, areaBottomSticky);
-  area.saveInitialPosition(this->x0, this->y0, this->x1, this->y1);
+  
+  addSubElement(&area, areasticky);
 
   initBars();
 }
 
-void Container::setElementOver(bool state)
+void ScrollContainer::moveAreaTo(int x, int y)
 {
-  Element::setElementOver(state);
-  bars.setElementOver(state);
-  for(size_t i = 0; i < size(); i++) element[i]->setElementOver(state);
+  for(unsigned long i = 0; i < size(); i++) elements.getElement(i)->move(x - area.getX0(), y - area.getY0());
+  area.moveTo(x, y);
 }
 
-void Container::toggleBars() //turns bars on or of if they're needed or not (depending on visible size and scroll area size) (different than MS Windows where scrollbars become inactive grey when not needed)
+void ScrollContainer::initBars()
+{
+  toggleBars();
+
+  bars.vbar.scrollSize = area.getSizey() - getVisibleSizey();
+  bars.hbar.scrollSize = area.getSizex() - getVisibleSizex();
+  bars.vbar.scrollPos = y0 - area.getY0();
+  bars.hbar.scrollPos = x0 - area.getX0();
+}
+
+void ScrollContainer::updateBars()
+{
+  toggleBars();
+
+  bars.hbar.scrollSize = area.getSizex() - getVisibleSizex();
+  bars.vbar.scrollSize = area.getSizey() - getVisibleSizey();
+  if(bars.hbar.scrollSize < 0) bars.hbar.scrollSize = 0;
+  if(bars.vbar.scrollSize < 0) bars.vbar.scrollSize = 0;
+  if(bars.hbar.scrollPos > bars.hbar.scrollSize) bars.hbar.scrollPos = bars.hbar.scrollSize;
+  if(bars.vbar.scrollPos > bars.vbar.scrollSize) bars.vbar.scrollPos = bars.vbar.scrollSize;
+}
+
+int ScrollContainer::getVisibleX0() const
+{
+  return x0;
+}
+
+int ScrollContainer::getVisibleY0() const
+{
+  return y0;
+}
+
+int ScrollContainer::getVisibleX1() const
+{
+  if(bars.venabled) return x1 - bars.vbar.getSizex();
+  else return x1;
+}
+
+int ScrollContainer::getVisibleY1() const
+{
+  if(bars.henabled) return y1 - bars.hbar.getSizey();
+  else return y1;
+}
+
+int ScrollContainer::getVisibleSizex() const
+{
+  return getVisibleX1() - getVisibleX0();
+}
+
+int ScrollContainer::getVisibleSizey() const
+{
+  return getVisibleY1() - getVisibleY0();
+}
+
+bool ScrollContainer::mouseInVisibleZone() const
+{
+  if(!mouseOver()) return false;
+  return globalMouseX >= getVisibleX0()
+      && globalMouseX < getVisibleX1()
+      && globalMouseY >= getVisibleY0()
+      && globalMouseY < getVisibleY1();
+}
+
+
+void ScrollContainer::toggleBars() //turns bars on or of if they're needed or not (depending on visible size and scroll area size) (different than MS Windows where scrollbars become inactive grey when not needed)
 {
   if(area.getSizex() <= getVisibleSizex() && area.getSizey() <= getVisibleSizey())
   {
@@ -733,59 +1131,166 @@ void Container::toggleBars() //turns bars on or of if they're needed or not (dep
   }
 }
 
-void Container::initBars()
+void ScrollContainer::setScrollSizeToElements()
 {
-  toggleBars();
-
-  bars.vbar.scrollSize = area.getSizey() - getVisibleSizey();
-  bars.hbar.scrollSize = area.getSizex() - getVisibleSizex();
-  bars.vbar.scrollPos = y0 - area.getY0();
-  bars.hbar.scrollPos = x0 - area.getX0();
+  int newx0 = x0, newy0 = y0, newx1 = x1, newy1 = y1;
+  if(size() > 0)
+  {
+    newx0 = elements.getElement(0)->getX0();
+    newy0 = elements.getElement(0)->getY0();
+    newx1 = elements.getElement(0)->getX1();
+    newy1 = elements.getElement(0)->getY1();
+  }
+  for(unsigned i = 1; i < size(); i++)
+  {
+    if(elements.getElement(i)->getX0() < newx0) newx0 = elements.getElement(i)->getX0();
+    if(elements.getElement(i)->getY0() < newy0) newy0 = elements.getElement(i)->getY0();
+    if(elements.getElement(i)->getX1() > newx1) newx1 = elements.getElement(i)->getX1();
+    if(elements.getElement(i)->getY1() > newy1) newy1 = elements.getElement(i)->getY1();
+  }
+  
+  area.resize(newx0, newy0, newx1, newy1);
+  
+  updateBars();
 }
 
-void Container::updateBars()
+////////////////////////////////////////////////////////////////////////////////
+//SCROLLELEMENT///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+ScrollElement will contain 1 element. Depending on the size of that element compared to this ScrollElement,
+1 or 2 scrollbars will appear, allowing to scroll to see all of that element.
+The size of that element isn't affected by this ScrollElement.
+The position of that element is completely controlled by this ScrollElement or its scrollbars
+*/
+
+void ScrollElement::drawWidget() const
 {
+  setSmallestScissor(getVisibleX0(), getVisibleY0(), getVisibleX1(), getVisibleY1()); //currently does same as setScissor (because otherwise there's weird bug, to reproduce: resize the red window and look at smiley in the small grey window), so elements from container in container are still drawn outside container. DEBUG THIS ASAP!!!
+  element->draw();
+  resetScissor();
+  
+  bars.draw();
+}
+
+void ScrollElement::moveWidget(int x, int y)
+{
+  if(element) element->move(x, y);
+}
+
+void ScrollElement::resizeWidget(const Pos<int>& /*newPos*/)
+{
+  updateBars(); //if this is done at the wrong moment, the bars may appear after resizing the container at times where it isn't desired
+}
+
+void ScrollElement::handleWidget()
+{
+  if(element) element->handle();
+  
+  bars.handle();
+  int scrollx = x0 - int(bars.hbar.scrollPos); //the scrollpos is 0 if a bar is not enabled
+  int scrolly = y0 - int(bars.vbar.scrollPos);
+  moveAreaTo(scrollx, scrolly);
+  
+  updateBars();
+}
+
+void ScrollElement::setElementOver(bool state)
+{
+  Element::setElementOver(state);
+  element->setElementOver(state);
+}
+
+ScrollElement::ScrollElement()
+{
+  element = 0;
+}
+
+void ScrollElement::make(int x, int y, int sizex, int sizey, Element* element)
+{
+  ic.getElements().clear();
+  
+  this->x0 = x;
+  this->y0 = y;
+  this->setSizex(sizex);
+  this->setSizey(sizey);
+  
+  bars.make(x, y, sizex, sizey);
+  bars.disableV();
+  bars.disableH();
+  addSubElement(&bars, STICKYFULL);
+  
+
+  this->element = element;
+
+  initBars();
+}
+
+void ScrollElement::moveAreaTo(int x, int y)
+{
+  if(element)element->moveTo(x, y);
+}
+
+void ScrollElement::initBars()
+{
+  if(!element) return;
+  
   toggleBars();
 
-  bars.hbar.scrollSize = area.getSizex() - getVisibleSizex();
-  bars.vbar.scrollSize = area.getSizey() - getVisibleSizey();
+  bars.vbar.scrollSize = element->getSizey() - getVisibleSizey();
+  bars.hbar.scrollSize = element->getSizex() - getVisibleSizex();
+  bars.vbar.scrollPos = y0 - element->getY0();
+  bars.hbar.scrollPos = x0 - element->getX0();
+}
+
+void ScrollElement::updateBars()
+{
+  if(!element) return;
+  
+  toggleBars();
+
+  bars.hbar.scrollSize = element->getSizex() - getVisibleSizex();
+  bars.vbar.scrollSize = element->getSizey() - getVisibleSizey();
   if(bars.hbar.scrollSize < 0) bars.hbar.scrollSize = 0;
   if(bars.vbar.scrollSize < 0) bars.vbar.scrollSize = 0;
   if(bars.hbar.scrollPos > bars.hbar.scrollSize) bars.hbar.scrollPos = bars.hbar.scrollSize;
   if(bars.vbar.scrollPos > bars.vbar.scrollSize) bars.vbar.scrollPos = bars.vbar.scrollSize;
 }
 
-int Container::getVisibleX0() const
+int ScrollElement::getVisibleX0() const
 {
   return x0;
 }
-int Container::getVisibleY0() const
+
+int ScrollElement::getVisibleY0() const
 {
   return y0;
 }
 
-int Container::getVisibleX1() const
+int ScrollElement::getVisibleX1() const
 {
   if(bars.venabled) return x1 - bars.vbar.getSizex();
   else return x1;
 }
-int Container::getVisibleY1() const
+
+int ScrollElement::getVisibleY1() const
 {
   if(bars.henabled) return y1 - bars.hbar.getSizey();
   else return y1;
 }
 
-int Container::getVisibleSizex() const
+int ScrollElement::getVisibleSizex() const
 {
   return getVisibleX1() - getVisibleX0();
 }
 
-int Container::getVisibleSizey() const
+int ScrollElement::getVisibleSizey() const
 {
   return getVisibleY1() - getVisibleY0();
 }
 
-bool Container::mouseInVisibleZone() const
+bool ScrollElement::mouseInVisibleZone() const
 {
   if(!mouseOver()) return false;
   return globalMouseX >= getVisibleX0()
@@ -794,243 +1299,30 @@ bool Container::mouseInVisibleZone() const
       && globalMouseY < getVisibleY1();
 }
 
-void Container::handleWidget()
-{
-  //if(mouseOver())
-  if(!elementOver && mouseInVisibleZone())
-  {
-    int topElement = -1;
-    
-    //priority to mouseGrabbed over mouseOver
-    for(int i = size() - 1; i >= 0; i--)
-    {
-      element[i]->setElementOver(0);
-      if(element[i]->mouseGrabbed(element[i]->getMouseStateForContainer()))
-      {
-        if(topElement < 0) topElement = i;
-        //break;
-      }
-      element[i]->setElementOver(1);
-    }
-    
-    //only now test mouseOver
-    if(topElement == -1)
-    for(int i = size() - 1; i >= 0; i--)
-    {
-      element[i]->setElementOver(0);
-      if(element[i]->mouseOver())
-      {
-        topElement = i;
-        break;
-      }
-      element[i]->setElementOver(1);
-    }
 
-    //make all elements unresponsive to the mouse by setting "elementover", except the topElement
-    for(size_t i = 0; i < size(); i++) element[i]->setElementOver(1);
-    if(topElement >= 0 && topElement < (int)size())
-    {
-      element[topElement]->setElementOver(0);
-      if(element[topElement]->isContainer() && element[topElement]->mouseDownHere(element[topElement]->getMouseStateForContainer())) bringToTop(element[topElement]);
-    }
-  }
-  else if(!elementOver) for(size_t i = 0; i < size(); i++) element[i]->setElementOver(1); //mouse is over the bars!
+void ScrollElement::toggleBars() //turns bars on or of if they're needed or not (depending on visible size and scroll area size) (different than MS Windows where scrollbars become inactive grey when not needed)
+{
+  if(!element) return;
   
-  if(keepElementsInside)
-  for(unsigned long i = 0; i < size(); i++)
+  if(element->getSizex() <= getVisibleSizex() && element->getSizey() <= getVisibleSizey())
   {
-    if(element[i]->mouseGrabbed(element[i]->getMouseStateForContainer())) putInside(i);
+    bars.disableH();
+    bars.disableV();
   }
-  
-  for(unsigned long i = 0; i < size(); i++)
+  else if(element->getSizex() > getVisibleSizex() && element->getSizey() <= getVisibleSizey())
   {
-    element[i]->handle();
+    bars.enableH();
+    bars.disableV();
   }
-  
-  bars.handle();
-  int scrollx = x0 - int(bars.hbar.scrollPos); //the scrollpos is 0 if a bar is not enabled
-  int scrolly = y0 - int(bars.vbar.scrollPos);
-  moveAreaTo(scrollx, scrolly);
-}
-
-void Container::moveAreaTo(int x, int y)
-{
-  for(unsigned long i = 0; i < size(); i++) element[i]->move(x - area.getX0(), y - area.getY0());
-  area.moveTo(x, y);
-}
-
-void Container::drawWidget() const
-{
-  setSmallestScissor(getVisibleX0(), getVisibleY0(), getVisibleX1(), getVisibleY1()); //currently does same as setScissor (because otherwise there's weird bug, to reproduce: resize the red window and look at smiley in the small grey window), so elements from container in container are still drawn outside container. DEBUG THIS ASAP!!!
-  
-  for(unsigned long i = 0; i < size(); i++)
+  else if(element->getSizex() <= getVisibleSizex() && element->getSizey() > getVisibleSizey())
   {
-    if(!element[i]->isNotDrawnByContainer())
-    {
-      element[i]->draw();
-    }
+    bars.disableH();
+    bars.enableV();
   }
-  
-  resetScissor();
-  
-  bars.draw();
-}
-
-unsigned long Container::size() const
-{
-  return element.size();
-}
-
-void Container::remove(Element* element)
-{
-  for(unsigned long i = 0; i < size(); i++)
+  else if(element->getSizex() > getVisibleSizex() && element->getSizey() > getVisibleSizey())
   {
-    if(element == this->element[i])
-    {
-      this->element.erase(this->element.begin() + i);
-    }
-  }
-}
-
-void Container::bringToTop(Element* element) //precondition: element must already be in the list
-{
-  remove(element); //remove it from the list before putting it to the top
-  this->element.push_back(element);
-}
-
-void Container::pushTop(Element* element, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
-{
-  pushTopAt(element, element->getX0() - x0, element->getY0() - y0, leftSticky, topSticky, rightSticky, bottomSticky);
-}
-
-void Container::pushBottom(Element* element, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
-{
-  pushBottomAt(element, element->getX0() - x0, element->getY0() - y0, leftSticky, topSticky, rightSticky, bottomSticky);
-}
-
-void Container::insert(size_t pos, Element* element, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
-{
-  insertAt(pos, element, element->getX0() - x0, element->getY0() - y0, leftSticky, topSticky, rightSticky, bottomSticky);
-}
-
-void Container::pushTopRelative(Element* element, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
-{
-  pushTopAt(element, element->getX0(), element->getY0(), leftSticky, topSticky, rightSticky, bottomSticky);
-}
-
-void Container::pushBottomRelative(Element* element, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
-{
-  pushBottomAt(element, element->getX0(), element->getY0(), leftSticky, topSticky, rightSticky, bottomSticky);
-}
-
-void Container::insertRelative(size_t pos, Element* element, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
-{
-  insertAt(pos, element, element->getX0(), element->getY0(), leftSticky, topSticky, rightSticky, bottomSticky);
-}
-
-void Container::pushTopAt(Element* element, int x, int y, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
-{
-  remove(element); //prevent duplicates
-  this->element.push_back(element);
-  initElement(element, x, y, leftSticky, topSticky, rightSticky, bottomSticky);
-}
-
-void Container::pushBottomAt(Element* element, int x, int y, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
-{
-  remove(element); //prevent duplicates
-  this->element.insert(this->element.begin(), element);
-  initElement(element, x, y, leftSticky, topSticky, rightSticky, bottomSticky);
-}
-
-void Container::insertAt(size_t pos, Element* element, int x, int y, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
-{
-  remove(element); //prevent duplicates
-  this->element.insert(this->element.begin() + pos, element);
-  initElement(element, x, y, leftSticky, topSticky, rightSticky, bottomSticky);
-}
-
-void Container::centerElement(Element* element)
-{
-  element->moveCenterTo(getCenterx(), getCentery());
-}
-
-void Container::initElement(Element* element, int x, int y, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
-{
-  element->moveTo(x0 + x, y0 + y);
-  
-  //sticky factors for resizing
-  element->setSticky(leftSticky, topSticky, rightSticky, bottomSticky);
-    
-  //remembering coordinates for proper resizing
-  element->saveInitialPosition(area.getX0(), area.getY0(), area.getX1(), area.getY1());
-}
-
-bool Container::isContainer() const
-{
-  return 1;
-}
-
-void Container::clear()
-{
-  element.clear();
-}
-
-void Container::putInside(unsigned long i)
-{
-  if(/*i >= 0 &&*/ i < size())
-  {
-    int ex0 = element[i]->getX0();
-    int ey0 = element[i]->getY0();
-    int ex1 = element[i]->getX1();
-    int ey1 = element[i]->getY1();
-    int esx = ex1 - ex0;
-    int esy = ey1 - ey0;
-    
-    int newx = ex0, newy = ey0;
-    
-    if(ex0 < area.getX0()) newx = area.getX0();
-    if(ey0 < area.getY0()) newy = area.getY0();
-    if(ex1 > area.getX1()) newx = area.getX1() - esx;
-    if(ey1 > area.getY1()) newy = area.getY1() - esy;
-    
-    //if the size of the element is too large to fit in the window, there's no reason to move it (or it'll warp all the time)
-    if(element[i]->getSizex() > area.getSizex()) newx = element[i]->getX0();
-    if(element[i]->getSizey() > area.getSizey()) newy = element[i]->getY0();
-    
-    element[i]->moveTo(newx, newy);
-  }
-}
-
-void Container::moveWidget(int x, int y)
-{
-  for(unsigned long i = 0; i < size(); i++) element[i]->move(x, y);
-  bars.move(x, y);
-  area.move(x, y);
-}
-
-void Container::getRelativeElementPos(Element& element, int& ex, int& ey) const
-{
-  ex = element.getX0() - x0;
-  ey = element.getY0() - y0;
-}
-
-void Container::resizeWidget()
-{
-  bars.resizeSticky(x0, y0, x1, y1);
-  area.resizeSticky(x0, y0, x1, y1);
-  updateBars(); //if this is done at the wrong moment, the bars may appear after resizing the container at times where it isn't desired
-
-  for(unsigned long i = 0; i < size(); i++)
-  {
-    element[i]->resizeSticky(area.getX0(), area.getY0(), area.getX1(), area.getY1());
-  }
-}
-
-void Container::saveInitialPositions()
-{
-  for(unsigned long i = 0; i < size(); i++)
-  {
-    element[i]->saveInitialPosition(area.getX0(), area.getY0(), area.getX1(), area.getY1());
+    bars.enableH();
+    bars.enableV();
   }
 }
 
@@ -1038,15 +1330,12 @@ void Container::saveInitialPositions()
 //GUIGROUP//////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-bool Group::mouseOver() const
+bool Group::mouseOverShape() const
 {
-  if(!present) return false;
-  if(elementOver) return false; //there is another element over this element, so says the container containing this element
-  
   for(int i = size() - 1; i >= 0; i--)
   {
-    element[i]->setElementOver(0);
-    if(element[i]->mouseOver()) return true;
+    elements.getElement(i)->setElementOver(0);
+    if(elements.getElement(i)->mouseOver()) return true;
   }
   
   return false;
@@ -1090,27 +1379,25 @@ void Panel::makeUntextured(int x, int y, int sizex, int sizey, const ColorRGB& f
 }
 
 void Panel::makeTextured(int x, int y, int sizex, int sizey,
-       const Texture* t00, const ColorRGB& colorMod, int shape)
+       const Texture* t00, const ColorRGB& colorMod)
 {
   this->x0 = x;
   this->y0 = y;
   this->setSizex(sizex);
   this->setSizey(sizey);
   this->totallyEnable();
-  this->shape = shape;
   
   this->panel.makeTextured(t00, colorMod);
 }
 
 void Panel::make(int x, int y, int sizex, int sizey,
-       const GuiSet* set, int shape)
+       const GuiSet* set)
 {
   this->x0 = x;
   this->y0 = y;
   this->setSizex(sizex);
   this->setSizey(sizey);
   this->totallyEnable();
-  this->shape = shape;
   
   this->panel = *set->windowPanel;
 }
@@ -1153,7 +1440,6 @@ void Rule::makeHorizontal(int x, int y, int length, const GuiSet* set)
   this->setSizex(length);
   this->setSizey(set->hline[0]->getV());
   this->totallyEnable();
-  this->shape = 0;
   
   this->line.makeHorizontal1(set->hline[0], set->mainColor);
 }
@@ -1165,7 +1451,6 @@ void Rule::makeHorizontal1(int x, int y, int length, Texture* t0, const ColorRGB
   this->setSizex(length);
   this->setSizey(t0->getV());
   this->totallyEnable();
-  this->shape = 0;
   
   this->line.makeHorizontal1(t0, colorMod);
 }
@@ -1177,7 +1462,6 @@ void Rule::makeVertical(int x, int y, int length, const GuiSet* set)
   this->setSizey(length);
   this->setSizex(set->vline[0]->getU());
   this->totallyEnable();
-  this->shape = 0;
   
   this->line.makeVertical1(set->vline[0], set->mainColor);
 }
@@ -1189,7 +1473,6 @@ void Rule::makeVertical1(int x, int y, int length, Texture* t0, const ColorRGB& 
   this->setSizey(length);
   this->setSizex(t0->getU());
   this->totallyEnable();
-  this->shape = 0;
   
   this->line.makeVertical1(t0, colorMod);
 }
@@ -1235,6 +1518,14 @@ Window::Window()
   this->enableResizer = 0;
   this->closed = 0;
   this->resizerOverContainer = 0;
+  
+  addSubElement(&top, STICKYHORIZONTALTOP);
+  addSubElement(&resizer, STICKYBOTTOMRIGHT);
+  addSubElement(&container, STICKYFULL);
+  addSubElement(&closeButton, STICKYTOPRIGHT);
+  
+  minSizex = 64;
+  minSizey = 64;
 }
 
 int Window::getRelContentStart() const
@@ -1252,9 +1543,6 @@ void Window::addCloseButton(int offsetX, int offsetY, const GuiSet* set)
   closeButton.makeImage(closeX, closeY, set->closeButton, set->closeButton, set->closeButton, set->mainColor, set->mouseOverColor, set->mouseDownColor);
   closed = 0;
   closeEnabled = 1;
-  
-  closeButton.setSticky(1.0, 0.0, 1.0, 0.0);
-  closeButton.saveInitialPosition(x0, y0, x1, y1);
 }
 
 void Window::addResizer(const GuiSet* set, bool overContainer, int offsetX, int offsetY)
@@ -1264,13 +1552,9 @@ void Window::addResizer(const GuiSet* set, bool overContainer, int offsetX, int 
   resizer.makeImage(resizerX, resizerY, set->resizer, set->resizer, set->resizer, set->mainColor, set->mouseOverColor, set->mouseDownColor);
   enableResizer = true;
   
-  resizer.setSticky(1.0, 1.0, 1.0, 1.0);
-  resizer.saveInitialPosition(x0, y0, x1, y1);
-  
   if(!overContainer)
   {
     container.resize(container.getX0(), container.getY0(), container.getX1(), container.getY1() - (y1 - resizer.getY0()));
-    container.saveInitialPosition(x0, y0, x1, y1);
   }
   
   resizerOverContainer = overContainer;
@@ -1310,12 +1594,11 @@ void Window::setContainerBorders(int left, int up, int right, int down)
   if(down < 0) down = left;
   
   container.resize(getContainerLeftmost() + left, getContainerHighest() + up, getContainerRightmost() - right, getContainerLowest() - down);
-  container.saveInitialPosition(x0, y0, x1, y1);
 }
 
 bool Window::isContainer() const
 {
-  return 1;
+  return true;
 }
 
 void Window::makeUntextured(int x, int y, int sizex, int sizey, const ColorRGB& fillColor)
@@ -1333,14 +1616,13 @@ void Window::makeUntextured(int x, int y, int sizex, int sizey, const ColorRGB& 
 }
 
 void Window::makeTextured(int x, int y, int sizex, int sizey,
-       const Texture* t00, const ColorRGB& colorMod, int shape)
+       const Texture* t00, const ColorRGB& colorMod)
 {
   this->x0 = x;
   this->y0 = y;
   this->setSizex(sizex);
   this->setSizey(sizey);
   this->totallyEnable();
-  this->shape = shape;
   
   this->enableTop = 0;
   
@@ -1350,14 +1632,13 @@ void Window::makeTextured(int x, int y, int sizex, int sizey,
 }
 
 void Window::make(int x, int y, int sizex, int sizey,
-       const GuiSet* set, int shape)
+       const GuiSet* set)
 {
   this->x0 = x;
   this->y0 = y;
   this->setSizex(sizex);
   this->setSizey(sizey);
   this->totallyEnable();
-  this->shape = shape;
   
   this->enableTop = 0;
   
@@ -1371,26 +1652,34 @@ void Window::addTop(Texture* t0, int offsetLeft, int offsetRight, int offsetTop,
   top.makeHorizontal1(x0 + offsetLeft, y0 + offsetTop, getSizex() - offsetLeft - offsetRight, t0, colorMod);
   this->enableTop = 1;
   
-  top.setSticky(0.0, 0.0, 1.0, 0.0);
-  top.saveInitialPosition(x0, y0, x1, y1);
-  
   container.resize(container.getX0(), container.getY0() + (top.getY1() - y0), container.getX1(), container.getY1());
-  container.saveInitialPosition(x0, y0, x1, y1);
 }
 
 
 void Window::initContainer()
 {
   container.make(x0, y0, getSizex(), getSizey());
-  container.setSticky(0.0, 0.0, 1.0, 1.0);
-  container.saveInitialPosition(x0, y0, x1, y1);
-  container.setKeepElementsInside(true);
 }
 
 //to let the scrollbars work properly, call this AFTER using setContainerBorders, addTop, addResizer and such of the window
-void Window::addScrollbars(int areax, int areay, int areasizex, int areasizey, double areaStickyLeft, double areaStickyTop, double areaStickyRight, double areaStickyBottom)
+void Window::addScrollbars()
 {
-  container.make(container.getX0(), container.getY0(), container.getSizex(), container.getSizey(), areax, areay, areasizex, areasizey, areaStickyLeft, areaStickyTop, areaStickyRight, areaStickyBottom);
+  if(scroll.element) return;
+  
+  scroll.make(container.getX0(), container.getY0(), container.getSizex(), container.getSizey(), &container);
+  container.setSizeToElements();
+  ic.removeElement(&container);
+  addSubElement(&scroll, STICKYFULL);
+}
+
+void Window::removeScrollbars()
+{
+  if(!scroll.element) return;
+  
+  scroll.element = 0;
+  ic.removeElement(&scroll);
+  addSubElement(&container, STICKYFULL);
+  container.resize(scroll.getX0(), scroll.getY0(), scroll.getX1(), scroll.getY1());
 }
 
 //this function could be obsolete once there's the resize function
@@ -1413,7 +1702,8 @@ void Window::handleWidget()
   //the close button
   if(closeEnabled && closeButton.clicked()) closed = 1;
   
-  container.handle();
+  if(scroll.element) scroll.handle();
+  else container.handle();
   
   //resize window
   if(enableResizer && resizer.mouseGrabbed()) resize(x0, y0, globalMouseX - resizer.mouseGetRelGrabX() + (x1 - resizer.getX0()), globalMouseY - resizer.mouseGetRelGrabY() + (y1 - resizer.getY0()));
@@ -1426,7 +1716,7 @@ void Window::handleWidget()
   }
   
   //the scrollbar's conserveCorner should be the same as this window's resizerOverContainer
-  container.bars.conserveCorner = resizerOverContainer;
+  scroll.bars.conserveCorner = resizerOverContainer;
   
 }
 
@@ -1441,9 +1731,14 @@ void Window::drawWidget() const
   
   if(closeEnabled) closeButton.draw();
 
-  container.draw();
+  if(scroll.element) scroll.draw();
+  else container.draw();
 
   if(enableResizer) resizer.draw(); //draw this after the container so the resizer is drawn over scrollbars if that is needed
+
+  //handy for debugging the auto-scrollbars
+  //container.drawBorder(ColorRGB(255, 255, 0, 192));
+  //container.area.drawBorder(ColorRGB(128, 255, 0, 192));
 }
 
 void Window::addTitle(const std::string& title, int titleX, int titleY, const Markup& titleMarkup)
@@ -1474,61 +1769,49 @@ void Window::bringToTop(Element* element) //precondition: element must already b
   container.bringToTop(element);
 }
 
-void Window::pushTopAt(Element* element, int x, int y, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
+void Window::pushTopAt(Element* element, int x, int y, const Pos<Sticky>& sticky)
 {
-  container.pushTopAt(element, x, y, leftSticky, topSticky, rightSticky, bottomSticky);
+  container.pushTopAt(element, x, y, sticky);
 }
 
-void Window::pushBottomAt(Element* element, int x, int y, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
+void Window::pushBottomAt(Element* element, int x, int y, const Pos<Sticky>& sticky)
 {
-  container.pushBottomAt(element, x, y, leftSticky, topSticky, rightSticky, bottomSticky);
+  container.pushBottomAt(element, x, y, sticky);
 }
 
-void Window::insertAt(size_t pos, Element* element, int x, int y, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
+void Window::insertAt(size_t pos, Element* element, int x, int y, const Pos<Sticky>& sticky)
 {
-  container.insertAt(pos, element, x, y, leftSticky, topSticky, rightSticky, bottomSticky);
+  container.insertAt(pos, element, x, y, sticky);
 }
 
-void Window::pushTop(Element* element, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
+void Window::pushTop(Element* element, const Pos<Sticky>& sticky)
 {
-  container.pushTop(element, leftSticky, topSticky, rightSticky, bottomSticky);
+  container.pushTop(element, sticky);
 }
 
-void Window::pushBottom(Element* element, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
+void Window::pushBottom(Element* element, const Pos<Sticky>& sticky)
 {
-  container.pushBottom(element, leftSticky, topSticky, rightSticky, bottomSticky);
+  container.pushBottom(element, sticky);
 }
 
-void Window::insert(size_t pos, Element* element, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
+void Window::insert(size_t pos, Element* element, const Pos<Sticky>& sticky)
 {
-  container.insert(pos, element, leftSticky, topSticky, rightSticky, bottomSticky);
+  container.insert(pos, element, sticky);
 }
 
-void Window::pushTopRelative(Element* element, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
+void Window::pushTopRelative(Element* element, const Pos<Sticky>& sticky)
 {
-  container.pushTopRelative(element, leftSticky, topSticky, rightSticky, bottomSticky);
+  container.pushTopRelative(element, sticky);
 }
 
-void Window::pushBottomRelative(Element* element, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
+void Window::pushBottomRelative(Element* element, const Pos<Sticky>& sticky)
 {
-  container.pushBottomRelative(element, leftSticky, topSticky, rightSticky, bottomSticky);
+  container.pushBottomRelative(element, sticky);
 }
 
-void Window::insertRelative(size_t pos, Element* element, double leftSticky, double topSticky, double rightSticky, double bottomSticky)
+void Window::insertRelative(size_t pos, Element* element, const Pos<Sticky>& sticky)
 {
-  container.insertRelative(pos, element, leftSticky, topSticky, rightSticky, bottomSticky);
-}
-
-Element* Window::getAutoSubElement(unsigned long i)
-{
-  switch(i)
-  {
-    case 0: return &top;
-    case 1: return &resizer;
-    case 2: return &container;
-    case 3: return &closeButton;
-    default: return 0;
-  }
+  container.insertRelative(pos, element, sticky);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1597,7 +1880,6 @@ Button::Button()
   this->visible = 0;
   this->doubleClickTime = 500;
   
-  this->shape = 0;
   this->mouseDownVisualStyle = 0;
 }
 
@@ -1607,8 +1889,7 @@ void Button::make
   int x, int y, int sizex, int sizey, //basic properties
   bool enableImage, Texture* texture1, Texture* texture2, Texture* texture3, int imageOffsetx, int imageOffsety, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3, //image
   bool enableText, const std::string& text, int textOffsetx, int textOffsety, const Markup& markup1, const Markup& markup2, const Markup& markup3, //text
-  bool enablePanel, const BackPanel* panel1, const BackPanel* panel2, const BackPanel* panel3, int panelOffsetx, int panelOffsety, //panel
-  int shape //special options
+  bool enablePanel, const BackPanel* panel1, const BackPanel* panel2, const BackPanel* panel3, int panelOffsetx, int panelOffsety //panel
 )
 {
   this->x0 = x;
@@ -1679,7 +1960,6 @@ void Button::make
   this->totallyEnable();
   this->doubleClickTime = 500;
   
-  this->shape = shape;
   this->mouseDownVisualStyle = 0;
 }
 
@@ -1709,8 +1989,7 @@ void Button::addFrontImage(const Texture* texture)
 void Button::makeImage
 (
   int x, int y, //basic properties
-  const Texture* texture1, const Texture* texture2, const Texture* texture3, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3, //image
-  int shape //special options
+  const Texture* texture1, const Texture* texture2, const Texture* texture3, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3 //image
 )
 {
   this->x0 = x;
@@ -1768,7 +2047,6 @@ void Button::makeImage
   this->totallyEnable();
   this->doubleClickTime = 500;
   
-  this->shape = shape;
   this->mouseDownVisualStyle = 0;
 }
 
@@ -1777,8 +2055,7 @@ void Button::makeText
 (
   int x, int y, //basic properties
   const std::string& text, //text
-  const GuiSet* set,
-  int shape //special options
+  const GuiSet* set
 )
 {
   this->x0 = x;
@@ -1810,7 +2087,6 @@ void Button::makeText
   this->totallyEnable();
   this->doubleClickTime = 500;
   
-  this->shape = shape;
   this->mouseDownVisualStyle = 0;
   
   autoTextSize();
@@ -1820,8 +2096,7 @@ void Button::makeText
 void Button::makeTextPanel
 (
   int x, int y, const std::string& text, int sizex, int sizey, //basic properties + text
-  const GuiSet* set, //panel
-  int shape //special options
+  const GuiSet* set //panel
 )
 {
   this->x0 = x;
@@ -1859,7 +2134,6 @@ void Button::makeTextPanel
   this->totallyEnable();
   this->doubleClickTime = 500;
   
-  this->shape = shape;
   this->mouseDownVisualStyle = 1;
   
    
@@ -1915,9 +2189,9 @@ void Button::centerText()
 
 
 
-void  Button::makeImage(int x, int y,  const Texture* texture123, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3,  int shape)
+void  Button::makeImage(int x, int y,  const Texture* texture123, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3)
 {
-  makeImage(x, y, texture123, texture123, texture123, imageColor1, imageColor2, imageColor3, shape);
+  makeImage(x, y, texture123, texture123, texture123, imageColor1, imageColor2, imageColor3);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1981,27 +2255,12 @@ void Scrollbar::init()
     buttonUp.makeImage(x0, y0, txUp, txUpOver, txUpOver, colorMod, colorModOver, colorModDown);
     buttonDown.makeImage(x0, y1 - txDown->getV(), txDown, txDownOver, txDownOver, colorMod, colorModOver, colorModDown);
     scroller.makeImage(x0, int(y0 + getSliderStart() + (getSliderSize() * scrollPos) / scrollSize), txScroller, txScrollerOver, txScrollerOver, colorMod, colorModOver, colorModDown);
-    
-    buttonUp.setSticky(0, 0, 0, 0);
-    buttonDown.setSticky(0, 1, 0, 1);
-    scroller.setSticky(0, -2, 0, -2);
-    buttonDown.saveInitialPosition(x0, y0, x1, y1);
-    buttonUp.saveInitialPosition(x0, y0, x1, y1);
-    scroller.saveInitialPosition(x0, y0, x1, y1);
-
   }
   else
   {
     buttonUp.makeImage(x0, y0, txUp, txUpOver, txUpOver, colorMod, colorModOver, colorModDown);
     buttonDown.makeImage(x1 - txDown->getU(), y0, txDown, txDownOver, txDownOver, colorMod, colorModOver, colorModDown);
     scroller.makeImage(int(x0 + getSliderStart() + (getSliderSize() * scrollPos) / scrollSize), y0, txScroller, txScrollerOver, txScrollerOver, colorMod, colorModOver, colorModDown);
-    
-    buttonUp.setSticky(0, 0, 0, 0);
-    buttonDown.setSticky(1, 0, 1, 0);
-    scroller.setSticky(-2, 0, -2, 0);
-    buttonDown.saveInitialPosition(x0, y0, x1, y1);
-    buttonUp.saveInitialPosition(x0, y0, x1, y1);
-    scroller.saveInitialPosition(x0, y0, x1, y1);
   }
   
   buttonUp.mouseDownVisualStyle = 1;
@@ -2027,6 +2286,37 @@ Scrollbar::Scrollbar()
   this->absoluteSpeed = 0;
   this->speedMode = 0;
   this->enableValue = 0;
+  this->forwardedScroll = 0;
+  
+//TODO: sticky parameters juist zetten
+  addSubElement(&scroller);
+  addSubElement(&buttonUp);
+  addSubElement(&buttonDown);
+}
+
+bool Scrollbar::forWardedMouseScrollUp() const
+{
+  if(forwardedScroll < 0)
+  {
+    forwardedScroll = 0;
+    return true;
+  }
+  return false;
+}
+
+bool Scrollbar::forWardedMouseScrollDown() const
+{
+  if(forwardedScroll > 0)
+  {
+    forwardedScroll = 0;
+    return true;
+  }
+  return false;
+}
+
+void Scrollbar::forwardScroll(int scroll)
+{
+  forwardedScroll += scroll;
 }
 
 void Scrollbar::showValue(int x, int y, const Markup& valueMarkup, int type)
@@ -2144,6 +2434,8 @@ void Scrollbar::handleWidget()
     }
     if(mouseScrollUp()) scrollDir = -2;
     if(mouseScrollDown()) scrollDir = 2;
+    if(forWardedMouseScrollUp()) scrollDir = -2;
+    if(forWardedMouseScrollDown()) scrollDir = 2;
   }
   else
   {
@@ -2172,17 +2464,6 @@ void Scrollbar::handleWidget()
   
   if(direction == V) scroller.moveTo(scroller.getX0(), int(y0 + getSliderStart() + (getSliderSize() * scrollPos) / scrollSize));
   else scroller.moveTo(int(x0 + getSliderStart() + (getSliderSize() * scrollPos) / scrollSize), scroller.getY0());
-}
-
-Element* Scrollbar::getAutoSubElement(unsigned long i)
-{
-  switch(i)
-  {
-    case 0: return &scroller;
-    case 1: return &buttonUp;
-    case 2: return &buttonDown;
-    default: return 0;
-  }
 }
 
 //from an external source, use this function only BEFORE using the handle() function or getTicks() - oldTime will be zero
@@ -2236,8 +2517,10 @@ void Scrollbar::setRelativeScrollSpeed()
 
 ScrollbarPair::ScrollbarPair() : venabled(false), henabled(false)
 {
-  this->conserveCorner = 0;
+  this->conserveCorner = false;
   scrollbarGuiSet = &builtInGuiSet;
+  addSubElement(&vbar, STICKYVERTICALRIGHT);
+  addSubElement(&hbar, STICKYHORIZONTALBOTTOM);
 }
 
 int ScrollbarPair::getVisiblex() const
@@ -2253,7 +2536,7 @@ int ScrollbarPair::getVisibley() const
 }
 
 void ScrollbarPair::make(int x, int y, int sizex, int sizey, double scrollSizeH, double scrollSizeV,
-        const GuiSet* set)
+                         const GuiSet* set)
 {
   scrollbarGuiSet = set;
   this->totallyEnable();
@@ -2269,19 +2552,14 @@ void ScrollbarPair::make(int x, int y, int sizex, int sizey, double scrollSizeH,
   hbar.makeHorizontal(x0, y1 - set->arrowW->getU(), sizex - set->arrowS->getU(),
           scrollSizeH, 0, 0, 1,
           set, 1);
-          
-  vbar.setSticky(1, 0, 1, 1);
-  hbar.setSticky(0, 1, 1, 1);
-  vbar.saveInitialPosition(x0, y0, x1, y1);
-  hbar.saveInitialPosition(x0, y0, x1, y1);
   
-  this->venabled = 1;
-  this->henabled = 1;
+  this->venabled = true;
+  this->henabled = true;
 }
 
 void ScrollbarPair::disableV()
 {
-  venabled = 0;
+  venabled = false;
   
   if(henabled)
   hbar.makeHorizontal(hbar.getX0(), hbar.getY0(), getSizex() - vbar.getSizex() * conserveCorner,
@@ -2291,7 +2569,7 @@ void ScrollbarPair::disableV()
 
 void ScrollbarPair::disableH()
 {
-  henabled = 0;
+  henabled = false;
   
   if(venabled)
   vbar.makeVertical(vbar.getX0(), vbar.getY0(), getSizey() - hbar.getSizey() * conserveCorner,
@@ -2301,7 +2579,7 @@ void ScrollbarPair::disableH()
 
 void ScrollbarPair::enableV()
 {
-  venabled = 1;
+  venabled = true;
   
   if(henabled)
   {
@@ -2322,7 +2600,7 @@ void ScrollbarPair::enableV()
 
 void ScrollbarPair::enableH()
 {
-  henabled = 1;
+  henabled = true;
   
   if(venabled)
   {
@@ -2354,16 +2632,6 @@ void ScrollbarPair::drawWidget() const
   if((venabled && henabled && !conserveCorner) || ((venabled || henabled) && conserveCorner)) txCorner->draw(x1 - txCorner->getU(), y1 - txCorner->getV());
 }
 
-Element* ScrollbarPair::getAutoSubElement(unsigned long i)
-{
-  switch(i)
-  {
-    case 0: return &vbar;
-    case 1: return &hbar;
-    default: return 0;
-  }
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 //GUISLIDER/////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -2376,6 +2644,7 @@ Slider::Slider()
 {
   this->visible = 0;
   this->active = 0;
+  addSubElement(&slider);
 }
 
 void Slider::makeHorizontal(int x, int y, int length, double scrollSize, const GuiSet* set)
@@ -2396,10 +2665,7 @@ void Slider::makeHorizontal(int x, int y, int length, double scrollSize, const G
   this->setSizey(set->slider->getV());
   this->ruler = set->sliderHRule;
   this->slider.makeImage(x0, y0 + centerPos - sliderCenter, set->slider, set->slider, set->slider, set->mainColor, set->mouseOverColor, set->mouseDownColor);
-  
-  slider.setSticky(-2, 0, -2, 0);
-  slider.saveInitialPosition(x0, y0, x1, y1);
-  
+//TODO: sticky parameters goed zetten
   slider.mouseDownVisualStyle = 2;
 }
 
@@ -2422,8 +2688,7 @@ void Slider::makeVertical(int x, int y, int length, double scrollSize, const Gui
   this->ruler = set->sliderVRule;
   this->slider.makeImage(x + centerPos - sliderCenter, y, set->slider, set->slider, set->slider, set->mainColor, set->mouseOverColor, set->mouseDownColor);
   
-  slider.setSticky(0, -2, 0, -2);
-  slider.saveInitialPosition(x0, y0, x1, y1);
+//TODO: sticky parameters goed zetten
 
   slider.mouseDownVisualStyle = 2;
 }
@@ -2520,12 +2785,6 @@ void Slider::handleWidget()
     
     slider.moveTo(slider.getX0(), y0 + scrollPosToScreenPos(scrollPos));
   }
-}
-
-Element* Slider::getAutoSubElement(unsigned long i)
-{
-  if(i == 0) return &slider;
-  else return 0;
 }
 
 double Slider::getValue() const
@@ -2833,12 +3092,6 @@ you first make() the prototype, and make() the bulletlist. Then all checkboxes h
 style you  want!
 */
 
-Element* BulletList::getAutoSubElement(unsigned long i)
-{
-  if(i < bullet.size()) return &bullet[i];
-  else return 0;
-}
-
 BulletList::BulletList()
 {
   this->active = 0;
@@ -2865,6 +3118,7 @@ void BulletList::make(int x, int y, unsigned long amount, int xDiff, int yDiff, 
   {
     bullet.push_back(prototype);
     bullet[i].moveTo(x + xDiff * i, y + yDiff * i);
+    addSubElement(&bullet[i]); //TODO: fix this big memory corruption problem and Element copying
   }
   
   //NOTE: DIT IS NIET CORRECT, DEZE FORMULES
@@ -2993,6 +3247,42 @@ void BulletList::set(unsigned long i)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+//GUITEXT///////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+Text is just some text as child of Element
+*/
+
+Text::Text()
+{
+  this->visible = 0;
+  this->active = 0;
+  this->useNewLine = true;
+}
+
+void Text::make(int x, int y, const std::string& text, const Markup& markup)
+{
+  this->x0 = x;
+  this->y0 = y;
+  this->setSizex(text.length() * markup.getWidth());
+  this->setSizey(markup.getHeight());
+  this->text = text;
+  this->markup = markup;
+  this->totallyEnable();
+}
+
+void Text::drawWidget() const
+{
+  print(text, x0, y0, markup, useNewLine);
+}
+
+void Text::setText(const std::string& text)
+{
+  this->text = text;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 //GUIIMAGE//////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -3032,154 +3322,6 @@ void Image::make(int x, int y, int sizex, int sizey, Texture* image, const Color
 void Image::drawWidget() const
 {
   image->draw(x0, y0, colorMod, getSizex(), getSizey());
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//GUIRECTANGLE//////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-/*
-Rectangle is a simple rectangle but as child class of Element
-*/
-
-Rectangle::Rectangle()
-{
-  this->visible = 0;
-  this->active = 0;
-  this->color = RGB_Black;
-}
-
-void Rectangle::make(int x, int y, int sizex, int sizey, const ColorRGB& color)
-{
-  this->x0 = x;
-  this->y0 = y;
-  this->setSizex(sizex);
-  this->setSizey(sizey);
-  this->color = color;
-  this->totallyEnable();
-}
-
-void Rectangle::drawWidget() const
-{
-  drawRectangle(x0, y0, x1, y1, color);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//GUILINE///////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-/*
-Line is a simple line but as child class of Element
-*/
-
-Line::Line()
-{
-  this->visible = 0;
-  this->active = 0;
-  this->color = RGB_Black;
-
-  this->lx0 = 0;
-  this->ly0 = 0;
-  this->lx1 = 0;
-  this->ly1 = 0;
-}
-
-void Line::make(int x, int y, int sizex, int sizey, const ColorRGB& color)
-{
-  this->x0 = x;
-  this->y0 = y;
-  this->setSizex(sizex);
-  this->setSizey(sizey);
-  this->color = color;
-  this->totallyEnable();
-  this->lx0 = x;
-  this->ly0 = y;
-  this->lx1 = x + sizex;
-  this->ly1 = y + sizey;
-}
-
-void Line::setEndpoints(int x0, int y0, int x1, int y1)
-{
-  this->lx0 = x0;
-  this->ly0 = y0;
-  this->lx1 = x1;
-  this->ly1 = y1;
-}
-
-void Line::drawWidget() const
-{
-  drawLine(lx0, ly0, lx1, ly1, color);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//GUITEXT///////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-/*
-Text is just some text as child of Element
-*/
-
-Text::Text()
-{
-  this->visible = 0;
-  this->active = 0;
-  this->useNewLine = true;
-}
-
-void Text::make(int x, int y, const std::string& text, const Markup& markup)
-{
-  this->x0 = x;
-  this->y0 = y;
-  this->setSizex(text.length() * markup.getWidth());
-  this->setSizey(markup.getHeight());
-  this->text = text;
-  this->markup = markup;
-  this->totallyEnable();
-}
-
-void Text::drawWidget() const
-{
-  print(text, x0, y0, markup, useNewLine);
-}
-
-void Text::setText(const std::string& text)
-{
-  this->text = text;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//GUIFORMATTEDTEXT//////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-/*
-FormattedText is just some formatted text as child of Element
-*/
-
-FormattedText::FormattedText()
-{
-  this->visible = 0;
-  this->active = 0;
-}
-
-void FormattedText::make(int x, int y, const std::string& text, const Markup& markup)
-{
-  this->x0 = x;
-  this->y0 = y;
-  this->setSizex(text.length() * markup.getWidth());
-  this->setSizey(markup.getHeight());
-  this->text = text;
-  this->markup = markup;
-  this->totallyEnable();
-}
-
-void FormattedText::drawWidget() const
-{
-  printFormatted(text, x0, y0, markup);
-}
-
-void FormattedText::setText(const std::string& text)
-{
-  this->text = text;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

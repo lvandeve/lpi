@@ -112,7 +112,7 @@ then it isn't always mentioned that A indirectly depends on C.
 
 *) lpi_draw3dgl: OpenGL, lpi_color, lpi_draw2d, lpi_math3d
 
-*) lpi_gui: SDL, OpenGL, lpi_gui_draw
+*) lpi_gui: SDL, OpenGL, lpi_gui_draw, lpi_general, lpi_color, lpi_texture, lpi_text, lpi_event, lpi_gl, lpi_draw2dgl
 
 *) lpi_gui_draw: SDL, OpenGL, lodepng, lpi_general, lpi_event, lpi_text, lpi_texture, lpi_gl, lpi_color, lpi_draw2dgl, lpi_xml, lpi_file, lpi_base64
 

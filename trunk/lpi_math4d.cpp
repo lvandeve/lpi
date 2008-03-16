@@ -25,25 +25,12 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
-Vector4 Vector4_origin = Vector4(0.0, 0.0, 0.0, 1.0);
-Vector4 Vector4_0 =      Vector4(0.0, 0.0, 0.0, 0.0);
-Vector4 Vector4_x =      Vector4(1.0, 0.0, 0.0, 1.0);
-Vector4 Vector4_y =      Vector4(0.0, 1.0, 0.0, 1.0);
-Vector4 Vector4_z =      Vector4(0.0, 0.0, 1.0, 1.0);
-
-Vector4::Vector4()
+Vector4::Vector4(double x, double y, double z, double w) : x(x), y(y), z(z), w(w)
 {
-  x = 0.0;
-  y = 0.0;
-  z = 0.0;
 }
 
-Vector4::Vector4(double x, double y, double z, double w)
+Vector4::Vector4() /*: x(0.0), y(0.0), z(0.0), w(0.0)*/
 {
-  this->x = x;
-  this->y = y;
-  this->z = z;
-  this->w = w;
 }
 
 void Vector4::convertTo(Vector3& v)

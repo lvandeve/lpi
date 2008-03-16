@@ -63,11 +63,11 @@ Vector4 operator*(const Vector4& v, double a);
 Vector4 operator*(double a, const Vector4& v);
 Vector4 operator/(const Vector4& v, double a);
 
-extern Vector4 Vector4_origin; //0001
-extern Vector4 Vector4_0;      //0000
-extern Vector4 Vector4_x;      //1001
-extern Vector4 Vector4_y;      //0101
-extern Vector4 Vector4_z;      //0011
+static const Vector4 Vector4_origin = Vector4(0.0, 0.0, 0.0, 1.0); //0001
+static const Vector4 Vector4_0 =      Vector4(0.0, 0.0, 0.0, 0.0); //0000
+static const Vector4 Vector4_x =      Vector4(1.0, 0.0, 0.0, 1.0); //1001
+static const Vector4 Vector4_y =      Vector4(0.0, 1.0, 0.0, 1.0); //0101
+static const Vector4 Vector4_z =      Vector4(0.0, 0.0, 1.0, 1.0); //0011
 
 class Matrix4
 {

@@ -25,16 +25,12 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
-Vector2::Vector2(double x, double y)
+Vector2::Vector2(double x, double y) : x(x), y(y)
 {
-  this->x = x;
-  this->y = y;
 }
 
-Vector2::Vector2()
+Vector2::Vector2() /*: x(0.0), y(0.0)*/
 {
-  x = 0.0;
-  y = 0.0;
 }
 
 Vector2& Vector2::operator+=(const Vector2& v)

@@ -279,10 +279,10 @@ void Texture::draw(int x, int y, const ColorRGB& colorMod, int sizex, int sizey,
 
   //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
   glBegin(GL_QUADS);
-    glTexCoord2d(0.0, 0.0); glVertex3d(x + 0   + skewx, y + 0   + 0  , 1);
-    glTexCoord2d(+u3, 0.0); glVertex3d(x + sizex + skewx, y + 0   + skewy, 1);
-    glTexCoord2d(+u3, +v3); glVertex3d(x + sizex + 0  , y + sizey + skewy, 1);
-    glTexCoord2d(0.0, +v3); glVertex3d(x + 0   + 0  , y + sizey + 0  , 1);
+    glTexCoord2d(0.0, 0.0); glVertex2d(x + 0     + skewx, y + 0     + 0    );
+    glTexCoord2d(+u3, 0.0); glVertex2d(x + sizex + skewx, y + 0     + skewy);
+    glTexCoord2d(+u3, +v3); glVertex2d(x + sizex + 0    , y + sizey + skewy);
+    glTexCoord2d(0.0, +v3); glVertex2d(x + 0     + 0    , y + sizey + 0    );
   glEnd();
 }
 

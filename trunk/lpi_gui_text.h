@@ -20,7 +20,11 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 
 /*
-lpi_gui: an OpenGL GUI
+text related GUI elements for lpi_gui
+
+NOTE: some of these elements may currently be broken due to refactoring and will be fixed later
+
+TODO: fix possible broken elements
 */
 
 #ifndef LPI_GUI_TEXT_H_INCLUDED
@@ -268,6 +272,20 @@ class InputBox : public Element
     
   protected:
     virtual Element* getAutoSubElement(unsigned long i);
+};
+
+
+class FormattedText : public Element
+{
+  public:
+    Markup markup;
+    virtual void drawWidget() const;
+    FormattedText();
+    void make(int x = 0, int y = 0, const std::string& text = "", const Markup& markup = TS_W);
+    void setText(const std::string& text);
+    const std::string& getText() const { return text; }
+  private:
+    std::string text;
 };
 
 } //namespace gui

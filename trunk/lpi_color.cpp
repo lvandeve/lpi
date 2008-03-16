@@ -249,6 +249,8 @@ Color components from the color structs are unsigned char's between 0 and 255
 Color components used in the calculations are normalized between 0.0 and 1.0
 */
 
+#if 0 //floating point version
+
 //Converts an RGB color to HSL color
 ColorHSL RGBtoHSL(const ColorRGB& colorRGB)
 {
@@ -419,6 +421,152 @@ ColorRGB HSVtoRGB(const ColorHSV& colorHSV)
   colorRGB.b = int(b * 256.0);
   return colorRGB;
 }
+
+#else //pure integer version
+
+//Converts an RGB color to HSL color
+ColorHSL RGBtoHSL(const ColorRGB& colorRGB)
+{
+  ColorHSL colorHSL;
+
+  int maxColor = std::max(colorRGB.r, std::max(colorRGB.g, colorRGB.b));
+  int minColor = std::min(colorRGB.r, std::min(colorRGB.g, colorRGB.b));
+
+  if(minColor == maxColor) //R = G = B, so it's a shade of grey
+  {
+    colorHSL.h = 0; //it doesn't matter what value it has
+    colorHSL.s = 0;
+    colorHSL.l = colorRGB.r; //doesn't matter if you pick r, g, or b
+  }
+  else
+  {
+    colorHSL.l = (minColor + maxColor) / 2;
+
+    if(colorHSL.l < 128) colorHSL.s = (255 * (maxColor - minColor)) / (maxColor + minColor);
+    else colorHSL.s = (maxColor - minColor) / (512 - maxColor - minColor);
+
+    if(colorRGB.r == maxColor) colorHSL.h = (255 * (colorRGB.g - colorRGB.b)) / (maxColor - minColor);
+    else if(colorRGB.g == maxColor) colorHSL.h = 512 + (255 * (colorRGB.b - colorRGB.r)) / (maxColor - minColor);
+    else colorHSL.h = 1024 + (255 * (colorRGB.r - colorRGB.g)) / (maxColor - minColor); //colorRGB.b == maxColor
+
+    colorHSL.h /= 6; //to bring it to a number between 0 and 255
+    if(colorHSL.h < 0) colorHSL.h += 256;
+  }
+  
+  return colorHSL;
+}
+
+//Converts an HSL color to RGB color
+ColorRGB HSLtoRGB(const ColorHSL& colorHSL)
+{
+  ColorRGB colorRGB;
+  int temp1, temp2, tempr, tempg, tempb;
+
+  //If saturation is 0, the color is a shade of grey
+  if(colorHSL.s == 0) colorRGB.r = colorRGB.g = colorRGB.b = colorHSL.l;
+  //If saturation > 0, more complex calculations are needed
+  else
+  {
+    //set the temporary values
+    if(colorHSL.l < 128) temp2 = colorHSL.l * (256 + colorHSL.s);
+    else temp2 = 256 * (colorHSL.l + colorHSL.s) - (colorHSL.l * colorHSL.s);
+    temp1 = 2 * 256 * colorHSL.l - temp2;
+    tempr = colorHSL.h + 256 / 3;
+    if(tempr > 255) tempr -= 256;
+    tempg = colorHSL.h;
+    tempb = colorHSL.h - 256 / 3;
+    if(tempb < 0) tempb += 256;
+
+    //red
+    if(tempr < 256 / 6) colorRGB.r = (temp1 + ((temp2 - temp1) * 6 * tempr) / 256) / 256;
+    else if(tempr < 128) colorRGB.r = temp2 / 256;
+    else if(tempr < 512 / 3) colorRGB.r = (temp1 + ((temp2 - temp1) * (((512 / 3) - tempr) * 6)) / 256) / 256;
+    else colorRGB.r = temp1 / 256;
+    
+     //green
+    if(tempg < 256 / 6) colorRGB.g = (temp1 + ((temp2 - temp1) * 6 * tempg) / 256) / 256;
+    else if(tempg < 128) colorRGB.g = temp2 / 256;
+    else if(tempg < 512 / 3) colorRGB.g = (temp1 + ((temp2 - temp1) * (((512 / 3) - tempg) * 6)) / 256) / 256;
+    else colorRGB.g = temp1 / 256;
+
+    //blue
+    if(tempb < 256 / 6) colorRGB.b = (temp1 + ((temp2 - temp1) * 6 * tempb) / 256) / 256;
+    else if(tempb < 128) colorRGB.b = temp2 / 256;
+    else if(tempb < 512 / 3) colorRGB.b = (temp1 + ((temp2 - temp1) * (((512 / 3) - tempb) * 6)) / 256) / 256;
+    else colorRGB.b = temp1 / 256;
+  }
+
+  return colorRGB;
+}
+
+//Converts an RGB color to HSV color
+ColorHSV RGBtoHSV(const ColorRGB& colorRGB)
+{
+  ColorHSV colorHSV;
+
+  int maxColor = std::max(colorRGB.r, std::max(colorRGB.g, colorRGB.b));
+  int minColor = std::min(colorRGB.r, std::min(colorRGB.g, colorRGB.b));
+
+  colorHSV.v = maxColor;
+
+  if(maxColor == 0) //avoid division by zero when the color is black
+  {
+    colorHSV.s = 0;
+  }
+  else
+  {
+    colorHSV.s = (255 * (maxColor - minColor)) / maxColor;
+  }
+  if(colorHSV.s == 0)
+  {
+    colorHSV.h = 0; //it doesn't matter what value it has
+  }
+  else
+  {
+    if(colorRGB.r == maxColor) colorHSV.h = (255 * (colorRGB.g - colorRGB.b)) / (maxColor - minColor);
+    else if(colorRGB.g == maxColor) colorHSV.h = 512 + (255 * (colorRGB.b - colorRGB.r)) / (maxColor - minColor);
+    else colorHSV.h = 1024 + (255 * (colorRGB.r - colorRGB.g)) / (maxColor - minColor); //colorRGB.b == maxColor
+
+    colorHSV.h /= 6; //to bring it to a number between 0 and 1
+    if(colorHSV.h < 0) colorHSV.h += 256;
+  }
+
+  return colorHSV;
+}
+
+//Converts an HSV color to RGB color
+ColorRGB HSVtoRGB(const ColorHSV& colorHSV)
+{
+  ColorRGB colorRGB;
+
+  //if saturation is 0, the color is a shade of grey
+  if(colorHSV.s == 0) colorRGB.r = colorRGB.g = colorRGB.b = colorHSV.v;
+  //if saturation > 0, more complex calculations are needed
+  else
+  {
+    int f, p, q, t;
+    int h = colorHSV.h * 6; //to bring hue to a number between (0 and 6) * 256, better for the calculations
+    f = h % 256;
+
+    p = (colorHSV.v * (255 - colorHSV.s)) / 256;
+    q = (colorHSV.v * (255 - ((colorHSV.s * f) / 256))) / 256;
+    t = (colorHSV.v * (255 - ((colorHSV.s * (255 - f)) / 256))) / 256;
+
+    switch(h / 256)
+    {
+      case 0: colorRGB.r=colorHSV.v; colorRGB.g=t; colorRGB.b=p; break;
+      case 1: colorRGB.r=q; colorRGB.g=colorHSV.v; colorRGB.b=p; break;
+      case 2: colorRGB.r=p; colorRGB.g=colorHSV.v; colorRGB.b=t; break;
+      case 3: colorRGB.r=p; colorRGB.g=q; colorRGB.b=colorHSV.v; break;
+      case 4: colorRGB.r=t; colorRGB.g=p; colorRGB.b=colorHSV.v; break;
+      default:colorRGB.r=colorHSV.v; colorRGB.g=p; colorRGB.b=q; break; //this be case 5, it's mathematically impossible for i to be something else
+    }
+  }
+  
+  return colorRGB;
+}
+
+#endif //end of choice between floating point or integer version of color conversions
 
 //converts an RGB color from 3 unsigned char's to a single integer
 unsigned long RGBtoINT(const ColorRGB& colorRGB)

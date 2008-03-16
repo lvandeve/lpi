@@ -30,7 +30,7 @@ namespace gui { void initBuiltInGui(); } //link time dependency to init the buil
 
 namespace
 {
-  SDL_Surface *scr; //the single SDL surface used
+  SDL_Surface* scr; //the single SDL surface used
   int w; //width of the screen
   int h; //height of the screen
   bool fullscreenMode; //if true, it's fullscreen
@@ -49,9 +49,9 @@ void screen(int width, int height, bool fullscreen, const char* text)
 
   if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
   {
-    printf("Unable to init SDL: %s\n", SDL_GetError());
+    std::printf("Unable to init SDL: %s\n", SDL_GetError());
     SDL_Quit();
-    exit(1);
+    std::exit(1);
   }
   atexit(SDL_Quit);
   
@@ -64,20 +64,20 @@ void screen(int width, int height, bool fullscreen, const char* text)
   
   if(fullscreen)
   {
-    scr = SDL_SetVideoMode(width,height,colorDepth,SDL_FULLSCREEN|SDL_OPENGL);
+    scr = SDL_SetVideoMode(width, height, colorDepth, SDL_FULLSCREEN | SDL_OPENGL);
     lock();
     fullscreenMode = 1;
   }
   else
   {
-    scr = SDL_SetVideoMode(width,height,colorDepth,SDL_OPENGL);
+    scr = SDL_SetVideoMode(width, height, colorDepth, SDL_OPENGL);
     fullscreenMode = 0;
   }
   if(scr == 0)
   {
-    printf("Unable to set video: %s\n", SDL_GetError());
+    std::printf("Unable to set video: %s\n", SDL_GetError());
     SDL_Quit();
-    exit(1);
+    std::exit(1);
   }
   SDL_WM_SetCaption(text, NULL);
   
