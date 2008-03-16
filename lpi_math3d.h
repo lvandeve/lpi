@@ -85,11 +85,11 @@ bool operator!=(const Vector3& a, const Vector3& b);
 
 std::ostream& operator<<(std::ostream& ostr, const Vector3& v);
 
-extern Vector3 Vector3_origin;
-extern Vector3 Vector3_0;
-extern Vector3 Vector3_x;
-extern Vector3 Vector3_y;
-extern Vector3 Vector3_z;
+static const Vector3 Vector3_origin = Vector3(0.0, 0.0, 0.0);
+static const Vector3 Vector3_0 =      Vector3(0.0, 0.0, 0.0);
+static const Vector3 Vector3_x =      Vector3(1.0, 0.0, 0.0);
+static const Vector3 Vector3_y =      Vector3(0.0, 1.0, 0.0);
+static const Vector3 Vector3_z =      Vector3(0.0, 0.0, 1.0);
 
 ////////////////////////////////////////////////////////////////////////////////
 //               [ 0 3 6 ]                                                    //

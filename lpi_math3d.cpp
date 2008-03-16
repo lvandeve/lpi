@@ -27,26 +27,14 @@ namespace { const double pi = 3.141592653589793238462643383279502884197169399375
 namespace lpi
 {
 
-Vector3 Vector3_origin = Vector3(0.0, 0.0, 0.0);
-Vector3 Vector3_0 =      Vector3(0.0, 0.0, 0.0);
-Vector3 Vector3_x =      Vector3(1.0, 0.0, 0.0);
-Vector3 Vector3_y =      Vector3(0.0, 1.0, 0.0);
-Vector3 Vector3_z =      Vector3(0.0, 0.0, 1.0);
-
 ///////////////////////////////////////////////////////////////////////////////
 
-Vector3::Vector3(double x, double y, double z)
+Vector3::Vector3(double x, double y, double z) : x(x), y(y), z(z)
 {
-  this->x = x;
-  this->y = y;
-  this->z = z;
 }
 
-Vector3::Vector3()
+Vector3::Vector3() /*: x(0.0), y(0.0), z(0.0)*/
 {
-  x = 0.0;
-  y = 0.0;
-  z = 0.0;
 }
 
 Vector3& Vector3::operator+=(const Vector3& v)
@@ -350,28 +338,19 @@ Matrix3 rotateAroundArbitrary(const Matrix3& m, const Vector3& axis, double angl
 
 Matrix3::Matrix3(double a0, double a1, double a2, double a3, double a4, double a5, double a6, double a7, double a8)
 {
-  this->a[0][0] = a0;
-  this->a[0][1] = a1;
-  this->a[0][2] = a2;
-  this->a[1][0] = a3;
-  this->a[1][1] = a4;
-  this->a[1][2] = a5;
-  this->a[2][0] = a6;
-  this->a[2][1] = a7;
-  this->a[2][2] = a8;
+  a[0][0] = a0;
+  a[0][1] = a1;
+  a[0][2] = a2;
+  a[1][0] = a3;
+  a[1][1] = a4;
+  a[1][2] = a5;
+  a[2][0] = a6;
+  a[2][1] = a7;
+  a[2][2] = a8;
 }
 
 Matrix3::Matrix3()
 {
-  this->a[0][0] = 0.0;
-  this->a[0][1] = 0.0;
-  this->a[0][2] = 0.0;
-  this->a[1][0] = 0.0;
-  this->a[1][1] = 0.0;
-  this->a[1][2] = 0.0;
-  this->a[2][0] = 0.0;
-  this->a[2][1] = 0.0;
-  this->a[2][2] = 0.0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

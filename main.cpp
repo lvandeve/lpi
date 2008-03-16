@@ -62,35 +62,62 @@ gprof > gprof.txt
 #include <iostream>
 #include <cmath>
 
+// class Test : public lpi::gui::Window
+// {
+//   public:
+//   Test()
+//   {
+//     make(10, 100, 200, 200);
+//     addTop();
+//   }
+// };
+
 int main(int, char*[]) //the arguments have to be given here, or DevC++ can't link to SDL for some reason
 {
   lpi::screen(1024, 768, 0, "lpi GUI demo");
   
   lpi::gui::Container c;
   
+  lpi::gui::Window w;
+  w.make(50, 50, 300, 300);
+  w.addTop();
+  w.addTitle("Window 2");
+  w.addCloseButton();
+  w.setColor(lpi::RGBA_White(192));
+  c.pushTop(&w);
+  
+  lpi::gui::Window w1;
+  w1.make(100, 100, 500, 500);
+  w1.addTop();
+  w1.addTitle("Window 1");
+  w1.addCloseButton();
+  w1.addResizer();
+  w1.setColor(lpi::RGBA_Red(192));
+  c.pushTop(&w1);
+  
   lpi::gui::Button sound_button;
   sound_button.makeTextPanel(20, 500, "sound");
-  c.pushTop(&sound_button);
+  w1.pushTopAt(&sound_button, 10, 50);
   
   lpi::gui::Scrollbar hbar;
   hbar.makeHorizontal(716, 220, 200);
-  c.pushTop(&hbar);
+  w1.pushTopAt(&hbar, 150, 210);
   
   lpi::gui::Scrollbar vbar;
   vbar.makeVertical(700, 20, 200);
-  c.pushTop(&vbar);
+  w1.pushTopAt(&vbar, 350, 10);
   
   lpi::gui::Slider sli;
   sli.makeVertical(650, 20, 200);
-  c.pushTop(&sli);
+  w1.pushTopAt(&sli, 300, 10, lpi::gui::STICKYRELATIVEVERTICAL0);
   
   lpi::gui::Checkbox cb;
   cb.make(500, 20);
-  c.pushTop(&cb);
+  w1.pushTopAt(&cb, 10, 600);
   
-  lpi::gui::BulletList bl;
+  /*lpi::gui::BulletList bl;
   bl.make(500, 80, 8, 0, 24);
-  c.pushTop(&bl);
+  c.pushTop(&bl);*/
   
   lpi::gui::Button tb;
   tb.makeText(20, 540, "Text Button");
@@ -100,37 +127,22 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   tb_unittest.makeText(20, 550, "Unit Test");
   c.pushTop(&tb_unittest);
   
-  lpi::gui::Window w;
-  w.make(50, 50, 300, 300);
-  w.addTop();
-  w.addTitle("Window 1");
-  w.addCloseButton();
-  w.setColor(lpi::RGBA_White(192));
-  c.pushTop(&w);
-  
   lpi::gui::Button wb;
   wb.makeTextPanel(0, 0, "window button");
   wb.autoTextSize(4);
   wb.centerText();
   w.pushTopAt(&wb, 20, 20);
   
-  lpi::gui::Window w2;
-  w2.make(100, 100, 300, 300);
-  w2.addTop();
-  w2.addTitle("Window 2");
-  w2.addCloseButton();
-  w2.addResizer();
-  w2.setColor(lpi::RGBA_Red(192));
-  c.pushTop(&w2);
-  
   lpi::gui::Checkbox wcb;
   wcb.make(0, 0);
-  w2.pushTopAt(&wcb, 20, 20);
+  w1.pushTopAt(&wcb, 20, 20);
   
   std::vector<double> sound(30000);
   for(size_t i = 0; i < 30000; i++) sound[i] = 0.3 * std::sin(i / (30.0 * (40000.0-i)/30000.0));
   
   lpi::audioOpen(44100, 2048);
+  
+  w1.addScrollbars();
   
   while(lpi::frame(true, true))
   {
@@ -142,6 +154,9 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     
     c.draw();
     c.handle();
+    
+    if(wcb.checked) w1.addScrollbars();
+    else w1.removeScrollbars();
     
     if(sound_button.pressed()) lpi::audioPlay(sound);
     

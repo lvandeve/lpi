@@ -287,6 +287,24 @@ void unconvert(T& out, const std::string& in)
   unconvert(out, in, 0, in.size());
 }
 
+//this one is for e.g. enums to avoid warning "dereferencing type-punned pointer will break strict-aliasing rules" when casting to (long&)
+template<typename T>
+T unconvert(const std::string& in, size_t pos, size_t end)
+{
+  T t;
+  unconvert(t, in, pos, end);
+  return t;
+}
+
+template<typename T>
+T unconvert(const std::string& in)
+{
+  T t;
+  unconvert(t, in);
+  return t;
+}
+
+
 //base64 is used to put binary data in XML tags
 void encodeBase64(const std::vector<unsigned char>& in, std::string& out);
 void decodeBase64(std::vector<unsigned char>& out, const std::string& in, size_t pos = 0, size_t end = 0);

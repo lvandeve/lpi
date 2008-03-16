@@ -380,24 +380,27 @@ care of events as well.
 */
 bool frame(bool quit_if_esc, bool delay) //delay makes CPU have some free time, use once per frame to avoid 100% usage of a CPU core
 {
-  checkMouse(); //not needed for the frame() function, but this way your loop automaticly checks the mouse every frame!
-  
   if(delay) SDL_Delay(5); //so it consumes less processing power
-
-  int done = 0;
-  if(!SDL_PollEvent(&event)) return 1;
-  inkeys.readKeys();
-  if(quit_if_esc && inkeys[SDLK_ESCAPE]) done = 1;
-  if(event.type == SDL_QUIT) done = 1;
   
+  //also do the checking of input (mouse & keyboard) for this frame
+  checkMouse();
+  inkeys.readKeys();
   globalMouseWheelUp = globalMouseWheelDown = false;
-  if(event.type == SDL_MOUSEBUTTONDOWN)
+  
+  if(quit_if_esc && inkeys[SDLK_ESCAPE]) return false;
+  
+  while(SDL_PollEvent(&event))
   {
-    if(event.button.button == SDL_BUTTON_WHEELUP) globalMouseWheelUp = true;
-    if(event.button.button == SDL_BUTTON_WHEELDOWN) globalMouseWheelDown = true;
+    if(event.type == SDL_QUIT) return false;
+    
+    if(event.type == SDL_MOUSEBUTTONDOWN)
+    {
+      if(event.button.button == SDL_BUTTON_WHEELUP) globalMouseWheelUp = true;
+      if(event.button.button == SDL_BUTTON_WHEELDOWN) globalMouseWheelDown = true;
+    }
   }
   
-  return !done;
+  return true; //the program may continue
 }
 
 //Ends the program

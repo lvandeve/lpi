@@ -55,8 +55,8 @@ void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color, int clipx1,
 
     
   glBegin(GL_LINES);
-    glVertex2d(x1, y1);
-    glVertex2d(x2, y2);
+    glVertex2d(x1 + 0.5, y1 + 0.5);
+    glVertex2d(x2 + 0.5, y2 + 0.5);
   glEnd();
 }
 void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color)

@@ -20,7 +20,11 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 
 /*
-lpi_gui: an OpenGL GUI
+extra GUI elements such as menus, canvas, ...
+
+NOTE: some of these elements are currently broken due to refactoring and will be fixed later
+
+TODO: fix menu and other such elements
 */
 
 #ifndef LPI_GUI_EX_H_INCLUDED
@@ -95,9 +99,6 @@ class DropMenu : public Element
     void addOption(const std::string& text, int id = 0); //id is an optional identity
     
     bool autoDisable; //if true, the menu will totallyDisable itself if you click anywhere not on the menu
-    
-  protected:
-    virtual Element* getAutoSubElement(unsigned long i);
 };
 
 
@@ -148,9 +149,6 @@ class Droplist : public Element
     virtual void handleWidget();
 
     void addOption(const std::string& text);
-    
-  protected:
-    virtual Element* getAutoSubElement(unsigned long i);
 };
 
 /*
@@ -297,6 +295,66 @@ class Canvas : public Element
     void setBrush(const ColorRGB& leftColor = RGB_Black, const ColorRGB& rightColor = RGB_Red, double size = 1.0, double hardness = 1.0, double opacity = 1.0);
 };
 
+
+template<typename T>
+class Variable : public Element //can be anything the typename is: integer, float, ..., as long as it can be given to a stringstream
+{
+  public:
+    T v;
+    std::string label;
+    Markup markup;
+    
+    virtual void drawWidget() const
+    {
+      print(label, x0, y0, markup);
+      print(v, x0 + label.length() * markup.getWidth(), y0, markup);
+    }
+    
+    Variable() { totallyDisable(); }
+    
+    void make(int x, int y, T v, const std::string& label="", const Markup& markup = TS_W)
+    {
+      this->x0 = x;
+      this->y0 = y;
+      //for now, only the length of the label + 1 is used
+      this->setSizex((label.length() + 1) * markup.getWidth());
+      this->setSizey(markup.getHeight());
+      this->v = v;
+      this->label = label;
+      this->markup = markup;
+      this->visible = 1;
+      this->active = 1;
+    }
+    
+    void setValue(T v) { this->v = v; }
+    
+    T& getValue() { return this->v; }
+    
+    const T& getValue() const { return this->v; }
+};
+
+class Rectangle : public Element
+{
+  public:
+    ColorRGB color;
+    virtual void drawWidget() const;
+    Rectangle();
+    void make(int x, int y, int sizex=64, int sizey=64, const ColorRGB& color = RGB_Grey);
+};
+
+class Line : public Element
+{
+  public:
+    ColorRGB color;
+    virtual void drawWidget() const;
+    Line();
+    int lx0;
+    int ly0;
+    int lx1;
+    int ly1;
+    void make(int x, int y, int sizex=64, int sizey=64, const ColorRGB& color = RGB_Grey);
+    void setEndpoints(int x0, int y0, int x1, int y1);
+};
 
 } //namespace gui
 } //namespace lpi

@@ -1168,6 +1168,41 @@ Element* InputBox::getAutoSubElement(unsigned long i)
   else return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//GUIFORMATTEDTEXT//////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+FormattedText is just some formatted text as child of Element
+*/
+
+FormattedText::FormattedText()
+{
+  this->visible = 0;
+  this->active = 0;
+}
+
+void FormattedText::make(int x, int y, const std::string& text, const Markup& markup)
+{
+  this->x0 = x;
+  this->y0 = y;
+  this->setSizex(text.length() * markup.getWidth());
+  this->setSizey(markup.getHeight());
+  this->text = text;
+  this->markup = markup;
+  this->totallyEnable();
+}
+
+void FormattedText::drawWidget() const
+{
+  printFormatted(text, x0, y0, markup);
+}
+
+void FormattedText::setText(const std::string& text)
+{
+  this->text = text;
+}
+
 } //namespace gui
 } //namespace lpi
 

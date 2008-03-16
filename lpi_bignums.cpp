@@ -92,23 +92,37 @@ ufixed96q32::operator double() const //this only returns a correct result if the
 {
   double result = 0.0;
   
-  double multiplier = 1.0 / 4294967296.0;
+  /*double multiplier = 1.0 / 4294967296.0;
   for(int i = 0; i < 4; i++)
   {
     result += multiplier * data[i];
     multiplier *= 4294967296.0;
-  }
+  }*/
+  
+  //loop-unrolled version
+  const double factor = 4294967296.0;
+  result += data[0] / factor;
+  result += data[1];
+  result += data[2] * factor;
+  result += data[3] * factor * factor;
+  
   return result;
 }
 
 void ufixed96q32::operator=(double d)
 {
-  double multiplier = 4294967296.0;
+  /*double multiplier = 4294967296.0;
   for(int i = 0; i < 4; i++)
   {
     data[i] = uint32(d * multiplier);
     multiplier /= 4294967296.0;
-  }
+  }*/
+  //loop-unrolled version
+  const double factor = 4294967296.0;
+  data[0] = uint32(d * factor);
+  data[1] = uint32(d);
+  data[2] = uint32(d / factor);
+  data[3] = uint32(d / (factor * factor));
 }
 
 void ufixed96q32::operator=(const fixed96q32& o)
@@ -601,7 +615,7 @@ fixed96q32::operator double() const //this only returns a correct result if the 
 {
   double result = 0.0;
   
-  if(sign())
+  /*if(sign())
   {
     double multiplier = 1.0 / 4294967296.0;
     for(int i = 0; i < 4; i++)
@@ -620,6 +634,25 @@ fixed96q32::operator double() const //this only returns a correct result if the 
       multiplier *= 4294967296.0;
     }
     return result;
+  }*/
+  
+  //loop-unrolled version
+  const double factor = 4294967296.0;
+  if(sign())
+  {
+    result += (~data[0]) / factor;
+    result += (~data[1]);
+    result += (~data[2]) * factor;
+    result += (~data[3]) * factor * factor;
+    return -result - 1.0 / factor;
+  }
+  else
+  {
+    result += data[0] / factor;
+    result += data[1];
+    result += data[2] * factor;
+    result += data[3] * factor * factor;
+    return result;
   }
 }
 
@@ -627,12 +660,20 @@ void fixed96q32::operator=(double d)
 {
   bool negative = d < 0.0;
   if(negative) d = -d;
-  double multiplier = 4294967296.0;
+  
+  /*double multiplier = 4294967296.0;
   for(int i = 0; i < 4; i++)
   {
     data[i] = uint32(d * multiplier);
     multiplier /= 4294967296.0;
-  }
+  }*/
+  //loop-unrolled version
+  const double factor = 4294967296.0;
+  data[0] = uint32(d * factor);
+  data[1] = uint32(d);
+  data[2] = uint32(d / factor);
+  data[3] = uint32(d / (factor * factor));
+  
   if(negative) negate();
 }
 

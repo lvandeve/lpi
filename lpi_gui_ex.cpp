@@ -168,6 +168,8 @@ void DropMenu::addOption(const std::string& text, int id)
     menuButton.push_back(b);
     separator.push_back(false);
     
+    addSubElement(&b);//TODO: fix this big memory corruption problem and Button copying
+    
     int separatorsize = 0;
     for(unsigned long i = 0; i < separator.size(); i++) if(separator[i]) separatorsize++;
     
@@ -262,12 +264,6 @@ int DropMenu::checkIdentity()
   return 0;
 }
 
-Element* DropMenu::getAutoSubElement(unsigned long i)
-{
-  if(i < menuButton.size()) return &menuButton[i];
-  else return 0;
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 //GUIDROPLIST///////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -286,6 +282,9 @@ Droplist::Droplist()
   this->y0 = 0;
   this->markup1 = TS_White;
   this->markup2 = TS_White;
+  
+  addSubElement(&listButton);
+  addSubElement(&bar);
   
   init("", -1);
 }
@@ -317,7 +316,7 @@ void Droplist::make(int x, int y, const std::string& text, int numVisibleOptions
   this->setSizex(sizexc);
   this->setSizey(sizeyc);
   
-  listButton.makeImage(x1 - buttonWidth, y0, buttonTexture, buttonTexture, buttonTexture, RGB_White, RGB_Grey, RGB_Grey, 0);
+  listButton.makeImage(x1 - buttonWidth, y0, buttonTexture, buttonTexture, buttonTexture, RGB_White, RGB_Grey, RGB_Grey);
 
 
   bar.makeVertical(x1 - buttonWidth, y0 + sizeyc, sizeyo - sizeyc,
@@ -390,6 +389,7 @@ void Droplist::addOption(const std::string& text)
   Button b;
   b.makeText(x0 + 2, y0 + sizeyc + 2 + (markup1.getHeight() + 2) * textButton.size(), text);
   textButton.push_back(b);
+  addSubElement(&textButton.back()); //TODO: fix this big memory corruption problem and Button copying
   
   unsigned long maxTextSize = b.getSizex() / markup1.getWidth();
   if(text.length() > maxTextSize) maxTextSize = text.length();
@@ -503,14 +503,6 @@ void Droplist::close()
   opened = 0;
   setSizex(sizexc);
   setSizey(sizeyc);
-}
-
-Element* Droplist::getAutoSubElement(unsigned long i)
-{
-  if(i == 0) return &listButton;
-  else if(i == 1) return &bar;
-  else if(i < textButton.size() + 2U) return &textButton[i - 2];
-  else return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -816,10 +808,10 @@ void YesNoWindow::make(int x, int y, int sizex, int sizey, const std::string& te
   
   message.make(0, 0, text);
   
-  pushTop(&message, 16, 16);
+  pushTopAt(&message, 16, 16);
   int centerx = getSizex() / 2;
-  pushTop(&yes, centerx - yes.getSizex() - 16, getSizey() - yes.getSizey() - 8 - 16);
-  pushTop(&no, centerx + 16, getSizey() - no.getSizey() - 8 - 16);
+  pushTopAt(&yes, centerx - yes.getSizex() - 16, getSizey() - yes.getSizey() - 8 - 16);
+  pushTopAt(&no, centerx + 16, getSizey() - no.getSizey() - 8 - 16);
   
   this->active = 1;
   this->visible = 1;
@@ -845,9 +837,9 @@ void OkWindow::make(int x, int y, int sizex, int sizey, const std::string& text)
   
   message.make(0, 0, text);
   
-  pushTop(&message, 16, 16);
+  pushTopAt(&message, 16, 16);
   int centerx = getSizex() / 2;
-  pushTop(&ok, centerx - ok.getSizex() / 2, getSizey() - ok.getSizey() - 8 - 16);
+  pushTopAt(&ok, centerx - ok.getSizex() / 2, getSizey() - ok.getSizey() - 8 - 16);
   
   this->active = 1;
   this->visible = 1;
@@ -929,7 +921,82 @@ void Canvas::clear()
   canvas.create(backColor, getSizex(), getSizey());
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//GUIRECTANGLE//////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
+/*
+Rectangle is a simple rectangle but as child class of Element
+*/
+
+Rectangle::Rectangle()
+{
+  this->visible = 0;
+  this->active = 0;
+  this->color = RGB_Black;
+}
+
+void Rectangle::make(int x, int y, int sizex, int sizey, const ColorRGB& color)
+{
+  this->x0 = x;
+  this->y0 = y;
+  this->setSizex(sizex);
+  this->setSizey(sizey);
+  this->color = color;
+  this->totallyEnable();
+}
+
+void Rectangle::drawWidget() const
+{
+  drawRectangle(x0, y0, x1, y1, color);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//GUILINE///////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+Line is a simple line but as child class of Element
+*/
+
+Line::Line()
+{
+  this->visible = 0;
+  this->active = 0;
+  this->color = RGB_Black;
+
+  this->lx0 = 0;
+  this->ly0 = 0;
+  this->lx1 = 0;
+  this->ly1 = 0;
+}
+
+void Line::make(int x, int y, int sizex, int sizey, const ColorRGB& color)
+{
+  this->x0 = x;
+  this->y0 = y;
+  this->setSizex(sizex);
+  this->setSizey(sizey);
+  this->color = color;
+  this->totallyEnable();
+  this->lx0 = x;
+  this->ly0 = y;
+  this->lx1 = x + sizex;
+  this->ly1 = y + sizey;
+}
+
+void Line::setEndpoints(int x0, int y0, int x1, int y1)
+{
+  this->lx0 = x0;
+  this->ly0 = y0;
+  this->lx1 = x1;
+  this->ly1 = y1;
+}
+
+void Line::drawWidget() const
+{
+  drawLine(lx0, ly0, lx1, ly1, color);
+}
 
 } //namespace gui
 } //namespace lpi
