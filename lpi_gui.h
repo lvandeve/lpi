@@ -599,10 +599,7 @@ class Invisible : public Element
 class Container : public Element
 {
   protected:
-  
-    //the scrollable area "behind" or "inside" the container - can be used by derived classes such as ScrollContainer, has simple default behaviour in this parent class: always has size of container
-    Invisible area; //the area that can be scrolled will be represented by this, so its move function and such can easily be called while you scroll
-
+    
     void drawElements() const;
     
     InternalContainer elements;
@@ -650,50 +647,6 @@ class Container : public Element
     virtual void setElementOver(bool state);
     
     void setSizeToElements(); //makes the size of the container as big as the elements. This resizes the container in a non-sticky way: no element is affected
-};
-
-class ScrollContainer : public Container
-{
-  public:
-    ScrollContainer();
-    virtual void handleWidget(); //you're supposed to handle() before you draw()
-    virtual void drawWidget() const;
-    virtual void resizeWidget(const Pos<int>& newPos);
-
-    void make(int x, int y, int sizex, int sizey,
-              int areax = 0, int areay = 0, int areasizex = -1, int areasizey = -1, //areax and areay are relative to the container!
-              const Pos<Sticky>& areasticky = STICKYFULL);
-    
-    ////everything concerning the scrollability
-    ScrollbarPair bars;
-
-    //the zone where elements are drawn: the size of this container excluding the scrollbarpair's bars
-    int getVisibleSizex() const;
-    int getVisibleSizey() const;
-    int getVisibleX0() const;
-    int getVisibleY0() const;
-    int getVisibleX1() const;
-    int getVisibleY1() const;
-    
-    int oldScrollx; //used to move elements every frame when you scroll the bars
-    int oldScrolly;
-    
-    void moveAreaTo(int x, int y); //moves the area to given position, and all the elements, but not the bars and x0, y0, x1, y1, Used when you scroll.
-    
-    void setScrollSizeToElements(); //makes the size of the scroll area as big as the elements
-    
-    void forwardScrollToVerticalScrollbar(int scroll) //if you scroll the mouse and want this container's vertical scrollbar to handle it, use this! -1 for up, +1 for down
-    {
-      bars.vbar.forwardScroll(scroll);
-    }
-    
-  protected:
-  
-    virtual bool mouseInVisibleZone() const; //is the mouse in the zone where elements are drawn
-    
-    void initBars();
-    void updateBars();
-    void toggleBars(); //turns the bars on or of depending on if they're needed or not
 };
 
 class ScrollElement : public Element
