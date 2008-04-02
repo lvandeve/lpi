@@ -21,6 +21,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_draw2d.h"
 
 #include <vector>
+#include <cmath>
 
 namespace lpi
 {
@@ -44,9 +45,9 @@ void drawLine(unsigned char* buffer, int buffer_w, int buffer_h, int x1, int y1,
   }
 
 
-  //draw the line with bresenham  
-  int deltax = abs(x2 - x1);    // The difference between the x's
-  int deltay = abs(y2 - y1);    // The difference between the y's
+  //draw the line with bresenham
+  int deltax = std::abs((double)(x2 - x1));    // The difference between the x's
+  int deltay = std::abs((double)(y2 - y1));    // The difference between the y's
   int x = x1;           // Start x off at the first pixel
   int y = y1;           // Start y off at the first pixel
   int xinc1, xinc2, yinc1, yinc2, den, num, numadd, numpixels, curpixel;

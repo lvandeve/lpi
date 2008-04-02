@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080306
+LodePNG version 20080402
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
@@ -30,7 +30,7 @@ You are free to name this file lodepng.cpp or lodepng.c depending on your usage.
 
 #include "lodepng.h"
 
-#define VERSION_STRING "20080306"
+#define VERSION_STRING "20080402"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Tools For C                                                            / */
@@ -2795,7 +2795,7 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
         char *key, *str;
         unsigned length, string2_begin;
         
-        for(length = 0; length < chunkLength && data[length] != 0; length++);
+        for(length = 0; length < chunkLength && data[length] != 0; length++) ;
         if(length + 1 >= chunkLength) { decoder->error = 75; break; }
         key = (char*)malloc(length + 1);
         key[length] = 0;
@@ -2826,7 +2826,7 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
         
         while(!decoder->error) /*not really a while loop, only used to break on error*/
         {
-          for(length = 0; length < chunkLength && data[length] != 0; length++);
+          for(length = 0; length < chunkLength && data[length] != 0; length++) ;
           if(length + 2 >= chunkLength) { decoder->error = 75; break; }
           key = (char*)malloc(length + 1);
           key[length] = 0;
@@ -2864,7 +2864,7 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
         while(!decoder->error) /*not really a while loop, only used to break on error*/
         {
           if(chunkLength < 5) { decoder->error = 76; break; }
-          for(length = 0; length < chunkLength && data[length] != 0; length++);
+          for(length = 0; length < chunkLength && data[length] != 0; length++) ;
           if(length + 2 >= chunkLength) { decoder->error = 75; break; }
           key = (char*)malloc(length + 1);
           key[length] = 0;

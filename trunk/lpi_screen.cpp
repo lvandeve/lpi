@@ -21,6 +21,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_screen.h"
 
 #include <iostream>
+#include <cstdlib> //std::exit
 
 namespace lpi
 {
