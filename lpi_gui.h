@@ -425,7 +425,7 @@ class Button : public Element
     void make(int x, int y, int sizex, int sizey, //basic properties
               bool enableImage, Texture* texture1, Texture* texture2, Texture* texture3, int imageOffsetx, int imageOffsety, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3, //image
               bool enableText, const std::string& text, int textOffsetx, int textOffsety, const Markup& markup1, const Markup& markup2, const Markup& markup3, //text
-              bool enablePanel, const BackPanel* panel1 = &builtInPanel[1], const BackPanel* panel2 = &builtInPanel[2], const BackPanel* panel2 = &builtInPanel[3], int panelOffsetx = 0, int panelOffsety = 0); //panel
+              bool enablePanel, const BackPanel* panel1 = &builtInPanel[1], const BackPanel* panel2 = &builtInPanel[2], const BackPanel* panel3 = &builtInPanel[3], int panelOffsetx = 0, int panelOffsety = 0); //panel
     
     //image only constructor (without offset)
     void makeImage(int x, int y,
