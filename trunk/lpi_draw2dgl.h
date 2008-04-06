@@ -36,7 +36,7 @@ void pset(int x, int y, const ColorRGB& color);
 void drawPoint(int x, int y, const ColorRGB& color); //same as pset but with other name
 void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color, int clipx1, int clipy1, int clipx2, int clipy2);
 void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color);
-void drawRectangle(int x1, int y1, int x2, int y2, const ColorRGB& color = RGB_White);
+void drawRectangle(int x1, int y1, int x2, int y2, const ColorRGB& color = RGB_White, bool filled = true);
 void drawDisk(int x, int y, double radius, const ColorRGB& color);
 void gradientLine(int x1, int y1, int x2, int y2, const ColorRGB& color1, const ColorRGB& color2);
 void gradientRectangle(int x1, int y1, int x2, int y2, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3, const ColorRGB& color4);

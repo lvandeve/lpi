@@ -103,24 +103,34 @@ void gradientLine(int x1, int y1, int x2, int y2, const ColorRGB& color1, const 
 }
 
 //Draw an untextured, filled, rectangle on screen from (x1, y1) to (x2, y2)
-void drawRectangle(int x1, int y1, int x2, int y2, const ColorRGB& color)
+void drawRectangle(int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled)
 {
-  x2++;
-  y2++;
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_BLEND);
-  glDisable(GL_TEXTURE_2D);
-
-  glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
+  if(filled)
+  {
+    x2++;
+    y2++;
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
   
-  setOpenGLScissor(); //everything that draws something must always do this
-
-  glBegin(GL_QUADS);
-    glVertex3d(x2, y1, 1);
-    glVertex3d(x1, y1, 1);
-    glVertex3d(x1, y2, 1);
-    glVertex3d(x2, y2, 1);
-  glEnd();
+    glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
+    
+    setOpenGLScissor(); //everything that draws something must always do this
+  
+    glBegin(GL_QUADS);
+      glVertex3d(x2, y1, 1);
+      glVertex3d(x1, y1, 1);
+      glVertex3d(x1, y2, 1);
+      glVertex3d(x2, y2, 1);
+    glEnd();
+  }
+  else
+  {
+    drawLine(x1, y1, x2, y1, color);
+    drawLine(x1, y2, x2, y2, color);
+    drawLine(x1, y1, x1, y2, color);
+    drawLine(x2, y1, x2, y2, color);
+  }
 }
 
 //Draw a rectangle with 4 different corner colors on screen from (x1, y1) to (x2, y2)
