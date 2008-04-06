@@ -306,10 +306,10 @@ void Texture::draw(int x1, int y1, int x2, int y2, const ColorRGB& colorMod) con
   glEnd();
 }
 
-void Texture::draw(int x, int y, double scale, const ColorRGB& colorMod) const
+void Texture::draw(int x, int y, double scalex, double scaley, const ColorRGB& colorMod) const
 {
-  double sizex = u * scale;
-  double sizey = v * scale;
+  double sizex = u * scalex;
+  double sizey = v * scaley;
   if(sizex == 0.0 || sizey == 0.0) return;
   glEnable(GL_TEXTURE_2D);
 
@@ -327,6 +327,11 @@ void Texture::draw(int x, int y, double scale, const ColorRGB& colorMod) const
   glEnd();
 }
 
+void Texture::draw(int x, int y, double scale, const ColorRGB& colorMod) const
+{
+  draw(x, y, scale, scale, colorMod);
+}
+
 //Draw the texture on screen where x and y are the center instead of the top left corner
 void Texture::drawCentered(int x, int y, const ColorRGB& colorMod, int sizex, int sizey, int skewx, int skewy) const
 {
@@ -336,14 +341,17 @@ void Texture::drawCentered(int x, int y, const ColorRGB& colorMod, int sizex, in
   draw(x - sizex / 2, y - sizey / 2, colorMod, sizex, sizey, skewx, skewy);
 }
 
+void Texture::drawCentered(int x, int y, double scalex, double scaley, const ColorRGB& colorMod) const
+{
+  int sizex = int(u * scalex);
+  int sizey = int(v * scaley);
+  if(sizex == 0 || sizey == 0) return;
+  draw(x - sizex / 2, y - sizey / 2, scalex, scaley, colorMod);
+}
+
 void Texture::drawCentered(int x, int y, double scale, const ColorRGB& colorMod) const
 {
-  int sizex = int(u * scale);
-  int sizey = int (v * scale);
-  if(sizex < 0) sizex = u;
-  if(sizey < 0) sizey = v;
-  if(sizex == 0 || sizey == 0) return;
-  draw(x - sizex / 2, y - sizey / 2, colorMod, sizex, sizey, 0, 0);
+  drawCentered(x, y, scale, scale, colorMod);
 }
 
 /*

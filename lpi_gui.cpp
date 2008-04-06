@@ -2087,7 +2087,7 @@ Scrollbar::Scrollbar()
   addSubElement(&buttonDown);
 }
 
-bool Scrollbar::forWardedMouseScrollUp() const
+bool Scrollbar::forwardedMouseScrollUp() const
 {
   if(forwardedScroll < 0)
   {
@@ -2097,7 +2097,7 @@ bool Scrollbar::forWardedMouseScrollUp() const
   return false;
 }
 
-bool Scrollbar::forWardedMouseScrollDown() const
+bool Scrollbar::forwardedMouseScrollDown() const
 {
   if(forwardedScroll > 0)
   {
@@ -2225,10 +2225,10 @@ void Scrollbar::handleWidget()
       scrollPos = (scrollSize * (globalMouseY - y0 - getSliderStart() - txScroller->getV() / 2)) / getSliderSize();
       scroller.mouseGrab();
     }
-    if(mouseScrollUp()) scrollDir = -2;
-    if(mouseScrollDown()) scrollDir = 2;
-    if(forWardedMouseScrollUp()) scrollDir = -2;
-    if(forWardedMouseScrollDown()) scrollDir = 2;
+    if(mouseScrollUp()) scrollDir = -3;
+    if(mouseScrollDown()) scrollDir = 3;
+    if(forwardedMouseScrollUp()) scrollDir = -3;
+    if(forwardedMouseScrollDown()) scrollDir = 3;
   }
   else
   {

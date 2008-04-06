@@ -519,8 +519,8 @@ class Scrollbar : public Element
     int valueX; //x position of the value (relative)
     int valueY; //y position of the value (relative)
     
-    bool forWardedMouseScrollUp() const; //see int forwardedScroll;
-    bool forWardedMouseScrollDown() const; //see int forwardedScroll;
+    bool forwardedMouseScrollUp() const; //see int forwardedScroll;
+    bool forwardedMouseScrollDown() const; //see int forwardedScroll;
     void forwardScroll(int scroll); //see int forwardedScroll;
     
     protected:

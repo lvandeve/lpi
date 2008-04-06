@@ -95,13 +95,16 @@ class Texture
     void calculateAlpha(const AlphaEffect& effect); //uses the setAlpha function in api.cpp on the buffer  
 
     
+    //2D drawing of textures
     //do not draw the texture before binding it
-    //void draw(int x, int y, ColorRGB colorMod = RGB_White);
+    //factors "scale" are allowed to be negative to obtain mirrored texture
     void draw(int x, int y, const ColorRGB& colorMod = RGB_White, int sizex = -1, int sizey = -1, int skewx = 0, int skewy = 0) const;
     void draw(int x, int y, double scale, const ColorRGB& colorMod = RGB_White) const;
+    void draw(int x, int y, double scalex, double scaley, const ColorRGB& colorMod = RGB_White) const;
     void draw(int x1, int y1, int x2, int y2, const ColorRGB& colorMod = RGB_White) const;
     void drawCentered(int x, int y, const ColorRGB& colorMod = RGB_White, int sizex = -1, int sizey = -1, int skewx = 0, int skewy = 0) const;
     void drawCentered(int x, int y, double scale, const ColorRGB& colorMod = RGB_White) const;
+    void drawCentered(int x, int y, double scalex, double scaley, const ColorRGB& colorMod = RGB_White) const;
     void drawRepeated(int x1, int y1, int x2, int y2, double scalex = 1.0, double scaley = 1.0, const ColorRGB& colorMod = RGB_White) const;
     
     unsigned char getPixel(int x, int y, int c) const
@@ -160,7 +163,7 @@ class Texture
     //width and height as powers of two (this will be the actual size of the buffer, because OpenGL only supports such textures)
     size_t u2;
     size_t v2;
-    //multiply openGL texture coordinates between 0.0 and 1.0 with u3 and v3 to let OpenGL draw them correct even when not power of twho
+    //multiply openGL texture coordinates between 0.0 and 1.0 with u3 and v3 to let OpenGL draw them correct even when not power of two
     double u3; //should always be u / double(u2)
     double v3; //should always be v / double(v2)
 };
