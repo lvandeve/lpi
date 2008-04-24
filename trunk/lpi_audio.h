@@ -26,7 +26,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
-int audioOpen(int samplerate, int framesize); //always 16-bit mono sound for now; returns 0 if no error happened
+int audioOpen(int samplerate, int framesize); //always 16-bit mono sound for now; returns 0 if no error happened. Pick for example samplerate 44100, framesize 1024
 void audioClose();
 int audioReOpen(); //closes and opens again with same parameters
 

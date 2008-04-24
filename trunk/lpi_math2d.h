@@ -53,6 +53,7 @@ class Vector2
   double manhattan(const Vector2& v);
   double dot(const Vector2& v);
   void negate();
+  void clamp(double value); //set maximum length to value
 };
 
 Vector2 operator*(const Vector2& v, double a);
@@ -70,6 +71,16 @@ double distance(const Vector2& v, const Vector2& w);
 double distancesq(const Vector2& v, const Vector2& w);
 double manhattan(const Vector2& v, const Vector2& w);
 double dot(const Vector2& v, const Vector2& w);
+
+/*
+deflect, aka Target Leading or Target Prediction System.
+Calculates what direction to shoot a slow moving bullet at to make it hit a moving target.
+The result is stored in dir.
+Return value is true if a solution was found, false if there wasn't a solution, e.g. if the velocity is too high for a bullet of speed to handle.
+vel is targetvelocity - shootervelocity.
+speed is speed of the slow moving bullet.
+*/
+bool deflect(Vector2& dir, const Vector2& shooterpos, const Vector2& targetpos, const Vector2& vel, double speed);
 
 }
 
