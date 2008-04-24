@@ -170,4 +170,27 @@ int gcd(int a, int b)
    return a;
 }
 
+int quadsol(double& x1, double& x2, double a, double b, double c)
+{
+  double D = b * b - 4.0 * a * c; //discriminant
+  
+  if(D < 0.0)
+  {
+    x1 = x2 = 0.0;
+    return 0;
+  }
+  else if(D == 0.0)
+  {
+    x1 = x2 = (-b) / (2.0 * a);
+    return 1;
+  }
+  else
+  {
+    double sqD = std::sqrt(D);
+    x1 = (-b + sqD) / (2.0 * a);
+    x1 = (-b - sqD) / (2.0 * a);
+    return 2;
+  }
+}
+
 } //namespace lpi

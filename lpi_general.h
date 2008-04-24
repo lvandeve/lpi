@@ -53,6 +53,8 @@ bool isPowerOfTwo(int n);
 int floatMod(double f, int m);
 int gcd(int a, int b);
 
+int quadsol(double& x1, double& x2, double a, double b, double c); //quadratic equation solution. return value = number of solutions (0, 1 or 2), this function is in real domain. The real parts of the two solutions are put in x1 and x2.
+
 static const double pi = 3.14159265358979323846264338327950288419716939937510; //why isn't this in standard C++ anyway
 static const double twopi = 6.283185307179586477;
 
@@ -67,7 +69,6 @@ inline int intdivdown(int a, int b) //divide so that 2/2 = 1, 1/2 = 0, -1/2 = -1
   if(a < 0) return -((-a - 1) / b + 1);
   else return a / b;
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////
 

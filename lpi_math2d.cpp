@@ -21,6 +21,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_math2d.h"
 
 #include <cmath>
+#include <iostream>
 
 namespace lpi
 {
@@ -73,6 +74,15 @@ void Vector2::negate()
 {
   x = -x;
   y = -y;
+}
+
+void Vector2::clamp(double value)
+{
+  double v = lengthsq();
+  if(v > value * value)
+  {
+    (*this) *= (value * value / v);
+  }
 }
 
 //Return the negative of the vector
@@ -202,6 +212,47 @@ double Vector2::dot(const Vector2& v)
 double dot(const Vector2& v, const Vector2& w)
 {
   return v.x * w.x + v.y * w.y;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+bool deflect(Vector2& dir, const Vector2& shooterpos, const Vector2& targetpos, const Vector2& vel, double speed)
+{
+  double a = speed * speed - lengthsq(vel);
+  double b = -(2.0 * dot(vel, targetpos - shooterpos));
+  double c = -lengthsq(targetpos - shooterpos);
+  
+  double D = b * b - 4.0 * a * c; //discriminant
+  
+  if(D <= 0.0 || a == 0.0)
+  {
+    dir = normalize(targetpos - shooterpos); //vel too fast for bullet's speed, so ignore it
+    return false;
+  }
+  else
+  {
+    double sqD = std::sqrt(D);
+    double t1 = (-b + sqD) / (2.0 * a); //time of hit solution 1
+    double t2 = (-b - sqD) / (2.0 * a); //time of hit solution 2
+    if(t1 < 0.0 && t2 < 0.0) //we can only hit the enemy in negative time, so no proper solution found
+    {
+      dir = normalize(targetpos - shooterpos); //vel too fast for bullet's speed, so ignore it
+      return false;
+    }
+    else
+    {
+      double t; //pick the smallest nonnegative value
+      
+      if     (t1 < 0.0) t = t2;
+      else if(t2 < 0.0) t = t1;
+      else if(t1 < t2)  t = t1;
+      else              t = t2;
+      
+      Vector2 intercept = targetpos + t * vel;
+      dir = normalize(intercept - shooterpos);
+      return true;
+    }
+  }
 }
 
 }

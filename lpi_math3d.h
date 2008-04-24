@@ -55,6 +55,7 @@ class Vector3 //memory: exactly 3 doubles
   double dot(const Vector3& v);
   Vector3 cross(const Vector3& v);
   void negate();
+  void clamp(double value); //set maximum length to value
   
   Vector3& operator+=(const Vector3& v);
   Vector3& operator-=(const Vector3& v);
@@ -209,9 +210,9 @@ class Transformation3
   //get and set FOV
   double getFOVU(double w, double h);
   double getFOVV(double w, double h);
-  void setFOVU(double angle);
-  void setFOVV(double angle);
-  void setFOV(double angle)
+  void setFOVU(double angle); //angle given in radians
+  void setFOVV(double angle); //angle given in radians
+  void setFOV(double angle) //angle given in radians
   {
     setFOVU(angle);
     setFOVV(angle);
@@ -290,6 +291,17 @@ Vector3 getSomePerpendicularVector(const Vector3& v);
 Vector3 barycentric(const Vector3& a, const Vector3& b, const Vector3& c, const Vector3& p);
 Vector3 rotateWithPlane(const Vector3& p, const Vector3& n);
 Vector3 planeSphereTangent(const Vector3& p, const Vector3& o, double radius, const Vector3& v);
+
+
+/*
+deflect, aka Target Leading or Target Prediction System.
+Calculates what direction to shoot a slow moving bullet at to make it hit a moving target.
+The result is stored in dir.
+Return value is true if a solution was found, false if there wasn't a solution, e.g. if the velocity is too high for a bullet of speed to handle.
+vel is targetvelocity - shootervelocity.
+speed is speed of the slow moving bullet.
+*/
+bool deflect(Vector3& dir, const Vector3& shooterpos, const Vector3& targetpos, const Vector3& vel, double speed);
 
 } //end of namespace lpi
 
