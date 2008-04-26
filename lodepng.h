@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080402
+LodePNG version 20080426
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
@@ -128,9 +128,9 @@ void LodePNG_chunk_generate_crc(unsigned char* chunk); /*generates the correct C
 unsigned char* LodePNG_chunk_next(unsigned char* chunk);
 const unsigned char* LodePNG_chunk_next_const(const unsigned char* chunk);
 
-/*add chunks to out buffer. It reallocs the buffer to append the data.*/
-unsigned char* LodePNG_append_chunk(unsigned char** out, size_t* outlength, const unsigned char* chunk); /*appends chunk that was already created, to the data. Returns pointer to start of appended chunk, or NULL if error happened*/
-unsigned char* LodePNG_create_chunk(unsigned char** out, size_t* outlength, unsigned length, const char* type, const unsigned char* data); /*appends new chunk to out. Returns pointer to start of appended chunk, or NULL if error happened; may change memory address of out buffer*/
+/*add chunks to out buffer. It reallocs the buffer to append the data. returns error code*/
+unsigned LodePNG_append_chunk(unsigned char** out, size_t* outlength, const unsigned char* chunk); /*appends chunk that was already created, to the data. Returns pointer to start of appended chunk, or NULL if error happened*/
+unsigned LodePNG_create_chunk(unsigned char** out, size_t* outlength, unsigned length, const char* type, const unsigned char* data); /*appends new chunk to out. Returns pointer to start of appended chunk, or NULL if error happened; may change memory address of out buffer*/
 
 
 typedef struct LodePNG_InfoColor /*info about the color type of an image*/
@@ -152,11 +152,11 @@ typedef struct LodePNG_InfoColor /*info about the color type of an image*/
 
 void LodePNG_InfoColor_init(LodePNG_InfoColor* info);
 void LodePNG_InfoColor_cleanup(LodePNG_InfoColor* info);
-void LodePNG_InfoColor_copy(LodePNG_InfoColor* dest, const LodePNG_InfoColor* source);
+unsigned LodePNG_InfoColor_copy(LodePNG_InfoColor* dest, const LodePNG_InfoColor* source);
 
 /*it's advised to use these functions instead of alloc'ing palette manually*/
 void LodePNG_InfoColor_clearPalette(LodePNG_InfoColor* info);
-void LodePNG_InfoColor_addPalette(LodePNG_InfoColor* info, unsigned char r, unsigned char g, unsigned char b, unsigned char a); /*add 1 color to the palette*/
+unsigned LodePNG_InfoColor_addPalette(LodePNG_InfoColor* info, unsigned char r, unsigned char g, unsigned char b, unsigned char a); /*add 1 color to the palette*/
 
 /*additional color info*/
 unsigned LodePNG_InfoColor_getBpp(const LodePNG_InfoColor* info);      /*bits per pixel*/
@@ -185,11 +185,11 @@ typedef struct LodePNG_Text /*non-international text*/
 
 void LodePNG_Text_init(LodePNG_Text* text);
 void LodePNG_Text_cleanup(LodePNG_Text* text);
-void LodePNG_Text_copy(LodePNG_Text* dest, const LodePNG_Text* source);
+unsigned LodePNG_Text_copy(LodePNG_Text* dest, const LodePNG_Text* source);
 
 /*it's advised to use these functions instead of alloc'ing the char**s manually*/
 void LodePNG_Text_clear(LodePNG_Text* text);
-void LodePNG_Text_add(LodePNG_Text* text, const char* key, const char* str); /*push back both texts at once*/
+unsigned LodePNG_Text_add(LodePNG_Text* text, const char* key, const char* str); /*push back both texts at once*/
 
 
 typedef struct LodePNG_IText /*international text*/
@@ -203,11 +203,11 @@ typedef struct LodePNG_IText /*international text*/
 
 void LodePNG_IText_init(LodePNG_IText* text);
 void LodePNG_IText_cleanup(LodePNG_IText* text);
-void LodePNG_IText_copy(LodePNG_IText* dest, const LodePNG_IText* source);
+unsigned LodePNG_IText_copy(LodePNG_IText* dest, const LodePNG_IText* source);
 
 /*it's advised to use these functions instead of alloc'ing the char**s manually*/
 void LodePNG_IText_clear(LodePNG_IText* text);
-void LodePNG_IText_add(LodePNG_IText* text, const char* key, const char* langtag, const char* transkey, const char* str); /*push back the 4 texts of 1 chunk at once*/
+unsigned LodePNG_IText_add(LodePNG_IText* text, const char* key, const char* langtag, const char* transkey, const char* str); /*push back the 4 texts of 1 chunk at once*/
 
 #endif /*LODEPNG_COMPILE_ANCILLARY_CHUNKS*/
 
@@ -226,7 +226,7 @@ typedef struct LodePNG_UnknownChunks /*unknown chunks read from the PNG, or extr
 
 void LodePNG_UnknownChunks_init(LodePNG_UnknownChunks* chunks);
 void LodePNG_UnknownChunks_cleanup(LodePNG_UnknownChunks* chunks);
-void LodePNG_UnknownChunks_copy(LodePNG_UnknownChunks* dest, const LodePNG_UnknownChunks* src);
+unsigned LodePNG_UnknownChunks_copy(LodePNG_UnknownChunks* dest, const LodePNG_UnknownChunks* src);
 
 #endif /*LODEPNG_COMPILE_UNKNOWN_CHUNKS*/
 
@@ -278,7 +278,7 @@ typedef struct LodePNG_InfoPng /*information about the PNG image, except pixels 
 
 void LodePNG_InfoPng_init(LodePNG_InfoPng* info);
 void LodePNG_InfoPng_cleanup(LodePNG_InfoPng* info);
-void LodePNG_InfoPng_copy(LodePNG_InfoPng* dest, const LodePNG_InfoPng* source);
+unsigned LodePNG_InfoPng_copy(LodePNG_InfoPng* dest, const LodePNG_InfoPng* source);
 
 typedef struct LodePNG_InfoRaw /*contains user-chosen information about the raw image data, which is independent of the PNG image*/
 {
@@ -287,7 +287,7 @@ typedef struct LodePNG_InfoRaw /*contains user-chosen information about the raw 
 
 void LodePNG_InfoRaw_init(LodePNG_InfoRaw* info);
 void LodePNG_InfoRaw_cleanup(LodePNG_InfoRaw* info);
-void LodePNG_InfoRaw_copy(LodePNG_InfoRaw* dest, const LodePNG_InfoRaw* source);
+unsigned LodePNG_InfoRaw_copy(LodePNG_InfoRaw* dest, const LodePNG_InfoRaw* source);
 
 /*
 LodePNG_convert:
@@ -1310,13 +1310,14 @@ through each other):
 *) 67: the length of a text chunk keyword given to the encoder is smaller than the minimum 1 byte.
 *) 68: tried to encode a PLTE chunk with a palette that has less than 1 or more than 256 colors
 *) 69: unknown chunk type with "critical" flag encountered by the decoder
-*) 70: insufficient memory error
+*) 70: out of memory while allocating memory somewhere
 *) 71: unexisting interlace mode given to encoder (must be 0 or 1)
 *) 72: while decoding, unexisting compression method encountering in zTXt or iTXt chunk (it must be 0)
 *) 73: invalid tIME chunk size
 *) 74: invalid pHYs chunk size
 *) 75: no null termination char found while decoding any kind of text chunk, or wrong length
 *) 76: iTXt chunk too short to contain required bytes
+*) 77: integer overflow in buffer size happened somewhere
 
 10. file IO
 -----------
@@ -1404,8 +1405,8 @@ Iterate to the next chunk. This works if you have a buffer with consecutive chun
 functions do no boundary checking of the allocated data whatsoever, so make sure there is enough
 data available in the buffer to be able to go to the next chunk.
 
-unsigned char* LodePNG_append_chunk(unsigned char** out, size_t* outlength, const unsigned char* chunk):
-unsigned char* LodePNG_create_chunk(unsigned char** out, size_t* outlength, unsigned length, const char* type, const unsigned char* data):
+unsigned LodePNG_append_chunk(unsigned char** out, size_t* outlength, const unsigned char* chunk):
+unsigned LodePNG_create_chunk(unsigned char** out, size_t* outlength, unsigned length, const char* type, const unsigned char* data):
 
 These functions are used to create new chunks that are appended to the data in *out that has
 length *outlength. The append function appends an existing chunk to the new data. The create
@@ -1639,6 +1640,7 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 26 apr 2008: added a few more checks here and there to assure more safety.
 *) 06 mar 2008: crash with encoding strings fixed
 *) 02 feb 2008: support for international text chunks added (iTXt)
 *) 23 jan 2008: small cleanups, and #defines to divide code in sections

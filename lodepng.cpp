@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080402
+LodePNG version 20080426
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
@@ -30,7 +30,7 @@ You are free to name this file lodepng.cpp or lodepng.c depending on your usage.
 
 #include "lodepng.h"
 
-#define VERSION_STRING "20080402"
+#define VERSION_STRING "20080426"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Tools For C                                                            / */
@@ -1807,30 +1807,35 @@ const unsigned char* LodePNG_chunk_next_const(const unsigned char* chunk) /*don'
   return &chunk[total_chunk_length];
 }
 
-unsigned char* LodePNG_append_chunk(unsigned char** out, size_t* outlength, const unsigned char* chunk) /*appends chunk that was already created, to the data. Returns pointer to start of appended chunk, or NULL if error happened*/
+unsigned LodePNG_append_chunk(unsigned char** out, size_t* outlength, const unsigned char* chunk) /*appends chunk that was already created, to the data. Returns error code.*/
 {
   unsigned i;
   unsigned total_chunk_length = LodePNG_chunk_length(chunk) + 12;
-  unsigned char* chunk_start;
+  unsigned char *chunk_start, *new_buffer;
+  size_t new_length = (*outlength) + total_chunk_length;
+  if(new_length < total_chunk_length || new_length < (*outlength)) return 77; /*integer overflow happened*/
   
-  (*outlength) += total_chunk_length;
-  (*out) = (unsigned char*)realloc(*out, *outlength);
-  if(!*out) return 0;
-  chunk_start = &(*out)[(*outlength) - total_chunk_length];
+  new_buffer = (unsigned char*)realloc(*out, new_length);
+  if(!new_buffer) return 70;
+  (*out) = new_buffer;
+  (*outlength) = new_length;
+  chunk_start = &(*out)[new_length - total_chunk_length];
   
   for(i = 0; i < total_chunk_length; i++) chunk_start[i] = chunk[i];
   
-  return chunk_start;
+  return 0;
 }
 
-unsigned char* LodePNG_create_chunk(unsigned char** out, size_t* outlength, unsigned length, const char* type, const unsigned char* data) /*appends new chunk to out. Returns pointer to start of appended chunk, or NULL if error happened; may change memory address of out buffer*/
+unsigned LodePNG_create_chunk(unsigned char** out, size_t* outlength, unsigned length, const char* type, const unsigned char* data) /*appends new chunk to out. Returns error code; may change memory address of out buffer*/
 {
   unsigned i;
-  unsigned char* chunk, *new_buffer;
-  (*outlength) += (length + 12);
-  new_buffer = (unsigned char*)realloc(*out, *outlength);
-  if(!*out) return 0;
-  else (*out) = new_buffer;
+  unsigned char *chunk, *new_buffer;
+  size_t new_length = (*outlength) + length + 12;
+  if(new_length < length + 12 || new_length < (*outlength)) return 77; /*integer overflow happened*/
+  new_buffer = (unsigned char*)realloc(*out, new_length);
+  if(!new_buffer) return 70;
+  (*out) = new_buffer;
+  (*outlength) = new_length;
   chunk = &(*out)[(*outlength) - length - 12];
   
   /*1: length*/
@@ -1848,7 +1853,7 @@ unsigned char* LodePNG_create_chunk(unsigned char** out, size_t* outlength, unsi
   /*4: CRC (of the chunkname characters and the data)*/
   LodePNG_chunk_generate_crc(chunk);
   
-  return chunk;
+  return 0;
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
@@ -1911,7 +1916,7 @@ void LodePNG_InfoColor_clearPalette(LodePNG_InfoColor* info)
   info->palettesize = 0;
 }
 
-void LodePNG_InfoColor_addPalette(LodePNG_InfoColor* info, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
+unsigned LodePNG_InfoColor_addPalette(LodePNG_InfoColor* info, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
   unsigned char* data;
   /*the same resize technique as C++ std::vectors is used, and here it's made so that for a palette with the max of 256 colors, it'll have the exact alloc size*/
@@ -1920,7 +1925,7 @@ void LodePNG_InfoColor_addPalette(LodePNG_InfoColor* info, unsigned char r, unsi
     /*allocated data must be at least 4* palettesize (for 4 color bytes)*/
     size_t alloc_size = info->palettesize == 0 ? 4 : info->palettesize * 4 * 2;
     data = (unsigned char*)realloc(info->palette, alloc_size);
-    if(!data) return;
+    if(!data) return 70;
     else info->palette = data;
   }
   info->palette[4 * info->palettesize + 0] = r;
@@ -1928,6 +1933,7 @@ void LodePNG_InfoColor_addPalette(LodePNG_InfoColor* info, unsigned char r, unsi
   info->palette[4 * info->palettesize + 2] = b;
   info->palette[4 * info->palettesize + 3] = a;
   info->palettesize++;
+  return 0;
 }
 
 unsigned LodePNG_InfoColor_getBpp(const LodePNG_InfoColor* info) { return getBpp(info->colorType, info->bitDepth); } /*calculate bits per pixel out of colorType and bitDepth*/
@@ -1956,7 +1962,7 @@ void LodePNG_UnknownChunks_cleanup(LodePNG_UnknownChunks* chunks)
   for(i = 0; i < 3; i++) free(chunks->data[i]);
 }
 
-void LodePNG_UnknownChunks_copy(LodePNG_UnknownChunks* dest, const LodePNG_UnknownChunks* src)
+unsigned LodePNG_UnknownChunks_copy(LodePNG_UnknownChunks* dest, const LodePNG_UnknownChunks* src)
 {
   unsigned i;
   
@@ -1967,8 +1973,11 @@ void LodePNG_UnknownChunks_copy(LodePNG_UnknownChunks* dest, const LodePNG_Unkno
     size_t j;
     dest->datasize[i] = src->datasize[i];
     dest->data[i] = (unsigned char*)malloc(src->datasize[i]);
+    if(!dest->data[i] && dest->datasize[i]) return 70;
     for(j = 0; j < src->datasize[i]; j++) dest->data[i][j] = src->data[i][j];
   }
+  
+  return 0;
 }
 
 #endif /*LODEPNG_COMPILE_UNKNOWN_CHUNKS*/
@@ -1987,13 +1996,18 @@ void LodePNG_Text_cleanup(LodePNG_Text* text)
   LodePNG_Text_clear(text);
 }
 
-void LodePNG_Text_copy(LodePNG_Text* dest, const LodePNG_Text* source)
+unsigned LodePNG_Text_copy(LodePNG_Text* dest, const LodePNG_Text* source)
 {
   size_t i = 0;
   dest->keys = 0;
   dest->strings = 0;
   dest->num = 0;
-  for(i = 0; i < source->num; i++) LodePNG_Text_add(dest, source->keys[i], source->strings[i]);
+  for(i = 0; i < source->num; i++)
+  {
+    unsigned error = LodePNG_Text_add(dest, source->keys[i], source->strings[i]);
+    if(error) return error;
+  }
+  return 0;
 }
 
 void LodePNG_Text_clear(LodePNG_Text* text)
@@ -2008,11 +2022,16 @@ void LodePNG_Text_clear(LodePNG_Text* text)
   free(text->strings);
 }
 
-void LodePNG_Text_add(LodePNG_Text* text, const char* key, const char* str)
+unsigned LodePNG_Text_add(LodePNG_Text* text, const char* key, const char* str)
 {
   char** new_keys = (char**)(realloc(text->keys, sizeof(char*) * (text->num + 1)));
   char** new_strings = (char**)(realloc(text->strings, sizeof(char*) * (text->num + 1)));
-  if(!new_keys || !new_strings) return;
+  if(!new_keys || !new_strings)
+  {
+    free(new_keys);
+    free(new_strings);
+    return 70;
+  }
   
   text->num++;
   text->keys = new_keys;
@@ -2023,6 +2042,8 @@ void LodePNG_Text_add(LodePNG_Text* text, const char* key, const char* str)
   
   string_init(&text->strings[text->num - 1]);
   string_set(&text->strings[text->num - 1], str);
+  
+  return 0;
 }
 
 /******************************************************************************/
@@ -2041,7 +2062,7 @@ void LodePNG_IText_cleanup(LodePNG_IText* text)
   LodePNG_IText_clear(text);
 }
 
-void LodePNG_IText_copy(LodePNG_IText* dest, const LodePNG_IText* source)
+unsigned LodePNG_IText_copy(LodePNG_IText* dest, const LodePNG_IText* source)
 {
   size_t i = 0;
   dest->keys = 0;
@@ -2049,7 +2070,12 @@ void LodePNG_IText_copy(LodePNG_IText* dest, const LodePNG_IText* source)
   dest->transkeys = 0;
   dest->strings = 0;
   dest->num = 0;
-  for(i = 0; i < source->num; i++) LodePNG_IText_add(dest, source->keys[i], source->langtags[i], source->transkeys[i], source->strings[i]);
+  for(i = 0; i < source->num; i++)
+  {
+    unsigned error = LodePNG_IText_add(dest, source->keys[i], source->langtags[i], source->transkeys[i], source->strings[i]);
+    if(error) return error;
+  }
+  return 0;
 }
 
 void LodePNG_IText_clear(LodePNG_IText* text)
@@ -2068,13 +2094,20 @@ void LodePNG_IText_clear(LodePNG_IText* text)
   free(text->strings);
 }
 
-void LodePNG_IText_add(LodePNG_IText* text, const char* key, const char* langtag, const char* transkey, const char* str)
+unsigned LodePNG_IText_add(LodePNG_IText* text, const char* key, const char* langtag, const char* transkey, const char* str)
 {
   char** new_keys = (char**)(realloc(text->keys, sizeof(char*) * (text->num + 1)));
   char** new_langtags = (char**)(realloc(text->langtags, sizeof(char*) * (text->num + 1)));
   char** new_transkeys = (char**)(realloc(text->transkeys, sizeof(char*) * (text->num + 1)));
   char** new_strings = (char**)(realloc(text->strings, sizeof(char*) * (text->num + 1)));
-  if(!new_keys || !new_langtags || !new_transkeys || !new_strings) return;
+  if(!new_keys || !new_langtags || !new_transkeys || !new_strings)
+  {
+    free(new_keys);
+    free(new_langtags);
+    free(new_transkeys);
+    free(new_strings);
+    return 70;
+  }
   
   text->num++;
   text->keys = new_keys;
@@ -2093,6 +2126,8 @@ void LodePNG_IText_add(LodePNG_IText* text, const char* key, const char* langtag
   
   string_init(&text->strings[text->num - 1]);
   string_set(&text->strings[text->num - 1], str);
+  
+  return 0;
 }
 
 #endif /*LODEPNG_COMPILE_ANCILLARY_CHUNKS*/
@@ -2131,22 +2166,24 @@ void LodePNG_InfoPng_cleanup(LodePNG_InfoPng* info)
 #endif /*LODEPNG_COMPILE_UNKNOWN_CHUNKS*/
 }
 
-void LodePNG_InfoPng_copy(LodePNG_InfoPng* dest, const LodePNG_InfoPng* source)
+unsigned LodePNG_InfoPng_copy(LodePNG_InfoPng* dest, const LodePNG_InfoPng* source)
 {
+  unsigned error = 0;
   LodePNG_InfoPng_cleanup(dest);
   *dest = *source;
   LodePNG_InfoColor_init(&dest->color);
-  LodePNG_InfoColor_copy(&dest->color, &source->color);
+  error = LodePNG_InfoColor_copy(&dest->color, &source->color); if(error) return error;
   
 #ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
-  LodePNG_Text_copy(&dest->text, &source->text);
-  LodePNG_IText_copy(&dest->itext, &source->itext);
+  error = LodePNG_Text_copy(&dest->text, &source->text); if(error) return error;
+  error = LodePNG_IText_copy(&dest->itext, &source->itext); if(error) return error;
 #endif /*LODEPNG_COMPILE_ANCILLARY_CHUNKS*/
   
 #ifdef LODEPNG_COMPILE_UNKNOWN_CHUNKS
   LodePNG_UnknownChunks_init(&dest->unknown_chunks);
-  LodePNG_UnknownChunks_copy(&dest->unknown_chunks, &source->unknown_chunks);
+  error = LodePNG_UnknownChunks_copy(&dest->unknown_chunks, &source->unknown_chunks); if(error) return error;
 #endif /*LODEPNG_COMPILE_UNKNOWN_CHUNKS*/
+  return error;
 }
 
 void LodePNG_InfoPng_swap(LodePNG_InfoPng* a, LodePNG_InfoPng* b)
@@ -2156,13 +2193,15 @@ void LodePNG_InfoPng_swap(LodePNG_InfoPng* a, LodePNG_InfoPng* b)
   *b = temp;
 }
 
-void LodePNG_InfoColor_copy(LodePNG_InfoColor* dest, const LodePNG_InfoColor* source)
+unsigned LodePNG_InfoColor_copy(LodePNG_InfoColor* dest, const LodePNG_InfoColor* source)
 {
   size_t i;
   LodePNG_InfoColor_cleanup(dest);
   *dest = *source;
   dest->palette = (unsigned char*)malloc(source->palettesize * 4);
+  if(!dest->palette && source->palettesize) return 70;
   for(i = 0; i < source->palettesize * 4; i++) dest->palette[i] = source->palette[i];
+  return 0;
 }
 
 void LodePNG_InfoRaw_init(LodePNG_InfoRaw* info)
@@ -2175,12 +2214,14 @@ void LodePNG_InfoRaw_cleanup(LodePNG_InfoRaw* info)
   LodePNG_InfoColor_cleanup(&info->color);
 }
 
-void LodePNG_InfoRaw_copy(LodePNG_InfoRaw* dest, const LodePNG_InfoRaw* source)
+unsigned LodePNG_InfoRaw_copy(LodePNG_InfoRaw* dest, const LodePNG_InfoRaw* source)
 {
+  unsigned error = 0;
   LodePNG_InfoRaw_cleanup(dest);
   *dest = *source;
   LodePNG_InfoColor_init(&dest->color);
-  LodePNG_InfoColor_copy(&dest->color, &source->color);
+  error = LodePNG_InfoColor_copy(&dest->color, &source->color); if(error) return error;
+  return error;
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
@@ -2727,6 +2768,7 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
       if(decoder->infoPng.color.palette) free(decoder->infoPng.color.palette);
       decoder->infoPng.color.palettesize = chunkLength / 3;
       decoder->infoPng.color.palette = (unsigned char*)malloc(4 * decoder->infoPng.color.palettesize);
+      if(!decoder->infoPng.color.palette && decoder->infoPng.color.palettesize) { decoder->error = 70; break; }
       if(!decoder->infoPng.color.palette) decoder->infoPng.color.palettesize = 0; /*malloc failed...*/
       if(decoder->infoPng.color.palettesize > 256) { decoder->error = 38; break; } /*error: palette too big*/
       for(i = 0; i < decoder->infoPng.color.palettesize; i++)
@@ -2798,6 +2840,7 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
         for(length = 0; length < chunkLength && data[length] != 0; length++) ;
         if(length + 1 >= chunkLength) { decoder->error = 75; break; }
         key = (char*)malloc(length + 1);
+        if(!key) { decoder->error = 70; break; }
         key[length] = 0;
         for(i = 0; i < length; i++) key[i] = data[i];
 
@@ -2805,10 +2848,11 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
         if(string2_begin > chunkLength)  { decoder->error = 75; break; }
         length = chunkLength - string2_begin;
         str = (char*)malloc(length + 1);
+        if(!str) { decoder->error = 70; break; }
         str[length] = 0;
         for(i = 0; i < length; i++) str[i] = data[string2_begin + i];
 
-        LodePNG_Text_add(&decoder->infoPng.text, key, str);
+        decoder->error = LodePNG_Text_add(&decoder->infoPng.text, key, str);
         free(key);
         free(str);
       }
@@ -2829,6 +2873,7 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
           for(length = 0; length < chunkLength && data[length] != 0; length++) ;
           if(length + 2 >= chunkLength) { decoder->error = 75; break; }
           key = (char*)malloc(length + 1);
+          if(!key) { decoder->error = 70; break; }
           key[length] = 0;
           for(i = 0; i < length; i++) key[i] = data[i];
           
@@ -2841,7 +2886,7 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
           if(decoder->error) break;
           ucvector_push_back(&decoded, 0);
 
-          LodePNG_Text_add(&decoder->infoPng.text, key, (char*)decoded.data);
+          decoder->error = LodePNG_Text_add(&decoder->infoPng.text, key, (char*)decoded.data);
           
           break;
         }
@@ -2867,6 +2912,7 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
           for(length = 0; length < chunkLength && data[length] != 0; length++) ;
           if(length + 2 >= chunkLength) { decoder->error = 75; break; }
           key = (char*)malloc(length + 1);
+          if(!key) { decoder->error = 70; break; }
           key[length] = 0;
           for(i = 0; i < length; i++) key[i] = data[i];
           
@@ -2878,6 +2924,7 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
           for(i = begin; i < chunkLength && data[i] != 0; i++) length++;
           if(begin + length + 1 >= chunkLength) { decoder->error = 75; break; }
           langtag = (char*)malloc(length + 1);
+          if(!langtag) { decoder->error = 70; break; }
           langtag[length] = 0;
           for(i = 0; i < length; i++) langtag[i] = data[begin + i];
           
@@ -2886,6 +2933,7 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
           for(i = begin; i < chunkLength && data[i] != 0; i++) length++;
           if(begin + length + 1 >= chunkLength) { decoder->error = 75; break; }
           transkey = (char*)malloc(length + 1);
+          if(!transkey) { decoder->error = 70; break; }
           transkey[length] = 0;
           for(i = 0; i < length; i++) transkey[i] = data[begin + i];
 
@@ -2906,7 +2954,7 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
             for(i = 0; i < length; i++) decoded.data[i] = data[begin + i];
           }
           
-          LodePNG_IText_add(&decoder->infoPng.itext, key, langtag, transkey, (char*)decoded.data);
+          decoder->error = LodePNG_IText_add(&decoder->infoPng.itext, key, langtag, transkey, (char*)decoded.data);
           
           break;
         }
@@ -2946,8 +2994,8 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
       if(decoder->settings.rememberUnknownChunks)
       {
         LodePNG_UnknownChunks* unknown = &decoder->infoPng.unknown_chunks;
-        unsigned char* c = LodePNG_append_chunk(&unknown->data[critical_pos - 1], &unknown->datasize[critical_pos - 1], chunk);
-        if(!c) { decoder->error = 70; break; }
+        decoder->error = LodePNG_append_chunk(&unknown->data[critical_pos - 1], &unknown->datasize[critical_pos - 1], chunk);
+        if(decoder->error) break;
       }
 #endif /*LODEPNG_COMPILE_UNKNOWN_CHUNKS*/
     }
@@ -2993,7 +3041,11 @@ void LodePNG_decode(LodePNG_Decoder* decoder, unsigned char** out, size_t* outsi
     /*same color type, no copying or converting of data needed*/
     /*store the infoPng color settings on the infoRaw so that the infoRaw still reflects what colorType
     the raw image has to the end user*/
-    if(!decoder->settings.color_convert) LodePNG_InfoColor_copy(&decoder->infoRaw.color, &decoder->infoPng.color);
+    if(!decoder->settings.color_convert)
+    {
+      decoder->error = LodePNG_InfoColor_copy(&decoder->infoRaw.color, &decoder->infoPng.color);
+      if(decoder->error) return;
+    }
   }
   else
   {
@@ -3074,9 +3126,9 @@ void LodePNG_Decoder_copy(LodePNG_Decoder* dest, const LodePNG_Decoder* source)
   LodePNG_Decoder_cleanup(dest);
   *dest = *source;
   LodePNG_InfoRaw_init(&dest->infoRaw);
-  LodePNG_InfoRaw_copy(&dest->infoRaw, &source->infoRaw);
   LodePNG_InfoPng_init(&dest->infoPng);
-  LodePNG_InfoPng_copy(&dest->infoPng, &source->infoPng);
+  dest->error = LodePNG_InfoRaw_copy(&dest->infoRaw, &source->infoRaw); if(dest->error) return;
+  dest->error = LodePNG_InfoPng_copy(&dest->infoPng, &source->infoPng); if(dest->error) return;
 }
 
 #endif /*LODEPNG_COMPILE_DECODER*/
@@ -3090,9 +3142,10 @@ void LodePNG_Decoder_copy(LodePNG_Decoder* dest, const LodePNG_Decoder* source)
 /*chunkName must be string of 4 characters*/
 static unsigned addChunk(ucvector* out, const char* chunkName, const unsigned char* data, size_t length)
 {
-  unsigned char* chunk = LodePNG_create_chunk(&out->data, &out->size, (unsigned)length, chunkName, data);
-  if(chunk) out->allocsize = out->size; /*fix the allocsize again*/
-  return chunk ? 0 : 70; /*if realloc failed, return error 70*/
+  unsigned error = LodePNG_create_chunk(&out->data, &out->size, (unsigned)length, chunkName, data);
+  if(error) return error;
+  out->allocsize = out->size; /*fix the allocsize again*/
+  return 0;
 }
 
 static void writeSignature(ucvector* out)
@@ -3593,8 +3646,9 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
   {
     *outsize = h + (h * ((w * bpp + 7) / 8)); /*image size plus an extra byte per scanline + possible padding bits*/
     *out = (unsigned char*)malloc(*outsize);
+    if(!(*out) && (*outsize)) error = 70;
 
-    if(bpp < 8 && w * bpp != ((w * bpp + 7) / 8) * 8) /*non multiple of 8 bits per scanline, padding bits needed per scanline*/
+    if(!error && bpp < 8 && w * bpp != ((w * bpp + 7) / 8) * 8) /*non multiple of 8 bits per scanline, padding bits needed per scanline*/
     {
       ucvector padded;
       ucvector_init(&padded);
@@ -3607,36 +3661,45 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
   }
   else /*interlaceMethod is 1 (Adam7)*/
   {
-    unsigned passw[7], passh[7]; size_t filter_passstart[8], padded_passstart[8], passstart[8];
-    unsigned i;
     unsigned char* adam7 = (unsigned char*)malloc((h * w * bpp + 7) / 8);
     
-    Adam7_getpassvalues(passw, passh, filter_passstart, padded_passstart, passstart, w, h, bpp);
-    
-    *outsize = filter_passstart[7]; /*image size plus an extra byte per scanline + possible padding bits*/
-    *out = (unsigned char*)malloc(*outsize);
-    
-    Adam7_interlace(adam7, in, w, h, bpp);
-    
-    for(i = 0; i < 7; i++)
+    while(!error)
     {
-      if(bpp < 8)
+      unsigned passw[7], passh[7]; size_t filter_passstart[8], padded_passstart[8], passstart[8];
+      unsigned i;
+      
+      if(!adam7 && ((h * w * bpp + 7) / 8)) { error = 70; break; }
+      
+      Adam7_getpassvalues(passw, passh, filter_passstart, padded_passstart, passstart, w, h, bpp);
+      
+      *outsize = filter_passstart[7]; /*image size plus an extra byte per scanline + possible padding bits*/
+      *out = (unsigned char*)malloc(*outsize);
+      if(!(*out) && (*outsize)) { error = 70; break; }
+      
+      Adam7_interlace(adam7, in, w, h, bpp);
+      
+      for(i = 0; i < 7; i++)
       {
-        ucvector padded;
-        ucvector_init(&padded);
-        ucvector_resize(&padded, h * ((w * bpp + 7) / 8));
-        addPaddingBits(&padded.data[padded_passstart[i]], &adam7[passstart[i]], ((passw[i] * bpp + 7) / 8) * 8, passw[i] * bpp, passh[i]);
-        
-        filter(&(*out)[filter_passstart[i]], &padded.data[padded_passstart[i]], passw[i], passh[i], &infoPng->color);
-        
-        ucvector_cleanup(&padded);
+        if(bpp < 8)
+        {
+          ucvector padded;
+          ucvector_init(&padded);
+          ucvector_resize(&padded, h * ((w * bpp + 7) / 8));
+          addPaddingBits(&padded.data[padded_passstart[i]], &adam7[passstart[i]], ((passw[i] * bpp + 7) / 8) * 8, passw[i] * bpp, passh[i]);
+          
+          filter(&(*out)[filter_passstart[i]], &padded.data[padded_passstart[i]], passw[i], passh[i], &infoPng->color);
+          
+          ucvector_cleanup(&padded);
+        }
+        else
+        {
+          filter(&(*out)[filter_passstart[i]], &adam7[padded_passstart[i]], passw[i], passh[i], &infoPng->color);
+        }
       }
-      else
-      {
-        filter(&(*out)[filter_passstart[i]], &adam7[padded_passstart[i]], passw[i], passh[i], &infoPng->color);
-      }
+      
+      break;
     }
-    
+
     free(adam7);
   }
   
@@ -3696,11 +3759,11 @@ static unsigned isFullyOpaque(const unsigned char* image, unsigned w, unsigned h
 #ifdef LODEPNG_COMPILE_UNKNOWN_CHUNKS
 static unsigned addUnknownChunks(ucvector* out, unsigned char* data, size_t datasize)
 {
-  unsigned char* inchunk = data, *c;
+  unsigned char* inchunk = data;
   while((size_t)(inchunk - data) < datasize)
   {
-    c = LodePNG_append_chunk(&out->data, &out->size, inchunk);
-    if(!c) return 70; /*error: not enough memory*/
+    unsigned error = LodePNG_append_chunk(&out->data, &out->size, inchunk);
+    if(error) return error; /*error: not enough memory*/
     out->allocsize = out->size; /*fix the allocsize again*/
     inchunk = LodePNG_chunk_next(inchunk);
   }
@@ -3712,7 +3775,7 @@ void LodePNG_encode(LodePNG_Encoder* encoder, unsigned char** out, size_t* outsi
 {
   LodePNG_InfoPng info;
   ucvector outv;
-  unsigned char* data; /*uncompressed version of the IDAT chunk data*/
+  unsigned char* data = 0; /*uncompressed version of the IDAT chunk data*/
   size_t datasize;
   
   /*provide some proper output values if error will happen*/
@@ -3891,9 +3954,9 @@ void LodePNG_Encoder_copy(LodePNG_Encoder* dest, const LodePNG_Encoder* source)
   LodePNG_Encoder_cleanup(dest);
   *dest = *source;
   LodePNG_InfoPng_init(&dest->infoPng);
-  LodePNG_InfoPng_copy(&dest->infoPng, &source->infoPng);
   LodePNG_InfoRaw_init(&dest->infoRaw);
-  LodePNG_InfoRaw_copy(&dest->infoRaw, &source->infoRaw);
+  dest->error = LodePNG_InfoPng_copy(&dest->infoPng, &source->infoPng); if(dest->error) return;
+  dest->error = LodePNG_InfoRaw_copy(&dest->infoRaw, &source->infoRaw); if(dest->error) return;
 }
 
 #endif /*LODEPNG_COMPILE_ENCODER*/
@@ -3926,9 +3989,9 @@ void LodePNG_loadFile(unsigned char** out, size_t* outsize, const char* filename
   /*read contents of the file into the vector*/
   *outsize = 0;
   *out = (unsigned char*)malloc((size_t)size);
-  if(size) (*outsize) = fread(*out, 1, (size_t)size, file);
+  if(size && (*out)) (*outsize) = fread(*out, 1, (size_t)size, file);
 
-  fclose (file);
+  fclose(file);
 }
 
 /*write given buffer to the file, overwriting the file, it doesn't append to it.*/
@@ -4024,12 +4087,12 @@ namespace LodePNG
   
   const LodePNG_InfoPng& Decoder::getInfoPng() const { return infoPng; }
   LodePNG_InfoPng& Decoder::getInfoPng() { return infoPng; }
-  void Decoder::setInfoPng(const LodePNG_InfoPng& info) { LodePNG_InfoPng_copy(&this->infoPng, &info); }
+  void Decoder::setInfoPng(const LodePNG_InfoPng& info) { error = LodePNG_InfoPng_copy(&this->infoPng, &info); }
   void Decoder::swapInfoPng(LodePNG_InfoPng& info) { LodePNG_InfoPng_swap(&this->infoPng, &info); }
   
   const LodePNG_InfoRaw& Decoder::getInfoRaw() const { return infoRaw; }
   LodePNG_InfoRaw& Decoder::getInfoRaw() { return infoRaw; }
-  void Decoder::setInfoRaw(const LodePNG_InfoRaw& info) { LodePNG_InfoRaw_copy(&this->infoRaw, &info); }
+  void Decoder::setInfoRaw(const LodePNG_InfoRaw& info) { error = LodePNG_InfoRaw_copy(&this->infoRaw, &info); }
   
   /* ////////////////////////////////////////////////////////////////////////// */
   
@@ -4058,12 +4121,12 @@ namespace LodePNG
   }
   
   void Encoder::clearPalette() { LodePNG_InfoColor_clearPalette(&infoPng.color); }
-  void Encoder::addPalette(unsigned char r, unsigned char g, unsigned char b, unsigned char a) { LodePNG_InfoColor_addPalette(&infoPng.color, r, g, b, a); }
+  void Encoder::addPalette(unsigned char r, unsigned char g, unsigned char b, unsigned char a) { error = LodePNG_InfoColor_addPalette(&infoPng.color, r, g, b, a); }
 #ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
   void Encoder::clearText() { LodePNG_Text_clear(&infoPng.text); }
-  void Encoder::addText(const std::string& key, const std::string& str) { LodePNG_Text_add(&infoPng.text, key.c_str(), str.c_str()); }
+  void Encoder::addText(const std::string& key, const std::string& str) { error = LodePNG_Text_add(&infoPng.text, key.c_str(), str.c_str()); }
   void Encoder::clearIText() { LodePNG_IText_clear(&infoPng.itext); }
-  void Encoder::addIText(const std::string& key, const std::string& langtag, const std::string& transkey, const std::string& str) { LodePNG_IText_add(&infoPng.itext, key.c_str(), langtag.c_str(), transkey.c_str(), str.c_str()); }
+  void Encoder::addIText(const std::string& key, const std::string& langtag, const std::string& transkey, const std::string& str) { error = LodePNG_IText_add(&infoPng.itext, key.c_str(), langtag.c_str(), transkey.c_str(), str.c_str()); }
 #endif /*LODEPNG_COMPILE_ANCILLARY_CHUNKS*/
 
   const LodePNG_EncodeSettings& Encoder::getSettings() const { return settings; }
@@ -4072,12 +4135,12 @@ namespace LodePNG
   
   const LodePNG_InfoPng& Encoder::getInfoPng() const { return infoPng; }
   LodePNG_InfoPng& Encoder::getInfoPng() { return infoPng; }
-  void Encoder::setInfoPng(const LodePNG_InfoPng& info) { LodePNG_InfoPng_copy(&this->infoPng, &info); }
+  void Encoder::setInfoPng(const LodePNG_InfoPng& info) { error = LodePNG_InfoPng_copy(&this->infoPng, &info); }
   void Encoder::swapInfoPng(LodePNG_InfoPng& info) { LodePNG_InfoPng_swap(&this->infoPng, &info); }
   
   const LodePNG_InfoRaw& Encoder::getInfoRaw() const { return infoRaw; }
   LodePNG_InfoRaw& Encoder::getInfoRaw() { return infoRaw; }
-  void Encoder::setInfoRaw(const LodePNG_InfoRaw& info) { LodePNG_InfoRaw_copy(&this->infoRaw, &info); }
+  void Encoder::setInfoRaw(const LodePNG_InfoRaw& info) { error = LodePNG_InfoRaw_copy(&this->infoRaw, &info); }
   
   /* ////////////////////////////////////////////////////////////////////////// */
   
