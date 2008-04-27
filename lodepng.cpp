@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080426
+LodePNG version 20080427
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
@@ -30,7 +30,7 @@ You are free to name this file lodepng.cpp or lodepng.c depending on your usage.
 
 #include "lodepng.h"
 
-#define VERSION_STRING "20080426"
+#define VERSION_STRING "20080427"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Tools For C                                                            / */
@@ -1750,7 +1750,7 @@ void LodePNG_chunk_type(char type[5], const unsigned char* chunk) /*puts the 4-b
 unsigned char LodePNG_chunk_type_equals(const unsigned char* chunk, const char* type) /*check if the type is the given type*/
 {
   if(strlen(type) != 4) return 0;
-  return (chunk[4 + 0] == type[0] && chunk[4 + 1] == type[1] && chunk[4 + 2] == type[2] && chunk[4 + 3] == type[3]);
+  return (chunk[4] == type[0] && chunk[5] == type[1] && chunk[6] == type[2] && chunk[7] == type[3]);
 }
 
 /*properties of PNG chunks gotten from capitalization of chunk type name, as defined by the standard*/
@@ -2834,25 +2834,32 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
     {
       if(decoder->settings.readTextChunks)
       {
-        char *key, *str;
-        unsigned length, string2_begin;
+        char *key = 0, *str = 0;
         
-        for(length = 0; length < chunkLength && data[length] != 0; length++) ;
-        if(length + 1 >= chunkLength) { decoder->error = 75; break; }
-        key = (char*)malloc(length + 1);
-        if(!key) { decoder->error = 70; break; }
-        key[length] = 0;
-        for(i = 0; i < length; i++) key[i] = data[i];
+        while(!decoder->error) /*not really a while loop, only used to break on error*/
+        {
+          unsigned length, string2_begin;
+          
+          for(length = 0; length < chunkLength && data[length] != 0; length++) ;
+          if(length + 1 >= chunkLength) { decoder->error = 75; break; }
+          key = (char*)malloc(length + 1);
+          if(!key) { decoder->error = 70; break; }
+          key[length] = 0;
+          for(i = 0; i < length; i++) key[i] = data[i];
+  
+          string2_begin = length + 1;
+          if(string2_begin > chunkLength)  { decoder->error = 75; break; }
+          length = chunkLength - string2_begin;
+          str = (char*)malloc(length + 1);
+          if(!str) { decoder->error = 70; break; }
+          str[length] = 0;
+          for(i = 0; i < length; i++) str[i] = data[string2_begin + i];
+  
+          decoder->error = LodePNG_Text_add(&decoder->infoPng.text, key, str);
+          
+          break;
+        }
 
-        string2_begin = length + 1;
-        if(string2_begin > chunkLength)  { decoder->error = 75; break; }
-        length = chunkLength - string2_begin;
-        str = (char*)malloc(length + 1);
-        if(!str) { decoder->error = 70; break; }
-        str[length] = 0;
-        for(i = 0; i < length; i++) str[i] = data[string2_begin + i];
-
-        decoder->error = LodePNG_Text_add(&decoder->infoPng.text, key, str);
         free(key);
         free(str);
       }
@@ -3087,8 +3094,8 @@ unsigned LodePNG_decode32f(unsigned char** out, unsigned* w, unsigned* h, const 
   unsigned char* buffer;
   size_t buffersize;
   unsigned error;
-  LodePNG_loadFile(&buffer, &buffersize, filename);
-  error = LodePNG_decode32(out, w, h, buffer, buffersize);
+  error = LodePNG_loadFile(&buffer, &buffersize, filename);
+  if(!error) error = LodePNG_decode32(out, w, h, buffer, buffersize);
   free(buffer);
   return error;
 }
@@ -3662,13 +3669,12 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
   else /*interlaceMethod is 1 (Adam7)*/
   {
     unsigned char* adam7 = (unsigned char*)malloc((h * w * bpp + 7) / 8);
+    if(!adam7 && ((h * w * bpp + 7) / 8)) error = 70; /*malloc failed*/
     
-    while(!error)
+    while(!error) /*not a real while loop, used to break out to cleanup to avoid a goto*/
     {
       unsigned passw[7], passh[7]; size_t filter_passstart[8], padded_passstart[8], passstart[8];
       unsigned i;
-      
-      if(!adam7 && ((h * w * bpp + 7) / 8)) { error = 70; break; }
       
       Adam7_getpassvalues(passw, passh, filter_passstart, padded_passstart, passstart, w, h, bpp);
       
@@ -3776,7 +3782,7 @@ void LodePNG_encode(LodePNG_Encoder* encoder, unsigned char** out, size_t* outsi
   LodePNG_InfoPng info;
   ucvector outv;
   unsigned char* data = 0; /*uncompressed version of the IDAT chunk data*/
-  size_t datasize;
+  size_t datasize = 0;
   
   /*provide some proper output values if error will happen*/
   *out = 0;
@@ -3803,10 +3809,12 @@ void LodePNG_encode(LodePNG_Encoder* encoder, unsigned char** out, size_t* outsi
   if(!LodePNG_InfoColor_equal(&encoder->infoRaw.color, &info.color))
   {
     unsigned char* converted;
+    size_t size = (w * h * LodePNG_InfoColor_getBpp(&info.color) + 7) / 8;
     
     if((info.color.colorType != 6 && info.color.colorType != 2) || (info.color.bitDepth != 8)) { encoder->error = 59; return; } /*for the output image, only these types are supported*/
-    converted = (unsigned char*)malloc((w * h * LodePNG_InfoColor_getBpp(&info.color) + 7) / 8);
-    encoder->error = LodePNG_convert(converted, image, &info.color, &encoder->infoRaw.color, w, h);
+    converted = (unsigned char*)malloc(size);
+    if(!converted && size) encoder->error = 70; /*error: malloc failed*/
+    if(!encoder->error) encoder->error = LodePNG_convert(converted, image, &info.color, &encoder->infoRaw.color, w, h);
     if(!encoder->error) preProcessScanlines(&data, &datasize, converted, &info);/*filter(data.data, converted.data, w, h, LodePNG_InfoColor_getBpp(&info.color));*/
     free(converted);
   }
@@ -3969,7 +3977,7 @@ void LodePNG_Encoder_copy(LodePNG_Encoder* dest, const LodePNG_Encoder* source)
 
 #ifdef LODEPNG_COMPILE_DISK
 
-void LodePNG_loadFile(unsigned char** out, size_t* outsize, const char* filename) /*designed for loading files from hard disk in a dynamically allocated buffer*/
+unsigned LodePNG_loadFile(unsigned char** out, size_t* outsize, const char* filename) /*designed for loading files from hard disk in a dynamically allocated buffer*/
 {
   FILE* file;
   long size;
@@ -3979,7 +3987,7 @@ void LodePNG_loadFile(unsigned char** out, size_t* outsize, const char* filename
   *outsize = 0;
 
   file = fopen(filename, "rb");
-  if(!file) return;
+  if(!file) return 78;
 
   /*get filesize:*/
   fseek(file , 0 , SEEK_END);
@@ -3992,15 +4000,19 @@ void LodePNG_loadFile(unsigned char** out, size_t* outsize, const char* filename
   if(size && (*out)) (*outsize) = fread(*out, 1, (size_t)size, file);
 
   fclose(file);
+  if(!(*out) && size) return 70; /*the above malloc failed*/
+  return 0;
 }
 
 /*write given buffer to the file, overwriting the file, it doesn't append to it.*/
-void LodePNG_saveFile(const unsigned char* buffer, size_t buffersize, const char* filename)
+unsigned LodePNG_saveFile(const unsigned char* buffer, size_t buffersize, const char* filename)
 {
   FILE* file;
   file = fopen(filename, "wb" );
-  if(file) fwrite((char*)buffer , 1 , buffersize, file);
+  if(!file) return 79;
+  fwrite((char*)buffer , 1 , buffersize, file);
   fclose(file);
+  return 0;
 }
 
 #endif /*LODEPNG_COMPILE_DISK*/
