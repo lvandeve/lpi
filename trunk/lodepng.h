@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080426
+LodePNG version 20080427
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
@@ -381,8 +381,8 @@ unsigned LodePNG_encode32f(const char* filename, const unsigned char* image, uns
 #ifdef LODEPNG_COMPILE_DISK
 /*global functions allowing to load and save a file from/to harddisk*/
 /*This function mallocs the out buffer for you and stores the size in *outsize. After using the *out data, *out must be free'd to avoid memory leaks.*/
-void LodePNG_loadFile(unsigned char** out, size_t* outsize, const char* filename);
-void LodePNG_saveFile(const unsigned char* buffer, size_t buffersize, const char* filename);
+unsigned LodePNG_loadFile(unsigned char** out, size_t* outsize, const char* filename);
+unsigned LodePNG_saveFile(const unsigned char* buffer, size_t buffersize, const char* filename);
 #endif /*LODEPNG_COMPILE_DISK*/
 
 #ifdef __cplusplus
@@ -1318,6 +1318,8 @@ through each other):
 *) 75: no null termination char found while decoding any kind of text chunk, or wrong length
 *) 76: iTXt chunk too short to contain required bytes
 *) 77: integer overflow in buffer size happened somewhere
+*) 78: file doesn't exist or couldn't be opened for reading
+*) 79: file couldn't be opened for writing
 
 10. file IO
 -----------
