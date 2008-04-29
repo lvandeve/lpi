@@ -23,7 +23,6 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include "lpi_tools.h"
 #include "lodepng.h"
-#include "lpi_general.h"
 #include "lpi_screen.h"
 #include "lpi_file.h"
 #include "lpi_base64.h"

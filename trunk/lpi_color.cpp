@@ -19,8 +19,9 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 */
 
 #include "lpi_color.h"
+
 #include <cmath>
-#include "lpi_general.h"
+#include <algorithm> //std::min and std::max
 
 namespace lpi
 {

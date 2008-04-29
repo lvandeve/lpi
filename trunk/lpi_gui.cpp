@@ -22,8 +22,8 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_gui.h"
 #include "lpi_gl.h"
 #include "lpi_draw2dgl.h"
-
-#include "lpi_general.h"
+#include "lpi_time.h"
+#include "lpi_math.h"
 
 #include <iostream>
 
