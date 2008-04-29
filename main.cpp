@@ -44,7 +44,7 @@ gprof > gprof.txt
 #include "lpi_color.h"
 #include "lpi_file.h"
 #include "lpi_event.h"
-#include "lpi_general.h"
+#include "lpi_time.h"
 #include "lpi_text.h"
 #include "lpi_texture.h"
 #include "lpi_screen.h"
@@ -138,7 +138,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   w1.pushTopAt(&wcb, 20, 20);
   
   std::vector<double> sound(30000);
-  for(size_t i = 0; i < 30000; i++) sound[i] = 0.3 * std::sin(i / (30.0 * (40000.0-i)/30000.0));
+  for(size_t i = 0; i < 30000; i++) sound[i] = 0.1 * std::sin(i / (30.0 * (40000.0-i)/30000.0));
   
   lpi::audioOpen(44100, 2048);
   

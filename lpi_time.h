@@ -18,17 +18,11 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef LPI_GENERAL_H_INCLUDED
-#define LPI_GENERAL_H_INCLUDED
+#ifndef LPI_TIME_H_INCLUDED
+#define LPI_TIME_H_INCLUDED
 
 #include <SDL/SDL.h>
-#include <string>
 #include <vector>
-#include <cmath>
-#include <iostream>
-#include <algorithm> //std::min and std::max
-#include <sstream>
-#include <iomanip>
 
 namespace lpi
 {
@@ -36,41 +30,6 @@ namespace lpi
 Uint32 getTicks(); //returns the ticks in milliseconds
 inline double getSeconds() { return getTicks() / 1000.0; } //returns the ticks in seconds
 
-double getRandom();
-int getRandom(int first, int last); //get random number in the range of integers first-last (including last)
-double getRandom(double first, double last); //get random number in the range of doubles first-last
-
-////////////////////////////////////////////////////////////////////////////////
-//HANDY AUXILIARY FUNCTIONS/////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-void sort(std::vector<int> &order, std::vector<double> &dist);
-int wrapmod(int i, int n); //wraps i between 0 and n, using the modulo operator
-double clamp(double a, double low, double high);
-int clamp(int a, int low, int high);
-
-bool isPowerOfTwo(int n);
-int floatMod(double f, int m);
-int gcd(int a, int b);
-
-int quadsol(double& x1, double& x2, double a, double b, double c); //quadratic equation solution. return value = number of solutions (0, 1 or 2), this function is in real domain. The real parts of the two solutions are put in x1 and x2.
-
-static const double pi = 3.14159265358979323846264338327950288419716939937510; //why isn't this in standard C++ anyway
-static const double twopi = 6.283185307179586477;
-
-inline int intdown(double f) //intdown(0.5) becomes 0, intdown(-0.5) becomes -1, intdown(0.0) becomes something unknown, it's a border
-{
-  if(f > 0) return int(f);
-  else return int(f) - 1;
-}
-
-inline int intdivdown(int a, int b) //divide so that 2/2 = 1, 1/2 = 0, -1/2 = -1, -2/2 = -1, ... (more logical on 2D tile maps than the standard integer dividion)
-{
-  if(a < 0) return -((-a - 1) / b + 1);
-  else return a / b;
-}
-
-///////////////////////////////////////////////////////////////////////////////
 
 class GameTime
 {
