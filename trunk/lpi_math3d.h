@@ -181,6 +181,10 @@ class Transformation3
   Vector3& getV(); //the "up" vector of the camera, y coordinate of screen
   Vector3& getDir(); //the direction of the camera, vector that points into the screen (z direction)
   Vector3& getPos(); //the position of the camera in world coordinates
+  const Vector3& getU() const; //the "right" vector of the camera, x coordinate of screen
+  const Vector3& getV() const; //the "up" vector of the camera, y coordinate of screen
+  const Vector3& getDir() const; //the direction of the camera, vector that points into the screen (z direction)
+  const Vector3& getPos() const; //the position of the camera in world coordinates
   void setDir(const Vector3& newDir);
   void setU(const Vector3& newY);
   void setV(const Vector3& newV);  
@@ -195,7 +199,7 @@ class Transformation3
   void setGroundPlane(const Vector3& n);
   
   //get and set distance to a certain point
-  double getDist(const Vector3& point);
+  double getDist(const Vector3& point) const;
   void setDist(const Vector3& point, double dist);
   
   //get and set zoom
@@ -208,8 +212,8 @@ class Transformation3
   void zoomV(double a);
     
   //get and set FOV
-  double getFOVU(double w, double h);
-  double getFOVV(double w, double h);
+  double getFOVU(double w, double h) const;
+  double getFOVV(double w, double h) const;
   void setFOVU(double angle); //angle given in radians
   void setFOVV(double angle); //angle given in radians
   void setFOV(double angle) //angle given in radians
@@ -219,9 +223,9 @@ class Transformation3
   }
   
   //get and set pitch, yaw and roll (these are NOT native parameters of the camera and should normally never be needed!)   
-  double getYaw();
-  double getPitch();
-  double getRoll();
+  double getYaw() const;
+  double getPitch() const;
+  double getRoll() const;
   void setYaw(double angle);
   void setPitch(double angle);
   void setRoll(double angle);
@@ -235,37 +239,75 @@ class Transformation3
   void resetSkewV();
   
   //set screen ratio of the camera (ratio of length of u and v, e.g. 4:3, 16:9, 640:480, ...)
-  double getRatioUV();
-  double getRatioVU();
+  double getRatioUV() const;
+  double getRatioVU() const;
   void setRatioUV(double ratio);
   void setRatioVU(double ratio);
   
   //scale U, V and Dir without changing what you see
-  double getScale();
+  double getScale() const;
   void setScale(double dirLength);
   void scale(double factor);
   
   //generate, get and use the camera matrix to transform points
   void generateMatrix();
-  const Matrix3& getMatrix();
-  Matrix3 getInvMatrix();
+  const Matrix3& getMatrix() const;
+  Matrix3 getInvMatrix() const;
   void setMatrix(const Matrix3& matrix);   //sets the u, v and dir vector to given matrix (and generates the actual matrix too of course)
-  Vector3 transform(const Vector3& v);
-  Vector3 transformPos(const Vector3& v);
-  bool projectOnScreen(const Vector3& point, int& x, int& y, double& z, int w, int h);
-  bool projectOnScreen(const Vector3& point, int& x, int& y, int w, int h);
-  bool transformOnScreen(const Vector3& point, int& x, int& y, double& z, int w, int h);
-  bool transformOnScreen(const Vector3& point, int& x, int& y, int w, int h);
-  bool camSpaceToScreen(const Vector3& point, int& x, int& y, int w, int h);
+  Vector3 transformWithoutPos(const Vector3& v) const;
+  Vector3 transform(const Vector3& v) const; //subtract position from v and transform with the matrix
+  
+  template<typename T>
+  bool projectOnScreen(const Vector3& point, T& x, T& y, double& z, int w, int h) const
+  {
+    Vector3 a = transform(point); //Transform to camera space
+    z = a.z;
+    return camSpaceToScreen(a, x, y, w, h); //Project on screen
+  }
+  
+  template<typename T>
+  bool projectOnScreenWithoutPos(const Vector3& point, T& x, T& y, double& z, int w, int h) const
+  {
+    Vector3 b = transformWithoutPos(point); //the transformation without position translation
+    z = b.z;
+    return camSpaceToScreen(b, x, y, w, h); //Projection on screen
+  }
+  
+  template<typename T>
+  bool projectOnScreen(const Vector3& point, T& x, T& y, int w, int h) const
+  {
+    double z = 0.0;
+    return projectOnScreen(point, x, y, z, w, h);
+  }
+  
+  template<typename T>
+  bool projectOnScreenWithoutPos(const Vector3& point, T& x, T& y, int w, int h) const
+  {
+    double z = 0.0;
+    return projectOnScreenWithoutPos(point, x, y, z, w, h);
+  }
+  
+  //camSpaceToScreen does the z divide, to be called on a point in camera coordinates
+  template<typename T>
+  bool camSpaceToScreen(const Vector3& point, T& x, T& y, int w, int h) const
+  {
+    //NOTE: if point.z is too small, you get integer imprecisions, so don't make near clipping plane too small
+    //NOTE: CURRENTLY THIS CODE IS SYNCED WITH THE OPENGL ENGINE. That's why both x and y work with 0.5 * h (where h is the screenheight). I have no idea why both x and y need to be multiplied with 0.5 * h to be in sync with (ie get the same screencoordinates as) the projections of the opengl engine, but it works. THe old version of this function had w for x and h for y, with no multiplication with 0.5.
+    
+    x = (T)(w / 2.0 + 0.5 * h * point.x / point.z);
+    y = (T)(h / 2.0 - 0.5 * h * point.y / point.z); //inversed: y should be "up", while in screen coordinates it's down
+
+    return ((x >= 0 && y >= 0 && x < w && y < h) && point.z >= nearClip);
+  }
   
   protected:
   //the camera plane, described by the vectors u and v, is described by "z = 0" in camera space
   Vector3 pos; //the location of the camera
   Matrix3 trans; //the camera matrix, is nothing more than the column vectors u, v and dir in one matrix
 
-  Matrix3 invCamMatrix; //the inverse of the camera matrix
-  bool matrixUpToDate;
-  bool invMatrixUpToDate;
+  mutable Matrix3 invCamMatrix; //the inverse of the camera matrix
+  mutable bool matrixUpToDate;
+  mutable bool invMatrixUpToDate;
 };
 
 
@@ -288,7 +330,8 @@ bool linesegmentThroughSphere(const Vector3& a, const Vector3& b, const Vector3&
 Vector3 linePlaneIntersection(const Vector3& a, const Vector3& b, const Vector3& p, const Vector3& q, const Vector3& r);
 void planeEquation(const Vector3& a, const Vector3& b, const Vector3& c, double& u, double& v, double& w, double& t);
 Vector3 getSomePerpendicularVector(const Vector3& v);
-Vector3 barycentric(const Vector3& a, const Vector3& b, const Vector3& c, const Vector3& p);
+Vector3 barycentric(const Vector3& a, const Vector3& b, const Vector3& c, const Vector3& p); //barycentric coordinates on 3D triangle, not for rasterizing
+void barycentric_persp(double& alpha, double& beta, double& gamma, /*double alpha2,*/ double beta2, double gamma2, double za, double zb, double zc); //for rasterizing textured triangle
 Vector3 rotateWithPlane(const Vector3& p, const Vector3& n);
 Vector3 planeSphereTangent(const Vector3& p, const Vector3& o, double radius, const Vector3& v);
 

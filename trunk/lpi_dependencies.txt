@@ -77,6 +77,7 @@ These can be used as independent libraries or tools whenever needed individually
 *) lpi_file
 *) lpi_math
 *) lpi_math2d
+*) lpi_math3d
 *) lpi_parse
 *) lpi_pathfind
 *) lpi_unittest
@@ -89,8 +90,6 @@ lpi units that depend on a few other lpi units but not on SDL or OpenGL
 Still useful as independent library in combination with only a few other lpi units.
 
 *) lpi_draw2d: lpi_color
-
-*) lpi_math3d: lpi_math2d
 
 *) lpi_math4d: lpi_math3d
 

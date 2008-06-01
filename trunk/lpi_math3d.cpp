@@ -19,7 +19,6 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 */
 
 #include "lpi_math3d.h"
-#include "lpi_math2d.h"
 #include <iostream>
 
 namespace { const double pi = 3.14159265358979323846264338327950288419716939937510; }
@@ -651,6 +650,26 @@ Vector3& Transformation3::getPos()
   return pos;
 }
 
+const Vector3& Transformation3::getU() const
+{
+  return trans[0];
+}
+
+const Vector3& Transformation3::getV() const
+{
+  return trans[1];
+}
+
+const Vector3& Transformation3::getDir() const
+{
+  return trans[2];
+}
+
+const Vector3& Transformation3::getPos() const
+{
+  return pos;
+}
+
 void Transformation3::setU(const Vector3& newU)
 {
   trans[0] = newU;
@@ -754,7 +773,7 @@ void Transformation3::setGroundPlane(const Vector3& n)
   generateMatrix();
 }
 
-double Transformation3::getDist(const Vector3& point)
+double Transformation3::getDist(const Vector3& point) const
 {
   return distance(pos, point);
 }
@@ -810,13 +829,13 @@ void Transformation3::setZoomV(double a)
   generateMatrix();
 }
 
-double Transformation3::getFOVU(double w, double h)
+double Transformation3::getFOVU(double w, double h) const
 {
   //NOTE: it's multiplied by w and divided through h, because only then it's correct for the opengl projection system used
   return(w * 2.0 * atan2(trans[0].length(), trans[2].length()) / h);
 }
 
-double Transformation3::getFOVV(double /*w*/, double /*h*/)
+double Transformation3::getFOVV(double /*w*/, double /*h*/) const
 {
   return(2.0 * atan2(trans[1].length(), trans[2].length()));
 }
@@ -853,7 +872,7 @@ W -----+-----> E  Looking in the direction X = East (+90 deg., +1.57 rad)
 
 //NOTE!!!! It may seem confusing that X and Z are wind directions, while Y is the axis of the world that points to the sky, but this is the convention used in most 3D engines as well as OpenGL, and it makes a camera with unit matrix have it's up vector really up to the sky while the looking direction is a wind direction!
 
-double Transformation3::getYaw()
+double Transformation3::getYaw() const
 {
   //the atan2 function returns the angle of a 2D point (like from polar coordinates), so here it gives angle of dir projected on XZ plane, which is what we want for the yaw
   if(planetGroundPlaneType == XZ) return(atan2(trans[2].x, trans[2].z));
@@ -896,7 +915,7 @@ Pitch is +90 deg. if you look to the sky (maximum "up")
 Pitch is -90 deg. if you look at the ground (maximum "down")
 Pitches of more than 90 deg. or less than -90 deg. aren't defined, since these can also be made by having  yaw 180 deg. rotated and having a pitch between -90 deg. and +90 deg.
 */
-double Transformation3::getPitch()
+double Transformation3::getPitch() const
 {
   //Project dir on the XZ plane
   //Then find angle between dir and projected dir   
@@ -932,7 +951,7 @@ Roll +-180 deg. = cam.u parallel with XZ plane, cam.v points downwards (= you're
 Roll -90 deg. = cam.v parallel with XZ plane, cam.u points upwards
 In space games the angles have no physical meaning, but in the coordinate system this angle is an "Euler" angle.
 */
-double Transformation3::getRoll()
+double Transformation3::getRoll() const
 {
   //roll is the angle between the plane (world_up, camera_dir) and the plane (camera_up, camera_dir)
   //the angle between two planes is the angle between their normals
@@ -991,12 +1010,12 @@ void Transformation3::resetSkewV()
 }
 
 //get and set screen ratios of the camera (ratio of length of u and v, e.g. 4:3, 16:9, 640:480, ...)
-double Transformation3::getRatioUV()
+double Transformation3::getRatioUV() const
 {
   return trans[0].length() / trans[1].length();
 }
 
-double Transformation3::getRatioVU()
+double Transformation3::getRatioVU() const
 {
   return trans[1].length() / trans[0].length();
 }
@@ -1018,7 +1037,7 @@ void Transformation3::setRatioVU(double ratio)
 }
 
 //scale U, V and Dir without changing what you see
-double Transformation3::getScale()
+double Transformation3::getScale() const
 {
   return trans[2].length();
 }
@@ -1040,12 +1059,12 @@ void Transformation3::generateMatrix()
   invMatrixUpToDate = false;
 }
 
-const Matrix3& Transformation3::getMatrix()
+const Matrix3& Transformation3::getMatrix() const
 {
   return trans;
 }
 
-Matrix3 Transformation3::getInvMatrix()
+Matrix3 Transformation3::getInvMatrix() const
 {
   if(!invMatrixUpToDate)
   {
@@ -1064,7 +1083,7 @@ void Transformation3::setMatrix(const Matrix3& matrix)
   generateMatrix();
 }
 
-Vector3 Transformation3::transform(const Vector3& v)
+Vector3 Transformation3::transformWithoutPos(const Vector3& v) const
 {
   /*
   Transformation from coordinate system 1 (base 1) to coordinate system 2 (base 2):
@@ -1089,65 +1108,10 @@ Vector3 Transformation3::transform(const Vector3& v)
   return getInvMatrix() * v;
 }
 
-//same as transform, but before multiplying, pos is subtracted from v
-Vector3 Transformation3::transformPos(const Vector3& v)
+Vector3 Transformation3::transform(const Vector3& v) const
 {
   Vector3 a = v - pos;
-  return transform(a);
-}
-
-//same as projectonscreen, but with given width and height
-bool Transformation3::projectOnScreen(const Vector3& point, int& x, int& y, double& z, int w, int h)
-{
-  //First transformation: position
-  Vector3 a = point - pos;
-  
-  //Second transformation: rotation
-  Vector3 b = transform(a);
-  
-  //Third transformation: Projection on screen
-  //be warned: if b.z is too small, you get integer imprecisions, so don't make near clipping plane too small
-  z = b.z;
-  return camSpaceToScreen(b, x, y, w, h);
-}
-
-bool Transformation3::transformOnScreen(const Vector3& point, int& x, int& y, double& z, int w, int h)
-{
-
-  //the transformation without position translation
-  Vector3 b = transform(point);
-  
-  //Third transformation: Projection on screen
-  //be warned: if b.z is too small, you get integer imprecisions, so don't make near clipping plane too small
-  z = b.z;
-  return camSpaceToScreen(b, x, y, w, h);
-}
-
-bool Transformation3::projectOnScreen(const Vector3& point, int& x, int& y, int w, int h)
-{
-  double z = 0.0;
-  return projectOnScreen(point, x, y, z, w, h);
-} 
-
-
-bool Transformation3::transformOnScreen(const Vector3& point, int& x, int& y, int w, int h)
-{
-  double z = 0.0;
-  return transformOnScreen(point, x, y, z, w, h);
-}
-
-
-bool Transformation3::camSpaceToScreen(const Vector3& point, int& x, int& y, int w, int h)
-{
-  //be warned: if point.z is too small, you get integer imprecisions, so don't make near clipping plane too small
-  
-  /*
-  IMPORTANT NOTE: CURRENTLY THIS CODE IS SYNCED WITH THE OPENGL ENGINE. That's why both x and y work with 0.5 * h (where h is the screenheight). I have no idea why both x and y need to be multiplied with 0.5 * h to be in sync with (ie get the same screencoordinates as) the projections of the opengl engine, but it works. THe old version of this function had w for x and h for y, with no multiplication with 0.5.
-  */
-  
-  x = int(w / 2.0 + 0.5 * h * point.x / point.z);
-  y = int(h / 2.0 - 0.5 * h * point.y / point.z); //inversed: y should be "up", while in screen coordinates it's down
-  return ((x >= 0 && y >= 0 && x < w && y < h) && point.z >= nearClip);
+  return transformWithoutPos(a);
 }
 
 //Auxiliary Functions
@@ -1370,53 +1334,33 @@ Vector3 linePlaneIntersection(const Vector3& a, const Vector3& b, const Vector3&
 }
 
 //given a point p on the triangle a, b, c. Find the weights wa, wb, wc of the point p in the triangle's coordinate system. E.G. if p is lying on a, the weights will be (1, 0, 0). If p is lying exactly in the center of the triangle, the weights will be (0.33, 0.33, 0.33). The 3 values of the weight are stored in the returned vector's x, y and z component respectively. The sum of the 3 weights is always 1. The point p must lie on the same plane as the triangle (a, b, c and d coplanar). wa, wb and wc are actually normalized baricentric coordinates.
-//precondition: a, b, c, d must be coplanar. a, b, c may not be colinear.
+//precondition: a, b, c, p must be coplanar. a, b, c may not be colinear.
 Vector3 barycentric(const Vector3& a, const Vector3& b, const Vector3& c, const Vector3& p)
 {
-  //we work in 2D so first of all project the triangle on the XY, YZ or XZ plane
-  Vector2 a2, b2, c2, p2; //these will act as the 2D coordinates
-  Vector3 normal = normalOfTriangle(a, b, c); //use the normal to find on which plane (XY, YZ or XZ) the triangle is most aligned (will have biggest area if projected on it)
+  Vector3 na = cross(c - b, p - b);
+  Vector3 nb = cross(a - c, p - c);
+  Vector3 nc = cross(b - a, p - a);
+  Vector3 n = cross(b - a, c - a);
   
-  if(normal.x >= normal.y && normal.x >= normal.z) //normal.x is greatest so project on YZ plane
-  {
-    a2 = Vector2(a.y, a.z);
-    b2 = Vector2(b.y, b.z);
-    c2 = Vector2(c.y, c.z);
-    p2 = Vector2(p.y, p.z);
-  }
-  else if(normal.y >= normal.x && normal.y >= normal.z) //normal.y is greatest so project on XZ plane
-  {
-    a2 = Vector2(a.x, a.z);
-    b2 = Vector2(b.x, b.z);
-    c2 = Vector2(c.x, c.z);
-    p2 = Vector2(p.x, p.z);
-  }
-  else //normal.z is greatest so project on XY plane
-  {
-    a2 = Vector2(a.x, a.y);
-    b2 = Vector2(b.x, b.y);
-    c2 = Vector2(c.x, c.y);
-    p2 = Vector2(p.x, p.y);
-  }
-  
-  //get the barycentric coordinates, with the formulas from the wikipedia article on barycentric coordinates on 16 october 2005, but with the Z component removed since I projected it on a 2D plane. The wikipedia version can have divisions through 0, my 2D version not.
-  
-  double A, B, C, D, E, F;
-  A = a2.x - c2.x;
-  B = b2.x - c2.x;
-  C = c2.x - p2.x;
-  D = a2.y - c2.y;
-  E = b2.y - c2.y;
-  F = c2.y - p2.y;
+  double nn = dot(n, n);
   
   Vector3 result;
-  
-  result.x = (B * F - C * E) / (A * E - B * D);
-  result.y = (A * F - C * D) / (B * D - A * E);
-  result.z = 1.0 - result.x - result.y;
+  result.x = dot(n, na) / nn; //alpha
+  result.y = dot(n, nb) / nn; //beta
+  result.z = dot(n, nc) / nn; //gamma
   
   return result;
-  
+}
+
+//non-perspective correct to perspective correct; beta2 and gamma2 are non-perspective correct barycentric values
+//the non-perspective correct beta2 and gamma2 are gotten from lpi_math2d's 2D barycentric formula for rasterizing triangles
+void barycentric_persp(double& alpha, double& beta, double& gamma, /*double alpha2,*/ double beta2, double gamma2, double za, double zb, double zc)
+{
+   double denom = zb * zc + zc * beta2 * (za - zb) + zb * gamma2 * (za - zc);
+   double invdenom = 1.0 / denom;
+   beta = za * zc * beta2 * invdenom;
+   gamma = za * zb * gamma2 * invdenom;
+   alpha = 1.0 - beta - gamma;
 }
 
 /*
