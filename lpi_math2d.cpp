@@ -216,6 +216,32 @@ double dot(const Vector2& v, const Vector2& w)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+//not perspective correct
+void barycentric(double& alpha, double& beta, double& gamma, const lpi::Vector2& a, const lpi::Vector2& b, const lpi::Vector2& c, const lpi::Vector2& p)
+{
+   /*
+   The formula in non-optimized form:
+   
+   gamma = ((a.y-b.y)*p.x + (b.x-a.x)*p.y + a.x*b.y - b.x*a.y)
+         / ((a.y-b.y)*c.x + (b.x-a.x)*c.y + a.x*b.y - b.x*a.y);
+   beta  = ((a.y-c.y)*p.x + (c.x-a.x)*p.y + a.x*c.y - c.x*a.y)
+         / ((a.y-c.y)*b.x + (c.x-a.x)*b.y + a.x*c.y - c.x*a.y);
+   alpha = 1.0 - beta - gamma;
+   */
+
+  //It becomes much simpler by subtracting a from everything, making a.x and a.y 0, gamma and beta can even share the same denominator because only the sign differs
+  Vector2 ba = b - a;
+  Vector2 ca = c - a;
+  Vector2 pa = p - a;
+  
+  double invdenom = 1.0 / (ba.x * ca.y - ba.y * ca.x);
+  gamma = (ba.x * pa.y - ba.y * pa.x) * invdenom;
+  beta  = (ca.y * pa.x - ca.x * pa.y) * invdenom;
+  alpha = 1.0 - beta - gamma;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 bool deflect(Vector2& dir, const Vector2& shooterpos, const Vector2& targetpos, const Vector2& vel, double speed)
 {
   double a = speed * speed - lengthsq(vel);

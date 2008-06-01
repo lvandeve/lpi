@@ -72,6 +72,9 @@ double distancesq(const Vector2& v, const Vector2& w);
 double manhattan(const Vector2& v, const Vector2& w);
 double dot(const Vector2& v, const Vector2& w);
 
+//barycentric non-perspective correct coordinates for rasterizing 2D triangle; to make perspective correct, use barycentric_persp of lpi_math3d after this
+void barycentric(double& alpha, double& beta, double& gamma, const lpi::Vector2& a, const lpi::Vector2& b, const lpi::Vector2& c, const lpi::Vector2& p);
+
 /*
 deflect, aka Target Leading or Target Prediction System.
 Calculates what direction to shoot a slow moving bullet at to make it hit a moving target.
