@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080606
+LodePNG version 20080902
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
@@ -1302,6 +1302,7 @@ through each other):
 *) 77: integer overflow in buffer size happened somewhere
 *) 78: file doesn't exist or couldn't be opened for reading
 *) 79: file couldn't be opened for writing
+*) 80: tried creating a tree for 0 symbols
 *) 9900-9999: out of memory while allocating chunk of memory somewhere
 
 
@@ -1626,6 +1627,8 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 02 sep 2008: fixed bug where it could create empty tree that linux apps could
+    read by ignoring the problem but windows apps couldn't.
 *) 06 jun 2008: added more error checks for out of memory cases.
 *) 26 apr 2008: added a few more checks here and there to ensure more safety.
 *) 06 mar 2008: crash with encoding of strings fixed
