@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080606
+LodePNG version 20080902
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
@@ -30,7 +30,7 @@ You are free to name this file lodepng.cpp or lodepng.c depending on your usage.
 
 #include "lodepng.h"
 
-#define VERSION_STRING "20080606"
+#define VERSION_STRING "20080902"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Tools For C                                                            / */
@@ -425,6 +425,19 @@ typedef struct HuffmanTree
   unsigned numcodes; /*number of symbols in the alphabet = number of codes*/
 } HuffmanTree;
 
+/*function used for debug purposes*/
+/*#include <iostream>
+static void HuffmanTree_draw(HuffmanTree* tree)
+{
+  std::cout << "tree. length: " << tree->numcodes << " maxbitlen: " << tree->maxbitlen << std::endl;
+  for(size_t i = 0; i < tree->tree1d.size; i++)
+  {
+    if(tree->lengths.data[i])
+      std::cout << i << " " << tree->tree1d.data[i] << " " << tree->lengths.data[i] << std::endl;
+  }
+  std::cout << std::endl;
+}*/
+
 static void HuffmanTree_init(HuffmanTree* tree)
 {
   uivector_init(&tree->tree2d);
@@ -556,13 +569,15 @@ static unsigned HuffmanTree_makeFromFrequencies(HuffmanTree* tree, const unsigne
       sum += frequencies[i];
     }
   }
-
+  
+  if(numcodes == 0) return 80; /*error: a tree of 0 symbols is not supposed to be made*/
   tree->numcodes = (unsigned)numcodes; /*number of symbols*/
   uivector_resize(&tree->lengths, 0);
   if(!uivector_resizev(&tree->lengths, tree->numcodes, 0)) return 9905;
   
   if(numpresent == 0) /*there are no symbols at all, in that case add one symbol of value 0 to the tree (see RFC 1951 section 3.2.7) */
   {
+    tree->lengths.data[0] = 1;
     return HuffmanTree_makeFromLengths2(tree);
   }
   else if(numpresent == 1) /*the package merge algorithm gives wrong results if there's only one symbol (theoretically 0 bits would then suffice, but we need a proper symbol for zlib)*/
