@@ -1,5 +1,5 @@
 /*
-LodePNG version 20080902
+LodePNG version 20080927
 
 Copyright (c) 2005-2008 Lode Vandevenne
 
@@ -30,7 +30,7 @@ You are free to name this file lodepng.cpp or lodepng.c depending on your usage.
 
 #include "lodepng.h"
 
-#define VERSION_STRING "20080902"
+#define VERSION_STRING "20080927"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Tools For C                                                            / */
@@ -516,8 +516,7 @@ static unsigned HuffmanTree_makeFromLengths2(HuffmanTree* tree) /*given that num
   uivector_cleanup(&blcount);
   uivector_cleanup(&nextcode);
   
-  if(!error)
-    return HuffmanTree_make2DTree(tree);
+  if(!error) return HuffmanTree_make2DTree(tree);
   else return error;
 }
 
@@ -595,21 +594,23 @@ static unsigned HuffmanTree_makeFromFrequencies(HuffmanTree* tree, const unsigne
   /*first row, lowest denominator*/
   error = HuffmanTree_fillInCoins(&coins, frequencies, tree->numcodes, sum);
   if(!error)
-  for(j = 1; j <= maxbitlen && !error; j++) /*each of the remaining rows*/
   {
-    vector_swap(&coins, &prev_row); /*swap instead of copying*/
-    if(!vector_resized(&coins, 0, Coin_cleanup)) { error = 9906; break; }
+    for(j = 1; j <= maxbitlen && !error; j++) /*each of the remaining rows*/
+    {
+      vector_swap(&coins, &prev_row); /*swap instead of copying*/
+      if(!vector_resized(&coins, 0, Coin_cleanup)) { error = 9906; break; }
 
-    for(i = 0; i + 1 < prev_row.size; i += 2)
-    {
-      if(!vector_resize(&coins, coins.size + 1)) { error = 9907; break; }
-      Coin_init((Coin*)vector_get(&coins, coins.size - 1));
-      Coin_copy((Coin*)vector_get(&coins, coins.size - 1), (Coin*)vector_get(&prev_row, i));
-      addCoins((Coin*)vector_get(&coins, coins.size - 1), (Coin*)vector_get(&prev_row, i + 1)); /*merge the coins into packages*/
-    }
-    if(j < maxbitlen)
-    {
-      error = HuffmanTree_fillInCoins(&coins, frequencies, tree->numcodes, sum);
+      for(i = 0; i + 1 < prev_row.size; i += 2)
+      {
+        if(!vector_resize(&coins, coins.size + 1)) { error = 9907; break; }
+        Coin_init((Coin*)vector_get(&coins, coins.size - 1));
+        Coin_copy((Coin*)vector_get(&coins, coins.size - 1), (Coin*)vector_get(&prev_row, i));
+        addCoins((Coin*)vector_get(&coins, coins.size - 1), (Coin*)vector_get(&prev_row, i + 1)); /*merge the coins into packages*/
+      }
+      if(j < maxbitlen)
+      {
+        error = HuffmanTree_fillInCoins(&coins, frequencies, tree->numcodes, sum);
+      }
     }
   }
   
@@ -653,9 +654,10 @@ static unsigned generateFixedTree(HuffmanTree* tree)
     for(i = 144; i <= 255; i++) bitlen.data[i] = 9;
     for(i = 256; i <= 279; i++) bitlen.data[i] = 7;
     for(i = 280; i <= 287; i++) bitlen.data[i] = 8;
+    
+    error = HuffmanTree_makeFromLengths(tree, bitlen.data, NUM_DEFLATE_CODE_SYMBOLS, 15);
   }
   
-  error = HuffmanTree_makeFromLengths(tree, bitlen.data, NUM_DEFLATE_CODE_SYMBOLS, 15);
   uivector_cleanup(&bitlen);
   return error;
 }
@@ -668,9 +670,11 @@ static unsigned generateDistanceTree(HuffmanTree* tree)
   if(!uivector_resize(&bitlen, NUM_DISTANCE_SYMBOLS)) error = 9910;
   
   /*there are 32 distance codes, but 30-31 are unused*/
-  if(!error) for(i = 0; i < NUM_DISTANCE_SYMBOLS; i++) bitlen.data[i] = 5;
-  
-  error = HuffmanTree_makeFromLengths(tree, bitlen.data, NUM_DISTANCE_SYMBOLS, 15);
+  if(!error)
+  {
+    for(i = 0; i < NUM_DISTANCE_SYMBOLS; i++) bitlen.data[i] = 5;
+    error = HuffmanTree_makeFromLengths(tree, bitlen.data, NUM_DISTANCE_SYMBOLS, 15);
+  }
   uivector_cleanup(&bitlen);
   return error;
 }
@@ -1122,60 +1126,62 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t size, 
   if(!uivector_resizev(&tablepos2, HASH_NUM_VALUES, 0)) error = 9919;
   
   if(!error)
-  for(pos = 0; pos < size; pos++)
   {
-    unsigned length = 0, offset = 0; /*the length and offset found for the current position*/
-    unsigned max_offset = pos < windowSize ? pos : windowSize; /*how far back to test*/
-    unsigned tablepos;
-  
-    /*/search for the longest string*/
-    /*first find out where in the table to start (the first value that is in the range from "pos - max_offset" to "pos")*/
-    unsigned hash = getHash(in, size, pos);
-    if(!uivector_push_back((uivector*)vector_get(&table, hash), pos))  { error = 9920; break; }
+    for(pos = 0; pos < size; pos++)
+    {
+      unsigned length = 0, offset = 0; /*the length and offset found for the current position*/
+      unsigned max_offset = pos < windowSize ? pos : windowSize; /*how far back to test*/
+      unsigned tablepos;
     
-    while(((uivector*)vector_get(&table, hash))->data[tablepos1.data[hash]] < pos - max_offset) tablepos1.data[hash]++; /*it now points to the first value in the table for which the index is larger than or equal to pos - max_offset*/
-    while(((uivector*)vector_get(&table, hash))->data[tablepos2.data[hash]] < pos) tablepos2.data[hash]++; /*it now points to the first value in the table for which the index is larger than or equal to pos*/
+      /*/search for the longest string*/
+      /*first find out where in the table to start (the first value that is in the range from "pos - max_offset" to "pos")*/
+      unsigned hash = getHash(in, size, pos);
+      if(!uivector_push_back((uivector*)vector_get(&table, hash), pos))  { error = 9920; break; }
+      
+      while(((uivector*)vector_get(&table, hash))->data[tablepos1.data[hash]] < pos - max_offset) tablepos1.data[hash]++; /*it now points to the first value in the table for which the index is larger than or equal to pos - max_offset*/
+      while(((uivector*)vector_get(&table, hash))->data[tablepos2.data[hash]] < pos) tablepos2.data[hash]++; /*it now points to the first value in the table for which the index is larger than or equal to pos*/
 
-    for(tablepos = tablepos2.data[hash] - 1; tablepos >= tablepos1.data[hash] && tablepos < tablepos2.data[hash]; tablepos--)
-    {
-      unsigned backpos = ((uivector*)vector_get(&table, hash))->data[tablepos];
-      unsigned current_offset = pos - backpos;
+      for(tablepos = tablepos2.data[hash] - 1; tablepos >= tablepos1.data[hash] && tablepos < tablepos2.data[hash]; tablepos--)
+      {
+        unsigned backpos = ((uivector*)vector_get(&table, hash))->data[tablepos];
+        unsigned current_offset = pos - backpos;
 
-      /*test the next characters*/
-      unsigned current_length = 0;
-      unsigned backtest = backpos;
-      unsigned foretest = pos;
-      while(foretest < size && in[backtest] == in[foretest] && current_length < MAX_SUPPORTED_DEFLATE_LENGTH) /*maximum supporte length by deflate is max length*/
-      {
-        if(backpos >= pos) backpos -= current_offset; /*continue as if we work on the decoded bytes after pos by jumping back before pos*/
-        current_length++;
-        backtest++;
-        foretest++;
+        /*test the next characters*/
+        unsigned current_length = 0;
+        unsigned backtest = backpos;
+        unsigned foretest = pos;
+        while(foretest < size && in[backtest] == in[foretest] && current_length < MAX_SUPPORTED_DEFLATE_LENGTH) /*maximum supporte length by deflate is max length*/
+        {
+          if(backpos >= pos) backpos -= current_offset; /*continue as if we work on the decoded bytes after pos by jumping back before pos*/
+          current_length++;
+          backtest++;
+          foretest++;
+        }
+        if(current_length > length)
+        {
+          length = current_length; /*the longest length*/
+          offset = current_offset; /*the offset that is related to this longest length*/
+          if(current_length == MAX_SUPPORTED_DEFLATE_LENGTH) break; /*you can jump out of this for loop once a length of max length is found (gives significant speed gain)*/
+        }
       }
-      if(current_length > length)
+      
+      /**encode it as length/distance pair or literal value**/
+      if(length < 3) /*only lengths of 3 or higher are supported as length/distance pair*/
       {
-        length = current_length; /*the longest length*/
-        offset = current_offset; /*the offset that is related to this longest length*/
-        if(current_length == MAX_SUPPORTED_DEFLATE_LENGTH) break; /*you can jump out of this for loop once a length of max length is found (gives significant speed gain)*/
+        if(!uivector_push_back(out, in[pos])) { error = 9921; break; }
       }
-    }
-    
-    /**encode it as length/distance pair or literal value**/
-    if(length < 3) /*only lengths of 3 or higher are supported as length/distance pair*/
-    {
-      if(!uivector_push_back(out, in[pos])) { error = 9921; break; }
-    }
-    else
-    {
-      unsigned j;
-      addLengthDistance(out, length, offset);
-      for(j = 0; j < length - 1; j++)
+      else
       {
-        pos++;
-        if(!uivector_push_back((uivector*)vector_get(&table, getHash(in, size, pos)), pos)) { error = 9922; break; }
+        unsigned j;
+        addLengthDistance(out, length, offset);
+        for(j = 0; j < length - 1; j++)
+        {
+          pos++;
+          if(!uivector_push_back((uivector*)vector_get(&table, getHash(in, size, pos)), pos)) { error = 9922; break; }
+        }
       }
-    }
-  } /*end of the loop through each character of input*/
+    } /*end of the loop through each character of input*/
+  } /*end of "if(!error)"*/
   
   /*cleanup*/
   for(i = 0; i < table.size; i++)
@@ -1562,7 +1568,7 @@ unsigned LodeZlib_decompress(unsigned char** out, size_t* outsize, const unsigne
   error = LodeFlate_inflate(&outv, in, insize, 2);
   *out = outv.data;
   *outsize = outv.size;
-  if(error != 0) return error;
+  if(error) return error;
   
   if(!settings->ignoreAdler32)
   {
@@ -3381,8 +3387,8 @@ static unsigned addChunk_iTXt(ucvector* out, unsigned compressed, const char* ke
     if(!error)
     {
       for(i = 0; i < compressed_data.size; i++) ucvector_push_back(&data, compressed_data.data[i]);
+      for(i = 0; textstring[i] != 0; i++) ucvector_push_back(&data, (unsigned char)textstring[i]);
     }
-    for(i = 0; textstring[i] != 0; i++) ucvector_push_back(&data, (unsigned char)textstring[i]);
   }
   else /*not compressed*/
   {
@@ -3565,30 +3571,32 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
     }
     
     if(!error)
-    for(y = 0; y < h; y++)
     {
-      /*try the 5 filter types*/
-      for(type = 0; type < 5; type++)
+      for(y = 0; y < h; y++)
       {
-        filterScanline(attempt[type].data, &in[y * linebytes], prevline, linebytes, bytewidth, type);
-        
-        /*calculate the sum of the result*/
-        sum[type] = 0;
-        for(x = 0; x < attempt[type].size; x+=3) sum[type] += attempt[type].data[x]; /*note that not all pixels are checked to speed this up while still having probably the best choice*/
-      
-        /*check if this is smallest sum (or if type == 0 it's the first case so always store the values)*/
-        if(type == 0 || sum[type] < smallest)
+        /*try the 5 filter types*/
+        for(type = 0; type < 5; type++)
         {
-          bestType = type;
-          smallest = sum[type];
+          filterScanline(attempt[type].data, &in[y * linebytes], prevline, linebytes, bytewidth, type);
+          
+          /*calculate the sum of the result*/
+          sum[type] = 0;
+          for(x = 0; x < attempt[type].size; x+=3) sum[type] += attempt[type].data[x]; /*note that not all pixels are checked to speed this up while still having probably the best choice*/
+        
+          /*check if this is smallest sum (or if type == 0 it's the first case so always store the values)*/
+          if(type == 0 || sum[type] < smallest)
+          {
+            bestType = type;
+            smallest = sum[type];
+          }
         }
+        
+        prevline = &in[y * linebytes];
+    
+        /*now fill the out values*/
+        out[y * (linebytes + 1)] = bestType; /*the first byte of a scanline will be the filter type*/
+        for(x = 0; x < linebytes; x++) out[y * (linebytes + 1) + 1 + x] = attempt[bestType].data[x];
       }
-      
-      prevline = &in[y * linebytes];
-  
-      /*now fill the out values*/
-      out[y * (linebytes + 1)] = bestType; /*the first byte of a scanline will be the filter type*/
-      for(x = 0; x < linebytes; x++) out[y * (linebytes + 1) + 1 + x] = attempt[bestType].data[x];
     }
     
     for(type = 0; type < 5; type++) ucvector_cleanup(&attempt[type]);
@@ -3714,19 +3722,22 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
     *out = (unsigned char*)malloc(*outsize);
     if(!(*out) && (*outsize)) error = 9950;
 
-    if(!error && bpp < 8 && w * bpp != ((w * bpp + 7) / 8) * 8) /*non multiple of 8 bits per scanline, padding bits needed per scanline*/
+    if(!error)
     {
-      ucvector padded;
-      ucvector_init(&padded);
-      if(!ucvector_resize(&padded, h * ((w * bpp + 7) / 8))) error = 9951;
-      if(!error)
+      if(bpp < 8 && w * bpp != ((w * bpp + 7) / 8) * 8) /*non multiple of 8 bits per scanline, padding bits needed per scanline*/
       {
-        addPaddingBits(padded.data, in, ((w * bpp + 7) / 8) * 8, w * bpp, h);
-        error = filter(*out, padded.data, w, h, &infoPng->color);
+        ucvector padded;
+        ucvector_init(&padded);
+        if(!ucvector_resize(&padded, h * ((w * bpp + 7) / 8))) error = 9951;
+        if(!error)
+        {
+          addPaddingBits(padded.data, in, ((w * bpp + 7) / 8) * 8, w * bpp, h);
+          error = filter(*out, padded.data, w, h, &infoPng->color);
+        }
+        ucvector_cleanup(&padded);
       }
-      ucvector_cleanup(&padded);
+      else error = filter(*out, in, w, h, &infoPng->color); /*we can immediatly filter into the out buffer, no other steps needed*/
     }
-    else error = filter(*out, in, w, h, &infoPng->color); /*we can immediatly filter into the out buffer, no other steps needed*/
   }
   else /*interlaceMethod is 1 (Adam7)*/
   {
