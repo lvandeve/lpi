@@ -37,6 +37,7 @@ extern int globalMouseX;
 extern int globalMouseY;
 extern bool globalLMB; //left mouse button
 extern bool globalRMB; //right mouse button
+extern bool globalMMB; //middle mouse button
 extern bool globalMouseWheelUp; //mouse wheel up
 extern bool globalMouseWheelDown; //mouse wheel down
 
@@ -44,21 +45,23 @@ extern bool globalMouseWheelDown; //mouse wheel down
 enum MouseButton
 {
   LMB,
-  RMB
+  RMB,
+  MMB
 };
 
 inline bool getGlobalMouseButton(MouseButton button)
 {
   if(button == LMB) return globalLMB;
   if(button == RMB) return globalRMB;
+  if(button == MMB) return globalMMB;
   return 0;
 }
 
-//these 3 functions can be used in the GUI unit test to mimic the behaviour of a user moving the mouse over controls
+//these debug functions can be used in the GUI unit test to mimic the behaviour of a user moving the mouse over controls
 inline void debugSetMousePos(int x, int y) { globalMouseX = x; globalMouseY = y; }
 inline void debugSetLMB(bool LMB) { globalLMB = LMB; }
-inline void debugSetRMB(bool RMB) { globalLMB = RMB; }
-
+inline void debugSetRMB(bool RMB) { globalRMB = RMB; }
+inline void debugSetMMB(bool MMB) { globalMMB = MMB; }
 
 void readKeys();
 
@@ -76,7 +79,7 @@ struct KeyState
 
 bool keyDown(int key);
 bool keyPressed(int key, KeyState* state = 0); //only returns true the first time the key is down and you check
-bool keyPressedTime(int key, double time, double warmupTime, double repTime, KeyState* state = 0); //reptime = time to repeat key press. All times in seconds.
+bool keyPressedTime(int key, double time, double warmupTime = 0.5, double repTime = 0.025, KeyState* state = 0); //reptime = time to repeat key press. All times in seconds.
 bool pressedEnter(KeyState* state = 0);
 
 void checkMouse(); //updates the values from the physical mouse
@@ -90,9 +93,9 @@ void resetMouseDiffFunctions();
 warmup = "warmup time": how long it takes before the key starts repeating
 rate = repetition rate of the key after the warmupTime
 having released the key resets the warmup
-timingIndex = index of variable that remembers key timing, so you can have different independent inputs
+timingIndex = index of variable that remembers key timing, so you can have different independent inputs (max 15)
 */
-int unicodeKey(int allowedChars, int warmup = 0.5, int rate = 0.025, int index = 0);
+int unicodeKey(int allowedChars, double time, double warmupTime = 0.5, double repTime = 0.025, int index = 0);
 
 //these were moved from general to input because they depend so much on input
 void sleep();

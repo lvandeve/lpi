@@ -196,9 +196,9 @@ void DropMenu::drawWidget() const
   }
 }
 
-void DropMenu::handleWidget()
+void DropMenu::handleWidget(const IGUIInput* input)
 {
-  if(autoDisable && globalLMB && !mouseDown()) totallyDisable();
+  if(autoDisable && input->mouseButtonDown(GUI_LMB) && !mouseDown(input)) totallyDisable();
 }
 
 /*
@@ -212,13 +212,13 @@ i (= 0 or a positive integer) if option i was clicked
 
 */
 
-int DropMenu::check()
+int DropMenu::check(const IGUIInput* input)
 {
   for(unsigned long i = 0; i < menuButton.size(); i++)
   {
     if(!separator[i])
     {
-      if(menuButton[i].clicked()) return i;
+      if(menuButton[i].clicked(input)) return i;
     }
   }
   return -1;
@@ -239,25 +239,25 @@ Button* DropMenu::getButton(const std::string& name)
 }
 
 
-std::string DropMenu::checkText()
+std::string DropMenu::checkText(const IGUIInput* input)
 {
   for(unsigned long i = 0; i < menuButton.size(); i++)
   {
     if(!separator[i])
     {
-      if(menuButton[i].clicked()) return menuButton[i].text;
+      if(menuButton[i].clicked(input)) return menuButton[i].text;
     }
   }
   return "";
 }
 
-int DropMenu::checkIdentity()
+int DropMenu::checkIdentity(const IGUIInput* input)
 {
   for(unsigned long i = 0; i < menuButton.size(); i++)
   {
     if(!separator[i])
     {
-      if(menuButton[i].clicked()) return identity[i];
+      if(menuButton[i].clicked(input)) return identity[i];
     }
   }
   return 0;
@@ -430,9 +430,9 @@ std::string Droplist::checkText()
   return textButton[selected].text;
 }
 
-void Droplist::handleWidget()
+void Droplist::handleWidget(const IGUIInput* input)
 {
-  if(listButton.clicked() || (clicked() && mouseGetRelPosY() < sizeyc && !listButton.mouseOver())) //behind the or is to open it also if you press the thing itself but not the button, the getMouseY() < sizeyc is necessary, without it, the code after this will not work anymore (starting from if(openen)
+  if(listButton.clicked(input) || (clicked(input) && mouseGetRelPosY(input) < sizeyc && !listButton.mouseOver(input))) //behind the or is to open it also if you press the thing itself but not the button, the getMouseY() < sizeyc is necessary, without it, the code after this will not work anymore (starting from if(openen)
   {
     if(!opened)
     {
@@ -448,16 +448,16 @@ void Droplist::handleWidget()
   {
     for(unsigned long i = 0; i <  textButton.size(); i++)
     {
-      if(textButton[i].clicked())
+      if(textButton[i].clicked(input))
       {
         close();
         selected = i;
       }
     }
     
-    if(mouseScrollUp() && !bar.mouseOver()) bar.scroll(-2);
-    if(mouseScrollDown() && !bar.mouseOver()) bar.scroll(2);
-    bar.handle();
+    if(mouseScrollUp(input) && !bar.mouseOver(input)) bar.scroll(input, -2);
+    if(mouseScrollDown(input) && !bar.mouseOver(input)) bar.scroll(input, 2);
+    bar.handle(input);
     scroll();
   }
 }
@@ -520,14 +520,14 @@ void Matrix::make(int x0, int y0, int x1, int y1, int numx, int numy)
   this->numy = numy;
 }
 
-unsigned long Matrix::getTileX() const
+unsigned long Matrix::getTileX(const IGUIInput* input) const
 {
-  return mouseGetRelPosX() / (getSizex() / numx);
+  return mouseGetRelPosX(input) / (getSizex() / numx);
 }
 
-unsigned long Matrix::getTileY() const
+unsigned long Matrix::getTileY(const IGUIInput* input) const
 {
-  return mouseGetRelPosY() / (getSizey() / numy);
+  return mouseGetRelPosY(input) / (getSizey() / numy);
 }
 
 int Matrix::getScreenX(int tilex) const
@@ -608,19 +608,19 @@ unsigned long Grid::getNumElements() const
   return getNumx() * getNumy();
 }
 
-int Grid::getTileX() const
+int Grid::getTileX(const IGUIInput* input) const
 {
-  return mouseGetRelPosX() / tileSizeX;
+  return mouseGetRelPosX(input) / tileSizeX;
 }
 
-int Grid::getTileY() const
+int Grid::getTileY(const IGUIInput* input) const
 {
-  return mouseGetRelPosY() / tileSizeY;
+  return mouseGetRelPosY(input) / tileSizeY;
 }
 
-int Grid::getTile() const //returns index of the tile
+int Grid::getTile(const IGUIInput* input) const //returns index of the tile
 {
-  return getTileX() + getNumx() * getTileY();
+  return getTileX(input) + getNumx() * getTileY(input);
 }
 
 int Grid::getScreenX(int tilex) const
@@ -886,17 +886,17 @@ void Canvas::init()
   canvas.create(backColor, getSizex(), getSizey());
 }
 
-void Canvas::handleWidget()
+void Canvas::handleWidget(const IGUIInput* input)
 {
-  if(mouseGrabbed(LMB) || mouseGrabbed(RMB))
+  if(mouseGrabbed(input, GUI_LMB) || mouseGrabbed(input, GUI_RMB))
   {
     ColorRGB drawColor;
     
-    if(globalLMB) drawColor = leftColor;
+    if(input->mouseButtonDown(GUI_LMB)) drawColor = leftColor;
     else drawColor = rightColor;
     
-    int drawx = mouseGetRelPosX();
-    int drawy = mouseGetRelPosY();
+    int drawx = mouseGetRelPosX(input);
+    int drawy = mouseGetRelPosY(input);
 
     if(validOldMousePos == true)
     {

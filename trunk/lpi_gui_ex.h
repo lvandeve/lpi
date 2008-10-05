@@ -33,7 +33,6 @@ TODO: fix menu and other such elements
 #include "lpi_gui.h"
 
 #include "lpi_color.h"
-#include "lpi_event.h"
 #include "lpi_texture.h"
 #include "lpi_text.h"
 
@@ -85,17 +84,17 @@ class DropMenu : public Element
               const Markup& markup1 = TS_White, const Markup& markup2 = TS_White,
               BackPanel panel = DEFAULTPANEL, BackRule hrule = DEFAULTHRULE); //make with given panel    
     virtual void drawWidget() const;
-    virtual void handleWidget();
-    int check();
+    virtual void handleWidget(const IGUIInput* input);
+    int check(const IGUIInput* input);
     Button* getButton(int i);
     Button* getButton(const std::string& name);
     int getNumButtons() const { return menuButton.size(); }
-    std::string checkText();
+    std::string checkText(const IGUIInput* input);
     /*
     returns 0 if none, or a button where no identity was set, is pressed, or
     the identity of the button if one with an identity was pressed
     */
-    int checkIdentity();
+    int checkIdentity(const IGUIInput* input);
     void addOption(const std::string& text, int id = 0); //id is an optional identity
     
     bool autoDisable; //if true, the menu will totallyDisable itself if you click anywhere not on the menu
@@ -146,7 +145,7 @@ class Droplist : public Element
     virtual void drawWidget() const;
     int check();
     std::string checkText();
-    virtual void handleWidget();
+    virtual void handleWidget(const IGUIInput* input);
 
     void addOption(const std::string& text);
 };
@@ -163,8 +162,8 @@ class Matrix : public Element
   unsigned long numx;
   unsigned long numy;
   
-  unsigned long getTileX() const;
-  unsigned long getTileY() const;
+  unsigned long getTileX(const IGUIInput* input) const;
+  unsigned long getTileY(const IGUIInput* input) const;
   
   int getScreenX(int tilex) const;
   int getScreenY(int tiley) const;
@@ -202,9 +201,9 @@ class Grid : public Element
   
   unsigned long getNumElements() const;
   
-  int getTileX() const;
-  int getTileY() const;
-  int getTile() const; //returns index of the tile
+  int getTileX(const IGUIInput* input) const;
+  int getTileY(const IGUIInput* input) const;
+  int getTile(const IGUIInput* input) const; //returns index of the tile
   
   int getScreenX(int tilex) const;
   int getScreenY(int tiley) const;
@@ -286,7 +285,7 @@ class Canvas : public Element
     int border;
     
     virtual void drawWidget() const;
-    virtual void handleWidget();
+    virtual void handleWidget(const IGUIInput* input);
     
     void clear(); //clear the whole texture to backColor, deleting it's previous contents
     

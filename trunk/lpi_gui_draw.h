@@ -27,7 +27,6 @@ lpi_gui: an OpenGL GUI
 #define LPI_GUI_DRAW_H_INCLUDED
 
 #include "lpi_color.h"
-#include "lpi_event.h"
 #include "lpi_texture.h"
 #include "lpi_text.h"
 

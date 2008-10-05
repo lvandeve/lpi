@@ -22,7 +22,6 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_gui.h"
 #include "lpi_gl.h"
 #include "lpi_draw2dgl.h"
-#include "lpi_time.h"
 #include "lpi_math.h"
 
 #include <iostream>
@@ -31,7 +30,6 @@ namespace lpi
 {
 namespace gui
 {
-
 
 void InternalContainer::resize(const Pos<int>& oldPos, const Pos<int>& newPos)
 {
@@ -112,357 +110,6 @@ void InternalContainer::insertSubElement(size_t index, Element* element, const P
   elements.insert(elements.begin() + index, element);
 }
 
-
-Pos<Sticky> STICKYTOPLEFT = { TOPLEFT, TOPLEFT, TOPLEFT, TOPLEFT };
-Pos<Sticky> STICKYTOPRIGHT = { BOTTOMRIGHT, TOPLEFT, BOTTOMRIGHT, TOPLEFT };
-Pos<Sticky> STICKYBOTTOMRIGHT = { BOTTOMRIGHT, BOTTOMRIGHT, BOTTOMRIGHT, BOTTOMRIGHT };
-Pos<Sticky> STICKYBOTTOMLEFT = { TOPLEFT, BOTTOMRIGHT, TOPLEFT, BOTTOMRIGHT };
-Pos<Sticky> STICKYFULL = { TOPLEFT, TOPLEFT, BOTTOMRIGHT, BOTTOMRIGHT };
-Pos<Sticky> STICKYNOTHING = { NOTHING, NOTHING, NOTHING, NOTHING };
-Pos<Sticky> STICKYVERTICALLEFT = { TOPLEFT, TOPLEFT, TOPLEFT, BOTTOMRIGHT };
-Pos<Sticky> STICKYVERTICALRIGHT = { BOTTOMRIGHT, TOPLEFT, BOTTOMRIGHT, BOTTOMRIGHT };
-Pos<Sticky> STICKYHORIZONTALTOP = { TOPLEFT, TOPLEFT, BOTTOMRIGHT, TOPLEFT };
-Pos<Sticky> STICKYHORIZONTALBOTTOM = { TOPLEFT, BOTTOMRIGHT, BOTTOMRIGHT, BOTTOMRIGHT };
-Pos<Sticky> STICKYRELATIVE = { RELATIVE00, RELATIVE00, RELATIVE11, RELATIVE11 };
-Pos<Sticky> STICKYRELATIVE00 = { RELATIVE00, RELATIVE00, RELATIVE00, RELATIVE00 };
-Pos<Sticky> STICKYRELATIVE01 = { RELATIVE00, RELATIVE11, RELATIVE00, RELATIVE11 };
-Pos<Sticky> STICKYRELATIVE10 = { RELATIVE11, RELATIVE00, RELATIVE11, RELATIVE00 };
-Pos<Sticky> STICKYRELATIVE11 = { RELATIVE11, RELATIVE11, RELATIVE11, RELATIVE11 };
-Pos<Sticky> STICKYRELATIVEHORIZONTAL0 = { RELATIVE00, RELATIVE00, RELATIVE11, RELATIVE00 };
-Pos<Sticky> STICKYRELATIVEVERTICAL0 = { RELATIVE00, RELATIVE00, RELATIVE00, RELATIVE11 };
-Pos<Sticky> STICKYRELATIVEHORIZONTAL1 = { RELATIVE00, RELATIVE11, RELATIVE11, RELATIVE11 };
-Pos<Sticky> STICKYRELATIVEVERTICAL1 = { RELATIVE11, RELATIVE00, RELATIVE11, RELATIVE11 };
-Pos<Sticky> STICKYRELATIVEHORIZONTALFULL = { RELATIVE00, TOPLEFT, RELATIVE11, BOTTOMRIGHT };
-Pos<Sticky> STICKYRELATIVEVERTICALFULL = { TOPLEFT, RELATIVE00, BOTTOMRIGHT, RELATIVE11 };
-Pos<Sticky> STICKYRELATIVELEFT = { TOPLEFT, RELATIVE00, TOPLEFT, RELATIVE11 };
-Pos<Sticky> STICKYRELATIVETOP = { RELATIVE00, TOPLEFT, RELATIVE11, TOPLEFT };
-Pos<Sticky> STICKYRELATIVERIGHT = { BOTTOMRIGHT, RELATIVE00, BOTTOMRIGHT, RELATIVE11 };
-Pos<Sticky> STICKYRELATIVEBOTTOM = { RELATIVE00, BOTTOMRIGHT, RELATIVE11, BOTTOMRIGHT };
-
-
-MouseState::MouseState()
-{
-  justdown_prev = 0;
-  justdownhere_prev = 0;
-  grabbed_grabbed = 0;
-  grabbed_prev = 0;
-  downhere_bool1 = 0;
-  downhere_bool2 = 0;
-  justuphere_bool1 = 0;
-  justuphere_bool2 = 0;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//BASICELEMENT
-////////////////////////////////////////////////////////////////////////////////
-
-int BasicElement::mouseGetRelPosX() const
-{
-  return globalMouseX - x0;
-}
-
-int BasicElement::mouseGetRelPosY() const
-{
-  return globalMouseY - y0;
-}
-
-bool BasicElement::mouseOverShape() const
-{
-  if(globalMouseX >= x0 && globalMouseX < x1 && globalMouseY >= y0 && globalMouseY < y1) return true;
-  else return false;
-  
-  
-  //old "shape" code. Now, to get a shape like triangle, make child class of the gui element and override mouseOverShape with the new shape code
-  /*switch(shape)
-  {
-    case 0: //rectangle
-      over = 1;
-      break;
-    case 1: //triangle pointing up
-      relX = globalMouseX - x0;
-      relY = globalMouseY - y0;
-      symX = std::abs(getSizex() / 2 - relX); //it's symmetrical
-      if(relY >= (2 * symX * getSizey()) / getSizex()) over = 1;
-      break;
-    case 2: //triangle pointing right
-      relX = globalMouseX - x0;
-      relY = globalMouseY - y0;
-      symY = std::abs(getSizey() / 2 - relY); //it's symmetrical
-      if(getSizex() - relX >= (2 * symY * getSizex()) / getSizey()) over = 1;
-      break;
-    case 3: //triangle pointing down
-      relX = globalMouseX - x0;
-      relY = globalMouseY - y0;
-      symX = std::abs(getSizex() / 2 - relX); //it's symmetrical
-      if(getSizey() - relY >= (2 * symX * getSizey()) / getSizex()) over = 1;
-    case 4: //triangle pointing left
-      relX = globalMouseX - x0;
-      relY = globalMouseY - y0;
-      symY = std::abs(getSizey() / 2 - relY); //it's symmetrical
-      if(relX >= (2 * symY * getSizey()) / getSizey()) over = 1;
-      break;
-    default: //rectangle
-      over = 1;
-      break;
-  }*/
-}
-
-bool BasicElement::mouseOver() const
-{
-  return mouseOverShape();
-}
-
-bool BasicElement::mouseDown(MouseButton button) const
-{
-  return mouseOver() && getGlobalMouseButton(button);
-}
-
-bool BasicElement::mouseDownHere(MouseState& state, MouseButton button) const
-{
-  bool down = getGlobalMouseButton(button);//mouseDown(button);
-  bool over = mouseOver();
-  
-  if(!down)
-  {
-    state.downhere_bool1 = false;
-    state.downhere_bool2 = false;
-  }
-  
-  if(down && state.downhere_bool2 == false) //state.downhere_bool2 means justOver (it's the prevstate)
-  {
-    state.downhere_bool2 = true;
-    state.downhere_bool1 = over; //true means it was inside when just clicked, false that it was not
-  }
-  
-  return state.downhere_bool1 && over;
-}
-
-bool BasicElement::mouseDownHere(MouseButton button)
-{
-  return mouseDownHere(_mouseState[button], button);
-}
-
-bool BasicElement::mouseGrabbed(MouseState& state, MouseButton button) const
-{
-  if(!mouseGrabbable()) return false;
-  
-  //grab
-  if(mouseJustDownHere(state.grabbed_prev, button))
-  {
-    state.grabbed_grabbed = true;
-    state.grabx = globalMouseX;
-    state.graby = globalMouseY;
-    state.grabrelx = mouseGetRelPosX();
-    state.grabrely = mouseGetRelPosY();
-  }
-  
-  //ungrab
-  if(!getGlobalMouseButton(button))
-  {
-    state.grabbed_grabbed = false;
-    state.grabbed_prev = false;
-  }
-
-  return state.grabbed_grabbed;
-}
-
-bool BasicElement::mouseGrabbed(MouseButton button)
-{
-  return mouseGrabbed(_mouseState[button], button);
-}
-
-void BasicElement::mouseGrab(MouseState& state) const
-{
-  state.grabbed_grabbed = true;
-  state.grabx = globalMouseX;
-  state.graby = globalMouseY;
-  state.grabrelx = mouseGetRelPosX();
-  state.grabrely = mouseGetRelPosY();
-}
-
-void BasicElement::mouseGrab(MouseButton button)
-{
-  mouseGrab(_mouseState[button]);
-}
-
-
-void BasicElement::mouseUngrab(MouseState& state) const
-{
-  state.grabbed_grabbed = false;
-  state.grabbed_prev = false;
-}
-
-void BasicElement::mouseUngrab(MouseButton button)
-{
-  mouseUngrab(_mouseState[button]);
-}
-
-bool BasicElement::mouseJustDown(bool& prevstate, MouseButton button) const
-{
-  bool nowDown = mouseOver() && getGlobalMouseButton(button);
-  
-  if(nowDown)
-  {
-    if(!prevstate)
-    {
-      prevstate = true;
-      return true;
-    }
-    else return false;
-  }
-  else
-  {
-    prevstate = false;
-    return false;
-  }
-}
-
-bool BasicElement::mouseJustDown(MouseState& state, MouseButton button) const
-{
-  return mouseJustDown(state.justdown_prev, button);
-}
-
-bool BasicElement::mouseJustDown(MouseButton button)
-{
-  return mouseJustDown(_mouseState[button], button);
-}
-
-bool BasicElement::mouseJustDownHere(bool& prevstate, MouseButton button) const
-{
-  bool nowDown = mouseOver() && getGlobalMouseButton(button);
-  
-  if(nowDown)
-  {
-    if(!prevstate)
-    {
-      prevstate = true;
-      return true;
-    }
-    else return false;
-  }
-  else
-  {
-    prevstate = false;
-  }
-  
-  if(!mouseOver()) prevstate = true; //so that it can't return true anymore after mouse was not on this
-
-  return false;
-}
-
-bool BasicElement::mouseJustDownHere(MouseState& state, MouseButton button) const
-{
-  return mouseJustDownHere(state.justdownhere_prev, button);
-}
-
-bool BasicElement::mouseJustDownHere(MouseButton button)
-{
-  return mouseJustDownHere(_mouseState[button], button);
-}
-
-bool BasicElement::mouseJustUpHere(MouseState& state, MouseButton button) const
-{
-  if(mouseJustDownHere(state.justuphere_bool1, button))
-  {
-    state.justuphere_bool2 = true;
-  }
-
-  if(state.justuphere_bool2 && !getGlobalMouseButton(button))
-  {
-    state.justuphere_bool2 = false;
-    if(mouseOver()) return true;
-    else return false;
-  }
-  
-  return false;
-}
-
-bool BasicElement::mouseJustUpHere(MouseButton button)
-{
-  return mouseJustUpHere(_mouseState[button], button);
-}
-
-bool BasicElement::pressed(MouseButton button)
-{
-  return mouseActive() && mouseJustDownHere(button);
-}
-
-bool BasicElement::clicked(MouseButton button)
-{
-  return mouseActive() &&  mouseJustUpHere(button);
-}
-
-bool BasicElement::mouseScrollUp() const
-{
-  return mouseActive() && mouseOver() && globalMouseWheelUp;
-}
-
-bool BasicElement::mouseScrollDown() const
-{
-  return mouseActive() && mouseOver() && globalMouseWheelDown;
-}
-
-bool BasicElement::mouseDoubleClicked(MouseState& state, MouseButton button) const
-{
-  bool dclick = 0;
-  
-  bool down = mouseOver() && getGlobalMouseButton(button); //is the button down
-
-  switch(state.doubleClickState)
-  {
-    case 0:
-      if(down)
-      {
-        state.doubleClickTime = getTicks() / 1000.0;
-        state.doubleClickState = 1;
-      }
-      break;
-    case 1:
-      if(!down)
-      {
-        state.doubleClickState = 2;
-      }
-      break;
-    case 2:
-      if(down)
-      {
-        state.doubleClickState = 3;
-      }
-      break;
-    case 3:
-      if(!down)
-      {
-        state.doubleClickState = 0;
-        if(getTicks() / 1000.0 - state.doubleClickTime < doubleClickTime) dclick = 1;
-      }
-      break;
-  }
-  
-  if
-  (
-     (state.doubleClickState > 0 && (getTicks() / 1000.0) - state.doubleClickTime  > doubleClickTime)
-  || (!mouseOver())
-  )
-  {
-    state.doubleClickState = 0;
-    state.doubleClickTime = 0;
-  }
-  
-  return dclick;
-}
-
-bool BasicElement::mouseDoubleClicked(MouseButton button)
-{
-  return mouseDoubleClicked(_mouseState[button], button);
-}
-
-BasicElement::BasicElement() : x0(0),
-                               y0(0),
-                               x1(0),
-                               y1(0),
-                               doubleClickTime(500)
-{}
-
 ////////////////////////////////////////////////////////////////////////////////
 //TOOLTIPMANAGER                                                              //
 ////////////////////////////////////////////////////////////////////////////////
@@ -472,10 +119,10 @@ void ToolTipManager::registerMe(const Element* element)
   this->element = element;
 }
 
-void ToolTipManager::draw() const
+void ToolTipManager::draw(const IGUIInput* input) const
 {
   if(enabled && element)
-    element->drawToolTip();
+    element->drawToolTip(input);
 }
 
 ToolTipManager defaultTooltipManager;
@@ -520,9 +167,9 @@ void Element::drawLabel() const
   print(label, x0 + labelX, y0 + labelY, labelMarkup);
 }
 
-void Element::drawToolTip() const
+void Element::drawToolTip(const IGUIInput* input) const
 {
-  if(tooltipenabled && mouseOver())
+  if(tooltipenabled && mouseOver(input))
   {
     int numlines = 1;
     int linelength = 0;
@@ -540,8 +187,8 @@ void Element::drawToolTip() const
     if(linelength > longestline) longestline = linelength;
     int sizex = longestline * TS_Black6.getWidth() + 4;
     int sizey = 2 +  TS_Black6.getHeight() * numlines;
-    int x = globalMouseX;
-    int y = globalMouseY - sizey;
+    int x = input->mouseX();
+    int y = input->mouseY() - sizey;
     drawRectangle(x, y, x + sizex, y + sizey, RGBA_Lightyellow(224));
     printText(tooltip, x + 2, y + 2, TS_Black6);
   }
@@ -555,12 +202,12 @@ void Element::makeLabel(const std::string& label, int labelX, int labelY, const 
   this->labelMarkup = labelMarkup;
 }
 
-bool Element::mouseOver() const
+bool Element::mouseOver(const IGUIInput* input) const
 {
   if(!present) return false;
   if(elementOver) return false; //there is another element over this element, so says the container containing this element
   
-  return BasicElement::mouseOver();
+  return BasicElement::mouseOver(input);
 }
 
 bool Element::mouseGrabbable() const
@@ -578,7 +225,7 @@ void Element::draw() const
   drawWidget();
   drawLabel();
   
-  if(tooltipenabled && mouseOver()) tooltipmanager->registerMe(this);
+  if(tooltipenabled && draw_mouse_over) tooltipmanager->registerMe(this);
 }
 
 /*void Element::drawWidget() const
@@ -613,30 +260,33 @@ void Element::moveCenterTo(int x, int y)
   this->moveTo(x - this->getSizex() / 2, y - this->getSizey() / 2);
 }
 
-void Element::autoActivate()
+void Element::autoActivate(const IGUIInput* input)
 {
   if(selfActivate)
   {
-    if(mouseDownHere(auto_activate_mouse_state)) active = 1;
+    if(mouseDownHere(auto_activate_mouse_state, input)) active = 1;
     else
     {
-      if(!mouseOver() && globalLMB && !mouseGrabbed(auto_activate_mouse_state)) active = 0; //"forceActive" enabled so that this disactivating also works if mouseActive is false!
+      if(!mouseOver(input) && input->mouseButtonDown(GUI_LMB) && !mouseGrabbed(auto_activate_mouse_state, input)) active = 0; //"forceActive" enabled so that this disactivating also works if mouseActive is false!
       //without the mouseGrabbed() test, it'll become inactive when you grab the scrollbar scroller and go outside with the mouse = annoying
     }
   }
 }
 
-void Element::handle()
+void Element::handle(const IGUIInput* input)
 {
-  autoActivate();
+  autoActivate(input);
+  
+  draw_mouse_over = mouseOver(input);
   
   if(!active) return;
   
-  handleWidget();
+  handleWidget(input);
 }
 
-void Element::handleWidget()
+void Element::handleWidget(const IGUIInput* input)
 {
+  (void)input;
   //no stuff needed for most elements
 }
 
@@ -732,10 +382,10 @@ void Container::setElementOver(bool state)
   elements.setElementOver(state);
 }
 
-void Container::handleWidget()
+void Container::handleWidget(const IGUIInput* input)
 {
   //if(mouseOver())
-  if(!elementOver && mouseOver())
+  if(!elementOver && mouseOver(input))
   {
     int topElement = -1;
     
@@ -743,7 +393,7 @@ void Container::handleWidget()
     for(int i = size() - 1; i >= 0; i--)
     {
       elements.getElement(i)->setElementOver(0);
-      if(elements.getElement(i)->mouseGrabbed(elements.getElement(i)->getMouseStateForContainer()))
+      if(elements.getElement(i)->mouseGrabbed(elements.getElement(i)->getMouseStateForContainer(), input))
       {
         if(topElement < 0) topElement = i;
         //break;
@@ -756,7 +406,7 @@ void Container::handleWidget()
     for(int i = size() - 1; i >= 0; i--)
     {
       elements.getElement(i)->setElementOver(0);
-      if(elements.getElement(i)->mouseOver())
+      if(elements.getElement(i)->mouseOver(input))
       {
         topElement = i;
         break;
@@ -769,14 +419,14 @@ void Container::handleWidget()
     if(topElement >= 0 && topElement < (int)size())
     {
       elements.getElement(topElement)->setElementOver(0);
-      if(elements.getElement(topElement)->isContainer() && elements.getElement(topElement)->mouseDownHere(elements.getElement(topElement)->getMouseStateForContainer())) bringToTop(elements.getElement(topElement));
+      if(elements.getElement(topElement)->isContainer() && elements.getElement(topElement)->mouseDownHere(elements.getElement(topElement)->getMouseStateForContainer(), input)) bringToTop(elements.getElement(topElement));
     }
   }
   else if(!elementOver) for(size_t i = 0; i < size(); i++) elements.getElement(i)->setElementOver(1); //mouse is over the bars!
   
   for(unsigned long i = 0; i < size(); i++)
   {
-    elements.getElement(i)->handle();
+    elements.getElement(i)->handle(input);
   }
 }
 
@@ -981,11 +631,11 @@ void ScrollElement::resizeWidget(const Pos<int>& /*newPos*/)
   updateBars(); //if this is done at the wrong moment, the bars may appear after resizing the container at times where it isn't desired
 }
 
-void ScrollElement::handleWidget()
+void ScrollElement::handleWidget(const IGUIInput* input)
 {
-  if(element) element->handle();
+  if(element) element->handle(input);
   
-  bars.handle();
+  bars.handle(input);
   int scrollx = x0 - int(bars.hbar.scrollPos); //the scrollpos is 0 if a bar is not enabled
   int scrolly = y0 - int(bars.vbar.scrollPos);
   moveAreaTo(scrollx, scrolly);
@@ -1087,13 +737,13 @@ int ScrollElement::getVisibleSizey() const
   return getVisibleY1() - getVisibleY0();
 }
 
-bool ScrollElement::mouseInVisibleZone() const
+bool ScrollElement::mouseInVisibleZone(const IGUIInput* input) const
 {
-  if(!mouseOver()) return false;
-  return globalMouseX >= getVisibleX0()
-      && globalMouseX < getVisibleX1()
-      && globalMouseY >= getVisibleY0()
-      && globalMouseY < getVisibleY1();
+  if(!mouseOver(input)) return false;
+  return input->mouseX() >= getVisibleX0()
+      && input->mouseX() < getVisibleX1()
+      && input->mouseY() >= getVisibleY0()
+      && input->mouseY() < getVisibleY1();
 }
 
 
@@ -1127,12 +777,12 @@ void ScrollElement::toggleBars() //turns bars on or of if they're needed or not 
 //GUIGROUP//////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-bool Group::mouseOverShape() const
+bool Group::mouseOverShape(const IGUIInput* input) const
 {
   for(int i = size() - 1; i >= 0; i--)
   {
     elements.getElement(i)->setElementOver(0);
-    if(elements.getElement(i)->mouseOver()) return true;
+    if(elements.getElement(i)->mouseOver(input)) return true;
   }
   
   return false;
@@ -1494,22 +1144,22 @@ void Window::putInside(int i)
 }
 
 
-void Window::handleWidget()
+void Window::handleWidget(const IGUIInput* input)
 {
   //the close button
-  if(closeEnabled && closeButton.clicked()) closed = 1;
+  if(closeEnabled && closeButton.clicked(input)) closed = 1;
   
-  if(scroll.element) scroll.handle();
-  else container.handle();
+  if(scroll.element) scroll.handle(input);
+  else container.handle(input);
   
   //resize window
-  if(enableResizer && resizer.mouseGrabbed()) resize(x0, y0, globalMouseX - resizer.mouseGetRelGrabX() + (x1 - resizer.getX0()), globalMouseY - resizer.mouseGetRelGrabY() + (y1 - resizer.getY0()));
+  if(enableResizer && resizer.mouseGrabbed(input)) resize(x0, y0, input->mouseX() - resizer.mouseGetRelGrabX() + (x1 - resizer.getX0()), input->mouseY() - resizer.mouseGetRelGrabY() + (y1 - resizer.getY0()));
 
   //drag window
-  if(!enableTop && mouseGrabbed()) moveTo(globalMouseX - mouseGetRelGrabX(), globalMouseY - mouseGetRelGrabY()); //um this means a window without top can always be dragged?? maybe I should turn this off? in case you want a non moveable window...
-  if(enableTop && top.mouseGrabbed())
+  if(!enableTop && mouseGrabbed(input)) moveTo(input->mouseX() - mouseGetRelGrabX(), input->mouseY() - mouseGetRelGrabY()); //um this means a window without top can always be dragged?? maybe I should turn this off? in case you want a non moveable window...
+  if(enableTop && top.mouseGrabbed(input))
   {
-    moveTo(globalMouseX - top.mouseGetRelGrabX() - (top.getX0() - getX0()), globalMouseY - top.mouseGetRelGrabY() - (top.getY0() - getY0()));
+    moveTo(input->mouseX() - top.mouseGetRelGrabX() - (top.getX0() - getX0()), input->mouseY() - top.mouseGetRelGrabY() - (top.getY0() - getY0()));
   }
   
   //the scrollbar's conserveCorner should be the same as this window's resizerOverContainer
@@ -1642,33 +1292,6 @@ Button::Button()
   this->markup[1] = TS_Black;
   this->markup[2] = TS_Black;
   
-  /*this->panel1.t00 = &emptyTexture;
-  this->panel1.t01 = &emptyTexture;
-  this->panel1.t02 = &emptyTexture;
-  this->panel1.t10 = &emptyTexture;
-  this->panel1.t11 = &emptyTexture;
-  this->panel1.t12 = &emptyTexture;
-  this->panel1.t20 = &emptyTexture;
-  this->panel1.t21 = &emptyTexture;
-  this->panel1.t22 = &emptyTexture;
-  this->panel2.t00 = &emptyTexture;
-  this->panel2.t01 = &emptyTexture;
-  this->panel2.t02 = &emptyTexture;
-  this->panel2.t10 = &emptyTexture;
-  this->panel2.t11 = &emptyTexture;
-  this->panel2.t12 = &emptyTexture;
-  this->panel2.t20 = &emptyTexture;
-  this->panel2.t21 = &emptyTexture;
-  this->panel2.t22 = &emptyTexture;  
-  this->panelOffsetx = 0;
-  this->panelOffsety = 0;
-  this->panel1.colorMod = RGB_Black;
-  this->panel2.colorMod = RGB_Black;
-  this->panel1.enableSides = 0;
-  this->panel2.enableSides = 0;
-  this->panel1.enableCenter = 0;
-  this->panel2.enableCenter = 0;*/
-  
   this->active = 0;
   this->visible = 0;
   this->doubleClickTime = 500;
@@ -1715,40 +1338,6 @@ void Button::make
   this->panel[2] = panel3;
   this->panelOffsetx = panelOffsetx;
   this->panelOffsety = panelOffsety;
-  
-  /*if(panelTexture1 != &emptyTexture)
-  {
-    this->panel1.t00 = &panelTexture1[0]; //+ 0*sizeof(Texture);
-    this->panel1.t01 = &panelTexture1[1]; //+ 1*sizeof(Texture);
-    this->panel1.t02 = &panelTexture1[2]; //+ 2*sizeof(Texture);
-    this->panel1.t10 = &panelTexture1[3]; //+ 3*sizeof(Texture);
-    this->panel1.t11 = &panelTexture1[4]; //+ 4*sizeof(Texture);
-    this->panel1.t12 = &panelTexture1[5]; //+ 5*sizeof(Texture);
-    this->panel1.t20 = &panelTexture1[6]; //+ 6*sizeof(Texture);
-    this->panel1.t21 = &panelTexture1[7]; //+ 7*sizeof(Texture);
-    this->panel1.t22 = &panelTexture1[8]; //+ 8*sizeof(Texture);
-  }
-  if(panelTexture2 != &emptyTexture)
-  {
-    this->panel2.t00 = &panelTexture2[0]; //+ 0*sizeof(Texture);
-    this->panel2.t01 = &panelTexture2[1]; //+ 1*sizeof(Texture);
-    this->panel2.t02 = &panelTexture2[2]; //+ 2*sizeof(Texture);
-    this->panel2.t10 = &panelTexture2[3]; //+ 3*sizeof(Texture);
-    this->panel2.t11 = &panelTexture2[4]; //+ 4*sizeof(Texture);
-    this->panel2.t12 = &panelTexture2[5]; //+ 5*sizeof(Texture);
-    this->panel2.t20 = &panelTexture2[6]; //+ 6*sizeof(Texture);
-    this->panel2.t21 = &panelTexture2[7]; //+ 7*sizeof(Texture);
-    this->panel2.t22 = &panelTexture2[8]; //+ 8*sizeof(Texture);
-  }
-
-  this->panelOffsetx = panelOffsetx;
-  this->panelOffsety = panelOffsety;
-  this->panel1.colorMod = panelColor1;
-  this->panel2.colorMod = panelColor2;
-  this->panel1.enableSides = 1;
-  this->panel2.enableSides = 1;
-  this->panel1.enableCenter = 1;
-  this->panel2.enableCenter = 1;*/
   
   this->totallyEnable();
   this->doubleClickTime = 500;
@@ -1935,24 +1524,32 @@ void Button::makeTextPanel
   centerText();
 }
 
+void Button::handleWidget(const IGUIInput* input)
+{
+  if((mouseDownVisualStyle == 0 && mouseDown(input, GUI_LMB))
+  || (mouseDownVisualStyle == 1 && mouseDownHere(button_drawing_mouse_test, input))
+  || (mouseDownVisualStyle == 2 && mouseGrabbed(button_drawing_mouse_test, input)))
+  {
+    draw_mouse_button_down_style = true;
+  }
+  else draw_mouse_button_down_style = false;
+}
+
 //Draws the button, also checks for mouseover and mousedown to draw mouseover graphic
 void Button::drawWidget() const
 {
-  int i = 0; //0 = normal, 1 = mouseOver, 2 = mouseDown
+  int style = 0; //0 = normal, 1 = mouseOver, 2 = mouseDown
   
-  if((mouseDownVisualStyle == 0 && mouseDown(LMB/*, 15*/))
-  || (mouseDownVisualStyle == 1 && mouseDownHere(mutable_button_drawing_mouse_test))
-  || (mouseDownVisualStyle == 2 && mouseGrabbed(mutable_button_drawing_mouse_test)))
-    i = 2;
-  else if(mouseOver()) i = 1;
+  if(draw_mouse_button_down_style) style = 2;
+  else if(draw_mouse_over) style = 1;
   
   int textDownOffset = 0;
-  if(i == 2) textDownOffset = 1; //on mouseDown, the text goes down a bit too
+  if(style == 2) textDownOffset = 1; //on mouseDown, the text goes down a bit too
   
-  if(enablePanel) panel[i]->draw(x0 + panelOffsetx, y0 + panelOffsety, getSizex(), getSizey());
-  if(enableImage) image[i]->draw(x0 + imageOffsetx, y0 + imageOffsety, imageColor[i]);
-  if(enableImage2) image2[i]->draw(x0 + imageOffsetx2, y0 + imageOffsety2, imageColor2[i]);
-  if(enableText) printFormatted(text, x0 + textOffsetx + textDownOffset, y0 + textOffsety + textDownOffset, markup[i]);
+  if(enablePanel) panel[style]->draw(x0 + panelOffsetx, y0 + panelOffsety, getSizex(), getSizey());
+  if(enableImage) image[style]->draw(x0 + imageOffsetx, y0 + imageOffsety, imageColor[style]);
+  if(enableImage2) image2[style]->draw(x0 + imageOffsetx2, y0 + imageOffsety2, imageColor2[style]);
+  if(enableText) printFormatted(text, x0 + textOffsetx + textDownOffset, y0 + textOffsety + textDownOffset, markup[style]);
   
   //NOTE: ik heb de print functies nu veranderd naar printFormatted! Zo kan je gekleurde texten enzo printen met # codes
 }
@@ -1979,8 +1576,6 @@ void Button::centerText()
   textOffsetx = (getSizex() / 2) - text.length() * (markup[0].getWidth() / 2); //4 = fontwidth / 2
   textOffsety = (getSizey() / 2) - (markup[0].getHeight() / 2);
 }
-
-
 
 void  Button::makeImage(int x, int y,  const Texture* texture123, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3)
 {
@@ -2206,49 +1801,49 @@ void Scrollbar::randomize()
   scrollPos = r * scrollSize;
 }
 
-void Scrollbar::handleWidget()
+void Scrollbar::handleWidget(const IGUIInput* input)
 {
   int scrollDir = 0;
 
-  if(buttonUp.mouseDownHere()) scrollDir = -1;
-  if(buttonDown.mouseDownHere()) scrollDir = 1;
+  if(buttonUp.mouseDownHere(input)) scrollDir = -1;
+  if(buttonDown.mouseDownHere(input)) scrollDir = 1;
 
   if(direction == V)
   {
     //grabbed must be checked every frame to work properly, not from inside nested ifs
-    bool buttonUp_grabbed = buttonUp.mouseGrabbed();
-    bool buttonDown_grabbed = buttonDown.mouseGrabbed();
-    if(scroller.mouseGrabbed())
-      scrollPos = (scrollSize * (globalMouseY - y0 - getSliderStart() - txScroller->getV() / 2)) / getSliderSize();
-    else if(mouseDownHere() && !scroller.mouseGrabbed() && !buttonUp_grabbed && !buttonDown_grabbed)
+    bool buttonUp_grabbed = buttonUp.mouseGrabbed(input);
+    bool buttonDown_grabbed = buttonDown.mouseGrabbed(input);
+    if(scroller.mouseGrabbed(input))
+      scrollPos = (scrollSize * (input->mouseY() - y0 - getSliderStart() - txScroller->getV() / 2)) / getSliderSize();
+    else if(mouseDownHere(input) && !scroller.mouseGrabbed(input) && !buttonUp_grabbed && !buttonDown_grabbed)
     {
-      scrollPos = (scrollSize * (globalMouseY - y0 - getSliderStart() - txScroller->getV() / 2)) / getSliderSize();
-      scroller.mouseGrab();
+      scrollPos = (scrollSize * (input->mouseY() - y0 - getSliderStart() - txScroller->getV() / 2)) / getSliderSize();
+      scroller.mouseGrab(input);
     }
-    if(mouseScrollUp()) scrollDir = -3;
-    if(mouseScrollDown()) scrollDir = 3;
+    if(mouseScrollUp(input)) scrollDir = -3;
+    if(mouseScrollDown(input)) scrollDir = 3;
     if(forwardedMouseScrollUp()) scrollDir = -3;
     if(forwardedMouseScrollDown()) scrollDir = 3;
   }
   else
   {
     //grabbed must be checked every frame to work properly, not from inside nested ifs
-    bool buttonUp_grabbed = buttonUp.mouseGrabbed();
-    bool buttonDown_grabbed = buttonDown.mouseGrabbed();
-    if(scroller.mouseGrabbed())
-      scrollPos = (scrollSize * (globalMouseX - x0 - getSliderStart() - txScroller->getU() / 2)) / getSliderSize();
-    else if(mouseDownHere() && !scroller.mouseGrabbed() && !buttonUp_grabbed && !buttonDown_grabbed)
+    bool buttonUp_grabbed = buttonUp.mouseGrabbed(input);
+    bool buttonDown_grabbed = buttonDown.mouseGrabbed(input);
+    if(scroller.mouseGrabbed(input))
+      scrollPos = (scrollSize * (input->mouseX() - x0 - getSliderStart() - txScroller->getU() / 2)) / getSliderSize();
+    else if(mouseDownHere(input) && !scroller.mouseGrabbed(input) && !buttonUp_grabbed && !buttonDown_grabbed)
     {
-      scrollPos = (scrollSize * (globalMouseX - x0 - getSliderStart() - txScroller->getU() / 2)) / getSliderSize();
-      scroller.mouseGrab();
+      scrollPos = (scrollSize * (input->mouseX() - x0 - getSliderStart() - txScroller->getU() / 2)) / getSliderSize();
+      scroller.mouseGrab(input);
     }
   }
   
   if(scrollDir != 0)
   {
-    scrollPos += scrollDir * absoluteSpeed * ((getSeconds() - oldTime));
+    scrollPos += scrollDir * absoluteSpeed * ((input->getSeconds() - oldTime));
   }
-  oldTime = getSeconds();
+  oldTime = input->getSeconds();
 
   if(scrollPos < 0) scrollPos = 0;
   if(scrollPos > scrollSize) scrollPos = scrollSize;
@@ -2260,9 +1855,9 @@ void Scrollbar::handleWidget()
 }
 
 //from an external source, use this function only BEFORE using the handle() function or getTicks() - oldTime will be zero
-void Scrollbar::scroll(int dir)
+void Scrollbar::scroll(const IGUIInput* input, int dir)
 {
-  scrollPos += dir * absoluteSpeed * (getTicks() - oldTime) / 1000.0;
+  scrollPos += dir * absoluteSpeed * (input->getSeconds() - oldTime);
 }
 
 void Scrollbar::drawWidget() const
@@ -2412,10 +2007,10 @@ void ScrollbarPair::enableH()
   }
 }
 
-void ScrollbarPair::handleWidget()
+void ScrollbarPair::handleWidget(const IGUIInput* input)
 {
-  if(venabled) vbar.handle();
-  if(henabled) hbar.handle();
+  if(venabled) vbar.handle(input);
+  if(henabled) hbar.handle(input);
 }
 
 void ScrollbarPair::drawWidget() const
@@ -2538,7 +2133,7 @@ void Slider::drawWidget() const
   }
 }
 
-void Slider::handleWidget()
+void Slider::handleWidget(const IGUIInput* input)
 {
   if(direction == H)
   {
@@ -2547,11 +2142,11 @@ void Slider::handleWidget()
     if(rulerCenter > centerPos) centerPos = rulerCenter;
     //int sliderSize = slider.texture1->getU();
     
-    if(slider.mouseGrabbed()) scrollPos = screenPosToScrollPos(mouseGetRelPosX());
-    else if(mouseDownHere() && !slider.mouseOver())
+    if(slider.mouseGrabbed(input)) scrollPos = screenPosToScrollPos(mouseGetRelPosX(input));
+    else if(mouseDownHere(input) && !slider.mouseOver(input))
     {
-      scrollPos = screenPosToScrollPos(mouseGetRelPosX());
-      slider.mouseGrab();
+      scrollPos = screenPosToScrollPos(mouseGetRelPosX(input));
+      slider.mouseGrab(input);
     }
     
     if(scrollPos < 0) scrollPos = 0;
@@ -2566,11 +2161,11 @@ void Slider::handleWidget()
     if(rulerCenter > centerPos) centerPos = rulerCenter;
     //int sliderSize = slider.texture1->getV();
     
-    if(slider.mouseGrabbed()) scrollPos = screenPosToScrollPos(mouseGetRelPosY());
-    else if(mouseDownHere() && !slider.mouseOver())
+    if(slider.mouseGrabbed(input)) scrollPos = screenPosToScrollPos(mouseGetRelPosY(input));
+    else if(mouseDownHere(input) && !slider.mouseOver(input))
     {
-      scrollPos = screenPosToScrollPos(mouseGetRelPosY());
-      slider.mouseGrab();
+      scrollPos = screenPosToScrollPos(mouseGetRelPosY(input));
+      slider.mouseGrab(input);
     }
     
     if(scrollPos < 0) scrollPos = 0;
@@ -2742,11 +2337,11 @@ void Checkbox::toggle()
 }
 
 //see how you click with the mouse and toggle on click
-void Checkbox::handleWidget()
+void Checkbox::handleWidget(const IGUIInput* input)
 {
   //make sure never both pressed() and clicked() are checked, because one test screws up the other, hence the order of the tests in the if conditions
-  if(toggleOnMouseUp == 0 && pressed()) toggle();
-  if(toggleOnMouseUp == 1 && clicked()) toggle();
+  if(toggleOnMouseUp == 0 && pressed(input)) toggle();
+  if(toggleOnMouseUp == 1 && clicked(input)) toggle();
 }
 
 //draw the checkbox with a texture depending on it's state
@@ -2755,7 +2350,7 @@ void Checkbox::drawWidget() const
   /*if(checked) texture2->draw(x0, y0, colorMod2);
   else texture1->draw(x0, y0, colorMod1);*/
   int i = 0;
-  if(mouseOver()) i++;
+  if(draw_mouse_over) i++;
   if(checked) i += 2;
   
   texture[i]->draw(x0, y0, colorMod[i]);
@@ -2843,17 +2438,17 @@ void NState::addState(Texture* texture, const ColorRGB& colorMod, const std::str
 
 
 //see how you click with the mouse and toggle on click
-void NState::handleWidget()
+void NState::handleWidget(const IGUIInput* input)
 {
   //make sure never both pressed() and clicked() are checked, because one test screws up the other, hence the order of the tests in the if conditions
   if(states.size() == 0) return;
   
-  if((toggleOnMouseUp == 0 && pressed()) || (toggleOnMouseUp == 1 && clicked()))
+  if((toggleOnMouseUp == 0 && pressed(input, GUI_LMB)) || (toggleOnMouseUp == 1 && clicked(input, GUI_LMB)))
   {
     if(state >= states.size() - 1) state = 0;
     else state++;
   }
-  if((toggleOnMouseUp == 0 && pressed(RMB)) || (toggleOnMouseUp == 1 && clicked(RMB)))
+  if((toggleOnMouseUp == 0 && pressed(input, GUI_RMB)) || (toggleOnMouseUp == 1 && clicked(input, GUI_RMB)))
   {
     if(state == 0) state = states.size() - 1;
     else state--;
@@ -2967,13 +2562,13 @@ void BulletList::setCorrectSize()
   this->setSizey(maxy - miny);
 }
 
-void BulletList::handleWidget()
+void BulletList::handleWidget(const IGUIInput* input)
 {
-  if(!mouseOver()) return; //some speed gain, don't do all those loops if the mouse isn't over this widget
+  if(!mouseOver(input)) return; //some speed gain, don't do all those loops if the mouse isn't over this widget
   
   for(unsigned long i = 0; i < bullet.size(); i++)
   {
-    bullet[i].handle();
+    bullet[i].handle(input);
   }
 
   int newChecked = -1;
@@ -3036,7 +2631,7 @@ void BulletList::set(unsigned long i)
   
   lastChecked = i;
   
-  handle();
+  //handle(input);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3117,448 +2712,6 @@ void Image::drawWidget() const
   image->draw(x0, y0, colorMod, getSizex(), getSizey());
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//OTHER FUNCTIONS///////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-//#define ENABLE_UNIT_TEST
-#ifdef ENABLE_UNIT_TEST
-
-#include "lpi_unittest.h"
-
-#define LUT_MY_RESET \
-{\
-  debugSetLMB(0);\
-  debugSetRMB(0);\
-  debugSetMousePos(0, 0);\
-}
-  
-void unitTest()
-{
-  screen(1024, 768, 0, "Unit Testing...");
-  
-  LUT_START_UNIT_TEST
-  
-  //I had a bug where when making a new BulletList and using "set" to give it a value, "check" wasn't returning the correct value until mouseOver
-  LUT_CASE("set bulletlist")
-    BulletList test1;
-    test1.make(0, 0, 5, 0, 0);
-    test1.set(3);
-    LUT_SUB_ASSERT_FALSE(test1.check() != 3)
-    test1.set(1);
-    LUT_SUB_ASSERT_FALSE(test1.check() != 1)
-  LUT_CASE_END
-  
-  LUT_CASE("mouseOver and mouseDown on Dummy")
-    Dummy dummy;
-    dummy.resize(0, 0, 50, 50);
-    debugSetMousePos(100, 100);
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseOver())
-    debugSetMousePos(1, 1);
-    LUT_SUB_ASSERT_TRUE(dummy.mouseOver())
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseDown())
-    debugSetLMB(1);
-    LUT_SUB_ASSERT_TRUE(dummy.mouseDown())
-    debugSetMousePos(100, 100);
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseDown())
-  LUT_CASE_END
-  
-  LUT_CASE("mouseJustDown")
-    Dummy dummy;
-    dummy.resize(0, 0, 50, 50);
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDown())
-    debugSetMousePos(100, 100);
-    debugSetLMB(1);
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDown())
-    debugSetMousePos(20, 20);
-    LUT_SUB_ASSERT_TRUE(dummy.mouseJustDown()) //the mouse moved over the element, the mouse button was already down since being outside the element, so it's now down over the element for the first time
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDown()) //now it may not return true anymore!
-    debugSetLMB(0);
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDown())
-    debugSetLMB(1);
-    LUT_SUB_ASSERT_TRUE(dummy.mouseJustDown())
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDown()) //now it may not return true anymore!
-  LUT_CASE_END
-  
-  LUT_CASE("mouseJustDownHere")
-    Dummy dummy;
-    dummy.resize(0, 0, 50, 50);
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDownHere())
-    debugSetMousePos(100, 100);
-    debugSetLMB(1);
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDownHere())
-    debugSetMousePos(20, 20);
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDownHere())
-    debugSetLMB(0);
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDownHere())
-    debugSetLMB(1);
-    LUT_SUB_ASSERT_TRUE(dummy.mouseJustDownHere())
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDownHere()) //now it may not return true anymore!
-  LUT_CASE_END
-  
-  LUT_CASE("mouseJustDownHere on top of window")
-    Container c;
-    Window w;
-    w.make(0, 0, 100, 100);
-    c.pushTop(&w, 0, 0);
-    
-    w.addTop();
-    c.handle();c.handle();
-    
-    int mx = w.top.getCenterx();
-    int my = w.top.getCentery();
-    c.handle();c.handle();
-    LUT_SUB_ASSERT_TRUE(!w.top.mouseJustDownHere())
-    debugSetMousePos(100, 100);
-    debugSetLMB(1);
-    c.handle();c.handle();
-    LUT_SUB_ASSERT_TRUE(!w.top.mouseJustDownHere())
-    debugSetMousePos(mx, my);
-    LUT_SUB_ASSERT_TRUE(!w.top.mouseJustDownHere())
-    debugSetLMB(0);
-    c.handle();c.handle();
-    LUT_SUB_ASSERT_TRUE(!w.top.mouseJustDownHere())
-    debugSetLMB(1);
-    c.handle();c.handle();
-    LUT_SUB_ASSERT_TRUE(w.top.mouseJustDownHere())
-    LUT_SUB_ASSERT_TRUE(!w.top.mouseJustDownHere()) //now it may not return true anymore!
-  LUT_CASE_END
-  
-  LUT_CASE("mouseGrabbed")
-    Dummy dummy;
-    dummy.resize(0, 0, 50, 50);
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseGrabbed()) //mouse not down yet
-    debugSetMousePos(10, 10);
-    debugSetLMB(1);
-    LUT_SUB_ASSERT_TRUE(dummy.mouseGrabbed()) //mouse down on element so it's grabbed
-    debugSetMousePos(100, 100);
-    LUT_SUB_ASSERT_TRUE(dummy.mouseGrabbed()) //mouse moved away but still down ==> still grabbed
-    LUT_SUB_ASSERT_TRUE(dummy.mouseGetGrabX() == 10 && dummy.mouseGetGrabY() == 10)
-    debugSetLMB(0);
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseGrabbed()) //mouse button up ==> not grabbed anymore
-    debugSetLMB(1);
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseGrabbed()) //mouse down somewhere else not on element ==> not grabbed
-    debugSetMousePos(15, 15);
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseGrabbed()) //mouse still down and moving over element, but it wasn't down HERE, so not grabbed
-    /*//now repeat the test to see if states can properly be reused
-    debugSetLMB(0);
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseGrabbed())
-    debugSetLMB(1);
-    LUT_SUB_ASSERT_TRUE(dummy.mouseGrabbed()) //mouse down on element so it's grabbed
-    debugSetMousePos(100, 100);
-    LUT_SUB_ASSERT_TRUE(dummy.mouseGrabbed()) //mouse moved away but still down ==> still grabbed
-    LUT_SUB_ASSERT_TRUE(dummy.mouseGetGrabX() == 15 && dummy.mouseGetGrabY() == 15)
-    debugSetLMB(0);
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseGrabbed()) //mouse button up ==> not grabbed anymore
-    debugSetLMB(1);
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseGrabbed()) //mouse down somewhere else not on element ==> not grabbed
-    debugSetMousePos(11, 11);
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseGrabbed()) //mouse still down and moving over element, but it wasn't down HERE, so not grabbed*/
-  LUT_CASE_END
-  
-  //the fact that the container and the window handles the elements, influences the result
-  LUT_CASE("mouseGrabbed on top of window")
-    Container c;
-    Window w;
-    w.make(0, 0, 100, 100);
-    c.pushTop(&w, 0, 0);
-    
-    w.addTop();
-    c.handle();c.handle();
-    
-    int mx = w.top.getCenterx();
-    int my = w.top.getCentery();
- 
-    c.handle();c.handle();
-    LUT_SUB_ASSERT_TRUE(!w.top.mouseGrabbed()) //mouse not down yet
-    debugSetMousePos(mx, my);
-    debugSetLMB(1);
-    c.handle();c.handle();
-    LUT_SUB_ASSERT_TRUE(w.top.mouseGrabbed()) //mouse down on element so it's grabbed
-    debugSetMousePos(200, 200);
-    c.handle();c.handle();
-    LUT_SUB_ASSERT_TRUE(w.top.mouseGrabbed()) //mouse moved away but still down ==> still grabbed
-    LUT_SUB_ASSERT_TRUE(w.top.mouseGetGrabX() == mx && w.top.mouseGetGrabY() == my)
-    debugSetLMB(0);
-    c.handle();c.handle();
-    LUT_SUB_ASSERT_TRUE(!w.top.mouseGrabbed()) //mouse button up ==> not grabbed anymore
-    debugSetLMB(1);
-    c.handle();c.handle();
-    LUT_SUB_ASSERT_TRUE(w.top.mouseGrabbed()) //mouse down somewhere else not on element ==> normally not grabbed, BUT, the window moves!! ==> under mouse and grabbed again
-  LUT_CASE_END
-  
-  LUT_CASE("dragging a window")
-    Container c;
-    Window w;
-    w.make(0, 0, 100, 100);
-    c.pushTop(&w, 0, 0);
-    
-    w.addTop();
-    c.handle();c.handle();
-    
-    int mx = w.top.getCenterx();
-    int my = w.top.getCentery();
-    
-    int wx1 = w.getX0();
-    int wy1 = w.getY0();
-    
-    debugSetMousePos(mx, my); //mouse above top bar of the window
-    debugSetLMB(1);
-    c.handle();c.handle();
-    
-    int wx2 = w.getX0();
-    int wy2 = w.getY0();
-    
-    LUT_SUB_ASSERT_TRUE(wx1 == wx2 && wy1 == wy2)
-    
-    debugSetMousePos(mx + 100, my + 50);
-    c.handle();c.handle();
-    int wx3 = w.getX0();
-    int wy3 = w.getY0();
-    
-    LUT_SUB_ASSERT_FALSE(wx3 == wx1 && wy3 == wy1)
-    LUT_SUB_ASSERT_TRUE(wx3 == wx1 + 100 && wy3 == wy1 + 50)
-    LUT_APPEND_MSG << "wx1: " << wx1 << "wy1: " << wy1 << "wx2: " << wx2 << "wy2: " << wy2 << "wx3: " << wx3 << "wy3: " << wy3;
-  LUT_CASE_END
-  
-  //functions like mouseJustDown and mouseJustDownHere may not influence each other's result, so both can return true once
-  LUT_CASE("mouse independence")
-    Dummy dummy;
-    dummy.resize(0, 0, 50, 50);
-    debugSetMousePos(10, 10); //mouse above
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDown())
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDownHere())
-    debugSetLMB(1); //press button
-    //now both must return true
-    LUT_SUB_ASSERT_TRUE(dummy.mouseJustDown())
-    LUT_SUB_ASSERT_TRUE(dummy.mouseJustDownHere())
-    //but of course now both must return false
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDown())
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDownHere())
-  LUT_CASE_END
-  
-  //when boolean mouseActive is true, mouseOver should work, when it's false, mouseOver shout NOT work
-  LUT_CASE("mouseOver when active and not active")
-    Dummy dummy;
-    dummy.resize(0, 0, 50, 50);
-    debugSetMousePos(1, 1);
-    LUT_SUB_ASSERT_TRUE(dummy.mouseOver())
-    dummy.setElementOver(true);
-    LUT_SUB_ASSERT_TRUE(!dummy.mouseOver())
-    //note: containers like a gui::Window have to take control of the mouseActive boolean of the elements in it
-  LUT_CASE_END
-    
-  
-  //the selfActivate system (used by text input boxes) didn't work anymore, so I added this test to make sure it won't break anymore
-  LUT_CASE("selfActivate of InputLine")
-    InputLine line;
-    line.make(0, 0, 10);
-    
-    //initially it's not active
-    line.handle(); //handle line all the time to let the selfActivate system work
-    LUT_SUB_ASSERT_TRUE(!line.isActive())
-    
-    //move mouse above it and click
-    debugSetMousePos(1, 1);
-    debugSetLMB(1);
-    line.handle();
-    //it must be active now!
-    LUT_SUB_ASSERT_TRUE(line.isActive())
-    
-    //now release the mouse button
-    debugSetLMB(0);
-    line.handle();
-    //it should still be active!
-    LUT_SUB_ASSERT_TRUE(line.isActive())
-    
-    //move mouse away
-    debugSetMousePos(100, 100);
-    line.handle();
-    //it should still be active!
-    LUT_SUB_ASSERT_TRUE(line.isActive())
-    
-    //move mouse away from it and click
-    debugSetMousePos(100, 100);
-    debugSetLMB(1);
-    line.handle();
-    //it may not be active anymore after clicking on a location outside (???????)
-    LUT_SUB_ASSERT_TRUE(!line.isActive())
-  LUT_CASE_END
-  LUT_CASE("selfActivate of InputLine in Window")
-    Container c;
-    Window w;
-    w.make(0, 0, 100, 100);
-    c.pushTop(&w, 0, 0);
-    
-    InputLine line;
-    line.make(0, 0, 10);
-    w.pushTop(&line, 0, 0);
-    
-    //initially it's not active
-    c.handle(); //handle line all the time to let the selfActivate system work
-    LUT_SUB_ASSERT_TRUE(!line.isActive())
-    
-    //now a little test to see if it's at the correct position for these tests below
-    debugSetMousePos(line.getCenterx(), line.getCentery());
-    line.setActive(true);
-    line.setElementOver(false);
-    LUT_SUB_ASSERT_TRUE(line.mouseOver())
-    line.setElementOver(true);
-    line.setActive(false);
-    
-    //move mouse above it and click
-    debugSetMousePos(line.getCenterx(), line.getCentery());
-    debugSetLMB(1);
-    c.handle();
-    //it must be active now!
-    LUT_SUB_ASSERT_TRUE(line.isActive())
-    
-    //now release the mouse button
-    debugSetLMB(0);
-    c.handle();
-    //it should still be active!
-    LUT_SUB_ASSERT_TRUE(line.isActive())
-    
-    //move mouse away
-    debugSetMousePos(100, 100);
-    c.handle();
-    //it should still be active!
-    LUT_SUB_ASSERT_TRUE(line.isActive())
-    
-    //move mouse away from it and click
-    debugSetMousePos(100, 100);
-    debugSetLMB(1);
-    c.handle();
-    //it may not be active anymore after clicking on a location outside (???????)
-    LUT_SUB_ASSERT_TRUE(!line.isActive())
-  LUT_CASE_END
-  
-  //two things on a container, both at the same location, first the one is totallyEnabled and the other totallyDisabled, then vica versa, then each time only the enabled one may return true to mouseOver
-  LUT_CASE("enabled and disabled on each other")
-    Container c;
-    Window w;
-    w.make(0, 0, 100, 100);
-    c.pushTop(&w, 0, 0);
-    
-    Dummy dummy1;
-    dummy1.resize(0, 0, 50, 50);
-    w.pushTop(&dummy1, 0, 0);
-    
-    Dummy dummy2;
-    dummy2.resize(0, 0, 50, 50);
-    w.pushTop(&dummy2, 0, 0);
-    
-    debugSetMousePos(dummy1.getCenterx(), dummy1.getCentery()); //doesn't matter if you take center of dummy1 or dummy2, both are exactly at same position
-    
-    dummy1.totallyEnable();
-    dummy2.totallyDisable();
-    
-    LUT_SUB_ASSERT_TRUE(dummy1.mouseOver())
-    LUT_SUB_ASSERT_TRUE(!dummy2.mouseOver())
-    
-    dummy1.totallyDisable();
-    dummy2.totallyEnable();
-    
-    LUT_SUB_ASSERT_TRUE(!dummy1.mouseOver())
-    LUT_SUB_ASSERT_TRUE(dummy2.mouseOver())
-  LUT_CASE_END
-  
-  //dragging a window that has a top
-  LUT_CASE("dragging of a window")
-  
-    Container c;
-    Window w;
-    w.make(0, 0, 100, 100);
-    w.addTop();
-    c.pushTop(&w, 0, 0);
-    
-    int mx = w.top.getCenterx();
-    int my = w.top.getCentery();
-    
-    //grab the window
-    debugSetMousePos(mx, my);
-    debugSetLMB(1);
-    
-    c.handle();
-    
-    //move
-    debugSetMousePos(200, 200);
-    
-    c.handle();
-    
-    //now the window must still be below the mouse
-    LUT_SUB_ASSERT_TRUE(w.mouseOver())  
-  LUT_CASE_END
-  
-  //when there are two windows, A and B, and you're dragging one over the other, but you drag the mouse fast and the mousepointer goes to a location not over the dragged window (the dragged window will be under the mouse again soon), then the other window may not swap to top
-  LUT_CASE("fast dragging of one window over another")
-  
-    Container c;
-    Window A;
-    A.make(0, 0, 100, 100);
-    A.addTop();
-    c.pushTopAt(&A, 0, 0);
-    
-    Window B;
-    B.make(0, 0, 100, 100);
-    B.addTop();
-    c.pushTopAt(&B, 200, 0);
-    
-    int ax = A.top.getCenterx();
-    int ay = A.top.getCentery();
-    int bx = B.top.getCenterx();
-    int by = B.top.getCentery();
-    
-    //grab the window A
-    debugSetMousePos(ax, ay);
-    debugSetLMB(1);
-    
-    c.handle();
-    
-    //move it over window B
-    debugSetMousePos(bx, by);
-    
-    c.handle();
-    
-    //now window A must be over window B, so window A must have mouseOver, window B not
-    
-    LUT_SUB_ASSERT_TRUE(A.mouseOver())
-    LUT_SUB_ASSERT_TRUE(!B.mouseOver())
-  
-  LUT_CASE_END
-  
-  //dragging a window that has a top that is shifted: when starting to drag, the window may not "jump" (but I once had)
-  LUT_CASE("dragging of a window with shifted top")
-  
-    Container c;
-    Window w;
-    w.make(0, 0, 100, 100);
-    w.addTop(&lpi::gui::builtInTexture[47], 2, 2, 2); //could cause jump of two pixels when the bug was there
-    c.pushTop(&w, 0, 0);
-    
-    int mx = w.top.getCenterx();
-    int my = w.top.getCentery();
-    
-    //grab the window
-    debugSetMousePos(mx, my);
-    debugSetLMB(1);
-    
-    c.handle();
-    
-    LUT_SUB_ASSERT_TRUE(w.getX0() == 0 && w.getY0() == 0); //NOT shifted over two pixels
-  LUT_CASE_END
-
-  LUT_END_UNIT_TEST
-}
-#else
-void unitTest()
-{
-  std::cout<<"gui unit test disabled at compile time. #define ENABLE_UNIT_TEST in " << __FILE__ << std::endl;
-}
-#endif //ENABLE_UNIT_TEST
-
 } //namespace gui
 } //namespace lpi
-
-////////////////////////////////////////////////////////////////////////////////
 
