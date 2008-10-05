@@ -44,48 +44,41 @@ class Element;
 
 class InternalContainer //container inside elements, for elements that contain sub elements to work (e.g. scrollbar exists out of background and 3 buttons)
 {
-  std::vector<Element*> elements;
+  private:
+    std::vector<Element*> elements;
   
   public:
   
-  const std::vector<Element*>& getElements() const { return elements; }
-  std::vector<Element*>& getElements() { return elements; }
-  
-  void resize(const Pos<int>& oldPos, const Pos<int>& newPos); //this resizes the 2D size of elements, not the amount of elements
-  void move(int x, int  y);
-  void setElementOver(bool state); //this says to all elements whether or not another element is in front of it in Z order, causing mouse to not work
+    const std::vector<Element*>& getElements() const { return elements; }
+    std::vector<Element*>& getElements() { return elements; }
+    
+    void resize(const Pos<int>& oldPos, const Pos<int>& newPos); //this resizes the 2D size of elements, not the amount of elements
+    void move(int x, int  y);
+    void setElementOver(bool state); //this says to all elements whether or not another element is in front of it in Z order, causing mouse to not work
 
-  void addSubElement(Element* element, const Pos<Sticky>& sticky, Element* parent);
-  void insertSubElement(size_t index, Element* element, const Pos<Sticky>& sticky, Element* parent);
-  
-  Element* getElement(size_t i) const { return elements[i]; }
-  
-  size_t findElementIndex(Element* element)
-  {
-    for(size_t i = 0; i < elements.size(); i++) if(elements[i] == element) return i;
-    return elements.size();
-  }
-  
-  void removeElement(Element* element)
-  {
-    size_t index = findElementIndex(element);
-    if(index < elements.size()) elements.erase(elements.begin() + index);
-  }
+    void addSubElement(Element* element, const Pos<Sticky>& sticky, Element* parent);
+    void insertSubElement(size_t index, Element* element, const Pos<Sticky>& sticky, Element* parent);
+    
+    Element* getElement(size_t i) const { return elements[i]; }
+    
+    size_t findElementIndex(Element* element);
+    void removeElement(Element* element);
   
   private:
-  void initSubElement(Element* element, const Pos<Sticky>& sticky, Element* parent);
+    void initSubElement(Element* element, const Pos<Sticky>& sticky, Element* parent);
 };
 
 class ToolTipManager //this is made to draw the tooltip at the very end to avoid other gui items to be drawn over it
 {
+  private:
+    const Element* element;
+    bool enabled;
+    
   public:
     void registerMe(const Element* element); //can register only one per frame (last one to register will get drawn); guiElements should do this in the draw function.
     void draw(const IGUIInput* input) const; //this will call the drawTooltip function of the one registered element, call this after drawing all gui elements
     void enableToolTips(bool set) { enabled = set; }
     ToolTipManager() : element(0), enabled(true) {}
-  private:
-    const Element* element;
-    bool enabled;
 };
 
 extern ToolTipManager defaultTooltipManager;
@@ -97,17 +90,49 @@ Possible things to check if your gui::Elements aren't behaving as they should:
 -The gui element constructors and make functions must be called AFTER the textures are loaded, otherwise the textures have size 0 and thus the gui element will have size 0
 -mouse functions like pressed() work only once per time, pressed will return "true" only once per guielement, until the mouse button is up again and then down again
 */
-class Element : public BasicElement
+class Element : public ElementShape
 {
-  public:
-    Element(); //constructor
-    virtual ~Element() { };
+  private:
+    
+    MouseState auto_activate_mouse_state; //for the autoActivate() function //TODO: make this pointer, to save memory. If it's 0, no selfactivate
+    
+  protected:
+    
+    bool elementOver; //true if there is an element over this element, causing the mouse NOT to be over this one (Z-order related)
+
+    bool visible; //if false, the draw() function doesn't draw anything
+    bool active; //if false, handle() does nothing, and mouse tests return always false
+    bool present; //if true, it reacts to the mouse. if false, it ignores the mouse, even if forceActive is true, if a gui element isn't present, it really isn't present
+
+    InternalContainer ic; //TODO: make this a pointer and use new and delete, to decrease memory size of elements that don't use the internal container
+    
+    //these variables are set in handle() and can be used by drawWidget() to make your drawing dependent on the input given back then (many elements look different if the mouse is hovered above it)
+    //NOTE: elements that need more than the ones available here, can create similar members in themselves and give them the value in handleWidget()
+    bool draw_mouse_over;
+
+    ////data for tooltip, TODO: move this to somewhere else
+    std::string tooltip;
+    bool tooltipenabled;
+    ToolTipManager* tooltipmanager;
+
+  public: //TODO: make these not-public
     bool selfActivate;
     
     ////minimum size
-    int minSizex; //you can't resize this element to something smaller than this
-    int minSizey;
+    int minSizeX; //you can't resize this element to something smaller than this
+    int minSizeY;
+    
+    ////parameters for "sticky" system
+    Pos<Sticky> sticky; //the sticky value for each of the 4 sides of this child widget
+    Pos<double> relativePos; //position in coordinates in range [0.0, 1.0], relative to parent element's size, for the RELATIVE sticky types
+    
+  protected:
+    void addSubElement(Element* element, const Pos<Sticky>& sticky = STICKYTOPLEFT); //only used for INTERNAL parts of the gui element, such as the buttons in a scrollbar, hence this function is protected
 
+  public:
+    Element();
+    virtual ~Element(){};
+    
     bool isVisible() { return visible; } //if false, the draw() function doesn't draw anything
     bool isActive() { return active; } //if false, handle() does nothing, and mouse tests return always false
     bool isPresent() { return present; } //if true, it reacts to the mouse. if false, it ignores the mouse, even if forceActive is true, if a gui element isn't present, it really isn't present
@@ -123,7 +148,7 @@ class Element : public BasicElement
     virtual bool mouseActive() const { return active; }
     
     ////core functions of gui::Elements
-    void draw() const; //will draw the actual widget, and if it's enabled, the label, do NOT overload this function
+    void draw() const; //will draw the actual widget and do some other always-to-do stuff, do NOT override this function
     virtual void drawWidget() const = 0; //called by draw(), this one can be overloaded for each widget defined below
     void handle(const IGUIInput* input);
     virtual void handleWidget(const IGUIInput* input);
@@ -146,66 +171,37 @@ class Element : public BasicElement
     virtual void resizeWidget(const Pos<int>& newPos); //always called after resize, will resize the other elements to the correct size. Override this if you have subelements, unless you use getAutoSubElement.
     virtual bool isContainer() const; //returns 0 if the type of element isn't a container, 1 if it is (Window, Container, ...); this value is used by for example Container: it brings containers to the top of the screen if you click on them. Actually so far it's only been used for that mouse test. It's something for containers, by containers :p
     void putInScreen(); //puts element in screen if it's outside
-
-    ////parameters for "sticky" system
-    Pos<Sticky> sticky; //the sticky value for each of the 4 sides of this child widget
-    Pos<double> relativePos; //position in coordinates in range [0.0, 1.0], relative to parent element's size, for the RELATIVE sticky types
     
-    ////optional label //TODO: remove this, instead only give elements that really need a label (such as checkbox) a label
-    std::string label;
-    int labelX; //label position is relative to the position of the element
-    int labelY;
-    Markup labelMarkup;
-    void drawLabel() const;
-    void makeLabel(const std::string& label, int labelX, int labelY, const Markup& labelMarkup);
-    
-    ////optional tooltip. Drawing it must be controlled by a higher layer, e.g. see the Container's implementation. //TODO: make tooltip class and only have pointer to it here, being 0 if no tooltip, to decrease memory footprint of element
-    std::string tooltip;
-    bool tooltipenabled;
+    ////optional tooltip. Drawing it must be controlled by a higher layer, e.g. see the Container's implementation. //TODO: make tooltip class and only have pointer to it here, being 0 if no tooltip, to decrease memory footprint of element, OR, store every info of the tooltip in ToolTipManager
     void addToolTip(const std::string& text, ToolTipManager* tooltipmanager = &defaultTooltipManager) { tooltipenabled = true; tooltip = text; this->tooltipmanager = tooltipmanager;}
     void removeToolTip() { tooltipenabled = false; }
     void drawToolTip(const IGUIInput* input) const; //TODO: move this function to ToolTipManager
-    ToolTipManager* tooltipmanager;
-    
     
     virtual void setElementOver(bool state); //ALL gui types that have gui elements inside of them, must set elementOver of all gui elements inside of them too! ==> override this virtual function for those. Override this if you have subelements, unless you use getAutoSubElement.
     bool hasElementOver() const;
 
-    ////special visible parts, for example for debugging
-    void drawBorder(const ColorRGB& color = RGB_White) const;
-    
-    //add background rectangle
-    void addBackgroundRectangle(const ColorRGB& color) { this->hasBackgroundRectangle = true; this->backgroundRectangleColor = color; }
-    
-    bool isNotDrawnByContainer() { return notDrawnByContainer; }
-    void setNotDrawnByContainer(bool set) { notDrawnByContainer = set; }
-    
-    private:
-    
-    //rectangle behind it
-    bool hasBackgroundRectangle; //TODO: remove this feature, only give elements that need a background rectangle something like this
-    ColorRGB backgroundRectangleColor;
-    
-    MouseState auto_activate_mouse_state; //for the autoActivate() function //TODO: make this pointer, to save memory. If it's 0, no selfactivate
-    
-    protected:
-    void addSubElement(Element* element, const Pos<Sticky>& sticky = STICKYTOPLEFT); //only used for INTERNAL parts of the gui element, such as the buttons in a scrollbar, hence this function is protected
-    
-    bool elementOver; //true if there is an element over this element, causing the mouse NOT to be over this one (Z-order related)
-
-    bool visible; //if false, the draw() function doesn't draw anything
-    bool active; //if false, handle() does nothing, and mouse tests return always false
-    bool present; //if true, it reacts to the mouse. if false, it ignores the mouse, even if forceActive is true, if a gui element isn't present, it really isn't present
-
-    //TODO: remove notDrawnByContainer feature: things are handled by internalcontainer now for sub elements, which never draws elements anyway
-    bool notDrawnByContainer; //default false. If true, this element won't be drawn by the container. You have to draw it yourself. Advantage: you can choose when it's drawn, allowing determining drawing-order of non-gui things intermixed with gui things.
-    
-    InternalContainer ic; //TODO: make this a pointer and use new and delete, to decrease memory size of elements that don't use the internal container
-    
-    //these variables are set in handle() and can be used by drawWidget() to make your drawing dependent on the input given back then (many elements look different if the mouse is hovered above it)
-    //NOTE: elements that need more than the ones available here, can create similar members in themselves and give them the value in handleWidget()
-    bool draw_mouse_over;
+    ////for debugging: if you've got no idea what's going on with a GUI element, this function at least is guaranteed to show where it is (if in screen)
+    void drawDebugBorder(const ColorRGB& color = RGB_White) const;
 };
+
+class Label //convenience class: elements that want an optional label (e.g. checkboxes) can inherit from this and use drawLabel(this) in their drawWidget function
+{
+  private:
+    std::string label;
+    int labelX; //label position is relative to the position of the element
+    int labelY;
+    Markup labelMarkup;
+  
+  protected:
+    void drawLabel(const Element* element) const;
+    
+  public:
+    Label();
+    virtual ~Label(){}
+    
+    void makeLabel(const std::string& label, int labelX, int labelY, const Markup& labelMarkup);
+};
+
 
 //Dummy = exactly the same as Element but not abstract, nothing implemented except pure virtuals of Element
 class Dummy : public Element
@@ -224,6 +220,7 @@ class Button : public Element
   
   public:
     Button();
+    
     ////part "back image"
     bool enableImage;
     const Texture* image[3]; //0=normal, 1=mouse over, 2=mouse down
@@ -293,7 +290,7 @@ class Button : public Element
     virtual void drawWidget() const;
     virtual void handleWidget(const IGUIInput* input);
     
-    private:
+  private:
     MouseState button_drawing_mouse_test;
     bool draw_mouse_button_down_style;
 };
@@ -367,7 +364,7 @@ class Scrollbar : public Element
     bool forwardedMouseScrollDown() const; //see int forwardedScroll;
     void forwardScroll(int scroll); //see int forwardedScroll;
     
-    protected:
+  protected:
     
     mutable int forwardedScroll; //forwarded mouse scroll event from other element; +1 is down, -1 is up
 };
@@ -443,10 +440,11 @@ class Invisible : public Element
 class Container : public Element
 {
   protected:
+    InternalContainer elements;
+
+  protected:
     
     void drawElements() const;
-    
-    InternalContainer elements;
     
   public:
     
@@ -491,17 +489,17 @@ class Container : public Element
     void setSizeToElements(); //makes the size of the container as big as the elements. This resizes the container in a non-sticky way: no element is affected
 };
 
-class ScrollElement : public Element
+class ScrollElement : public Element //a.k.a "ScrollZone"
 {
   /*
-  ScrollElement will contain 1 element. Depending on the size of that element compared to this ScrollElement,
+  ScrollElement will contain 1 element (which can be a container with more elements).
+  Depending on the size of that element compared to this ScrollElement,
   1 or 2 scrollbars will appear, allowing to scroll to see all of that element.
   The size of that element isn't affected by this ScrollElement.
   The position of that element is completely controlled by this ScrollElement or its scrollbars
   */
   public:
     Element* element;
-  
   
     ScrollElement();
     virtual void handleWidget(const IGUIInput* input); //you're supposed to handle() before you draw()
@@ -516,8 +514,8 @@ class ScrollElement : public Element
     ScrollbarPair bars;
 
     //the zone where elements are drawn: the size of this container excluding the scrollbarpair's bars
-    int getVisibleSizex() const;
-    int getVisibleSizey() const;
+    int getVisibleSizeX() const;
+    int getVisibleSizeY() const;
     int getVisibleX0() const;
     int getVisibleY0() const;
     int getVisibleX1() const;
@@ -562,7 +560,7 @@ class Panel : public Element
     void makeTextured(int x, int y, int sizex, int sizey,
                       const Texture* t00, const ColorRGB& colorMod = RGB_White);
     void setSize(int x, int y, int sizex, int sizey);
-         
+
     virtual void drawWidget() const;
 };
 
@@ -618,9 +616,8 @@ class Window : public Element
     int getContainerY0() const { return container.getY0(); }
     int getContainerX1() const { return container.getX1(); }
     int getContainerY1() const { return container.getY1(); }
-    int getContainerSizex() const { return container.getSizex(); }
-    int getContainerSizey() const { return container.getSizey(); }
-    
+    int getContainerSizeX() const { return container.getSizeX(); }
+    int getContainerSizeY() const { return container.getSizeY(); }
     
     //if a parameter is -1, it's set to left
     void setContainerBorders(int left = 0, int up = -1, int right = -1, int down = -1);
@@ -702,7 +699,7 @@ class Window : public Element
 };
 
 //The Checkbox
-class Checkbox : public Element
+class Checkbox : public Element, public Label
 {
   private:
     int textOffsetX;
@@ -771,7 +768,7 @@ class NStateState
 };
 
 //circle between N states (you can add states, the make function makes no states). Left mouse click goes to next state, right mouse click goes to previous state.
-class NState : public Element
+class NState : public Element, public Label
 {
   private:
   public:
@@ -826,7 +823,6 @@ class Text : public Element
   private:
     std::string text;
 };
-
 
 class Image : public Element
 {

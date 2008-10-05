@@ -92,8 +92,8 @@ void InputLine::make(int x, int y, unsigned long l, const Markup& markup, int ty
     allowedChars |= 3; //set "disable text" and "disable special symbols" to true
   }
   
-  this->setSizey( markup.getHeight()); //font height
-  this->setSizex((title.length() + l) * markup.getWidth());
+  this->setSizeY( markup.getHeight()); //font height
+  this->setSizeX((title.length() + l) * markup.getWidth());
   
   this->active = 0;
   this->visible = 1;
@@ -713,8 +713,8 @@ void Console::make(int x, int y, int sizex, int sizey, int num, const Markup& ma
 {
   this->x0 = x;
   this->y0 = y;
-  this->setSizex(sizex);
-  this->setSizey(sizey);
+  this->setSizeX(sizex);
+  this->setSizeY(sizey);
   this->num = num;
   this->markup = markup;
   
@@ -741,7 +741,7 @@ void Console::calcNumLines()
   for(int i = 0; i < num; i++)
   {
     t.setText(stack.getOldest(i));
-    t.splitWords(getSizex());
+    t.splitWords(getSizeX());
     line += t.getNumLines();
   }
   numLines = line;
@@ -759,14 +759,14 @@ int Console::getNumMessages() const
 
 int Console::getVisibleLines(const Markup& markup)
 {
-  return getSizey() / markup.getHeight();
+  return getSizeY() / markup.getHeight();
 }
 
 void Console::drawWidget() const
 {
   int line = 0;
   int message = 0;
-  int maxScreenLines = getSizey() / markup.getHeight();
+  int maxScreenLines = getSizeY() / markup.getHeight();
   int messageLines = 0;
   int messageStartLine = 0;
   int messageEndLine = 0;
@@ -784,7 +784,7 @@ void Console::drawWidget() const
     messageStartLine = line; //first line of the message in all messages
     
     t.setText(stack.getOldest(message));
-    t.splitWords(getSizex());
+    t.splitWords(getSizeX());
     messageLines = t.getNumLines();
     //messageLines = calcTextLines(text[message], sizex, markup); //number of lines of the message
     messageEndLine = messageStartLine + messageLines - 1; //last line of the message
@@ -835,13 +835,13 @@ void TextArea::make(int x, int y, int sizex, int sizey, const std::string& text,
 {
   this->x0 = x;
   this->y0 = y;
-  this->setSizex(sizex);
-  this->setSizey(sizey);
+  this->setSizeX(sizex);
+  this->setSizeY(sizey);
   this->markup = markup;
   this->text.markup = markup;
   
   this->text.setText(text);
-  this->text.splitWords(getSizex());
+  this->text.splitWords(getSizeX());
 
   
   this->totallyEnable();
@@ -855,8 +855,8 @@ void TextArea::setText(const std::string& text, const Markup& markup)
   this->text.markup = markup;
   
   this->text.setText(text);
-  int width = getSizex();
-  if(scrollEnabled) width -= scrollbar.getSizex();
+  int width = getSizeX();
+  if(scrollEnabled) width -= scrollbar.getSizeX();
   this->text.splitWords(width);
 
   this->scroll = 0;
@@ -872,7 +872,7 @@ int TextArea::getNumLines() const
 
 void TextArea::resizeWidget()
 {
-  this->text.splitWords(getSizex());
+  this->text.splitWords(getSizeX());
 }
 
 Element* TextArea::getAutoSubElement(unsigned long i)
@@ -892,7 +892,7 @@ void TextArea::handleWidget(const IGUIInput* input)
 
 int TextArea::getVisibleLines(const Markup& markup) const
 {
-  return getSizey() / markup.getHeight();
+  return getSizeY() / markup.getHeight();
 }
 
 void TextArea::drawWidget() const
@@ -909,7 +909,7 @@ void TextArea::drawWidget() const
 
 void TextArea::setScrollbarSize()
 {
-  int size = text.getNumLines() - (getSizey() / markup.getHeight());
+  int size = text.getNumLines() - (getSizeY() / markup.getHeight());
   if(size < 0) size = 0;
   
   scrollbar.scrollSize = size;
@@ -919,8 +919,8 @@ void TextArea::addScrollbar()
 {
   scrollEnabled = true;
   
-  scrollbar.makeVertical(x1 - 16, 0, getSizey());
-  this->text.splitWords(getSizex() - scrollbar.getSizex());
+  scrollbar.makeVertical(x1 - 16, 0, getSizeY());
+  this->text.splitWords(getSizeX() - scrollbar.getSizeX());
   
   setScrollbarSize();
 }
@@ -944,8 +944,8 @@ void InputBox::make(int x, int y, int sizex, int sizey, int maxLines, int border
 {
   this->x0 = x;
   this->y0 = y;
-  this->setSizex(sizex);
-  this->setSizey(sizey);
+  this->setSizeX(sizex);
+  this->setSizeY(sizey);
   this->maxLines = maxLines;
   this->markup = markup;
   this->multiText.markup = markup;
@@ -964,14 +964,14 @@ void InputBox::make(int x, int y, int sizex, int sizey, int maxLines, int border
 
 void InputBox::makeScrollbar(const GuiSet* set)
 {
-  bar.makeVertical(x1 - set->arrowN->getU(), y0, getSizey(),
+  bar.makeVertical(x1 - set->arrowN->getU(), y0, getSizeY(),
                    100, 0, 0, 1,
                    set, 1);
 }
 
 void InputBox::init()
 {
-  bar.makeVertical(x1 - builtInGuiSet.arrowN->getU(), y0, getSizey(), 100, 0, 0, 1);
+  bar.makeVertical(x1 - builtInGuiSet.arrowN->getU(), y0, getSizeY(), 100, 0, 0, 1);
   bar.scrollSize = 1;
   bar.scrollPos = 0;
 }
@@ -983,7 +983,7 @@ int InputBox::getLeftText() const
 
 int InputBox::getRightText() const
 {
-  return getSizex() - border - bar.getSizex();
+  return getSizeX() - border - bar.getSizeX();
 }
 
 int InputBox::getTopText() const
@@ -993,7 +993,7 @@ int InputBox::getTopText() const
 
 int InputBox::getBottomText() const
 {
-  return getSizey() - border;
+  return getSizeY() - border;
 }
 
 int InputBox::getTextAreaHeight() const
@@ -1013,7 +1013,7 @@ int InputBox::getLinesVisible() const
 
 void InputBox::drawWidget() const
 {
-  panel.draw(x0, y0, getSizex(), getSizey());
+  panel.draw(x0, y0, getSizeX(), getSizeY());
   bar.draw();
   
   //draw the cursor if active
@@ -1077,7 +1077,7 @@ void InputBox::handleWidget(const IGUIInput* input)
       unsigned long cursorLine;
       unsigned long cursorColumn;
       multiText.cursorAtCharPos(cursor, cursorLine, cursorColumn);
-      cursor = multiText.charAtCursorPos(cursorLine, int(getSizex() / markup.getWidth()));
+      cursor = multiText.charAtCursorPos(cursorLine, int(getSizeX() / markup.getWidth()));
     }
     
      scrollerMayJump = 1;
@@ -1189,8 +1189,8 @@ void FormattedText::make(int x, int y, const std::string& text, const Markup& ma
 {
   this->x0 = x;
   this->y0 = y;
-  this->setSizex(text.length() * markup.getWidth());
-  this->setSizey(markup.getHeight());
+  this->setSizeX(text.length() * markup.getWidth());
+  this->setSizeY(markup.getHeight());
   this->text = text;
   this->markup = markup;
   this->totallyEnable();

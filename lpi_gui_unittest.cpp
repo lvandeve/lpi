@@ -93,8 +93,8 @@ void unitTest()
     w.addTop();
     c.handle(testinput);c.handle(testinput);
     
-    int mx = w.top.getCenterx();
-    int my = w.top.getCentery();
+    int mx = w.top.getCenterX();
+    int my = w.top.getCenterY();
     c.handle(testinput);c.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!w.top.mouseJustDownHere(testinput))
     debugSetMousePos(100, 100);
@@ -154,8 +154,8 @@ void unitTest()
     w.addTop();
     c.handle(testinput);c.handle(testinput);
     
-    int mx = w.top.getCenterx();
-    int my = w.top.getCentery();
+    int mx = w.top.getCenterX();
+    int my = w.top.getCenterY();
  
     c.handle(testinput);c.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!w.top.mouseGrabbed(testinput)) //mouse not down yet
@@ -184,8 +184,8 @@ void unitTest()
     w.addTop();
     c.handle(testinput);c.handle(testinput);
     
-    int mx = w.top.getCenterx();
-    int my = w.top.getCentery();
+    int mx = w.top.getCenterX();
+    int my = w.top.getCenterY();
     
     int wx1 = w.getX0();
     int wy1 = w.getY0();
@@ -287,7 +287,7 @@ void unitTest()
     LUT_SUB_ASSERT_TRUE(!line.isActive())
     
     //now a little test to see if it's at the correct position for these tests below
-    debugSetMousePos(line.getCenterx(), line.getCentery());
+    debugSetMousePos(line.getCenterX(), line.getCenterY());
     line.setActive(true);
     line.setElementOver(false);
     LUT_SUB_ASSERT_TRUE(line.mouseOver(testinput))
@@ -295,7 +295,7 @@ void unitTest()
     line.setActive(false);
     
     //move mouse above it and click
-    debugSetMousePos(line.getCenterx(), line.getCentery());
+    debugSetMousePos(line.getCenterX(), line.getCenterY());
     debugSetLMB(1);
     c.handle(testinput);
     //it must be active now!
@@ -336,7 +336,7 @@ void unitTest()
     dummy2.resize(0, 0, 50, 50);
     w.pushTopAt(&dummy2, 0, 0);
     
-    debugSetMousePos(dummy1.getCenterx(), dummy1.getCentery()); //doesn't matter if you take center of dummy1 or dummy2, both are exactly at same position
+    debugSetMousePos(dummy1.getCenterX(), dummy1.getCenterY()); //doesn't matter if you take center of dummy1 or dummy2, both are exactly at same position
     
     dummy1.totallyEnable();
     dummy2.totallyDisable();
@@ -360,8 +360,8 @@ void unitTest()
     w.addTop();
     c.pushTopAt(&w, 0, 0);
     
-    int mx = w.top.getCenterx();
-    int my = w.top.getCentery();
+    int mx = w.top.getCenterX();
+    int my = w.top.getCenterY();
     
     //grab the window
     debugSetMousePos(mx, my);
@@ -392,10 +392,10 @@ void unitTest()
     B.addTop();
     c.pushTopAt(&B, 200, 0);
     
-    int ax = A.top.getCenterx();
-    int ay = A.top.getCentery();
-    int bx = B.top.getCenterx();
-    int by = B.top.getCentery();
+    int ax = A.top.getCenterX();
+    int ay = A.top.getCenterY();
+    int bx = B.top.getCenterX();
+    int by = B.top.getCenterY();
     
     //grab the window A
     debugSetMousePos(ax, ay);
@@ -424,8 +424,8 @@ void unitTest()
     w.addTop(&lpi::gui::builtInTexture[47], 2, 2, 2); //could cause jump of two pixels when the bug was there
     c.pushTopAt(&w, 0, 0);
     
-    int mx = w.top.getCenterx();
-    int my = w.top.getCentery();
+    int mx = w.top.getCenterX();
+    int my = w.top.getCenterY();
     
     //grab the window
     debugSetMousePos(mx, my);
