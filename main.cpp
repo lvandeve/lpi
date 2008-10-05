@@ -39,7 +39,6 @@ valgrind
 gprof > gprof.txt
 */
 
-
 #include <SDL/SDL.h>
 #include "lpi_color.h"
 #include "lpi_file.h"
@@ -51,13 +50,16 @@ gprof > gprof.txt
 #include "lpi_gui.h"
 #include "lpi_gui_text.h"
 #include "lpi_gui_ex.h"
+#include "lpi_gui_input_sdl.h"
 #include "lpi_draw2dgl.h"
 #include "lpi_audio.h"
 #include "lpi_bignums.h"
 #include "lpi_tools.h"
 #include "lpi_gl.h"
+#include "lpi_gui_unittest.h"
 #include "lodepng.h"
 #include "lodewav.h"
+
 #include <vector>
 #include <iostream>
 #include <cmath>
@@ -97,7 +99,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   
   lpi::gui::Button sound_button;
   sound_button.makeTextPanel(20, 500, "sound");
-  w1.pushTopAt(&sound_button, 10, 50);
+  w1.pushTopAt(&sound_button, 15, 50);
   
   lpi::gui::Scrollbar hbar;
   hbar.makeHorizontal(716, 220, 200);
@@ -142,8 +144,6 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   
   lpi::audioOpen(44100, 2048);
   
-  w1.addScrollbars();
-  
   while(lpi::frame(true, true))
   {
     lpi::print("lpi GUI demo");
@@ -153,14 +153,14 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     lpi::gui::builtInTexture[37].draw(0, 50);
     
     c.draw();
-    c.handle();
+    c.handle(&lpi::gGUIInput);
     
     if(wcb.checked) w1.addScrollbars();
     else w1.removeScrollbars();
     
-    if(sound_button.pressed()) lpi::audioPlay(sound);
+    if(sound_button.pressed(&lpi::gGUIInput)) lpi::audioPlay(sound);
     
-    if(tb_unittest.pressed()) lpi::gui::unitTest();
+    if(tb_unittest.pressed(&lpi::gGUIInput)) lpi::gui::unitTest();
     
     lpi::redraw();
     lpi::cls(lpi::RGB_Darkgreen);

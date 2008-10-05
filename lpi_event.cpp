@@ -153,6 +153,7 @@ int globalMouseX;
 int globalMouseY;
 bool globalLMB;
 bool globalRMB;
+bool globalMMB;
 //mouse wheel state is checked in the done function in api.cpp because it can only checked with an sdl event
 bool globalMouseWheelUp; //mouse wheel up
 bool globalMouseWheelDown; //mouse wheel down
@@ -166,6 +167,9 @@ void checkMouse()
   else globalLMB = false;
   if(mouseState & 4) globalRMB = true; 
   else globalRMB = false;
+  if(mouseState & 2) globalMMB = true; 
+  else globalMMB = false;
+  //NOTE: scroll wheel is handled in "frame" function
 }
 
 
@@ -238,12 +242,10 @@ Note that this function can also return things like when you pressed backspace, 
 */
 
 char previousChar[16];
-float keyTime[16];
+double keyTime[16];
 bool warmed_up[16];
 
-Uint32 getTicks(); //defined in another .cpp file (link time dependency)
-
-int unicodeKey(int allowedChars, int warmup, int rate, int index)
+int unicodeKey(int allowedChars, double time, double warmupTime, double repTime, int index)
 {
   if(index < 0) index = 0;
   if(index > 15) index %= 16;
@@ -284,16 +286,16 @@ int unicodeKey(int allowedChars, int warmup, int rate, int index)
         asciiChar = 0;
         
         //if waited long enough, asciiChar can be set to inputChar anyway!
-        if(getTicks() - keyTime[index] > warmup && !warmed_up[index])
+        if(time - keyTime[index] > warmupTime && !warmed_up[index])
         {
-          keyTime[index] = getTicks();
-          warmed_up[index] = 1;
+          keyTime[index] = time;
+          warmed_up[index] = true;
         }
-        else if(getTicks() - keyTime[index] > rate && warmed_up[index])
+        else if(time - keyTime[index] > repTime && warmed_up[index])
         {
           previousChar[index] = inputChar;
           asciiChar = inputChar;
-          keyTime[index] = getTicks();
+          keyTime[index] = time;
         }
 
       }
@@ -301,11 +303,9 @@ int unicodeKey(int allowedChars, int warmup, int rate, int index)
       {
         previousChar[index] = inputChar;
         asciiChar = inputChar;
-        keyTime[index] = getTicks();
+        keyTime[index] = time;
         warmed_up[index] = 0;
       }
-      
-      
       
     }
     else

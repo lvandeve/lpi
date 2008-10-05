@@ -26,10 +26,10 @@ lpi_gui: an OpenGL GUI
 #ifndef LPI_GUI_H_INCLUDED
 #define LPI_GUI_H_INCLUDED
 
+#include "lpi_gui_base.h"
 #include "lpi_gui_draw.h"
 
 #include "lpi_color.h"
-#include "lpi_event.h"
 #include "lpi_texture.h"
 #include "lpi_text.h"
 
@@ -39,56 +39,10 @@ namespace lpi
 namespace gui
 {
 
-enum Sticky //how to resize child widget with master widget
-{
-  TOPLEFT, //follow top/left side of master
-  BOTTOMRIGHT, //follow bottom/right side of master
-  RELATIVE00, //position relative to master, distance of this subelement's side to upper left ("00") corner of subelement will stay constant
-  RELATIVE11, //position relative to master, distance of this subelement's side to lower right ("11") corner of subelement will stay constant
-  NOTHING //don't do anything in resize(). But in move() it'll still translate.
-};
-
-template<typename T>
-struct Pos
-{
-  T x0;
-  T y0;
-  T x1;
-  T y1;
-};
-
-//some named combinations for Pos<Sticky> values, more are possible but these are probably the most common
-extern Pos<Sticky> STICKYTOPLEFT; //always keeps same size, stays at same position compared to parent's top left
-extern Pos<Sticky> STICKYTOPRIGHT; //always keeps same size, stays at same position compared to parent's top right
-extern Pos<Sticky> STICKYBOTTOMRIGHT; //always keeps same size, stays at same position compared to parent's bottom right
-extern Pos<Sticky> STICKYBOTTOMLEFT; //always keeps same size, stays at same position compared to parent's bottom left
-extern Pos<Sticky> STICKYFULL; //follows each corresponding side, so it resizes as much as its master
-extern Pos<Sticky> STICKYNOTHING; //don't do anything in resize() of parent, but still move if the parent move()s
-//for e.g. scrollbars:
-extern Pos<Sticky> STICKYVERTICALLEFT; //follows both sides in vertical direction, follows left side
-extern Pos<Sticky> STICKYVERTICALRIGHT; //follows both sides in vertical direction, follows right side
-extern Pos<Sticky> STICKYHORIZONTALTOP; //follows both sides in horizontal direction, follows top side
-extern Pos<Sticky> STICKYHORIZONTALBOTTOM; //follows both sides in horizontal direction, follows bottom side
-//some involving relative:
-extern Pos<Sticky> STICKYRELATIVE; //relative in all directions - use for subelements that may be resized too in all directions
-extern Pos<Sticky> STICKYRELATIVE00; //position relative, but size stays constant (position determined by top left corner)
-extern Pos<Sticky> STICKYRELATIVE01; //position relative, but size stays constant (position determined by bottom left corner)
-extern Pos<Sticky> STICKYRELATIVE10; //position relative, but size stays constant (position determined by top right corner)
-extern Pos<Sticky> STICKYRELATIVE11; //position relative, but size stays constant (position determined by bottom right corner)
-extern Pos<Sticky> STICKYRELATIVEHORIZONTAL0; //size and position relative in horizontal direction, position relative in vertical direction
-extern Pos<Sticky> STICKYRELATIVEVERTICAL0; //size and position relative in vertical direction, position relative in horizontal direction
-extern Pos<Sticky> STICKYRELATIVEHORIZONTAL1; //size and position relative in horizontal direction, position relative in vertical direction
-extern Pos<Sticky> STICKYRELATIVEVERTICAL1; //size and position relative in vertical direction, position relative in horizontal direction
-extern Pos<Sticky> STICKYRELATIVEHORIZONTALFULL; //relative in horizontal direction, follows both sides in vertical direction
-extern Pos<Sticky> STICKYRELATIVEVERTICALFULL; //relative in vertical direction, follows both sides in horizontal direction
-extern Pos<Sticky> STICKYRELATIVELEFT; //relative in horizontal direction, follows left side in vertical direction
-extern Pos<Sticky> STICKYRELATIVETOP; //relative in vertical direction, follows top side in horizontal direction
-extern Pos<Sticky> STICKYRELATIVERIGHT; //relative in horizontal direction, follows right side in vertical direction
-extern Pos<Sticky> STICKYRELATIVEBOTTOM; //relative in vertical direction, follows bottom side in horizontal direction
 
 class Element;
 
-class InternalContainer
+class InternalContainer //container inside elements, for elements that contain sub elements to work (e.g. scrollbar exists out of background and 3 buttons)
 {
   std::vector<Element*> elements;
   
@@ -122,127 +76,11 @@ class InternalContainer
   void initSubElement(Element* element, const Pos<Sticky>& sticky, Element* parent);
 };
 
-const int NUM_MOUSE_BUTTONS = 2;
-
-struct MouseState
-{
-  bool downhere_bool1;
-  bool downhere_bool2;
-  bool justdown_prev;
-  bool justdownhere_prev;
-  bool justuphere_bool1;
-  bool justuphere_bool2;
-  bool grabbed_grabbed;
-  bool grabbed_prev;
-  int grabx;
-  int graby;
-  int grabrelx;
-  int grabrely;
-  int doubleClickState;
-  double doubleClickTime; //in seconds
-  
-  MouseState();
-};
-
-class BasicElement //more basic than "Element" - only describes the shape and mouse handling in this shape
-{
-  protected:
-    ////position
-    int x0; //position of upper left corner of this element on screen
-    int y0;
-    int x1; //position of the bottom right corner of this element on screen
-    int y1;
-    
-    virtual bool mouseOverShape() const; //can be overridden for elements with different shape, e.g. circle, or the gui::Group which's shape is that of all elements in it
-  
-  public:
-    BasicElement();
-    
-    int getX0() const { return x0; }
-    int getY0() const { return y0; }
-    int getX1() const { return x1; }
-    int getY1() const { return y1; }
-    void setX0(int x0) { this->x0 = x0; }
-    void setY0(int y0) { this->y0 = y0; }
-    void setX1(int x1) { this->x1 = x1; }
-    void setY1(int y1) { this->y1 = y1; }
-    
-    int getSizex() const { return x1 - x0; } //get the size of this element
-    int getSizey() const { return y1 - y0; }
-    //obviously the functoins below are best used after setting x0 and y0
-    void setSizex(const int sizex) { x1 = x0 + sizex; } //change x1, y1 to get the given size
-    void setSizey(const int sizey) { y1 = y0 + sizey; }
-    int getCenterx() const { return (x0 + x1) / 2; } //the center in screen coordinates
-    int getCentery() const { return (y0 + y1) / 2; }
-    int getRelCenterx() const { return (x1 - x0) / 2; } //the half of the size
-    int getRelCentery() const { return (y1 - y0) / 2; }
-
-    ////MOUSE RELATED STUFF
-    int mouseGetRelPosX() const; //returns relative mouse positions (relative to x and y of the elemnt)
-    int mouseGetRelPosY() const; //returns relative mouse positions (relative to x and y of the elemnt)
-    
-    //these are virtual because other states can have an influence
-    virtual bool mouseOver() const; //mouse cursor over the element (and no other element lpiged by gui container above it)
-    virtual bool mouseGrabbable() const { return true; }
-    virtual bool mouseActive() const { return true; } //false if the element should not respond to "clicked", "pressed", etc..
-    
-    bool mouseDown(MouseButton button = LMB) const; //mouse is over and down
-    bool mouseDownHere(MouseState& state, MouseButton button = LMB) const; //mouse is over, down, and was pressed while it was on here
-    bool mouseDownHere(MouseButton button = LMB);
-    bool mouseGrabbed(MouseState& state, MouseButton button = LMB) const; //like mouseDownHere, but keeps returning true if you move the mouse away from the element while keeping button pressed
-    bool mouseGrabbed(MouseButton button = LMB);
-    void mouseGrab(MouseState& state) const; //sets states as if element were grabbed
-    void mouseGrab(MouseButton button = LMB);
-    void mouseUngrab(MouseState& state) const; //sets states as if element were not grabbed
-    void mouseUngrab(MouseButton button = LMB);
-    int mouseGetGrabX(const MouseState& state) const { return state.grabx; } //absolute location where you last started grabbing (x)
-    int mouseGetGrabX(MouseButton button = LMB) const { return mouseGetGrabX(_mouseState[button]); }
-    int mouseGetGrabY(const MouseState& state) const { return state.graby; }
-    int mouseGetGrabY(MouseButton button = LMB) const { return mouseGetGrabY(_mouseState[button]); }
-    int mouseGetRelGrabX(const MouseState& state) const { return state.grabrelx; } //relative location where you last started grabbing (x)
-    int mouseGetRelGrabX(MouseButton button = LMB) const { return mouseGetRelGrabX(_mouseState[button]); }
-    int mouseGetRelGrabY(const MouseState& state) const { return state.grabrely; }
-    int mouseGetRelGrabY(MouseButton button = LMB) const { return mouseGetRelGrabY(_mouseState[button]); }
-    
-    bool mouseJustDown(bool& prevstate, MouseButton button = LMB) const; //generalized version with only boolean given
-    bool mouseJustDown(MouseState& state, MouseButton button = LMB) const; //mouse down for the first time after being up or not over the element
-    bool mouseJustDown(MouseButton button = LMB);
-    
-    bool mouseJustDownHere(bool& prevstate, MouseButton button = LMB) const;
-    bool mouseJustDownHere(MouseState& state, MouseButton button = LMB) const; //mouse down for the first time after being up, only returns true if the mouse was above it before you clicked already
-    bool mouseJustDownHere(MouseButton button = LMB);
-    
-    bool mouseJustUpHere(MouseState& state, MouseButton button = LMB) const; //mouse up for first time after being down, and over the element (so if you have mouse down on element and move mouse away, this will NOT return true, only if you release mouse button while cursor is over it, and mousedownhere)
-    bool mouseJustUpHere(MouseButton button = LMB);
-    
-    bool pressed(MouseButton button = LMB); //mouseJustDown and active
-    bool clicked(MouseButton button = LMB); //mouseJustUp and active
-
-    bool mouseScrollUp() const; //scrolled up while on this element
-    bool mouseScrollDown() const; //scrolled down while on this element
-    
-    double doubleClickTime; //maximum time for a doubleclick
-    void setDoubleClickTime(double i_doubleClickTime) { doubleClickTime = i_doubleClickTime; }
-    double getDoubleClickTime() { return doubleClickTime; }
-    
-    bool mouseDoubleClicked(MouseState& state, MouseButton button = LMB) const; //double clicked on this element
-    bool mouseDoubleClicked(MouseButton button = LMB);
-    
-    MouseState& getMouseStateForContainer() { return mouse_state_for_containers; }
-    
-    protected:
-    
-    MouseState _mouseState[NUM_MOUSE_BUTTONS];
-    MouseState mouse_state_for_containers; //for bookkeeping by containers that contain this element
-};
-
-class Element;
-
 class ToolTipManager //this is made to draw the tooltip at the very end to avoid other gui items to be drawn over it
 {
   public:
     void registerMe(const Element* element); //can register only one per frame (last one to register will get drawn); guiElements should do this in the draw function.
-    void draw() const; //this will call the drawTooltip function of the one registered element, call this after drawing all gui elements
+    void draw(const IGUIInput* input) const; //this will call the drawTooltip function of the one registered element, call this after drawing all gui elements
     void enableToolTips(bool set) { enabled = set; }
     ToolTipManager() : element(0), enabled(true) {}
   private:
@@ -280,19 +118,19 @@ class Element : public BasicElement
     void totallyEnable() {visible = active = present = true;}
     
     ////mouse overrides
-    virtual bool mouseOver() const;
+    virtual bool mouseOver(const IGUIInput* input) const;
     virtual bool mouseGrabbable() const;
     virtual bool mouseActive() const { return active; }
     
     ////core functions of gui::Elements
     void draw() const; //will draw the actual widget, and if it's enabled, the label, do NOT overload this function
     virtual void drawWidget() const = 0; //called by draw(), this one can be overloaded for each widget defined below
-    void handle();
-    virtual void handleWidget();
+    void handle(const IGUIInput* input);
+    virtual void handleWidget(const IGUIInput* input);
     void move(int x, int y);
     virtual void moveWidget(int /*x*/, int /*y*/); //Override this if you have subelements, unless you use getAutoSubElement.
     
-    void autoActivate();
+    void autoActivate(const IGUIInput* input);
     
     void moveTo(int x, int y);
     void moveCenterTo(int x, int y);
@@ -326,7 +164,7 @@ class Element : public BasicElement
     bool tooltipenabled;
     void addToolTip(const std::string& text, ToolTipManager* tooltipmanager = &defaultTooltipManager) { tooltipenabled = true; tooltip = text; this->tooltipmanager = tooltipmanager;}
     void removeToolTip() { tooltipenabled = false; }
-    void drawToolTip() const;
+    void drawToolTip(const IGUIInput* input) const; //TODO: move this function to ToolTipManager
     ToolTipManager* tooltipmanager;
     
     
@@ -363,6 +201,10 @@ class Element : public BasicElement
     bool notDrawnByContainer; //default false. If true, this element won't be drawn by the container. You have to draw it yourself. Advantage: you can choose when it's drawn, allowing determining drawing-order of non-gui things intermixed with gui things.
     
     InternalContainer ic; //TODO: make this a pointer and use new and delete, to decrease memory size of elements that don't use the internal container
+    
+    //these variables are set in handle() and can be used by drawWidget() to make your drawing dependent on the input given back then (many elements look different if the mouse is hovered above it)
+    //NOTE: elements that need more than the ones available here, can create similar members in themselves and give them the value in handleWidget()
+    bool draw_mouse_over;
 };
 
 //Dummy = exactly the same as Element but not abstract, nothing implemented except pure virtuals of Element
@@ -449,16 +291,18 @@ class Button : public Element
                        const GuiSet* set = &builtInGuiSet); //panel
 
     virtual void drawWidget() const;
+    virtual void handleWidget(const IGUIInput* input);
     
     private:
-    mutable MouseState mutable_button_drawing_mouse_test;
+    MouseState button_drawing_mouse_test;
+    bool draw_mouse_button_down_style;
 };
 
 //The Scrollbar
 class Scrollbar : public Element
 {
   private:
-    double oldTime;
+    double oldTime; //in seconds
     void init();
   public:
     //get length and begin and end coordinates of the slider part (the part between the up and down buttons) (relative to x, y of the scrollbar)
@@ -466,7 +310,7 @@ class Scrollbar : public Element
     int getSliderStart() const;
     int getSliderEnd() const;
     
-    virtual void handleWidget();
+    virtual void handleWidget(const IGUIInput* input);
     virtual void drawWidget() const;
 
     Direction direction; //0 = vertical, 1 = horizontal
@@ -507,7 +351,7 @@ class Scrollbar : public Element
                         const GuiSet* set = &builtInGuiSet, int speedMode = 1);
     void showValue(int x, int y, const Markup& valueMarkup, int type); //type: 0=don't, 1=float, 2=int
     
-    void scroll(int dir); //make it scroll from an external command
+    void scroll(const IGUIInput* input, int dir); //make it scroll from an external command
     
     double offset; //used as an offset of ScrollPos to get/set the scroll value with offset added with the functions below
     double getValue() const;
@@ -542,7 +386,7 @@ class ScrollbarPair : public Element
     
     const Texture* txCorner; //the corner piece between the two scrollbars
         
-    virtual void handleWidget();
+    virtual void handleWidget(const IGUIInput* input);
     virtual void drawWidget() const;
     
     bool venabled;
@@ -585,7 +429,7 @@ class Slider : public Element
     int scrollPosToScreenPos(double scrollPos);
 
     virtual void drawWidget() const;
-    virtual void handleWidget();
+    virtual void handleWidget(const IGUIInput* input);
 };
 
 class Invisible : public Element
@@ -607,7 +451,7 @@ class Container : public Element
   public:
     
     Container();
-    virtual void handleWidget(); //you're supposed to handle() before you draw()
+    virtual void handleWidget(const IGUIInput* input); //you're supposed to handle() before you draw()
     virtual void drawWidget() const;
     
     //push the element without affecting absolute position
@@ -660,7 +504,7 @@ class ScrollElement : public Element
   
   
     ScrollElement();
-    virtual void handleWidget(); //you're supposed to handle() before you draw()
+    virtual void handleWidget(const IGUIInput* input); //you're supposed to handle() before you draw()
     virtual void drawWidget() const;
     virtual void resizeWidget(const Pos<int>& newPos);
     virtual void moveWidget(int x, int y);
@@ -691,7 +535,7 @@ class ScrollElement : public Element
     
   protected:
   
-    virtual bool mouseInVisibleZone() const; //is the mouse in the zone where elements are drawn
+    virtual bool mouseInVisibleZone(const IGUIInput* input) const; //is the mouse in the zone where elements are drawn
     
     void initBars();
     void updateBars();
@@ -701,7 +545,7 @@ class ScrollElement : public Element
 class Group : public Container
 {
   public:
-    virtual bool mouseOverShape() const; //difference with the mouseOverShape from other guielements, is that it checks all sub elements, not itself, for mouseovers
+    virtual bool mouseOverShape(const IGUIInput* input) const; //difference with the mouseOverShape from other guielements, is that it checks all sub elements, not itself, for mouseovers
 };
 
 class Panel : public Element
@@ -846,7 +690,7 @@ class Window : public Element
     ////overloaded functions
     virtual void drawWidget() const;
     
-    virtual void handleWidget();
+    virtual void handleWidget(const IGUIInput* input);
     virtual bool isContainer() const;
     
     ////useful for the close button
@@ -889,7 +733,7 @@ class Checkbox : public Element
     void make(int x, int y, bool checked = 0, const GuiSet* set = &builtInGuiSet, int toggleOnMouseUp = 0);
     void addText(const std::string& text, const Markup& markup = TS_W);
     virtual void drawWidget() const; //also handles it by calling handle(): toggles when mouse down or not
-    virtual void handleWidget();
+    virtual void handleWidget(const IGUIInput* input);
 
     void setText(const std::string& newText);
     const std::string& getText() const { return text; }
@@ -939,7 +783,7 @@ class NState : public Element
     void make(int x, int y, int toggleOnMouseUp = 0);
     void addState(Texture* texture, const ColorRGB& colorMod = RGB_White, const std::string& text = "", const Markup& markup = TS_W);
     virtual void drawWidget() const; //also handles it by calling handle(): toggles when mouse down or not
-    virtual void handleWidget();
+    virtual void handleWidget(const IGUIInput* input);
 };
 
 //The bulletlist, a list of checkboxes where only one can be selected
@@ -951,7 +795,7 @@ class BulletList : public Element
     
     BulletList();
     virtual void drawWidget() const;
-    virtual void handleWidget();
+    virtual void handleWidget(const IGUIInput* input);
     void make(int x, int y, unsigned long amount, int xDiff, int yDiff, const GuiSet* set = &builtInGuiSet); //diff = the location difference between successive checkboxes
     void make(int x, int y, unsigned long amount, int xDiff, int yDiff, unsigned long amountx, const GuiSet* set = &builtInGuiSet); //make in 2D pattern
     void setCorrectSize();
@@ -994,11 +838,6 @@ class Image : public Element
     void make(int x, int y, Texture* image=&builtInTexture[37], const ColorRGB& colorMod = RGB_White);
     void make(int x, int y, int sizex, int sizey, Texture* image=&builtInTexture[37], const ColorRGB& colorMod = RGB_White);
 };
-
-/*
-a way of unit testing all the GUI classes and mouse behaviour
-*/
-void unitTest();
 
 } //namespace gui
 } //namespace lpi

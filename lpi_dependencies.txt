@@ -36,8 +36,10 @@ lpi_event: events, keyboard and mouse input with SDL
 lpi_file: load and save files through simpler interface
 lpi_gl: a few simple OpenGL wrapper functions
 lpi_gui: an OpenGL based gui with buttons, windows, scrollbars, ...
+lpi_gui_base: very general base classes for lpi GUI, it especially handles the mouse. No dependencies on anything in it.
 lpi_gui_draw: used by lpi_gui to draw everything
 lpi_gui_ex: extra/extended GUI widgets for lpi_gui, such as drawing canvas, grid, ...
+lpi_gui_input_sdl: key, mouse and time input implemenation for lpi_gui_base
 lpi_gui_text: text-input related GUI widgets for lpi_gui, such as input line, input box, console, ...
 lpi_math: some mathematics useful for games (random, quadratic solve, ...) but not in <cmath> (and also a sort function because where else to put it...)
 lpi_math2d: 2D vector math
@@ -75,9 +77,9 @@ These can be used as independent libraries or tools whenever needed individually
 *) lpi_color
 *) lpi_crypto
 *) lpi_file
+*) lpi_gui_base
 *) lpi_math
 *) lpi_math2d
-*) lpi_math3d
 *) lpi_parse
 *) lpi_pathfind
 *) lpi_unittest
@@ -90,6 +92,8 @@ lpi units that depend on a few other lpi units but not on SDL or OpenGL
 Still useful as independent library in combination with only a few other lpi units.
 
 *) lpi_draw2d: lpi_color
+
+*) lpi_math3d: lpi_math2d
 
 *) lpi_math4d: lpi_math3d
 
@@ -119,11 +123,13 @@ then it isn't always mentioned that A indirectly depends on C.
 
 *) lpi_draw3dgl: OpenGL, lpi_color, lpi_draw2d, lpi_math3d
 
-*) lpi_gui: SDL, OpenGL, lpi_gui_draw, lpi_time, lpi_color, lpi_texture, lpi_text, lpi_event, lpi_gl, lpi_draw2dgl
+*) lpi_gui: SDL, OpenGL, lpi_gui_base, lpi_gui_draw, lpi_color, lpi_texture, lpi_text, lpi_gl, lpi_draw2dgl
 
-*) lpi_gui_draw: SDL, OpenGL, lodepng, lpi_event, lpi_text, lpi_texture, lpi_gl, lpi_color, lpi_draw2dgl, lpi_xml, lpi_file, lpi_base64
+*) lpi_gui_draw: SDL, OpenGL, lodepng, lpi_text, lpi_texture, lpi_gl, lpi_color, lpi_draw2dgl, lpi_xml, lpi_file, lpi_base64
 
 *) lpi_gui_ex: SDL, OpenGL, lpi_gui
+
+*) lpi_gui_input_sdl: SDL, lpi_event, lpi_time
 
 *) lpi_gui_text: SDL, OpenGL, lpi_gui
 

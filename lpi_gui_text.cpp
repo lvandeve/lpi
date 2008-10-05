@@ -28,7 +28,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_file.h"
 #include "lpi_base64.h"
 #include "lpi_xml.h"
-#include "lpi_time.h"
+#include <SDL/SDL.h> //this is for the key codes like SDLK_ENTER
 
 #include <iostream>
 #include <cstdlib>
@@ -69,8 +69,6 @@ InputLine::InputLine()
   this->text = "";
   cursor = 0;
   entered = 0;
-  
-  this->keyCheckIndex = 0;
 }
 
 void InputLine::make(int x, int y, unsigned long l, const Markup& markup, int type, int allowedChars, const std::string& title, const Markup& titleMarkup, const ColorRGB& cursorColor)
@@ -104,7 +102,7 @@ void InputLine::make(int x, int y, unsigned long l, const Markup& markup, int ty
   this->selfActivate = 1; //with this true, it'll disable itself if you click outside of it, and turn on again if you click inside
 }
 
-//this function draws the line, and makes sure it gets handled too (calls handle())
+//this function draws the line, and makes sure it gets handled too
 void InputLine::drawWidget() const
 {
   print(title, x0, y0, titleMarkup);
@@ -124,7 +122,7 @@ void InputLine::drawWidget() const
   else if(type == 2) print(getInteger(), inputX, inputY, markup);
   
   //draw the cursor if active
-  if(active && int((getTicks() / 1000.0) * 2) % 2 == 0)
+  if(active && int(draw_time * 2.0) % 2 == 0)
   {
     int cursorXDraw = inputX + cursor * markup.getWidth();
     drawLine(cursorXDraw, inputY, cursorXDraw, inputY + markup.getHeight(), cursorColor);
@@ -157,11 +155,13 @@ int InputLine::enter()
   else return 0;
 }
 
-void InputLine::handleWidget() //both check if you pressed enter, and also check letter keys pressed, backspace, etc...
+void InputLine::handleWidget(const IGUIInput* input) //both check if you pressed enter, and also check letter keys pressed, backspace, etc...
 {
+  draw_time = input->getSeconds();
+  
   if(cursor >= text.length()) cursor = text.length();
 
-  int ascii = unicodeKey(allowedChars, 500, 25, keyCheckIndex);
+  int ascii = input->unicodeKey(allowedChars, 0.5, 0.025);
   if(ascii)
   {
     switch(ascii)
@@ -187,20 +187,20 @@ void InputLine::handleWidget() //both check if you pressed enter, and also check
     }
   }
   
-  if(keyPressed(SDLK_DELETE)) text.erase(cursor, 1);
-  if(keyPressed(SDLK_HOME)) cursor = 0;
-  if(keyPressed(SDLK_END))
+  if(input->keyPressed(SDLK_DELETE)) text.erase(cursor, 1);
+  if(input->keyPressed(SDLK_HOME)) cursor = 0;
+  if(input->keyPressed(SDLK_END))
   {
     unsigned long pos = 0;
     while(text[pos] != 0 && pos < text.length()) pos++;
     cursor = pos;
   }
-  if(keyPressed(SDLK_LEFT)) if(cursor > 0) cursor--;
-  if(keyPressed(SDLK_RIGHT)) if(cursor < text.length()) cursor++;
+  if(input->keyPressed(SDLK_LEFT)) if(cursor > 0) cursor--;
+  if(input->keyPressed(SDLK_RIGHT)) if(cursor < text.length()) cursor++;
 
-  if(mouseDown())
+  if(mouseDown(input))
   {
-    int relMouse = globalMouseX - x0;
+    int relMouse = input->mouseX() - x0;
     relMouse -= title.length() * markup.getWidth();
     if(relMouse / markup.getWidth() < int(text.length())) cursor = relMouse / markup.getWidth();
     else cursor = text.length();
@@ -881,11 +881,11 @@ Element* TextArea::getAutoSubElement(unsigned long i)
   else return 0;
 }
 
-void TextArea::handleWidget()
+void TextArea::handleWidget(const IGUIInput* input)
 {
   if(scrollEnabled)
   {
-    scrollbar.handle();
+    scrollbar.handle(input);
     scroll = int(scrollbar.scrollPos);
   }
 }
@@ -1017,7 +1017,7 @@ void InputBox::drawWidget() const
   bar.draw();
   
   //draw the cursor if active
-  if(active && int((getTicks() / 1000.0) * 2) % 2 == 0)
+  if(active && int(draw_time * 2.0) % 2 == 0)
   {
     unsigned long cursorLine;
     unsigned long cursorColumn;
@@ -1030,13 +1030,15 @@ void InputBox::drawWidget() const
   multiText.draw(x0 + getLeftText(), y0 + getTopText(), firstVisibleLine, firstVisibleLine + getLinesVisible());
 }
 
-void InputBox::handleWidget()
+void InputBox::handleWidget(const IGUIInput* input)
 {
+  draw_time = input->getSeconds();
+  
   bool scrollerMayJump = 0;
   
-  if(keyPressed(SDLK_RIGHT)) if(cursor < text.length()) cursor++, scrollerMayJump = 1;
-  if(keyPressed(SDLK_LEFT)) if(cursor > 0) cursor--, scrollerMayJump = 1;
-  if(keyPressed(SDLK_UP))
+  if(input->keyPressed(SDLK_RIGHT)) if(cursor < text.length()) cursor++, scrollerMayJump = 1;
+  if(input->keyPressed(SDLK_LEFT)) if(cursor > 0) cursor--, scrollerMayJump = 1;
+  if(input->keyPressed(SDLK_UP))
   {
     unsigned long cursorLine;
     unsigned long cursorColumn;
@@ -1045,7 +1047,7 @@ void InputBox::handleWidget()
     
     scrollerMayJump = 1;
   }
-  if(keyPressed(SDLK_DOWN))
+  if(input->keyPressed(SDLK_DOWN))
   {
     unsigned long cursorLine;
     unsigned long cursorColumn;
@@ -1054,9 +1056,9 @@ void InputBox::handleWidget()
     
     scrollerMayJump = 1;
   }
-  if(keyPressed(SDLK_HOME))
+  if(input->keyPressed(SDLK_HOME))
   {
-    if(keyDown(SDLK_LCTRL)) cursor = 0;
+    if(input->keyDown(SDLK_LCTRL)) cursor = 0;
     else
     {
       unsigned long cursorLine;
@@ -1067,9 +1069,9 @@ void InputBox::handleWidget()
     
      scrollerMayJump = 1;
   }
-  if(keyPressed(SDLK_END))
+  if(input->keyPressed(SDLK_END))
   {
-    if(keyDown(SDLK_LCTRL)) cursor = text.length();
+    if(input->keyDown(SDLK_LCTRL)) cursor = text.length();
     else
     {
       unsigned long cursorLine;
@@ -1081,7 +1083,7 @@ void InputBox::handleWidget()
      scrollerMayJump = 1;
   }
 
-  int ascii = unicodeKey(0, 500, 25);
+  int ascii = input->unicodeKey(0, 0.5, 0.025);
   if(ascii)
   {
     switch(ascii)
@@ -1115,10 +1117,10 @@ void InputBox::handleWidget()
     
   }
   
-  if(mouseDownHere() && !bar.mouseOver())
+  if(mouseDownHere(input) && !bar.mouseOver(input))
   {
-    unsigned long mouseColumn = (mouseGetRelPosX() - getLeftText()) / markup.getWidth();
-    unsigned long mouseLine = (mouseGetRelPosY() - getTopText()) / markup.getHeight() + firstVisibleLine;
+    unsigned long mouseColumn = (mouseGetRelPosX(input) - getLeftText()) / markup.getWidth();
+    unsigned long mouseLine = (mouseGetRelPosY(input) - getTopText()) / markup.getHeight() + firstVisibleLine;
     
     cursor = multiText.charAtCursorPos(mouseLine, mouseColumn);
   }
@@ -1127,16 +1129,16 @@ void InputBox::handleWidget()
   if(scrollSize < 1) scrollSize = 1;
   bar.scrollSize = scrollSize;
 
-  if(mouseScrollUp() && !bar.mouseOver())
+  if(mouseScrollUp(input) && !bar.mouseOver(input))
   {
-    bar.scroll(-2);
+    bar.scroll(input, -2);
   }
-  if(mouseScrollDown() && !bar.mouseOver())
+  if(mouseScrollDown(input) && !bar.mouseOver(input))
   {
-    bar.scroll(2);
+    bar.scroll(input, 2);
   }
   
-  bar.handle();
+  bar.handle(input);
   
   firstVisibleLine = int(bar.scrollPos);
   

@@ -33,7 +33,6 @@ TODO: fix possible broken elements
 #include "lpi_gui.h"
 
 #include "lpi_color.h"
-#include "lpi_event.h"
 #include "lpi_texture.h"
 #include "lpi_text.h"
 
@@ -43,12 +42,13 @@ namespace lpi
 namespace gui
 {
 
-class InputLine : public Element//input text line
+class InputLine : public Element //input text line
 {
   private:
     //unsigned long titleLength;
     unsigned long cursor; //position of the cursor (0 = before first char)
     bool entered; //after you pressed enter!
+    double draw_time; //for drawing the blinking cursor
     
   public:
     unsigned long l; //max length
@@ -72,7 +72,7 @@ class InputLine : public Element//input text line
               int type = 0, int allowedChars = 0, const std::string& title = "", const Markup& titleMarkup = TS_W, const ColorRGB& cursorColor = RGB_White);
     
     virtual void drawWidget() const;
-    virtual void handleWidget();
+    virtual void handleWidget(const IGUIInput* input);
 
     void setText(const std::string& i_text);
     const std::string& getText() const;
@@ -93,7 +93,6 @@ TODO: make proper getters here instead of check()
     int check();
     int enter();
     int getInteger() const; //returns any integer number that may be in the string you typed
-    int keyCheckIndex; //if you have multiple input lines and don't want interference for the key input, give them a differnt keyCheckIndex
 };
 
 /*
@@ -212,7 +211,7 @@ class TextArea : public Element
     int getNumLines() const;
     int getVisibleLines(const Markup& markup) const;
     virtual void drawWidget() const;
-    virtual void handleWidget();
+    virtual void handleWidget(const IGUIInput* input);
     virtual void resizeWidget();
 
     TextArea();
@@ -239,6 +238,8 @@ class InputBox : public Element
     MultiLineText multiText;
     std::string text;
     
+    double draw_time; //for drawing the blinking cursor
+    
     void init();
     
   public:
@@ -250,7 +251,7 @@ class InputBox : public Element
     const std::string& getText() const { return text; }
     
     virtual void drawWidget() const;
-    virtual void handleWidget();
+    virtual void handleWidget(const IGUIInput* input);
     
     int border;
     
