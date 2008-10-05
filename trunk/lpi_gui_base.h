@@ -17,11 +17,11 @@ class IGUIInput
   public:
     virtual ~IGUIInput(){}
     
-    //TIME
+    ///Time
     
     virtual double getSeconds() const = 0; //ticks in seconds
     
-    //MOUSE
+    ///Mouse
     
     //check position of mouse
     virtual int mouseX() const = 0;
@@ -32,9 +32,8 @@ class IGUIInput
     virtual bool mouseWheelUp() const = 0;
     virtual bool mouseWheelDown() const = 0;
     
-    //KEYBOARD
+    ///Keyboard
     
-    //keyboard keys
     virtual bool keyDown(int key) const = 0;
     virtual bool keyPressed(int key) const = 0; //only returns true the first time the key is down and you check (can use mutable variable internally for this)
     virtual int unicodeKey(int allowedChars, double time, double warmupTime = 0.5, double repTime = 0.025) const = 0;
@@ -109,7 +108,7 @@ struct MouseState
   MouseState();
 };
 
-class BasicElement //more basic than "Element" - only describes the shape and mouse handling in this shape
+class ElementShape //describes the shape and mouse handling in this shape
 {
   protected:
     ////position
@@ -118,10 +117,17 @@ class BasicElement //more basic than "Element" - only describes the shape and mo
     int x1; //position of the bottom right corner of this element on screen
     int y1;
     
-    virtual bool mouseOverShape(const IGUIInput* input) const; //can be overridden for elements with different shape, e.g. circle, or the gui::Group which's shape is that of all elements in it
+    double doubleClickTime; //maximum time for a doubleclick
+    MouseState _mouseState[NUM_MOUSE_BUTTONS];
+    MouseState mouse_state_for_containers; //for bookkeeping by containers that contain this element
   
+  protected:
+  
+    virtual bool mouseOverShape(const IGUIInput* input) const; //can be overridden for elements with different shape, e.g. circle, or the gui::Group which's shape is that of all elements in it
+    
   public:
-    BasicElement();
+    ElementShape();
+    virtual ~ElementShape(){};
     
     int getX0() const { return x0; }
     int getY0() const { return y0; }
@@ -132,15 +138,15 @@ class BasicElement //more basic than "Element" - only describes the shape and mo
     void setX1(int x1) { this->x1 = x1; }
     void setY1(int y1) { this->y1 = y1; }
     
-    int getSizex() const { return x1 - x0; } //get the size of this element
-    int getSizey() const { return y1 - y0; }
-    //obviously the functoins below are best used after setting x0 and y0
-    void setSizex(const int sizex) { x1 = x0 + sizex; } //change x1, y1 to get the given size
-    void setSizey(const int sizey) { y1 = y0 + sizey; }
-    int getCenterx() const { return (x0 + x1) / 2; } //the center in screen coordinates
-    int getCentery() const { return (y0 + y1) / 2; }
-    int getRelCenterx() const { return (x1 - x0) / 2; } //the half of the size
-    int getRelCentery() const { return (y1 - y0) / 2; }
+    int getSizeX() const { return x1 - x0; } //get the size of this element
+    int getSizeY() const { return y1 - y0; }
+    //the functions below are best used after setting x0 and y0
+    void setSizeX(const int sizex) { x1 = x0 + sizex; } //change x1, y1 to get the given size
+    void setSizeY(const int sizey) { y1 = y0 + sizey; }
+    int getCenterX() const { return (x0 + x1) / 2; } //the center in screen coordinates
+    int getCenterY() const { return (y0 + y1) / 2; }
+    int getRelCenterX() const { return (x1 - x0) / 2; } //the half of the size
+    int getRelCenterY() const { return (y1 - y0) / 2; }
 
     ////MOUSE RELATED STUFF
     int mouseGetRelPosX(const IGUIInput* input) const; //returns relative mouse positions (relative to x and y of the elemnt)
@@ -195,12 +201,6 @@ class BasicElement //more basic than "Element" - only describes the shape and mo
     bool mouseDoubleClicked(const IGUIInput* input, GUIMouseButton button = GUI_LMB);
     
     MouseState& getMouseStateForContainer() { return mouse_state_for_containers; }
-    
-    protected:
-    
-    double doubleClickTime; //maximum time for a doubleclick
-    MouseState _mouseState[NUM_MOUSE_BUTTONS];
-    MouseState mouse_state_for_containers; //for bookkeeping by containers that contain this element
 };
 
 } //namespace gui

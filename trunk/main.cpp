@@ -138,6 +138,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   lpi::gui::Checkbox wcb;
   wcb.make(0, 0);
   w1.pushTopAt(&wcb, 20, 20);
+  wcb.makeLabel("toggle scroll-zone", wcb.getSizeX(), wcb.getRelCenterY() - 4, lpi::TS_W);
   
   std::vector<double> sound(30000);
   for(size_t i = 0; i < 30000; i++) sound[i] = 0.1 * std::sin(i / (30.0 * (40000.0-i)/30000.0));

@@ -156,8 +156,8 @@ void DropMenu::setOptions(const std::string& text)
   }
   
    
-  setSizex(maxTextSize * markup1.getWidth() + markup1.getWidth() / 2);
-  setSizey(n * (markup1.getHeight() + 2) + markup1.getHeight() / 2);
+  setSizeX(maxTextSize * markup1.getWidth() + markup1.getWidth() / 2);
+  setSizeY(n * (markup1.getHeight() + 2) + markup1.getHeight() / 2);
 }
 
 void DropMenu::addOption(const std::string& text, int id)
@@ -172,7 +172,7 @@ void DropMenu::addOption(const std::string& text, int id)
     int separatorsize = 0;
     for(unsigned long i = 0; i < separator.size(); i++) if(separator[i]) separatorsize++;
     
-    setSizey((menuButton.size() + separatorsize) * (markup1.getHeight() + 2) + markup1.getHeight() / 2);
+    setSizeY((menuButton.size() + separatorsize) * (markup1.getHeight() + 2) + markup1.getHeight() / 2);
 
     //int newSizex = text.length() * markup1.getWidth() + markup1.getWidth() / 2;
     int newSizex;// = text.length();
@@ -180,19 +180,19 @@ void DropMenu::addOption(const std::string& text, int id)
     getFormattedTextSize(text, newSizex, textheight, markup1);
     newSizex +=  markup1.getWidth() / 2;
     
-    if(newSizex > getSizex()) setSizex(newSizex);
+    if(newSizex > getSizeX()) setSizeX(newSizex);
     
     identity.push_back(id);
 }
 
 void DropMenu::drawWidget() const
 {
-  panel.draw(x0, y0, getSizex(), getSizey());
+  panel.draw(x0, y0, getSizeX(), getSizeY());
 
   for(unsigned long i = 0; i < menuButton.size(); i++)
   {
     if(!separator[i]) menuButton[i].draw();
-    else hrule.draw(x0 + markup1.getWidth() / 2, y0 + 2 + (markup1.getHeight() + 2) * i + markup1.getHeight() / 2, getSizex() - markup1.getWidth());
+    else hrule.draw(x0 + markup1.getWidth() / 2, y0 + 2 + (markup1.getHeight() + 2) * i + markup1.getHeight() / 2, getSizeX() - markup1.getWidth());
   }
 }
 
@@ -312,8 +312,8 @@ void Droplist::make(int x, int y, const std::string& text, int numVisibleOptions
   sizexo += buttonWidth;
   sizexc = sizexo;
   
-  this->setSizex(sizexc);
-  this->setSizey(sizeyc);
+  this->setSizeX(sizexc);
+  this->setSizeY(sizeyc);
   
   listButton.makeImage(x1 - buttonWidth, y0, buttonTexture, buttonTexture, buttonTexture, RGB_White, RGB_Grey, RGB_Grey);
 
@@ -373,13 +373,13 @@ void Droplist::init(const std::string& text, int numVisibleOptions)
   if(numVisibleOptions == -1) this->numVisibleOptions = numVisibleOptions = n;
   else this->numVisibleOptions = numVisibleOptions;
    
-  sizexo = maxTextSize * markup1.getWidth() + markup1.getWidth() / 2 + bar.getSizex();
+  sizexo = maxTextSize * markup1.getWidth() + markup1.getWidth() / 2 + bar.getSizeX();
   sizeyo = sizeyc + numVisibleOptions * (markup1.getHeight() + 2) + markup1.getHeight() / 2;
   
   int buttonWidth = maxTextSize * markup1.getWidth();
   for(unsigned long i = 0; i < textButton.size(); i++)
   {
-    textButton[i].setSizex(buttonWidth);
+    textButton[i].setSizeX(buttonWidth);
   }
 }
 
@@ -390,20 +390,20 @@ void Droplist::addOption(const std::string& text)
   textButton.push_back(b);
   addSubElement(&textButton.back()); //TODO: fix this big memory corruption problem and Button copying
   
-  unsigned long maxTextSize = b.getSizex() / markup1.getWidth();
+  unsigned long maxTextSize = b.getSizeX() / markup1.getWidth();
   if(text.length() > maxTextSize) maxTextSize = text.length();
   
   int buttonWidth = maxTextSize * markup1.getWidth();
   for(unsigned long i = 0; i < textButton.size(); i++)
   {
-    textButton[i].setSizex(buttonWidth);
+    textButton[i].setSizeX(buttonWidth);
   }
   
-  setSizex(maxTextSize * markup1.getWidth() + markup1.getWidth() / 2 + bar.getSizex());
-  sizexo = sizexc = getSizex();
+  setSizeX(maxTextSize * markup1.getWidth() + markup1.getWidth() / 2 + bar.getSizeX());
+  sizexo = sizexc = getSizeX();
   
-  bar.moveTo(x0 + sizexo - bar.getSizex(), bar.getY0());
-  listButton.moveTo(x0 + sizexc - listButton.getSizex(), listButton.getY0());
+  bar.moveTo(x0 + sizexo - bar.getSizeX(), bar.getY0());
+  listButton.moveTo(x0 + sizexc - listButton.getSizeX(), listButton.getY0());
 }
 
 void Droplist::drawWidget() const
@@ -493,15 +493,15 @@ void Droplist::scroll()
 void Droplist::open()
 {
   opened = 1;
-  setSizex(sizexo);
-  setSizey(sizeyo);
+  setSizeX(sizexo);
+  setSizeY(sizeyo);
 }
 
 void Droplist::close()
 {
   opened = 0;
-  setSizex(sizexc);
-  setSizey(sizeyc);
+  setSizeX(sizexc);
+  setSizeY(sizeyc);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -522,22 +522,22 @@ void Matrix::make(int x0, int y0, int x1, int y1, int numx, int numy)
 
 unsigned long Matrix::getTileX(const IGUIInput* input) const
 {
-  return mouseGetRelPosX(input) / (getSizex() / numx);
+  return mouseGetRelPosX(input) / (getSizeX() / numx);
 }
 
 unsigned long Matrix::getTileY(const IGUIInput* input) const
 {
-  return mouseGetRelPosY(input) / (getSizey() / numy);
+  return mouseGetRelPosY(input) / (getSizeY() / numy);
 }
 
 int Matrix::getScreenX(int tilex) const
 {
-  return (tilex * getSizex()) / numx + x0;
+  return (tilex * getSizeX()) / numx + x0;
 }
 
 int Matrix::getScreenY(int tiley) const
 {
-  return (tiley * getSizey()) / numy + y0;
+  return (tiley * getSizeY()) / numy + y0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -594,13 +594,13 @@ int Grid::getTileCentery(int index) const //index = index of the tile
 unsigned long Grid::getNumx() const
 {
   if(tileSizeX == 0) return 0;
-  else return getSizex() / tileSizeX;
+  else return getSizeX() / tileSizeX;
 }
 
 unsigned long Grid::getNumy() const
 {
   if(tileSizeY == 0) return 0;
-  else return getSizey() / tileSizeY;
+  else return getSizeY() / tileSizeY;
 }
 
 unsigned long Grid::getNumElements() const
@@ -669,8 +669,8 @@ void Painter::make(int x, int y, int sizex, int sizey, const ColorRGB& color)
 {
   this->x0 = x;
   this->y0 = y;
-  this->setSizex(sizex);
-  this->setSizey(sizey);
+  this->setSizeX(sizex);
+  this->setSizeY(sizey);
   this->color = color;
   this->stack.clear();
   this->totallyEnable();
@@ -808,9 +808,9 @@ void YesNoWindow::make(int x, int y, int sizex, int sizey, const std::string& te
   message.make(0, 0, text);
   
   pushTopAt(&message, 16, 16);
-  int centerx = getSizex() / 2;
-  pushTopAt(&yes, centerx - yes.getSizex() - 16, getSizey() - yes.getSizey() - 8 - 16);
-  pushTopAt(&no, centerx + 16, getSizey() - no.getSizey() - 8 - 16);
+  int centerx = getSizeX() / 2;
+  pushTopAt(&yes, centerx - yes.getSizeX() - 16, getSizeY() - yes.getSizeY() - 8 - 16);
+  pushTopAt(&no, centerx + 16, getSizeY() - no.getSizeY() - 8 - 16);
   
   this->active = 1;
   this->visible = 1;
@@ -837,8 +837,8 @@ void OkWindow::make(int x, int y, int sizex, int sizey, const std::string& text)
   message.make(0, 0, text);
   
   pushTopAt(&message, 16, 16);
-  int centerx = getSizex() / 2;
-  pushTopAt(&ok, centerx - ok.getSizex() / 2, getSizey() - ok.getSizey() - 8 - 16);
+  int centerx = getSizeX() / 2;
+  pushTopAt(&ok, centerx - ok.getSizeX() / 2, getSizeY() - ok.getSizeY() - 8 - 16);
   
   this->active = 1;
   this->visible = 1;
@@ -864,8 +864,8 @@ void Canvas::make(int x, int y, int sizex, int sizey, const ColorRGB& backColor,
   this->active = true;
   this->x0 = x;
   this->y0 = y;
-  this->setSizex(sizex);
-  this->setSizey(sizey);
+  this->setSizeX(sizex);
+  this->setSizeY(sizey);
   this->leftColor = leftColor;
   this->rightColor = rightColor;
   this->backColor = backColor;
@@ -883,7 +883,7 @@ void Canvas::make(int x, int y, int sizex, int sizey, const ColorRGB& backColor,
 
 void Canvas::init()
 {
-  canvas.create(backColor, getSizex(), getSizey());
+  canvas.create(backColor, getSizeX(), getSizeY());
 }
 
 void Canvas::handleWidget(const IGUIInput* input)
@@ -900,7 +900,7 @@ void Canvas::handleWidget(const IGUIInput* input)
 
     if(validOldMousePos == true)
     {
-      drawLine(&canvas.getOpenGLBuffer()[0], canvas.getU2(), canvas.getV2(), oldMouseX, oldMouseY, drawx, drawy, drawColor, border, border, getSizex() - border, getSizey() - border);
+      drawLine(&canvas.getOpenGLBuffer()[0], canvas.getU2(), canvas.getV2(), oldMouseX, oldMouseY, drawx, drawy, drawColor, border, border, getSizeX() - border, getSizeY() - border);
       canvas.upload();
     }
     oldMouseX = drawx;
@@ -917,7 +917,7 @@ void Canvas::drawWidget() const
 
 void Canvas::clear()
 {
-  canvas.create(backColor, getSizex(), getSizey());
+  canvas.create(backColor, getSizeX(), getSizeY());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -939,8 +939,8 @@ void Rectangle::make(int x, int y, int sizex, int sizey, const ColorRGB& color)
 {
   this->x0 = x;
   this->y0 = y;
-  this->setSizex(sizex);
-  this->setSizey(sizey);
+  this->setSizeX(sizex);
+  this->setSizeY(sizey);
   this->color = color;
   this->totallyEnable();
 }
@@ -974,8 +974,8 @@ void Line::make(int x, int y, int sizex, int sizey, const ColorRGB& color)
 {
   this->x0 = x;
   this->y0 = y;
-  this->setSizex(sizex);
-  this->setSizey(sizey);
+  this->setSizeX(sizex);
+  this->setSizeY(sizey);
   this->color = color;
   this->totallyEnable();
   this->lx0 = x;
