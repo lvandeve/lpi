@@ -200,20 +200,19 @@ Markup operator/(Markup ts, int a);
 void drawLetter(unsigned char n, int x, int y, const Markup& markup);
 
 //used to print a string without newlines
-int printString(std::string text, int x = 0, int y = 0, const Markup& markup = TS_W, unsigned long forceLength=0);
+int printString(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W, unsigned long forceLength=0);
 //used to print a text with newlines
-int printText(std::string text, int x = 0, int y = 0, const Markup& markup = TS_W, unsigned long forceLength=0);
+int printText(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W, unsigned long forceLength=0);
 
 //print something (string, int, float, ...)
-template<typename T> int print(T val, int x = 0, int y = 0, const Markup& markup = TS_W, bool useNewline = false, unsigned long forceLength=0)
+template<typename T> int print(const T& val, int x = 0, int y = 0, const Markup& markup = TS_W, bool useNewline = false, unsigned long forceLength=0)
 {
   std::string text = valtostr(val);
   if(useNewline) return printText(text, x, y, markup, forceLength);
   else return printString(text, x, y, markup, forceLength);
 }
 
-void addTexts(std::string  text1, int size1, char * text2, int size2, char * text3, int size3);
-void printCentered(std::string text, int x = 0, int y = 0, const Markup& markup = TS_W, unsigned long forceLength=0);
+void printCentered(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W, unsigned long forceLength=0);
 
 //usage: std::string str = valtostr(25454.91654654f);
 template<typename T>
@@ -267,15 +266,15 @@ The following codes are available:
 etc.., see the implementation for possible more codes
 
 */
-int printFormatted(std::string text, int x = 0, int y = 0, const Markup& markup = TS_W);
-int printFormattedM(std::string text, int x, int y, Markup& markup, const Markup& originalMarkup = TS_W); //this once changes the markup
+int printFormatted(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W);
+int printFormattedM(const std::string&, int x, int y, Markup& markup, const Markup& originalMarkup = TS_W); //this once changes the markup
 
 int getFormattedTextAttrSize(char c); //give the char after the #, and it returns how much symbols follow after that
 int getFormattedTextSymbolPrintSize(char c); //give the char after the #, and it returns how much symbols will be printed
 
-void getFormattedTextSize(std::string text, int& xsize, int& ysize, const Markup& markup = TS_W);
+void getFormattedTextSize(const std::string& text, int& xsize, int& ysize, const Markup& markup = TS_W);
 
-void getFormattedMarkup(std::string text, Markup& markup, const Markup& originalMarkup = TS_W); //this one calculates which markup you'll get after this text
+void getFormattedMarkup(const std::string& text, Markup& markup, const Markup& originalMarkup = TS_W); //this one calculates which markup you'll get after this text
 
 void initBuiltInFontTextures();
 
