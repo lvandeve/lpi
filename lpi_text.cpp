@@ -139,7 +139,7 @@ void drawLetter(unsigned char n, int x, int y, const Markup& markup)
 }
 
 //Draws a string of text, null terminated
-int printString(std::string text, int x, int y, const Markup& markup, unsigned long forceLength)
+int printString(const std::string& text, int x, int y, const Markup& markup, unsigned long forceLength)
 {
   unsigned long pos = 0;
   while((pos < text.length() && forceLength == 0 /*&& text[pos] != 0*/) || (pos < forceLength && pos < text.length()  /*&& text[pos] != 0*/ && forceLength > 0))
@@ -154,7 +154,7 @@ int printString(std::string text, int x, int y, const Markup& markup, unsigned l
 
 //Draws a string of text, and uses some of the ascii control characters, e.g. newline
 //Other control characters (ascii value < 32) are ignored and have no effect.
-int printText(std::string text, int x, int y, const Markup& markup, unsigned long forceLength)
+int printText(const std::string& text, int x, int y, const Markup& markup, unsigned long forceLength)
 {
   unsigned long pos = 0;
   int drawX = x;
@@ -189,7 +189,7 @@ int printText(std::string text, int x, int y, const Markup& markup, unsigned lon
 //FORMATTED TEXT///////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-int printFormattedM(std::string text, int x, int y, Markup& markup, const Markup& originalMarkup)
+int printFormattedM(const std::string& text, int x, int y, Markup& markup, const Markup& originalMarkup)
 {
   unsigned long pos = 0;
   int drawX = x;
@@ -282,7 +282,7 @@ int printFormattedM(std::string text, int x, int y, Markup& markup, const Markup
   return getScreenHeight() * drawX + drawY;
 }
 
-int printFormatted(std::string text, int x, int y, const Markup& markup)
+int printFormatted(const std::string& text, int x, int y, const Markup& markup)
 {
   Markup markup_ = markup;
   
@@ -319,7 +319,7 @@ int getFormattedTextSymbolPrintSize(char c)
   }
 }
 
-void getFormattedTextSize(std::string text, int& xsize, int& ysize, const Markup& markup_)
+void getFormattedTextSize(const std::string& text, int& xsize, int& ysize, const Markup& markup_)
 {
   xsize = 0;
   ysize = markup_.getHeight();
@@ -363,7 +363,7 @@ void getFormattedTextSize(std::string text, int& xsize, int& ysize, const Markup
   }
 }
 
-void getFormattedMarkup(std::string text, Markup& markup, const Markup& originalMarkup) //this one calculates which markup you'll get after this text
+void getFormattedMarkup(const std::string& text, Markup& markup, const Markup& originalMarkup) //this one calculates which markup you'll get after this text
 {
   unsigned long pos = 0;
   unsigned char symbol;
@@ -427,7 +427,7 @@ void getFormattedMarkup(std::string text, Markup& markup, const Markup& original
 //ADVANCED TEXT DRAWING FUNCTIONS///////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-void printCentered(std::string text, int x, int y, const Markup& markup, unsigned long forceLength)
+void printCentered(const std::string& text, int x, int y, const Markup& markup, unsigned long forceLength)
 {
   int pos = 0;
   while(text[pos] != 0) pos++;
