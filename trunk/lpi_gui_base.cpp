@@ -203,6 +203,68 @@ Pos<Sticky> STICKYRELATIVETOP = { RELATIVE00, TOPLEFT, RELATIVE11, TOPLEFT };
 Pos<Sticky> STICKYRELATIVERIGHT = { BOTTOMRIGHT, RELATIVE00, BOTTOMRIGHT, RELATIVE11 };
 Pos<Sticky> STICKYRELATIVEBOTTOM = { RELATIVE00, BOTTOMRIGHT, RELATIVE11, BOTTOMRIGHT };
 
+////////////////////////////////////////////////////////////////////////////////
+
+MouseOverState::MouseOverState()
+: over_prev(false)
+, left_prev(false)
+{
+}
+
+bool MouseOverState::mouseJustOver(bool over_now)
+{
+  bool result = over_now && !over_prev;
+  over_prev = over_now;
+  return result;
+}
+
+bool MouseOverState::mouseJustLeft(bool over_now)
+{
+  bool result = !over_now && left_prev;
+  left_prev = over_now;
+  return result;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+bool mouseJustDown(bool& prevstate, bool over, bool down)
+{
+  if(over && down)
+  {
+    if(!prevstate)
+    {
+      prevstate = true;
+      return true;
+    }
+    else return false;
+  }
+  else
+  {
+    prevstate = false;
+    return false;
+  }
+}
+
+bool mouseJustDownHere(bool& prevstate, bool over, bool down)
+{
+  if(over && down)
+  {
+    if(!prevstate)
+    {
+      prevstate = true;
+      return true;
+    }
+    else return false;
+  }
+  else
+  {
+    if(over)
+      prevstate = false;
+    else
+      prevstate = true; //so that it can't return true anymore after mouse was not on this
+    return false;
+  }
+}
 
 MouseState::MouseState()
 {
@@ -214,6 +276,97 @@ MouseState::MouseState()
   downhere_bool2 = 0;
   justuphere_bool1 = 0;
   justuphere_bool2 = 0;
+}
+
+bool MouseState::mouseDownHere(bool over, bool down)
+{
+  if(!down)
+  {
+    downhere_bool1 = false;
+    downhere_bool2 = false;
+  }
+  
+  if(down && downhere_bool2 == false) //downhere_bool2 means justOver (it's the prevstate)
+  {
+    downhere_bool2 = true;
+    downhere_bool1 = over; //true means it was inside when just clicked, false that it was not
+  }
+  
+  return downhere_bool1 && over;
+}
+
+bool MouseState::mouseGrabbed(bool over, bool down, int x, int y, int relx, int rely)
+{
+  //grab
+  bool temp_bool = grabbed_prev;
+  if(lpi::gui::mouseJustDownHere(temp_bool, over, down))
+  {
+    grabbed_grabbed = true;
+    grabx = x;
+    graby = y;
+    grabrelx = relx;
+    grabrely = rely;
+  }
+  grabbed_prev = temp_bool;
+  
+  //ungrab
+  if(!down)
+  {
+    grabbed_grabbed = false;
+    grabbed_prev = false;
+  }
+
+  return grabbed_grabbed;
+}
+
+void MouseState::mouseUngrab()
+{
+  grabbed_grabbed = false;
+  grabbed_prev = false;
+}
+
+bool MouseState::mouseJustDown(bool over, bool down)
+{
+  bool temp_bool = justdown_prev;
+  bool result = lpi::gui::mouseJustDown(temp_bool, over, down);
+  justdown_prev = temp_bool;
+  return result;
+}
+
+bool MouseState::mouseJustDownHere(bool over, bool down)
+{
+  bool temp_bool = justdownhere_prev;
+  bool result = lpi::gui::mouseJustDownHere(temp_bool, over, down);
+  justdownhere_prev = temp_bool;
+  return result;
+}
+
+bool MouseState::mouseJustUpHere(bool over, bool down)
+{
+  bool temp_bool = justuphere_bool1;
+  if(lpi::gui::mouseJustDownHere(temp_bool, over, down))
+  {
+    justuphere_bool2 = true;
+  }
+  justuphere_bool1 = temp_bool;
+
+  if(justuphere_bool2 && !down)
+  {
+    justuphere_bool2 = false;
+    if(over) return true;
+    else return false;
+  }
+  
+  return false;
+}
+
+void MouseState::mouseGrab(int x, int y, int relx, int rely)
+{
+  grabbed_grabbed = true;
+  grabx = x;
+  graby = y;
+  grabrelx = relx;
+  grabrely = rely;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -276,185 +429,65 @@ bool ElementShape::mouseOver(const IGUIInput& input) const
   return isInside(input.mouseX(), input.mouseY());
 }
 
+bool ElementShape::mouseJustOver(const IGUIInput& input)
+{
+  return mouse_over_state.mouseJustOver(mouseOver(input));
+}
+
+bool ElementShape::mouseJustLeft(const IGUIInput& input)
+{
+  return mouse_over_state.mouseJustLeft(mouseOver(input));
+}
+
 bool ElementShape::mouseDown(const IGUIInput& input, GUIMouseButton button) const
 {
   return mouseOver(input) && input.mouseButtonDown(button);
 }
 
-bool ElementShape::mouseDownHere(MouseState& state, const IGUIInput& input, GUIMouseButton button) const
-{
-  bool down = mouseDown(input, button);//mouseDown(button);
-  bool over = mouseOver(input);
-  
-  if(!down)
-  {
-    state.downhere_bool1 = false;
-    state.downhere_bool2 = false;
-  }
-  
-  if(down && state.downhere_bool2 == false) //state.downhere_bool2 means justOver (it's the prevstate)
-  {
-    state.downhere_bool2 = true;
-    state.downhere_bool1 = over; //true means it was inside when just clicked, false that it was not
-  }
-  
-  return state.downhere_bool1 && over;
-}
-
 bool ElementShape::mouseDownHere(const IGUIInput& input, GUIMouseButton button)
 {
-  return mouseDownHere(_mouseState[button], input, button);
-}
-
-bool ElementShape::mouseGrabbed(MouseState& state, const IGUIInput& input, GUIMouseButton button) const
-{
-  if(!mouseGrabbable()) return false;
-  
-  //grab
-  bool prev = state.grabbed_prev;
-  if(mouseJustDownHere(prev, input, button))
-  {
-    state.grabbed_grabbed = true;
-    state.grabx = input.mouseX();
-    state.graby = input.mouseY();
-    state.grabrelx = mouseGetRelPosX(input);
-    state.grabrely = mouseGetRelPosY(input);
-  }
-  state.grabbed_prev = prev;
-  
-  //ungrab
-  if(!input.mouseButtonDown(button))
-  {
-    state.grabbed_grabbed = false;
-    state.grabbed_prev = false;
-  }
-
-  return state.grabbed_grabbed;
+  return _mouseState[button].mouseDownHere(mouseOver(input), input.mouseButtonDown(button));
 }
 
 bool ElementShape::mouseGrabbed(const IGUIInput& input, GUIMouseButton button)
 {
-  return mouseGrabbed(_mouseState[button], input, button);
-}
-
-void ElementShape::mouseGrab(MouseState& state, const IGUIInput& input) const
-{
-  state.grabbed_grabbed = true;
-  state.grabx = input.mouseX();
-  state.graby = input.mouseY();
-  state.grabrelx = mouseGetRelPosX(input);
-  state.grabrely = mouseGetRelPosY(input);
+  if(!mouseGrabbable()) return false;
+  
+  return _mouseState[button].mouseGrabbed(mouseOver(input)
+                                        , input.mouseButtonDown(button)
+                                        , input.mouseX()
+                                        , input.mouseY()
+                                        , mouseGetRelPosX(input)
+                                        , mouseGetRelPosY(input));
 }
 
 void ElementShape::mouseGrab(const IGUIInput& input, GUIMouseButton button)
 {
-  mouseGrab(_mouseState[button], input);
+  return _mouseState[button].mouseGrab(input.mouseX()
+                                     , input.mouseY()
+                                     , mouseGetRelPosX(input)
+                                     , mouseGetRelPosY(input));
 }
 
-
-void ElementShape::mouseUngrab(MouseState& state) const
-{
-  state.grabbed_grabbed = false;
-  state.grabbed_prev = false;
-}
 
 void ElementShape::mouseUngrab(GUIMouseButton button)
 {
-  mouseUngrab(_mouseState[button]);
-}
-
-bool ElementShape::mouseJustDown(bool& prevstate, const IGUIInput& input, GUIMouseButton button) const
-{
-  bool nowDown = mouseOver(input) && mouseDown(input, button);
-  
-  if(nowDown)
-  {
-    if(!prevstate)
-    {
-      prevstate = true;
-      return true;
-    }
-    else return false;
-  }
-  else
-  {
-    prevstate = false;
-    return false;
-  }
-}
-
-bool ElementShape::mouseJustDown(MouseState& state, const IGUIInput& input, GUIMouseButton button) const
-{
-  bool result, prev = state.justdown_prev;
-  result = mouseJustDown(prev, input, button);
-  state.justdown_prev = prev;
-  return result;
+  _mouseState[button].mouseUngrab();
 }
 
 bool ElementShape::mouseJustDown(const IGUIInput& input, GUIMouseButton button)
 {
-  return mouseJustDown(_mouseState[button], input, button);
-}
-
-bool ElementShape::mouseJustDownHere(bool& prevstate, const IGUIInput& input, GUIMouseButton button) const
-{
-  bool over = mouseOver(input);
-  bool nowDown = over && mouseDown(input, button);
-  
-  if(nowDown)
-  {
-    if(!prevstate)
-    {
-      prevstate = true;
-      return true;
-    }
-    else return false;
-  }
-  else
-  {
-    prevstate = false;
-  }
-  
-  if(!over) prevstate = true; //so that it can't return true anymore after mouse was not on this
-
-  return false;
-}
-
-bool ElementShape::mouseJustDownHere(MouseState& state, const IGUIInput& input, GUIMouseButton button) const
-{
-  bool result, prev = state.justdownhere_prev;
-  result = mouseJustDownHere(prev, input, button);
-  state.justdownhere_prev = prev;
-  return result;
+  return _mouseState[button].mouseJustDown(mouseOver(input), input.mouseButtonDown(button));
 }
 
 bool ElementShape::mouseJustDownHere(const IGUIInput& input, GUIMouseButton button)
 {
-  return mouseJustDownHere(_mouseState[button], input, button);
-}
-
-bool ElementShape::mouseJustUpHere(MouseState& state, const IGUIInput& input, GUIMouseButton button) const
-{
-  bool prev = state.justuphere_bool1;
-  if(mouseJustDownHere(prev, input, button))
-  {
-    state.justuphere_bool2 = true;
-  }
-  state.justuphere_bool1 = prev;
-
-  if(state.justuphere_bool2 && !mouseDown(input, button))
-  {
-    state.justuphere_bool2 = false;
-    if(mouseOver(input)) return true;
-    else return false;
-  }
-  
-  return false;
+  return _mouseState[button].mouseJustDownHere(mouseOver(input), input.mouseButtonDown(button));
 }
 
 bool ElementShape::mouseJustUpHere(const IGUIInput& input, GUIMouseButton button)
 {
-  return mouseJustUpHere(_mouseState[button], input, button);
+  return _mouseState[button].mouseJustUpHere(mouseOver(input), input.mouseButtonDown(button));
 }
 
 bool ElementShape::pressed(const IGUIInput& input, GUIMouseButton button)

@@ -249,12 +249,15 @@ void Element::moveCenterTo(int x, int y)
 
 void Element::autoActivate(const IGUIInput& input)
 {
+  bool over = mouseOver(input), down = input.mouseButtonDown(GUI_LMB); //for shorter notation
+  
   if(selfActivate)
   {
-    if(mouseDownHere(auto_activate_mouse_state, input)) active = 1;
+    if(auto_activate_mouse_state.mouseDownHere(over, down)) active = 1;
     else
     {
-      if(!mouseOver(input) && input.mouseButtonDown(GUI_LMB) && !mouseGrabbed(auto_activate_mouse_state, input)) active = 0; //"forceActive" enabled so that this disactivating also works if mouseActive is false!
+      bool grabbed = auto_activate_mouse_state.mouseGrabbed(over, down, input.mouseX(), input.mouseY(), mouseGetRelPosX(input), mouseGetRelPosY(input));
+      if(!over && down && !grabbed) active = 0; //"forceActive" enabled so that this disactivating also works if mouseActive is false!
       //without the mouseGrabbed() test, it'll become inactive when you grab the scrollbar scroller and go outside with the mouse = annoying
     }
   }
@@ -400,7 +403,13 @@ void Container::handleWidget(const IGUIInput& input)
     for(int i = size() - 1; i >= 0; i--)
     {
       elements.getElement(i)->setElementOver(0);
-      if(elements.getElement(i)->mouseGrabbed(elements.getElement(i)->getMouseStateForContainer(), input))
+      bool grabbed = elements.getElement(i)->getMouseStateForContainer().mouseGrabbed(elements.getElement(i)->mouseOver(input)
+                                                                                    , input.mouseButtonDown(GUI_LMB)
+                                                                                    , input.mouseX()
+                                                                                    , input.mouseY()
+                                                                                    , elements.getElement(i)->mouseGetRelPosX(input)
+                                                                                    , elements.getElement(i)->mouseGetRelPosY(input));
+      if(grabbed)
       {
         if(topElement < 0) topElement = i;
         //break;
@@ -426,7 +435,9 @@ void Container::handleWidget(const IGUIInput& input)
     if(topElement >= 0 && topElement < (int)size())
     {
       elements.getElement(topElement)->setElementOver(0);
-      if(elements.getElement(topElement)->isContainer() && elements.getElement(topElement)->mouseDownHere(elements.getElement(topElement)->getMouseStateForContainer(), input)) bringToTop(elements.getElement(topElement));
+      if(elements.getElement(topElement)->isContainer()
+      && elements.getElement(topElement)->getMouseStateForContainer().mouseDownHere(elements.getElement(topElement)->mouseOver(input), input.mouseButtonDown(GUI_LMB)))
+        bringToTop(elements.getElement(topElement));
     }
   }
   else if(!elementOver) for(size_t i = 0; i < size(); i++) elements.getElement(i)->setElementOver(1); //mouse is over the bars!
@@ -1522,8 +1533,8 @@ void Button::makeTextPanel
 void Button::handleWidget(const IGUIInput& input)
 {
   if((mouseDownVisualStyle == 0 && mouseDown(input, GUI_LMB))
-  || (mouseDownVisualStyle == 1 && mouseDownHere(button_drawing_mouse_test, input))
-  || (mouseDownVisualStyle == 2 && mouseGrabbed(button_drawing_mouse_test, input)))
+  || (mouseDownVisualStyle == 1 && button_drawing_mouse_test.mouseDownHere(mouseOver(input), input.mouseButtonDown(GUI_LMB)))
+  || (mouseDownVisualStyle == 2 && button_drawing_mouse_test.mouseGrabbed(mouseOver(input), input.mouseButtonDown(GUI_LMB), input.mouseX(), input.mouseY(), mouseGetRelPosX(input), mouseGetRelPosY(input))))
   {
     draw_mouse_button_down_style = true;
   }
