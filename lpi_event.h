@@ -57,12 +57,6 @@ inline bool getGlobalMouseButton(MouseButton button)
   return 0;
 }
 
-//these debug functions can be used in the GUI unit test to mimic the behaviour of a user moving the mouse over controls
-inline void debugSetMousePos(int x, int y) { globalMouseX = x; globalMouseY = y; }
-inline void debugSetLMB(bool LMB) { globalLMB = LMB; }
-inline void debugSetRMB(bool RMB) { globalRMB = RMB; }
-inline void debugSetMMB(bool MMB) { globalMMB = MMB; }
-
 void readKeys();
 
 struct KeyState

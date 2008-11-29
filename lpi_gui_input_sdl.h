@@ -29,10 +29,11 @@ namespace gui
 {
 
 //this uses the global variables for mouse states that lpi gets from SDL
-class GUIInputSDL : public IGUIInput
+class GUIInputSDL : public IGUIInputClick
 {
   private:
     mutable KeyState keystate;
+  
   public:
     virtual double getSeconds() const; //ticks in seconds
   

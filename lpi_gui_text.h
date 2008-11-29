@@ -71,8 +71,8 @@ class InputLine : public Element //input text line
               const Markup& markup = TS_W,
               int type = 0, int allowedChars = 0, const std::string& title = "", const Markup& titleMarkup = TS_W, const ColorRGB& cursorColor = RGB_White);
     
-    virtual void drawWidget() const;
-    virtual void handleWidget(const IGUIInput* input);
+    virtual void drawWidget(IGUIDrawer& drawer) const;
+    virtual void handleWidget(const IGUIInput& input);
 
     void setText(const std::string& i_text);
     const std::string& getText() const;
@@ -191,7 +191,7 @@ class Console : public Element
     int getNumLines() const;
     int getNumMessages() const;
     int getVisibleLines(const Markup& markup);
-    virtual void drawWidget() const;
+    virtual void drawWidget(IGUIDrawer& drawer) const;
     
     void push(const std::string& text);
     Console();
@@ -210,8 +210,8 @@ class TextArea : public Element
     
     int getNumLines() const;
     int getVisibleLines(const Markup& markup) const;
-    virtual void drawWidget() const;
-    virtual void handleWidget(const IGUIInput* input);
+    virtual void drawWidget(IGUIDrawer& drawer) const;
+    virtual void handleWidget(const IGUIInput& input);
     virtual void resizeWidget();
 
     TextArea();
@@ -246,12 +246,15 @@ class InputBox : public Element
     int maxLines;
     
     InputBox();
-    void make(int x, int y, int sizex, int sizey, int maxLines, int border = 2, const Markup& markup = TS_B, BackPanel panel = COLORPANEL(RGB_White), const ColorRGB& cursorColor = RGB_Black);
+    void make(int x, int y, int sizex, int sizey, int maxLines, int border = 2,
+              const Markup& markup = TS_B,
+              //BackPanel panel = COLORPANEL(RGB_White),
+              const ColorRGB& cursorColor = RGB_Black);
     void makeScrollbar(const GuiSet* set = &builtInGuiSet);
     const std::string& getText() const { return text; }
     
-    virtual void drawWidget() const;
-    virtual void handleWidget(const IGUIInput* input);
+    virtual void drawWidget(IGUIDrawer& drawer) const;
+    virtual void handleWidget(const IGUIInput& input);
     
     int border;
     
@@ -280,7 +283,7 @@ class FormattedText : public Element
 {
   public:
     Markup markup;
-    virtual void drawWidget() const;
+    virtual void drawWidget(IGUIDrawer& drawer) const;
     FormattedText();
     void make(int x = 0, int y = 0, const std::string& text = "", const Markup& markup = TS_W);
     void setText(const std::string& text);

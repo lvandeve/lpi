@@ -22,6 +22,8 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include "lpi_time.h"
 
+#include <cstdlib> //abs on int
+
 namespace lpi
 {
 namespace gui
@@ -46,10 +48,10 @@ bool GUIInputSDL::mouseButtonDown(GUIMouseButton button) const
 {
   if(button == GUI_LMB)
     return globalLMB;
+  /*else if(button == GUI_MMB)
+    return globalMMB;*/
   else if(button == GUI_RMB)
     return globalRMB;
-  else if(button == GUI_MMB)
-    return globalMMB;
   else return false;
 }
 

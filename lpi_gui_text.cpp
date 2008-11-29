@@ -103,7 +103,7 @@ void InputLine::make(int x, int y, unsigned long l, const Markup& markup, int ty
 }
 
 //this function draws the line, and makes sure it gets handled too
-void InputLine::drawWidget() const
+void InputLine::drawWidget(IGUIDrawer& /*drawer*/) const
 {
   print(title, x0, y0, titleMarkup);
 
@@ -155,13 +155,13 @@ int InputLine::enter()
   else return 0;
 }
 
-void InputLine::handleWidget(const IGUIInput* input) //both check if you pressed enter, and also check letter keys pressed, backspace, etc...
+void InputLine::handleWidget(const IGUIInput& input) //both check if you pressed enter, and also check letter keys pressed, backspace, etc...
 {
-  draw_time = input->getSeconds();
+  draw_time = input.getSeconds();
   
   if(cursor >= text.length()) cursor = text.length();
 
-  int ascii = input->unicodeKey(allowedChars, 0.5, 0.025);
+  int ascii = input.unicodeKey(allowedChars, 0.5, 0.025);
   if(ascii)
   {
     switch(ascii)
@@ -187,20 +187,20 @@ void InputLine::handleWidget(const IGUIInput* input) //both check if you pressed
     }
   }
   
-  if(input->keyPressed(SDLK_DELETE)) text.erase(cursor, 1);
-  if(input->keyPressed(SDLK_HOME)) cursor = 0;
-  if(input->keyPressed(SDLK_END))
+  if(input.keyPressed(SDLK_DELETE)) text.erase(cursor, 1);
+  if(input.keyPressed(SDLK_HOME)) cursor = 0;
+  if(input.keyPressed(SDLK_END))
   {
     unsigned long pos = 0;
     while(text[pos] != 0 && pos < text.length()) pos++;
     cursor = pos;
   }
-  if(input->keyPressed(SDLK_LEFT)) if(cursor > 0) cursor--;
-  if(input->keyPressed(SDLK_RIGHT)) if(cursor < text.length()) cursor++;
+  if(input.keyPressed(SDLK_LEFT)) if(cursor > 0) cursor--;
+  if(input.keyPressed(SDLK_RIGHT)) if(cursor < text.length()) cursor++;
 
   if(mouseDown(input))
   {
-    int relMouse = input->mouseX() - x0;
+    int relMouse = input.mouseX() - x0;
     relMouse -= title.length() * markup.getWidth();
     if(relMouse / markup.getWidth() < int(text.length())) cursor = relMouse / markup.getWidth();
     else cursor = text.length();
@@ -762,7 +762,7 @@ int Console::getVisibleLines(const Markup& markup)
   return getSizeY() / markup.getHeight();
 }
 
-void Console::drawWidget() const
+void Console::drawWidget(IGUIDrawer& /*drawer*/) const
 {
   int line = 0;
   int message = 0;
@@ -881,7 +881,7 @@ Element* TextArea::getAutoSubElement(unsigned long i)
   else return 0;
 }
 
-void TextArea::handleWidget(const IGUIInput* input)
+void TextArea::handleWidget(const IGUIInput& input)
 {
   if(scrollEnabled)
   {
@@ -895,7 +895,7 @@ int TextArea::getVisibleLines(const Markup& markup) const
   return getSizeY() / markup.getHeight();
 }
 
-void TextArea::drawWidget() const
+void TextArea::drawWidget(IGUIDrawer& drawer) const
 {
   int visible = getVisibleLines(markup);
   //scroll is the startline, scroll + visible is the end line
@@ -904,7 +904,7 @@ void TextArea::drawWidget() const
   
   text.draw(x0, y0, startLine, endLine);
   
-  if(scrollEnabled) scrollbar.draw();
+  if(scrollEnabled) scrollbar.draw(drawer);
 }
 
 void TextArea::setScrollbarSize()
@@ -940,7 +940,10 @@ InputBox::InputBox()
   this->active = 0;
 }
 
-void InputBox::make(int x, int y, int sizex, int sizey, int maxLines, int border, const Markup& markup, BackPanel panel, const ColorRGB& cursorColor)
+void InputBox::make(int x, int y, int sizex, int sizey, int maxLines, int border
+                  , const Markup& markup
+                  //, BackPanel panel
+                  , const ColorRGB& cursorColor)
 {
   this->x0 = x;
   this->y0 = y;
@@ -1011,10 +1014,10 @@ int InputBox::getLinesVisible() const
   return getTextAreaHeight() / markup.getHeight();
 }
 
-void InputBox::drawWidget() const
+void InputBox::drawWidget(IGUIDrawer& drawer) const
 {
   panel.draw(x0, y0, getSizeX(), getSizeY());
-  bar.draw();
+  bar.draw(drawer);
   
   //draw the cursor if active
   if(active && int(draw_time * 2.0) % 2 == 0)
@@ -1030,15 +1033,15 @@ void InputBox::drawWidget() const
   multiText.draw(x0 + getLeftText(), y0 + getTopText(), firstVisibleLine, firstVisibleLine + getLinesVisible());
 }
 
-void InputBox::handleWidget(const IGUIInput* input)
+void InputBox::handleWidget(const IGUIInput& input)
 {
-  draw_time = input->getSeconds();
+  draw_time = input.getSeconds();
   
   bool scrollerMayJump = 0;
   
-  if(input->keyPressed(SDLK_RIGHT)) if(cursor < text.length()) cursor++, scrollerMayJump = 1;
-  if(input->keyPressed(SDLK_LEFT)) if(cursor > 0) cursor--, scrollerMayJump = 1;
-  if(input->keyPressed(SDLK_UP))
+  if(input.keyPressed(SDLK_RIGHT)) if(cursor < text.length()) cursor++, scrollerMayJump = 1;
+  if(input.keyPressed(SDLK_LEFT)) if(cursor > 0) cursor--, scrollerMayJump = 1;
+  if(input.keyPressed(SDLK_UP))
   {
     unsigned long cursorLine;
     unsigned long cursorColumn;
@@ -1047,7 +1050,7 @@ void InputBox::handleWidget(const IGUIInput* input)
     
     scrollerMayJump = 1;
   }
-  if(input->keyPressed(SDLK_DOWN))
+  if(input.keyPressed(SDLK_DOWN))
   {
     unsigned long cursorLine;
     unsigned long cursorColumn;
@@ -1056,9 +1059,9 @@ void InputBox::handleWidget(const IGUIInput* input)
     
     scrollerMayJump = 1;
   }
-  if(input->keyPressed(SDLK_HOME))
+  if(input.keyPressed(SDLK_HOME))
   {
-    if(input->keyDown(SDLK_LCTRL)) cursor = 0;
+    if(input.keyDown(SDLK_LCTRL)) cursor = 0;
     else
     {
       unsigned long cursorLine;
@@ -1069,9 +1072,9 @@ void InputBox::handleWidget(const IGUIInput* input)
     
      scrollerMayJump = 1;
   }
-  if(input->keyPressed(SDLK_END))
+  if(input.keyPressed(SDLK_END))
   {
-    if(input->keyDown(SDLK_LCTRL)) cursor = text.length();
+    if(input.keyDown(SDLK_LCTRL)) cursor = text.length();
     else
     {
       unsigned long cursorLine;
@@ -1083,7 +1086,7 @@ void InputBox::handleWidget(const IGUIInput* input)
      scrollerMayJump = 1;
   }
 
-  int ascii = input->unicodeKey(0, 0.5, 0.025);
+  int ascii = input.unicodeKey(0, 0.5, 0.025);
   if(ascii)
   {
     switch(ascii)
@@ -1196,7 +1199,7 @@ void FormattedText::make(int x, int y, const std::string& text, const Markup& ma
   this->totallyEnable();
 }
 
-void FormattedText::drawWidget() const
+void FormattedText::drawWidget(IGUIDrawer& /*drawer*/) const
 {
   printFormatted(text, x0, y0, markup);
 }

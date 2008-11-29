@@ -70,14 +70,14 @@ DropMenu::DropMenu()
 //Constructor to make the menu
 void DropMenu::makeColored(int x, int y, const std::string& text, 
            const Markup& markup1, const Markup& markup2,
-           const ColorRGB& menuColor, BackRule hrule)
+           const ColorRGB& /*menuColor*/, BackRule hrule)
 {
   this->x0 = x;
   this->y0 = y;
   this->totallyEnable();
   this->markup1 = markup1;
   this->markup2 = markup2;
-  this->panel.makeUntextured(menuColor);
+  //this->panel.makeUntextured(menuColor);
   this->hrule = hrule;
   
   setOptions(text);
@@ -185,20 +185,20 @@ void DropMenu::addOption(const std::string& text, int id)
     identity.push_back(id);
 }
 
-void DropMenu::drawWidget() const
+void DropMenu::drawWidget(IGUIDrawer& drawer) const
 {
   panel.draw(x0, y0, getSizeX(), getSizeY());
 
   for(unsigned long i = 0; i < menuButton.size(); i++)
   {
-    if(!separator[i]) menuButton[i].draw();
+    if(!separator[i]) menuButton[i].draw(drawer);
     else hrule.draw(x0 + markup1.getWidth() / 2, y0 + 2 + (markup1.getHeight() + 2) * i + markup1.getHeight() / 2, getSizeX() - markup1.getWidth());
   }
 }
 
-void DropMenu::handleWidget(const IGUIInput* input)
+void DropMenu::handleWidget(const IGUIInput& input)
 {
-  if(autoDisable && input->mouseButtonDown(GUI_LMB) && !mouseDown(input)) totallyDisable();
+  if(autoDisable && input.mouseButtonDown(GUI_LMB) && !mouseDown(input)) totallyDisable();
 }
 
 /*
@@ -212,7 +212,7 @@ i (= 0 or a positive integer) if option i was clicked
 
 */
 
-int DropMenu::check(const IGUIInput* input)
+int DropMenu::check(const IGUIInput& input)
 {
   for(unsigned long i = 0; i < menuButton.size(); i++)
   {
@@ -239,7 +239,7 @@ Button* DropMenu::getButton(const std::string& name)
 }
 
 
-std::string DropMenu::checkText(const IGUIInput* input)
+std::string DropMenu::checkText(const IGUIInput& input)
 {
   for(unsigned long i = 0; i < menuButton.size(); i++)
   {
@@ -251,7 +251,7 @@ std::string DropMenu::checkText(const IGUIInput* input)
   return "";
 }
 
-int DropMenu::checkIdentity(const IGUIInput* input)
+int DropMenu::checkIdentity(const IGUIInput& input)
 {
   for(unsigned long i = 0; i < menuButton.size(); i++)
   {
@@ -290,11 +290,11 @@ Droplist::Droplist()
 
 void Droplist::make(int x, int y, const std::string& text, int numVisibleOptions,
           const Markup& markup1, const Markup& markup2, const Markup& markup3,
-          BackPanel topPanel, BackPanel listPanel,
+          //BackPanel topPanel, BackPanel listPanel,
           Texture* buttonTexture)
 {
-  this->topPanel = topPanel;
-  this->listPanel = listPanel;
+  //this->topPanel = topPanel;
+  //this->listPanel = listPanel;
   this->markup1 = markup1;
   this->markup2 = markup2;
   this->markup3 = markup3;
@@ -406,17 +406,17 @@ void Droplist::addOption(const std::string& text)
   listButton.moveTo(x0 + sizexc - listButton.getSizeX(), listButton.getY0());
 }
 
-void Droplist::drawWidget() const
+void Droplist::drawWidget(IGUIDrawer& drawer) const
 {
   topPanel.draw(x0, y0, sizexc, sizeyc);
-  listButton.draw();
+  listButton.draw(drawer);
   print(textButton[selected].text, x0, y0 + sizeyc / 2 - markup3.getHeight() / 2, markup3);
 
   if(opened)
   {
     listPanel.draw(x0, y0 + sizeyc, sizexo, sizeyo - sizeyc);
-    for(unsigned long i = 0; i < textButton.size(); i++) textButton[i].draw();
-    bar.draw();
+    for(unsigned long i = 0; i < textButton.size(); i++) textButton[i].draw(drawer);
+    bar.draw(drawer);
   }
 }
 
@@ -430,7 +430,7 @@ std::string Droplist::checkText()
   return textButton[selected].text;
 }
 
-void Droplist::handleWidget(const IGUIInput* input)
+void Droplist::handleWidget(const IGUIInput& input)
 {
   if(listButton.clicked(input) || (clicked(input) && mouseGetRelPosY(input) < sizeyc && !listButton.mouseOver(input))) //behind the or is to open it also if you press the thing itself but not the button, the getMouseY() < sizeyc is necessary, without it, the code after this will not work anymore (starting from if(openen)
   {
@@ -520,12 +520,12 @@ void Matrix::make(int x0, int y0, int x1, int y1, int numx, int numy)
   this->numy = numy;
 }
 
-unsigned long Matrix::getTileX(const IGUIInput* input) const
+unsigned long Matrix::getTileX(const IGUIInput& input) const
 {
   return mouseGetRelPosX(input) / (getSizeX() / numx);
 }
 
-unsigned long Matrix::getTileY(const IGUIInput* input) const
+unsigned long Matrix::getTileY(const IGUIInput& input) const
 {
   return mouseGetRelPosY(input) / (getSizeY() / numy);
 }
@@ -608,17 +608,17 @@ unsigned long Grid::getNumElements() const
   return getNumx() * getNumy();
 }
 
-int Grid::getTileX(const IGUIInput* input) const
+int Grid::getTileX(const IGUIInput& input) const
 {
   return mouseGetRelPosX(input) / tileSizeX;
 }
 
-int Grid::getTileY(const IGUIInput* input) const
+int Grid::getTileY(const IGUIInput& input) const
 {
   return mouseGetRelPosY(input) / tileSizeY;
 }
 
-int Grid::getTile(const IGUIInput* input) const //returns index of the tile
+int Grid::getTile(const IGUIInput& input) const //returns index of the tile
 {
   return getTileX(input) + getNumx() * getTileY(input);
 }
@@ -634,7 +634,7 @@ int Grid::getScreenY(int tiley) const
 }
 
 
-void Grid::drawWidget() const
+void Grid::drawWidget(IGUIDrawer& /*drawer*/) const
 {
   if(showGrid)
   {
@@ -676,7 +676,7 @@ void Painter::make(int x, int y, int sizex, int sizey, const ColorRGB& color)
   this->totallyEnable();
 }
 
-void Painter::drawWidget() const
+void Painter::drawWidget(IGUIDrawer& /*drawer*/) const
 {
   //first draw the rectangle if the alpha channel of color is > 0
   if(color.a > 0) drawRectangle(x0, y0, x1, y1, color);
@@ -886,13 +886,13 @@ void Canvas::init()
   canvas.create(backColor, getSizeX(), getSizeY());
 }
 
-void Canvas::handleWidget(const IGUIInput* input)
+void Canvas::handleWidget(const IGUIInput& input)
 {
   if(mouseGrabbed(input, GUI_LMB) || mouseGrabbed(input, GUI_RMB))
   {
     ColorRGB drawColor;
     
-    if(input->mouseButtonDown(GUI_LMB)) drawColor = leftColor;
+    if(input.mouseButtonDown(GUI_LMB)) drawColor = leftColor;
     else drawColor = rightColor;
     
     int drawx = mouseGetRelPosX(input);
@@ -910,7 +910,7 @@ void Canvas::handleWidget(const IGUIInput* input)
   else validOldMousePos = false;
 }
 
-void Canvas::drawWidget() const
+void Canvas::drawWidget(IGUIDrawer& /*drawer*/) const
 {
   canvas.draw(x0, y0);
 }
@@ -945,7 +945,7 @@ void Rectangle::make(int x, int y, int sizex, int sizey, const ColorRGB& color)
   this->totallyEnable();
 }
 
-void Rectangle::drawWidget() const
+void Rectangle::drawWidget(IGUIDrawer& /*drawer*/) const
 {
   drawRectangle(x0, y0, x1, y1, color);
 }
@@ -992,7 +992,7 @@ void Line::setEndpoints(int x0, int y0, int x1, int y1)
   this->ly1 = y1;
 }
 
-void Line::drawWidget() const
+void Line::drawWidget(IGUIDrawer& /*drawer*/) const
 {
   drawLine(lx0, ly0, lx1, ly1, color);
 }

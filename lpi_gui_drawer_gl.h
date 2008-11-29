@@ -19,17 +19,14 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 */
 
 
-/*
-lpi_gui: an OpenGL GUI
-*/
+#pragma once
 
-#ifndef LPI_GUI_DRAW_H_INCLUDED
-#define LPI_GUI_DRAW_H_INCLUDED
+#include "lpi_gui_drawer.h"
 
+#include "lpi_gui_base.h"
 #include "lpi_color.h"
 #include "lpi_texture.h"
 #include "lpi_text.h"
-
 
 namespace lpi
 {
@@ -44,16 +41,6 @@ void initBuiltInGuiIconsSmall(const std::vector<unsigned char>& png);
 void initBuiltInGuiTexturesSmall(const std::string& png_file_name);
 void initBuiltInGuiIconsSmall(const std::string& png_file_name);
 
-////////////////////////////////////////////////////////////////////////////////
-//ENUMS/////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-//direction for gui elements like scrollbars and stuff
-enum Direction
-{
-  H, //horizontal
-  V  //vertical
-};
-
 struct TextureSet //contains the actual texture data, not just pointers
 {
   private:
@@ -63,9 +50,7 @@ struct TextureSet //contains the actual texture data, not just pointers
   Texture& operator[](int index);
 };
 
-
 extern Texture builtInTexture[128];
-
 
 /*
 a BackPanel is a collection of 9 textures that should be tileable (except the corners)
@@ -74,12 +59,9 @@ so that you can make a variable size rectangle with it
 class BackPanel
 {
   public:
-  ColorRGB colorMod; //used for modifying the textures
-  ColorRGB fillColor;
-  
   /*
   enable side and/or center texture
-  if center is disabled, fillColor is used instead for the center
+  if center is disabled, only sides are drawn (so it can be used to draw a border around something) 
   if sides are disabled, the center texture is used for the whole thing
   */
   bool enableSides;
@@ -97,27 +79,23 @@ class BackPanel
   const Texture* t22; //bottom right corner
 
   //draw the panel at x, y position, with given width and height
-  void draw(int x, int y, int width, int height) const;
+  void draw(int x, int y, int width, int height, const ColorRGB& colorMod=RGB_White) const;
   
   //constructors
   BackPanel();
   BackPanel(int style); //used to quickly generate working BackPanel prototypes in parameters
-  BackPanel(const ColorRGB& color); //used for color prototypes
   
   //make panel with flat color (no textures but fill color)
-  void makeUntextured(const ColorRGB& fillColor);
+  void makeUntextured();
   //give 9 separate textures
   void makeTextured9(const Texture* t00=&builtInTexture[0], const Texture* t01=&builtInTexture[1], const Texture* t02=&builtInTexture[2], 
             const Texture* t10=&builtInTexture[3], const Texture* t11=&builtInTexture[4], const Texture* t12=&builtInTexture[5], 
-            const Texture* t20=&builtInTexture[6], const Texture* t21=&builtInTexture[7], const Texture* t22=&builtInTexture[8],
-            const ColorRGB& colorMod=RGB_White);
+            const Texture* t20=&builtInTexture[6], const Texture* t21=&builtInTexture[7], const Texture* t22=&builtInTexture[8]);
   //give 1 texture, the other 8 are assumed to have successive memory locations
-  void makeTextured(const Texture* t00=&builtInTexture[0],
-       const ColorRGB& colorMod=RGB_White);
+  void makeTextured(const Texture* t00=&builtInTexture[0]);
 };
 
 #define DEFAULTPANEL BackPanel(1)
-#define COLORPANEL(color) BackPanel(color)
 
 /*
 a BackRule is a collection of 3 textures (the center one tileable) that
@@ -160,6 +138,9 @@ class BackRule
 
 #define DEFAULTHRULE BackRule(1)
 #define DEFAULTVRULE BackRule(2)
+
+extern BackPanel builtInPanel[4];
+extern BackRule builtInRule[2];
 
 struct GuiSet
 {
@@ -205,12 +186,37 @@ struct GuiSet
   Markup textButtonMarkup[3];
 };
 
-
-extern BackPanel builtInPanel[4];
-extern BackRule builtInRule[2];
 extern GuiSet builtInGuiSet;
+
+class GUIDrawerGL : public IGUIDrawer
+{
+  private:
+    GuiSet* guiset;
+    
+  public:
+    GUIDrawerGL(GuiSet* set);
+    
+    virtual void drawLine(int x0, int y0, int x1, int y1, const ColorRGB& color);
+    virtual void fillRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color);
+    virtual void drawText(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W);
+    virtual void drawTexture(int x, int y, const Texture* texture, const ColorRGB& colorMod = RGB_White);
+    
+    virtual void setSmallestScissor(int x0, int y0, int x1, int y1);
+    virtual void resetScissor();
+    
+    //not all GUI parts use all input parameters! only x0 and y0 are always used.
+    virtual void drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, bool inactive, const ColorRGB& color);
+    
+    //input
+    virtual IGUIInput& getInput();
+};
+
 
 } //namespace gui
 } //namespace lpi
 
-#endif
+
+namespace lpi
+{
+extern gui::GUIDrawerGL gGUIDrawer; //global gui drawer usig GL. Outside of namespace gui on purpose (too long name otherwise)
+} //namespace lpi

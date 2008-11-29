@@ -89,6 +89,7 @@ void InternalContainer::setElementOver(bool state)
   }
 }
 
+
 void InternalContainer::initSubElement(Element* element, const Pos<Sticky>& sticky, Element* parent)
 {
   element->sticky = sticky;
@@ -131,7 +132,7 @@ void ToolTipManager::registerMe(const Element* element)
   this->element = element;
 }
 
-void ToolTipManager::draw(const IGUIInput* input) const
+void ToolTipManager::draw(const IGUIInput& input) const
 {
   if(enabled && element)
     element->drawToolTip(input);
@@ -165,11 +166,11 @@ void Element::drawDebugBorder(const ColorRGB& color) const
 {
   drawLine(x0    , y0    , x0    , y1 - 1, color);
   drawLine(x1 - 1, y0    , x1 - 1, y1 - 1, color);
-  drawLine(x0    , y0    , x1 - 1, y0     , color);
+  drawLine(x0    , y0    , x1 - 1, y0    , color);
   drawLine(x0    , y1 - 1, x1 - 1, y1 - 1, color);
 }
 
-void Element::drawToolTip(const IGUIInput* input) const
+void Element::drawToolTip(const IGUIInput& input) const
 {
   if(tooltipenabled && mouseOver(input))
   {
@@ -189,14 +190,14 @@ void Element::drawToolTip(const IGUIInput* input) const
     if(linelength > longestline) longestline = linelength;
     int sizex = longestline * TS_Black6.getWidth() + 4;
     int sizey = 2 +  TS_Black6.getHeight() * numlines;
-    int x = input->mouseX();
-    int y = input->mouseY() - sizey;
+    int x = input.mouseX();
+    int y = input.mouseY() - sizey;
     drawRectangle(x, y, x + sizex, y + sizey, RGBA_Lightyellow(224));
     printText(tooltip, x + 2, y + 2, TS_Black6);
   }
 }
 
-bool Element::mouseOver(const IGUIInput* input) const
+bool Element::mouseOver(const IGUIInput& input) const
 {
   if(!present) return false;
   if(elementOver) return false; //there is another element over this element, so says the container containing this element
@@ -210,19 +211,14 @@ bool Element::mouseGrabbable() const
 }
 
 
-void Element::draw() const
+void Element::draw(IGUIDrawer& drawer) const
 {
   if(!visible) return;
   
-  drawWidget();
+  drawWidget(drawer);
   
-  if(tooltipenabled && draw_mouse_over) tooltipmanager->registerMe(this);
+  if(tooltipenabled && mouseOver(drawer.getInput())) tooltipmanager->registerMe(this);
 }
-
-/*void Element::drawWidget() const
-{
-  //this function is pure virtual
-}*/
 
 void Element::move(int x, int y)
 {
@@ -251,31 +247,29 @@ void Element::moveCenterTo(int x, int y)
   this->moveTo(x - this->getSizeX() / 2, y - this->getSizeY() / 2);
 }
 
-void Element::autoActivate(const IGUIInput* input)
+void Element::autoActivate(const IGUIInput& input)
 {
   if(selfActivate)
   {
     if(mouseDownHere(auto_activate_mouse_state, input)) active = 1;
     else
     {
-      if(!mouseOver(input) && input->mouseButtonDown(GUI_LMB) && !mouseGrabbed(auto_activate_mouse_state, input)) active = 0; //"forceActive" enabled so that this disactivating also works if mouseActive is false!
+      if(!mouseOver(input) && input.mouseButtonDown(GUI_LMB) && !mouseGrabbed(auto_activate_mouse_state, input)) active = 0; //"forceActive" enabled so that this disactivating also works if mouseActive is false!
       //without the mouseGrabbed() test, it'll become inactive when you grab the scrollbar scroller and go outside with the mouse = annoying
     }
   }
 }
 
-void Element::handle(const IGUIInput* input)
+void Element::handle(const IGUIInput& input)
 {
   autoActivate(input);
-  
-  draw_mouse_over = mouseOver(input);
   
   if(!active) return;
   
   handleWidget(input);
 }
 
-void Element::handleWidget(const IGUIInput* input)
+void Element::handleWidget(const IGUIInput& input)
 {
   (void)input;
   //no stuff needed for most elements
@@ -395,9 +389,9 @@ void Container::setElementOver(bool state)
   elements.setElementOver(state);
 }
 
-void Container::handleWidget(const IGUIInput* input)
+void Container::handleWidget(const IGUIInput& input)
 {
-  //if(mouseOver())
+  //if(mouseOver(input))
   if(!elementOver && mouseOver(input))
   {
     int topElement = -1;
@@ -436,26 +430,26 @@ void Container::handleWidget(const IGUIInput* input)
     }
   }
   else if(!elementOver) for(size_t i = 0; i < size(); i++) elements.getElement(i)->setElementOver(1); //mouse is over the bars!
-  
+
   for(unsigned long i = 0; i < size(); i++)
   {
     elements.getElement(i)->handle(input);
   }
 }
 
-void Container::drawElements() const
+void Container::drawElements(IGUIDrawer& drawer) const
 {
   for(unsigned long i = 0; i < size(); i++)
   {
-    elements.getElement(i)->draw();
+    elements.getElement(i)->draw(drawer);
   }
 }
 
-void Container::drawWidget() const
+void Container::drawWidget(IGUIDrawer& drawer) const
 {
-  setSmallestScissor(x0, y0, x1, y1);
-  drawElements();
-  resetScissor();
+  drawer.setSmallestScissor(x0, y0, x1, y1);
+  drawElements(drawer);
+  drawer.resetScissor();
 }
 
 unsigned long Container::size() const
@@ -622,13 +616,13 @@ The size of that element isn't affected by this ScrollElement.
 The position of that element is completely controlled by this ScrollElement or its scrollbars
 */
 
-void ScrollElement::drawWidget() const
+void ScrollElement::drawWidget(IGUIDrawer& drawer) const
 {
-  setSmallestScissor(getVisibleX0(), getVisibleY0(), getVisibleX1(), getVisibleY1()); //currently does same as setScissor (because otherwise there's weird bug, to reproduce: resize the red window and look at smiley in the small grey window), so elements from container in container are still drawn outside container. DEBUG THIS ASAP!!!
-  element->draw();
-  resetScissor();
+  drawer.setSmallestScissor(getVisibleX0(), getVisibleY0(), getVisibleX1(), getVisibleY1()); //currently does same as setScissor (because otherwise there's weird bug, to reproduce: resize the red window and look at smiley in the small grey window), so elements from container in container are still drawn outside container. DEBUG THIS ASAP!!!
+  element->draw(drawer);
+  drawer.resetScissor();
   
-  bars.draw();
+  bars.draw(drawer);
 }
 
 void ScrollElement::moveWidget(int x, int y)
@@ -641,7 +635,7 @@ void ScrollElement::resizeWidget(const Pos<int>& /*newPos*/)
   updateBars(); //if this is done at the wrong moment, the bars may appear after resizing the container at times where it isn't desired
 }
 
-void ScrollElement::handleWidget(const IGUIInput* input)
+void ScrollElement::handleWidget(const IGUIInput& input)
 {
   if(element) element->handle(input);
   
@@ -747,13 +741,13 @@ int ScrollElement::getVisibleSizeY() const
   return getVisibleY1() - getVisibleY0();
 }
 
-bool ScrollElement::mouseInVisibleZone(const IGUIInput* input) const
+bool ScrollElement::mouseInVisibleZone(const IGUIInput& input) const
 {
   if(!mouseOver(input)) return false;
-  return input->mouseX() >= getVisibleX0()
-      && input->mouseX() < getVisibleX1()
-      && input->mouseY() >= getVisibleY0()
-      && input->mouseY() < getVisibleY1();
+  return input.mouseX() >= getVisibleX0()
+      && input.mouseX() < getVisibleX1()
+      && input.mouseY() >= getVisibleY0()
+      && input.mouseY() < getVisibleY1();
 }
 
 
@@ -787,12 +781,11 @@ void ScrollElement::toggleBars() //turns bars on or of if they're needed or not 
 //GUIGROUP//////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-bool Group::mouseOverShape(const IGUIInput* input) const
+bool Group::isInside(int x, int y) const
 {
   for(int i = size() - 1; i >= 0; i--)
   {
-    elements.getElement(i)->setElementOver(0);
-    if(elements.getElement(i)->mouseOver(input)) return true;
+    if(elements.getElement(i)->isInside(x, y)) return true;
   }
   
   return false;
@@ -809,8 +802,8 @@ Panel is a class containing a backpanel, but it also shares the Element function
 
 Panel::Panel()
 {
-  this->panel.colorMod = RGB_White;
-  this->panel.fillColor = RGB_White;
+  //this->panel.colorMod = RGB_White;
+  //this->panel.fillColor = RGB_White;
   this->panel.enableSides = 0;
   this->panel.enableCenter = 0;
   this->panel.t00 = &emptyTexture;
@@ -824,7 +817,7 @@ Panel::Panel()
   this->panel.t22 = &emptyTexture;
 }
 
-void Panel::makeUntextured(int x, int y, int sizex, int sizey, const ColorRGB& fillColor)
+void Panel::makeUntextured(int x, int y, int sizex, int sizey, const ColorRGB& /*fillColor*/)
 {
   this->x0 = x;
   this->y0 = y;
@@ -832,11 +825,11 @@ void Panel::makeUntextured(int x, int y, int sizex, int sizey, const ColorRGB& f
   this->setSizeY(sizey);
   this->totallyEnable();
   
-  this->panel.makeUntextured(fillColor);
+  //this->panel.makeUntextured(fillColor);
 }
 
 void Panel::makeTextured(int x, int y, int sizex, int sizey,
-       const Texture* t00, const ColorRGB& colorMod)
+       const Texture* /*t00*/, const ColorRGB& /*colorMod*/)
 {
   this->x0 = x;
   this->y0 = y;
@@ -844,7 +837,7 @@ void Panel::makeTextured(int x, int y, int sizex, int sizey,
   this->setSizeY(sizey);
   this->totallyEnable();
   
-  this->panel.makeTextured(t00, colorMod);
+  //this->panel.makeTextured(t00, colorMod);
 }
 
 void Panel::make(int x, int y, int sizex, int sizey,
@@ -868,7 +861,7 @@ void Panel::setSize(int x, int y, int sizex, int sizey)
   this->setSizeY(sizey);
 }
 
-void Panel::drawWidget() const
+void Panel::drawWidget(IGUIDrawer& /*drawer*/) const
 {
   panel.draw(x0, y0, getSizeX(), getSizeY());
 }
@@ -942,7 +935,7 @@ void Rule::setSize(int x, int y, int length)
   else this->setSizeY(length);
 }
 
-void Rule::drawWidget() const
+void Rule::drawWidget(IGUIDrawer& /*drawer*/) const
 {
   if(line.direction == H) line.draw(x0, y0, getSizeX());
   else line.draw(x0, y0, getSizeY());
@@ -1067,13 +1060,13 @@ void Window::makeUntextured(int x, int y, int sizex, int sizey, const ColorRGB& 
   this->totallyEnable();
   this->enableTop = 0;
   
-  this->panel.makeUntextured(fillColor);
+  colorMod = fillColor;
   
   initContainer();
 }
 
 void Window::makeTextured(int x, int y, int sizex, int sizey,
-       const Texture* t00, const ColorRGB& colorMod)
+       const Texture* /*t00*/, const ColorRGB& colorMod)
 {
   this->x0 = x;
   this->y0 = y;
@@ -1083,13 +1076,13 @@ void Window::makeTextured(int x, int y, int sizex, int sizey,
   
   this->enableTop = 0;
   
-  this->panel.makeTextured(t00, colorMod);
+  this->colorMod = colorMod;
   
   initContainer();
 }
 
 void Window::make(int x, int y, int sizex, int sizey,
-       const GuiSet* set)
+       const GuiSet* /*set*/)
 {
   this->x0 = x;
   this->y0 = y;
@@ -1098,8 +1091,6 @@ void Window::make(int x, int y, int sizex, int sizey,
   this->totallyEnable();
   
   this->enableTop = 0;
-  
-  this->panel = *set->windowPanel;
   
   initContainer();
 }
@@ -1154,7 +1145,7 @@ void Window::putInside(int i)
 }
 
 
-void Window::handleWidget(const IGUIInput* input)
+void Window::handleWidget(const IGUIInput& input)
 {
   //the close button
   if(closeEnabled && closeButton.clicked(input)) closed = 1;
@@ -1163,35 +1154,34 @@ void Window::handleWidget(const IGUIInput* input)
   else container.handle(input);
   
   //resize window
-  if(enableResizer && resizer.mouseGrabbed(input)) resize(x0, y0, input->mouseX() - resizer.mouseGetRelGrabX() + (x1 - resizer.getX0()), input->mouseY() - resizer.mouseGetRelGrabY() + (y1 - resizer.getY0()));
+  if(enableResizer && resizer.mouseGrabbed(input)) resize(x0, y0, input.mouseX() - resizer.mouseGetRelGrabX() + (x1 - resizer.getX0()), input.mouseY() - resizer.mouseGetRelGrabY() + (y1 - resizer.getY0()));
 
   //drag window
-  if(!enableTop && mouseGrabbed(input)) moveTo(input->mouseX() - mouseGetRelGrabX(), input->mouseY() - mouseGetRelGrabY()); //um this means a window without top can always be dragged?? maybe I should turn this off? in case you want a non moveable window...
+  if(!enableTop && mouseGrabbed(input)) moveTo(input.mouseX() - mouseGetRelGrabX(), input.mouseY() - mouseGetRelGrabY()); //dragging of window without a top
   if(enableTop && top.mouseGrabbed(input))
   {
-    moveTo(input->mouseX() - top.mouseGetRelGrabX() - (top.getX0() - getX0()), input->mouseY() - top.mouseGetRelGrabY() - (top.getY0() - getY0()));
+    moveTo(input.mouseX() - top.mouseGetRelGrabX() - (top.getX0() - getX0()), input.mouseY() - top.mouseGetRelGrabY() - (top.getY0() - getY0()));
   }
   
   //the scrollbar's conserveCorner should be the same as this window's resizerOverContainer
   scroll.bars.conserveCorner = resizerOverContainer;
-  
 }
 
-void Window::drawWidget() const
+void Window::drawWidget(IGUIDrawer& drawer) const
 {
-  panel.draw(x0, y0, getSizeX(), getSizeY());
+  drawer.drawGUIPart(GP_WINDOW_PANEL, x0, y0, x1, y1, false, colorMod);
   if(enableTop)
   {
-    top.draw(); //draw top bar before the elements, or it'll appear above windows relative to the current window
+    top.draw(drawer); //draw top bar before the elements, or it'll appear above windows relative to the current window
     print(title, top.getX0() + titleX, top.getY0() + titleY, titleMarkup);
   }
   
-  if(closeEnabled) closeButton.draw();
+  if(closeEnabled) closeButton.draw(drawer);
 
-  if(scroll.element) scroll.draw();
-  else container.draw();
+  if(scroll.element) scroll.draw(drawer);
+  else container.draw(drawer);
 
-  if(enableResizer) resizer.draw(); //draw this after the container so the resizer is drawn over scrollbars if that is needed
+  if(enableResizer) resizer.draw(drawer); //draw this after the container so the resizer is drawn over scrollbars if that is needed
 }
 
 void Window::addTitle(const std::string& title, int titleX, int titleY, const Markup& titleMarkup)
@@ -1304,7 +1294,6 @@ Button::Button()
   
   this->active = 0;
   this->visible = 0;
-  this->doubleClickTime = 500;
   
   this->mouseDownVisualStyle = 0;
 }
@@ -1350,7 +1339,6 @@ void Button::make
   this->panelOffsety = panelOffsety;
   
   this->totallyEnable();
-  this->doubleClickTime = 500;
   
   this->mouseDownVisualStyle = 0;
 }
@@ -1437,7 +1425,6 @@ void Button::makeImage
   this->panel2.enableCenter = 0;*/
   
   this->totallyEnable();
-  this->doubleClickTime = 500;
   
   this->mouseDownVisualStyle = 0;
 }
@@ -1477,7 +1464,6 @@ void Button::makeText
   this->markup[2] = set->textButtonMarkup[2];
   
   this->totallyEnable();
-  this->doubleClickTime = 500;
   
   this->mouseDownVisualStyle = 0;
   
@@ -1524,7 +1510,6 @@ void Button::makeTextPanel
   this->panelOffsety = 0;
 
   this->totallyEnable();
-  this->doubleClickTime = 500;
   
   this->mouseDownVisualStyle = 1;
   
@@ -1534,7 +1519,7 @@ void Button::makeTextPanel
   centerText();
 }
 
-void Button::handleWidget(const IGUIInput* input)
+void Button::handleWidget(const IGUIInput& input)
 {
   if((mouseDownVisualStyle == 0 && mouseDown(input, GUI_LMB))
   || (mouseDownVisualStyle == 1 && mouseDownHere(button_drawing_mouse_test, input))
@@ -1546,12 +1531,12 @@ void Button::handleWidget(const IGUIInput* input)
 }
 
 //Draws the button, also checks for mouseover and mousedown to draw mouseover graphic
-void Button::drawWidget() const
+void Button::drawWidget(IGUIDrawer& drawer) const
 {
   int style = 0; //0 = normal, 1 = mouseOver, 2 = mouseDown
   
   if(draw_mouse_button_down_style) style = 2;
-  else if(draw_mouse_over) style = 1;
+  else if(mouseOver(drawer.getInput())) style = 1;
   
   int textDownOffset = 0;
   if(style == 2) textDownOffset = 1; //on mouseDown, the text goes down a bit too
@@ -1811,7 +1796,7 @@ void Scrollbar::randomize()
   scrollPos = r * scrollSize;
 }
 
-void Scrollbar::handleWidget(const IGUIInput* input)
+void Scrollbar::handleWidget(const IGUIInput& input)
 {
   int scrollDir = 0;
 
@@ -1824,10 +1809,10 @@ void Scrollbar::handleWidget(const IGUIInput* input)
     bool buttonUp_grabbed = buttonUp.mouseGrabbed(input);
     bool buttonDown_grabbed = buttonDown.mouseGrabbed(input);
     if(scroller.mouseGrabbed(input))
-      scrollPos = (scrollSize * (input->mouseY() - y0 - getSliderStart() - txScroller->getV() / 2)) / getSliderSize();
+      scrollPos = (scrollSize * (input.mouseY() - y0 - getSliderStart() - txScroller->getV() / 2)) / getSliderSize();
     else if(mouseDownHere(input) && !scroller.mouseGrabbed(input) && !buttonUp_grabbed && !buttonDown_grabbed)
     {
-      scrollPos = (scrollSize * (input->mouseY() - y0 - getSliderStart() - txScroller->getV() / 2)) / getSliderSize();
+      scrollPos = (scrollSize * (input.mouseY() - y0 - getSliderStart() - txScroller->getV() / 2)) / getSliderSize();
       scroller.mouseGrab(input);
     }
     if(mouseScrollUp(input)) scrollDir = -3;
@@ -1841,19 +1826,19 @@ void Scrollbar::handleWidget(const IGUIInput* input)
     bool buttonUp_grabbed = buttonUp.mouseGrabbed(input);
     bool buttonDown_grabbed = buttonDown.mouseGrabbed(input);
     if(scroller.mouseGrabbed(input))
-      scrollPos = (scrollSize * (input->mouseX() - x0 - getSliderStart() - txScroller->getU() / 2)) / getSliderSize();
+      scrollPos = (scrollSize * (input.mouseX() - x0 - getSliderStart() - txScroller->getU() / 2)) / getSliderSize();
     else if(mouseDownHere(input) && !scroller.mouseGrabbed(input) && !buttonUp_grabbed && !buttonDown_grabbed)
     {
-      scrollPos = (scrollSize * (input->mouseX() - x0 - getSliderStart() - txScroller->getU() / 2)) / getSliderSize();
+      scrollPos = (scrollSize * (input.mouseX() - x0 - getSliderStart() - txScroller->getU() / 2)) / getSliderSize();
       scroller.mouseGrab(input);
     }
   }
   
   if(scrollDir != 0)
   {
-    scrollPos += scrollDir * absoluteSpeed * ((input->getSeconds() - oldTime));
+    scrollPos += scrollDir * absoluteSpeed * ((input.getSeconds() - oldTime));
   }
-  oldTime = input->getSeconds();
+  oldTime = input.getSeconds();
 
   if(scrollPos < 0) scrollPos = 0;
   if(scrollPos > scrollSize) scrollPos = scrollSize;
@@ -1865,12 +1850,12 @@ void Scrollbar::handleWidget(const IGUIInput* input)
 }
 
 //from an external source, use this function only BEFORE using the handle() function or getTicks() - oldTime will be zero
-void Scrollbar::scroll(const IGUIInput* input, int dir)
+void Scrollbar::scroll(const IGUIInput& input, int dir)
 {
-  scrollPos += dir * absoluteSpeed * (input->getSeconds() - oldTime);
+  scrollPos += dir * absoluteSpeed * (input.getSeconds() - oldTime);
 }
 
-void Scrollbar::drawWidget() const
+void Scrollbar::drawWidget(IGUIDrawer& drawer) const
 {
   //in the drawRepeated functions, sizeButton is divided through two, so if the arrow buttons have a few transparent pixels, in one half of the button you see the background through, in the other half not
   if(direction == V)
@@ -1881,9 +1866,9 @@ void Scrollbar::drawWidget() const
   {
     txBack->drawRepeated(x0 + getSliderStart(), y0, x0 + getSliderEnd(), y1, 1.0, 1.0, colorMod);
   }
-  buttonUp.draw();
-  buttonDown.draw();
-  if(scrollSize > 0) scroller.draw();
+  buttonUp.draw(drawer);
+  buttonDown.draw(drawer);
+  if(scrollSize > 0) scroller.draw(drawer);
   
   if(enableValue == 1)
   {
@@ -2017,16 +2002,16 @@ void ScrollbarPair::enableH()
   }
 }
 
-void ScrollbarPair::handleWidget(const IGUIInput* input)
+void ScrollbarPair::handleWidget(const IGUIInput& input)
 {
   if(venabled) vbar.handle(input);
   if(henabled) hbar.handle(input);
 }
 
-void ScrollbarPair::drawWidget() const
+void ScrollbarPair::drawWidget(IGUIDrawer& drawer) const
 {
-  if(venabled) vbar.draw();
-  if(henabled) hbar.draw();
+  if(venabled) vbar.draw(drawer);
+  if(henabled) hbar.draw(drawer);
   if((venabled && henabled && !conserveCorner) || ((venabled || henabled) && conserveCorner)) txCorner->draw(x1 - txCorner->getU(), y1 - txCorner->getV());
 }
 
@@ -2121,7 +2106,7 @@ int Slider::scrollPosToScreenPos(double scrollPos)
   }
 }
 
-void Slider::drawWidget() const
+void Slider::drawWidget(IGUIDrawer& drawer) const
 {
   if(direction == H)
   {
@@ -2130,7 +2115,7 @@ void Slider::drawWidget() const
     if(rulerCenter > centerPos) centerPos = rulerCenter;
     
     ruler->draw(x0, y0 + centerPos - rulerCenter, getSizeX());
-    slider.draw();
+    slider.draw(drawer);
   }
   else //if(direction == V)
   {
@@ -2139,11 +2124,11 @@ void Slider::drawWidget() const
     if(rulerCenter > centerPos) centerPos = rulerCenter;
     
     ruler->draw(x0 + centerPos - rulerCenter, y0, getSizeY());
-    slider.draw();
+    slider.draw(drawer);
   }
 }
 
-void Slider::handleWidget(const IGUIInput* input)
+void Slider::handleWidget(const IGUIInput& input)
 {
   if(direction == H)
   {
@@ -2219,7 +2204,7 @@ void Invisible::make(int x0, int y0, int x1, int y1)
   this->visible = true;
 }
 
-void Invisible::drawWidget() const
+void Invisible::drawWidget(IGUIDrawer& /*drawer*/) const
 {
   //intentionally do nothing, because this is invisible
 }
@@ -2347,7 +2332,7 @@ void Checkbox::toggle()
 }
 
 //see how you click with the mouse and toggle on click
-void Checkbox::handleWidget(const IGUIInput* input)
+void Checkbox::handleWidget(const IGUIInput& input)
 {
   //make sure never both pressed() and clicked() are checked, because one test screws up the other, hence the order of the tests in the if conditions
   if(toggleOnMouseUp == 0 && pressed(input)) toggle();
@@ -2355,12 +2340,12 @@ void Checkbox::handleWidget(const IGUIInput* input)
 }
 
 //draw the checkbox with a texture depending on it's state
-void Checkbox::drawWidget() const
+void Checkbox::drawWidget(IGUIDrawer& drawer) const
 {
   /*if(checked) texture2->draw(x0, y0, colorMod2);
   else texture1->draw(x0, y0, colorMod1);*/
   int i = 0;
-  if(draw_mouse_over) i++;
+  if(mouseOver(drawer.getInput())) i++;
   if(checked) i += 2;
   
   texture[i]->draw(x0, y0, colorMod[i]);
@@ -2450,7 +2435,7 @@ void NState::addState(Texture* texture, const ColorRGB& colorMod, const std::str
 
 
 //see how you click with the mouse and toggle on click
-void NState::handleWidget(const IGUIInput* input)
+void NState::handleWidget(const IGUIInput& input)
 {
   //make sure never both pressed() and clicked() are checked, because one test screws up the other, hence the order of the tests in the if conditions
   if(states.size() == 0) return;
@@ -2469,7 +2454,7 @@ void NState::handleWidget(const IGUIInput* input)
 }
 
 //draw the checkbox with a texture depending on it's state
-void NState::drawWidget() const
+void NState::drawWidget(IGUIDrawer& /*drawer*/) const
 {
   if(states.size() == 0) return;
   
@@ -2576,7 +2561,7 @@ void BulletList::setCorrectSize()
   this->setSizeY(maxy - miny);
 }
 
-void BulletList::handleWidget(const IGUIInput* input)
+void BulletList::handleWidget(const IGUIInput& input)
 {
   if(!mouseOver(input)) return; //some speed gain, don't do all those loops if the mouse isn't over this widget
   
@@ -2602,11 +2587,11 @@ void BulletList::handleWidget(const IGUIInput* input)
     bullet[lastChecked].checked = true;
 }
 
-void BulletList::drawWidget() const
+void BulletList::drawWidget(IGUIDrawer& drawer) const
 {
   for(unsigned long i = 0; i < bullet.size(); i++)
   {
-    bullet[i].draw();
+    bullet[i].draw(drawer);
   }
 }
 
@@ -2674,7 +2659,7 @@ void Text::make(int x, int y, const std::string& text, const Markup& markup)
   this->totallyEnable();
 }
 
-void Text::drawWidget() const
+void Text::drawWidget(IGUIDrawer& /*drawer*/) const
 {
   print(text, x0, y0, markup, useNewLine);
 }
@@ -2721,7 +2706,7 @@ void Image::make(int x, int y, int sizex, int sizey, Texture* image, const Color
   this->totallyEnable();
 }
 
-void Image::drawWidget() const
+void Image::drawWidget(IGUIDrawer& /*drawer*/) const
 {
   image->draw(x0, y0, colorMod, getSizeX(), getSizeY());
 }
