@@ -83,18 +83,18 @@ class DropMenu : public Element
     void make(int x, int y, const std::string& text,
               const Markup& markup1 = TS_White, const Markup& markup2 = TS_White,
               BackPanel panel = DEFAULTPANEL, BackRule hrule = DEFAULTHRULE); //make with given panel    
-    virtual void drawWidget() const;
-    virtual void handleWidget(const IGUIInput* input);
-    int check(const IGUIInput* input);
+    virtual void drawWidget(IGUIDrawer& drawer) const;
+    virtual void handleWidget(const IGUIInput& input);
+    int check(const IGUIInput& input);
     Button* getButton(int i);
     Button* getButton(const std::string& name);
     int getNumButtons() const { return menuButton.size(); }
-    std::string checkText(const IGUIInput* input);
+    std::string checkText(const IGUIInput& input);
     /*
     returns 0 if none, or a button where no identity was set, is pressed, or
     the identity of the button if one with an identity was pressed
     */
-    int checkIdentity(const IGUIInput* input);
+    int checkIdentity(const IGUIInput& input);
     void addOption(const std::string& text, int id = 0); //id is an optional identity
     
     bool autoDisable; //if true, the menu will totallyDisable itself if you click anywhere not on the menu
@@ -139,13 +139,13 @@ class Droplist : public Element
     
     void make(int x, int y, const std::string& text, int numVisibleOptions = -1,
               const Markup& markup1 = TS_Black, const Markup& markup2 = TS_Red, const Markup& markup3 = TS_Shadow,
-              BackPanel topPanel = COLORPANEL(RGB_Grey), BackPanel listPanel = COLORPANEL(RGB_White),
+              //BackPanel topPanel = COLORPANEL(RGB_Grey), BackPanel listPanel = COLORPANEL(RGB_White),
               Texture* buttonTexture = &builtInTexture[28]);
     void makeScrollbar(const GuiSet* set = &builtInGuiSet);
-    virtual void drawWidget() const;
+    virtual void drawWidget(IGUIDrawer& drawer) const;
     int check();
     std::string checkText();
-    virtual void handleWidget(const IGUIInput* input);
+    virtual void handleWidget(const IGUIInput& input);
 
     void addOption(const std::string& text);
 };
@@ -162,8 +162,8 @@ class Matrix : public Element
   unsigned long numx;
   unsigned long numy;
   
-  unsigned long getTileX(const IGUIInput* input) const;
-  unsigned long getTileY(const IGUIInput* input) const;
+  unsigned long getTileX(const IGUIInput& input) const;
+  unsigned long getTileY(const IGUIInput& input) const;
   
   int getScreenX(int tilex) const;
   int getScreenY(int tiley) const;
@@ -191,7 +191,7 @@ class Grid : public Element
   bool showGrid;
   ColorRGB gridColor;
   
-  virtual void drawWidget() const;
+  virtual void drawWidget(IGUIDrawer& drawer) const;
   
   int tileSizeX;
   int tileSizeY;
@@ -201,9 +201,9 @@ class Grid : public Element
   
   unsigned long getNumElements() const;
   
-  int getTileX(const IGUIInput* input) const;
-  int getTileY(const IGUIInput* input) const;
-  int getTile(const IGUIInput* input) const; //returns index of the tile
+  int getTileX(const IGUIInput& input) const;
+  int getTileY(const IGUIInput& input) const;
+  int getTile(const IGUIInput& input) const; //returns index of the tile
   
   int getScreenX(int tilex) const;
   int getScreenY(int tiley) const;
@@ -226,7 +226,7 @@ class Painter : public Element
 {
   public:
     ColorRGB color;
-    virtual void drawWidget() const;
+    virtual void drawWidget(IGUIDrawer& drawer) const;
     Painter();
     void make(int x, int y, int sizex = 200, int sizey = 150, const ColorRGB& color = RGB_Invisible);
     
@@ -284,8 +284,8 @@ class Canvas : public Element
     
     int border;
     
-    virtual void drawWidget() const;
-    virtual void handleWidget(const IGUIInput* input);
+    virtual void drawWidget(IGUIDrawer& drawer) const;
+    virtual void handleWidget(const IGUIInput& input);
     
     void clear(); //clear the whole texture to backColor, deleting it's previous contents
     
@@ -303,7 +303,7 @@ class Variable : public Element //can be anything the typename is: integer, floa
     std::string label;
     Markup markup;
     
-    virtual void drawWidget() const
+    virtual void drawWidget(IGUIDrawer& drawer) const
     {
       print(label, x0, y0, markup);
       print(v, x0 + label.length() * markup.getWidth(), y0, markup);
@@ -336,7 +336,7 @@ class Rectangle : public Element
 {
   public:
     ColorRGB color;
-    virtual void drawWidget() const;
+    virtual void drawWidget(IGUIDrawer& drawer) const;
     Rectangle();
     void make(int x, int y, int sizex=64, int sizey=64, const ColorRGB& color = RGB_Grey);
 };
@@ -345,7 +345,7 @@ class Line : public Element
 {
   public:
     ColorRGB color;
-    virtual void drawWidget() const;
+    virtual void drawWidget(IGUIDrawer& drawer) const;
     Line();
     int lx0;
     int ly0;

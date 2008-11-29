@@ -25,11 +25,21 @@ namespace lpi
 namespace gui
 {
 
+//direction for gui elements like scrollbars and stuff
+enum Direction
+{
+  H, //horizontal
+  V  //vertical
+};
+
+//const static int NUM_MOUSE_BUTTONS = 3; //lmb, mmb, rmb
+const static int NUM_MOUSE_BUTTONS = 2; //lmb, rmb
+
 enum GUIMouseButton
 {
   GUI_LMB,
-  GUI_RMB,
-  GUI_MMB
+  //GUI_MMB,
+  GUI_RMB
 };
 
 class IGUIInput
@@ -48,6 +58,11 @@ class IGUIInput
     virtual int mouseY() const = 0;
     //check the state of the 3 buttons of mouse
     virtual bool mouseButtonDown(GUIMouseButton button) const = 0;
+    
+    virtual bool doubleClicked(GUIMouseButton button) const = 0;
+    virtual bool tripleClicked(GUIMouseButton button) const = 0;
+    virtual bool quadrupleClicked(GUIMouseButton button) const = 0;
+    
     //check if scroll wheel of mouse was moved up or down
     virtual bool mouseWheelUp() const = 0;
     virtual bool mouseWheelDown() const = 0;
@@ -57,6 +72,32 @@ class IGUIInput
     virtual bool keyDown(int key) const = 0;
     virtual bool keyPressed(int key) const = 0; //only returns true the first time the key is down and you check (can use mutable variable internally for this)
     virtual int unicodeKey(int allowedChars, double time, double warmupTime = 0.5, double repTime = 0.025) const = 0;
+};
+
+class IGUIInputClick : public IGUIInput //this one already implements the double clicking in a way
+{
+  protected:
+
+    mutable char doubleClickState[NUM_MOUSE_BUTTONS];
+    mutable double doubleClickTime[NUM_MOUSE_BUTTONS]; //in seconds
+    mutable int doubleClickX[NUM_MOUSE_BUTTONS];
+    mutable int doubleClickY[NUM_MOUSE_BUTTONS];
+    
+    mutable char tripleClickState[NUM_MOUSE_BUTTONS];
+    mutable double tripleClickTime[NUM_MOUSE_BUTTONS]; //in seconds
+    mutable int tripleClickX[NUM_MOUSE_BUTTONS];
+    mutable int tripleClickY[NUM_MOUSE_BUTTONS];
+    
+    mutable char quadrupleClickState[NUM_MOUSE_BUTTONS];
+    mutable double quadrupleClickTime[NUM_MOUSE_BUTTONS]; //in seconds
+    mutable int quadrupleClickX[NUM_MOUSE_BUTTONS];
+    mutable int quadrupleClickY[NUM_MOUSE_BUTTONS];
+
+  public:
+
+    virtual bool doubleClicked(GUIMouseButton button) const;
+    virtual bool tripleClicked(GUIMouseButton button) const;
+    virtual bool quadrupleClicked(GUIMouseButton button) const;
 };
 
 enum Sticky //how to resize child widget with master widget
@@ -106,24 +147,20 @@ extern Pos<Sticky> STICKYRELATIVETOP; //relative in vertical direction, follows 
 extern Pos<Sticky> STICKYRELATIVERIGHT; //relative in horizontal direction, follows right side in vertical direction
 extern Pos<Sticky> STICKYRELATIVEBOTTOM; //relative in vertical direction, follows bottom side in horizontal direction
 
-const int NUM_MOUSE_BUTTONS = 2;
-
 struct MouseState
 {
-  bool downhere_bool1;
-  bool downhere_bool2;
-  bool justdown_prev;
-  bool justdownhere_prev;
-  bool justuphere_bool1;
-  bool justuphere_bool2;
-  bool grabbed_grabbed;
-  bool grabbed_prev;
+  unsigned short downhere_bool1 : 1;
+  unsigned short downhere_bool2 : 1;
+  unsigned short justdown_prev : 1;
+  unsigned short justdownhere_prev : 1;
+  unsigned short justuphere_bool1 : 1;
+  unsigned short justuphere_bool2 : 1;
+  unsigned short grabbed_grabbed : 1;
+  unsigned short grabbed_prev : 1;
   int grabx;
   int graby;
   int grabrelx;
   int grabrely;
-  int doubleClickState;
-  double doubleClickTime; //in seconds
   
   MouseState();
 };
@@ -136,15 +173,17 @@ class ElementShape //describes the shape and mouse handling in this shape
     int y0;
     int x1; //position of the bottom right corner of this element on screen
     int y1;
-    
-    double doubleClickTime; //maximum time for a doubleclick
+
+  private:
+    ////mouse related data
     MouseState _mouseState[NUM_MOUSE_BUTTONS];
-    MouseState mouse_state_for_containers; //for bookkeeping by containers that contain this element
+    MouseState mouse_state_for_containers; //for bookkeeping by containers that contain this element TODO: make container itself remember one per element
+    
+    bool mouseJustDownHere(bool& prevstate, const IGUIInput& input, GUIMouseButton button = GUI_LMB) const;
+    bool mouseJustDown(bool& prevstate, const IGUIInput& input, GUIMouseButton button = GUI_LMB) const; //generalized version with only boolean given
   
   protected:
-  
-    virtual bool mouseOverShape(const IGUIInput* input) const; //can be overridden for elements with different shape, e.g. circle, or the gui::Group which's shape is that of all elements in it
-    
+
   public:
     ElementShape();
     virtual ~ElementShape(){};
@@ -167,58 +206,54 @@ class ElementShape //describes the shape and mouse handling in this shape
     int getCenterY() const { return (y0 + y1) / 2; }
     int getRelCenterX() const { return (x1 - x0) / 2; } //the half of the size
     int getRelCenterY() const { return (y1 - y0) / 2; }
-
-    ////MOUSE RELATED STUFF
-    int mouseGetRelPosX(const IGUIInput* input) const; //returns relative mouse positions (relative to x and y of the elemnt)
-    int mouseGetRelPosY(const IGUIInput* input) const; //returns relative mouse positions (relative to x and y of the elemnt)
     
-    //these are virtual because other states can have an influence
-    virtual bool mouseOver(const IGUIInput* input) const; //mouse cursor over the element (and no other element lpiged by gui container above it)
+    virtual bool isInside(int x, int y) const; //Is point x, y inside this element? Can be overridden for elements with different shape, e.g. circle, or the gui::Group which's shape is that of all elements in it
+
+    ////mouse related functions
+    
+    //these are virtual because other states can have an influence (e.g. due to other elements in Z order on top of it...)
     virtual bool mouseGrabbable() const { return true; }
     virtual bool mouseActive() const { return true; } //false if the element should not respond to "clicked", "pressed", etc..
-    
-    bool mouseDown(const IGUIInput* input, GUIMouseButton button = GUI_LMB) const; //mouse is over and down
-    bool mouseDownHere(MouseState& state, const IGUIInput* input, GUIMouseButton button = GUI_LMB) const; //mouse is over, down, and was pressed while it was on here
-    bool mouseDownHere(const IGUIInput* input, GUIMouseButton button = GUI_LMB);
-    bool mouseGrabbed(MouseState& state, const IGUIInput* input, GUIMouseButton button = GUI_LMB) const; //like mouseDownHere, but keeps returning true if you move the mouse away from the element while keeping button pressed
-    bool mouseGrabbed(const IGUIInput* input, GUIMouseButton button = GUI_LMB);
-    void mouseGrab(MouseState& state, const IGUIInput* input) const; //sets states as if element were grabbed
-    void mouseGrab(const IGUIInput* input, GUIMouseButton button = GUI_LMB);
-    void mouseUngrab(MouseState& state) const; //sets states as if element were not grabbed
-    void mouseUngrab(GUIMouseButton button = GUI_LMB);
-    
-    int mouseGetGrabX(const MouseState& state) const { return state.grabx; } //absolute location where you last started grabbing (x)
-    int mouseGetGrabX(GUIMouseButton button = GUI_LMB) const { return mouseGetGrabX(_mouseState[button]); }
-    int mouseGetGrabY(const MouseState& state) const { return state.graby; }
+    virtual bool mouseOver(const IGUIInput& input) const; //mouse cursor over the element (and no other element managed by gui container above it)
+
+    bool mouseDown(const IGUIInput& input, GUIMouseButton button = GUI_LMB) const; //mouse is over and down (does NOT return true if the mouse button is down but the mouse isn't inside this element)
+    bool mouseDownHere(const IGUIInput& input, GUIMouseButton button = GUI_LMB); //mouse is over, down, and was pressed while it was on here
+    bool mouseJustDown(const IGUIInput& input, GUIMouseButton button = GUI_LMB); //mouse down for the first time after being up or not over the element
+    bool mouseJustDownHere(const IGUIInput& input, GUIMouseButton button = GUI_LMB); //mouse down for the first time after being up, only returns true if the mouse was above it before you clicked already
+    bool mouseJustUpHere(const IGUIInput& input, GUIMouseButton button = GUI_LMB); //mouse up for first time after being down, and over the element (so if you have mouse down on element and move mouse away, this will NOT return true, only if you release mouse button while cursor is over it, and mousedownhere)
+    bool pressed(const IGUIInput& input, GUIMouseButton button = GUI_LMB); //mouseJustDown and active
+    bool clicked(const IGUIInput& input, GUIMouseButton button = GUI_LMB); //mouseJustUp and active
+
+    //these use info from IGUIInput that isn't remembered by each element, so you need to pass the IGUIInput when calling these
+    bool mouseScrollUp(const IGUIInput& input) const; //scrolled up while on this element
+    bool mouseScrollDown(const IGUIInput& input) const; //scrolled down while on this element
+    bool mouseDoubleClicked(const IGUIInput& input, GUIMouseButton button = GUI_LMB) const;
+    bool mouseTripleClicked(const IGUIInput& input, GUIMouseButton button = GUI_LMB) const;
+    bool mouseQuadrupleClicked(const IGUIInput& input, GUIMouseButton button = GUI_LMB) const;
+    int mouseGetRelPosX(const IGUIInput& input) const; //returns relative mouse positions (relative to x and y of the elemnt)
+    int mouseGetRelPosY(const IGUIInput& input) const; //returns relative mouse positions (relative to x and y of the elemnt)
+
+    //everything related to grabbing - position is needed for this, hence some functions require IGUIInput parameter
+    bool mouseGrabbed(const IGUIInput& input, GUIMouseButton button = GUI_LMB); //like mouseDownHere, but keeps returning true if you move the mouse away from the element while keeping button pressed
+    void mouseGrab(const IGUIInput& input, GUIMouseButton button = GUI_LMB); //sets states as if element were grabbed
+    void mouseUngrab(GUIMouseButton button = GUI_LMB); //sets states as if element were not grabbed
+    int mouseGetGrabX(GUIMouseButton button = GUI_LMB) const { return mouseGetGrabX(_mouseState[button]); } //absolute location where you last started grabbing (x)
     int mouseGetGrabY(GUIMouseButton button = GUI_LMB) const { return mouseGetGrabY(_mouseState[button]); }
-    int mouseGetRelGrabX(const MouseState& state) const { return state.grabrelx; } //relative location where you last started grabbing (x)
-    int mouseGetRelGrabX(GUIMouseButton button = GUI_LMB) const { return mouseGetRelGrabX(_mouseState[button]); }
-    int mouseGetRelGrabY(const MouseState& state) const { return state.grabrely; }
+    int mouseGetRelGrabX(GUIMouseButton button = GUI_LMB) const { return mouseGetRelGrabX(_mouseState[button]); } //relative location where you last started grabbing (x)
     int mouseGetRelGrabY(GUIMouseButton button = GUI_LMB) const { return mouseGetRelGrabY(_mouseState[button]); }
     
-    bool mouseJustDown(bool& prevstate, const IGUIInput* input, GUIMouseButton button = GUI_LMB) const; //generalized version with only boolean given
-    bool mouseJustDown(MouseState& state, const IGUIInput* input, GUIMouseButton button = GUI_LMB) const; //mouse down for the first time after being up or not over the element
-    bool mouseJustDown(const IGUIInput* input, GUIMouseButton button = GUI_LMB);
-    
-    bool mouseJustDownHere(bool& prevstate, const IGUIInput* input, GUIMouseButton button = GUI_LMB) const;
-    bool mouseJustDownHere(MouseState& state, const IGUIInput* input, GUIMouseButton button = GUI_LMB) const; //mouse down for the first time after being up, only returns true if the mouse was above it before you clicked already
-    bool mouseJustDownHere(const IGUIInput* input, GUIMouseButton button = GUI_LMB);
-    
-    bool mouseJustUpHere(MouseState& state, const IGUIInput* input, GUIMouseButton button = GUI_LMB) const; //mouse up for first time after being down, and over the element (so if you have mouse down on element and move mouse away, this will NOT return true, only if you release mouse button while cursor is over it, and mousedownhere)
-    bool mouseJustUpHere(const IGUIInput* input, GUIMouseButton button = GUI_LMB);
-    
-    bool pressed(const IGUIInput* input, GUIMouseButton button = GUI_LMB); //mouseJustDown and active
-    bool clicked(const IGUIInput* input, GUIMouseButton button = GUI_LMB); //mouseJustUp and active
-
-    bool mouseScrollUp(const IGUIInput* input) const; //scrolled up while on this element
-    bool mouseScrollDown(const IGUIInput* input) const; //scrolled down while on this element
-    
-    void setDoubleClickTime(double i_doubleClickTime) { doubleClickTime = i_doubleClickTime; }
-    double getDoubleClickTime() { return doubleClickTime; }
-    
-    //times are given in seconds
-    bool mouseDoubleClicked(MouseState& state, const IGUIInput* input, GUIMouseButton button = GUI_LMB) const; //double clicked on this element
-    bool mouseDoubleClicked(const IGUIInput* input, GUIMouseButton button = GUI_LMB);
+    //same mouse functions but with custom MouseState
+    bool mouseDownHere(MouseState& state, const IGUIInput& input, GUIMouseButton button = GUI_LMB) const;
+    bool mouseJustDown(MouseState& state, const IGUIInput& input, GUIMouseButton button = GUI_LMB) const;
+    bool mouseJustDownHere(MouseState& state, const IGUIInput& input, GUIMouseButton button = GUI_LMB) const;
+    bool mouseJustUpHere(MouseState& state, const IGUIInput& input, GUIMouseButton button = GUI_LMB) const;
+    bool mouseGrabbed(MouseState& state, const IGUIInput& input, GUIMouseButton button = GUI_LMB) const;
+    void mouseGrab(MouseState& state, const IGUIInput& input) const;
+    void mouseUngrab(MouseState& state) const;
+    int mouseGetGrabX(const MouseState& state) const { return state.grabx; }
+    int mouseGetGrabY(const MouseState& state) const { return state.graby; }
+    int mouseGetRelGrabX(const MouseState& state) const { return state.grabrelx; }
+    int mouseGetRelGrabY(const MouseState& state) const { return state.grabrely; }
     
     MouseState& getMouseStateForContainer() { return mouse_state_for_containers; }
 };

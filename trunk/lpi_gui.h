@@ -27,11 +27,13 @@ lpi_gui: an OpenGL GUI
 #define LPI_GUI_H_INCLUDED
 
 #include "lpi_gui_base.h"
-#include "lpi_gui_draw.h"
 
 #include "lpi_color.h"
 #include "lpi_texture.h"
 #include "lpi_text.h"
+
+#include "lpi_gui_drawer.h"
+#include "lpi_gui_drawer_gl.h" //TODO: make lpi_gui independent of this header inclusion
 
 
 namespace lpi
@@ -55,6 +57,7 @@ class InternalContainer //container inside elements, for elements that contain s
     void resize(const Pos<int>& oldPos, const Pos<int>& newPos); //this resizes the 2D size of elements, not the amount of elements
     void move(int x, int  y);
     void setElementOver(bool state); //this says to all elements whether or not another element is in front of it in Z order, causing mouse to not work
+    void setBasicMouseInfo(const IGUIInput& input);
 
     void addSubElement(Element* element, const Pos<Sticky>& sticky, Element* parent);
     void insertSubElement(size_t index, Element* element, const Pos<Sticky>& sticky, Element* parent);
@@ -76,7 +79,7 @@ class ToolTipManager //this is made to draw the tooltip at the very end to avoid
     
   public:
     void registerMe(const Element* element); //can register only one per frame (last one to register will get drawn); guiElements should do this in the draw function.
-    void draw(const IGUIInput* input) const; //this will call the drawTooltip function of the one registered element, call this after drawing all gui elements
+    void draw(const IGUIInput& input) const; //this will call the drawTooltip function of the one registered element, call this after drawing all gui elements
     void enableToolTips(bool set) { enabled = set; }
     ToolTipManager() : element(0), enabled(true) {}
 };
@@ -106,10 +109,6 @@ class Element : public ElementShape
 
     InternalContainer ic; //TODO: make this a pointer and use new and delete, to decrease memory size of elements that don't use the internal container
     
-    //these variables are set in handle() and can be used by drawWidget() to make your drawing dependent on the input given back then (many elements look different if the mouse is hovered above it)
-    //NOTE: elements that need more than the ones available here, can create similar members in themselves and give them the value in handleWidget()
-    bool draw_mouse_over;
-
     ////data for tooltip, TODO: move this to somewhere else
     std::string tooltip;
     bool tooltipenabled;
@@ -143,19 +142,19 @@ class Element : public ElementShape
     void totallyEnable() {visible = active = present = true;}
     
     ////mouse overrides
-    virtual bool mouseOver(const IGUIInput* input) const;
+    virtual bool mouseOver(const IGUIInput& input) const;
     virtual bool mouseGrabbable() const;
     virtual bool mouseActive() const { return active; }
     
     ////core functions of gui::Elements
-    void draw() const; //will draw the actual widget and do some other always-to-do stuff, do NOT override this function
-    virtual void drawWidget() const = 0; //called by draw(), this one can be overloaded for each widget defined below
-    void handle(const IGUIInput* input);
-    virtual void handleWidget(const IGUIInput* input);
+    void draw(IGUIDrawer& drawer) const; //will draw the actual widget and do some other always-to-do stuff, do NOT override this function
+    virtual void drawWidget(IGUIDrawer& drawer) const = 0; //called by draw(), this one can be overloaded for each widget defined below
+    void handle(const IGUIInput& input);
+    virtual void handleWidget(const IGUIInput& input);
     void move(int x, int y);
     virtual void moveWidget(int /*x*/, int /*y*/); //Override this if you have subelements, unless you use getAutoSubElement.
     
-    void autoActivate(const IGUIInput* input);
+    void autoActivate(const IGUIInput& input);
     
     void moveTo(int x, int y);
     void moveCenterTo(int x, int y);
@@ -175,7 +174,7 @@ class Element : public ElementShape
     ////optional tooltip. Drawing it must be controlled by a higher layer, e.g. see the Container's implementation. //TODO: make tooltip class and only have pointer to it here, being 0 if no tooltip, to decrease memory footprint of element, OR, store every info of the tooltip in ToolTipManager
     void addToolTip(const std::string& text, ToolTipManager* tooltipmanager = &defaultTooltipManager) { tooltipenabled = true; tooltip = text; this->tooltipmanager = tooltipmanager;}
     void removeToolTip() { tooltipenabled = false; }
-    void drawToolTip(const IGUIInput* input) const; //TODO: move this function to ToolTipManager
+    void drawToolTip(const IGUIInput& input) const; //TODO: move this function to ToolTipManager
     
     virtual void setElementOver(bool state); //ALL gui types that have gui elements inside of them, must set elementOver of all gui elements inside of them too! ==> override this virtual function for those. Override this if you have subelements, unless you use getAutoSubElement.
     bool hasElementOver() const;
@@ -206,7 +205,7 @@ class Label //convenience class: elements that want an optional label (e.g. chec
 //Dummy = exactly the same as Element but not abstract, nothing implemented except pure virtuals of Element
 class Dummy : public Element
 {
-  void drawWidget() const {}
+  void drawWidget(IGUIDrawer& /*drawer*/) const {}
 };
 
 class Button : public Element
@@ -214,7 +213,7 @@ class Button : public Element
   /*
   the button has 3 separate graphical elements:
   *) text
-  *) an image
+  *) an image (or two)
   *) a panel (resisable rectangle with sides)
   */
   
@@ -287,8 +286,12 @@ class Button : public Element
     void makeTextPanel(int x, int y, const std::string& text = "", int sizex = 64, int sizey = 24, //basic properties + actual text
                        const GuiSet* set = &builtInGuiSet); //panel
 
-    virtual void drawWidget() const;
-    virtual void handleWidget(const IGUIInput* input);
+    virtual void drawWidget(IGUIDrawer& drawer) const;
+    virtual void handleWidget(const IGUIInput& input);
+    
+    //mouse functions without having to give the IGUIInput
+    /*bool clicked(GUIMouseButton button = GUI_LMB);
+    bool pressed(GUIMouseButton button = GUI_LMB);*/
     
   private:
     MouseState button_drawing_mouse_test;
@@ -307,8 +310,8 @@ class Scrollbar : public Element
     int getSliderStart() const;
     int getSliderEnd() const;
     
-    virtual void handleWidget(const IGUIInput* input);
-    virtual void drawWidget() const;
+    virtual void handleWidget(const IGUIInput& input);
+    virtual void drawWidget(IGUIDrawer& drawer) const;
 
     Direction direction; //0 = vertical, 1 = horizontal
     double scrollSize; //length of the total scrollbar (in steps)
@@ -348,7 +351,7 @@ class Scrollbar : public Element
                         const GuiSet* set = &builtInGuiSet, int speedMode = 1);
     void showValue(int x, int y, const Markup& valueMarkup, int type); //type: 0=don't, 1=float, 2=int
     
-    void scroll(const IGUIInput* input, int dir); //make it scroll from an external command
+    void scroll(const IGUIInput& input, int dir); //make it scroll from an external command
     
     double offset; //used as an offset of ScrollPos to get/set the scroll value with offset added with the functions below
     double getValue() const;
@@ -383,8 +386,8 @@ class ScrollbarPair : public Element
     
     const Texture* txCorner; //the corner piece between the two scrollbars
         
-    virtual void handleWidget(const IGUIInput* input);
-    virtual void drawWidget() const;
+    virtual void handleWidget(const IGUIInput& input);
+    virtual void drawWidget(IGUIDrawer& drawer) const;
     
     bool venabled;
     bool henabled;
@@ -425,8 +428,8 @@ class Slider : public Element
     double screenPosToScrollPos(int screenPos);
     int scrollPosToScreenPos(double scrollPos);
 
-    virtual void drawWidget() const;
-    virtual void handleWidget(const IGUIInput* input);
+    virtual void drawWidget(IGUIDrawer& drawer) const;
+    virtual void handleWidget(const IGUIInput& input);
 };
 
 class Invisible : public Element
@@ -434,7 +437,7 @@ class Invisible : public Element
   public:
   void make(int x0, int y0, int x1, int y1);
 
-  virtual void drawWidget() const;
+  virtual void drawWidget(IGUIDrawer& drawer) const;
 };
 
 class Container : public Element
@@ -444,13 +447,13 @@ class Container : public Element
 
   protected:
     
-    void drawElements() const;
+    void drawElements(IGUIDrawer& drawer) const;
     
   public:
     
     Container();
-    virtual void handleWidget(const IGUIInput* input); //you're supposed to handle() before you draw()
-    virtual void drawWidget() const;
+    virtual void handleWidget(const IGUIInput& input); //you're supposed to handle() before you draw()
+    virtual void drawWidget(IGUIDrawer& drawer) const;
     
     //push the element without affecting absolute position
     void pushTop(Element* element, const Pos<Sticky>& sticky = STICKYTOPLEFT);
@@ -502,8 +505,8 @@ class ScrollElement : public Element //a.k.a "ScrollZone"
     Element* element;
   
     ScrollElement();
-    virtual void handleWidget(const IGUIInput* input); //you're supposed to handle() before you draw()
-    virtual void drawWidget() const;
+    virtual void handleWidget(const IGUIInput& input); //you're supposed to handle() before you draw()
+    virtual void drawWidget(IGUIDrawer& drawer) const;
     virtual void resizeWidget(const Pos<int>& newPos);
     virtual void moveWidget(int x, int y);
     virtual void setElementOver(bool state);
@@ -533,7 +536,7 @@ class ScrollElement : public Element //a.k.a "ScrollZone"
     
   protected:
   
-    virtual bool mouseInVisibleZone(const IGUIInput* input) const; //is the mouse in the zone where elements are drawn
+    virtual bool mouseInVisibleZone(const IGUIInput& input) const; //is the mouse in the zone where elements are drawn
     
     void initBars();
     void updateBars();
@@ -543,7 +546,7 @@ class ScrollElement : public Element //a.k.a "ScrollZone"
 class Group : public Container
 {
   public:
-    virtual bool mouseOverShape(const IGUIInput* input) const; //difference with the mouseOverShape from other guielements, is that it checks all sub elements, not itself, for mouseovers
+    virtual bool isInside(int x, int y) const; //difference with the isInside from other guielements, is that it checks all sub elements, not itself, for mouseovers
 };
 
 class Panel : public Element
@@ -561,7 +564,7 @@ class Panel : public Element
                       const Texture* t00, const ColorRGB& colorMod = RGB_White);
     void setSize(int x, int y, int sizex, int sizey);
 
-    virtual void drawWidget() const;
+    virtual void drawWidget(IGUIDrawer& drawer) const;
 };
 
 class Rule : public Element
@@ -584,7 +587,7 @@ class Rule : public Element
   
   void setSize(int x, int y, int length);
 
-  virtual void drawWidget() const;
+  virtual void drawWidget(IGUIDrawer& drawer) const;
 };
 
 //Window is a container for other gui elements that'll move and get drawn at the command of the window
@@ -593,17 +596,13 @@ class Window : public Element
   protected:
     Container container;
     ScrollElement scroll;
+    ColorRGB colorMod;
     
   public:
-    void disableCenterTexture() { panel.enableCenter = false; }
-    void setFillColor(const ColorRGB& color) { panel.fillColor = color; }
   
     Window();
     
-    ////obligatory part "panel"
-    BackPanel panel;
-    
-    ////obligatory part "container"
+    ////container
     int getContainerLowest() const;
     int getContainerHighest() const;
     int getContainerLeftmost() const;
@@ -685,9 +684,9 @@ class Window : public Element
     void setSize(int x, int y, int sizex, int sizey);
     
     ////overloaded functions
-    virtual void drawWidget() const;
+    virtual void drawWidget(IGUIDrawer& drawer) const;
     
-    virtual void handleWidget(const IGUIInput* input);
+    virtual void handleWidget(const IGUIInput& input);
     virtual bool isContainer() const;
     
     ////useful for the close button
@@ -695,7 +694,7 @@ class Window : public Element
     void unClose() { closed = 0; totallyEnable(); }
     void toggleClose() { if(closed) unClose(); else close(); }
     
-    void setColor(const ColorRGB& color) { panel.colorMod = color; }
+    void setColor(const ColorRGB& color) { colorMod = color; }
 };
 
 //The Checkbox
@@ -729,8 +728,8 @@ class Checkbox : public Element, public Label
     Checkbox();
     void make(int x, int y, bool checked = 0, const GuiSet* set = &builtInGuiSet, int toggleOnMouseUp = 0);
     void addText(const std::string& text, const Markup& markup = TS_W);
-    virtual void drawWidget() const; //also handles it by calling handle(): toggles when mouse down or not
-    virtual void handleWidget(const IGUIInput* input);
+    virtual void drawWidget(IGUIDrawer& drawer) const; //also handles it by calling handle(): toggles when mouse down or not
+    virtual void handleWidget(const IGUIInput& input);
 
     void setText(const std::string& newText);
     const std::string& getText() const { return text; }
@@ -779,8 +778,8 @@ class NState : public Element, public Label
     NState();
     void make(int x, int y, int toggleOnMouseUp = 0);
     void addState(Texture* texture, const ColorRGB& colorMod = RGB_White, const std::string& text = "", const Markup& markup = TS_W);
-    virtual void drawWidget() const; //also handles it by calling handle(): toggles when mouse down or not
-    virtual void handleWidget(const IGUIInput* input);
+    virtual void drawWidget(IGUIDrawer& drawer) const; //also handles it by calling handle(): toggles when mouse down or not
+    virtual void handleWidget(const IGUIInput& input);
 };
 
 //The bulletlist, a list of checkboxes where only one can be selected
@@ -791,8 +790,8 @@ class BulletList : public Element
     Checkbox prototype;
     
     BulletList();
-    virtual void drawWidget() const;
-    virtual void handleWidget(const IGUIInput* input);
+    virtual void drawWidget(IGUIDrawer& drawer) const;
+    virtual void handleWidget(const IGUIInput& input);
     void make(int x, int y, unsigned long amount, int xDiff, int yDiff, const GuiSet* set = &builtInGuiSet); //diff = the location difference between successive checkboxes
     void make(int x, int y, unsigned long amount, int xDiff, int yDiff, unsigned long amountx, const GuiSet* set = &builtInGuiSet); //make in 2D pattern
     void setCorrectSize();
@@ -815,7 +814,7 @@ class Text : public Element
   public:
     bool useNewLine;
     Markup markup;
-    virtual void drawWidget() const;
+    virtual void drawWidget(IGUIDrawer& drawer) const;
     Text();
     void make(int x = 0, int y = 0, const std::string& text = "", const Markup& markup = TS_W);
     void setText(const std::string& text);
@@ -829,7 +828,7 @@ class Image : public Element
   public:
     Texture* image;
     ColorRGB colorMod;
-    virtual void drawWidget() const;
+    virtual void drawWidget(IGUIDrawer& drawer) const;
     Image();
     void make(int x, int y, Texture* image=&builtInTexture[37], const ColorRGB& colorMod = RGB_White);
     void make(int x, int y, int sizex, int sizey, Texture* image=&builtInTexture[37], const ColorRGB& colorMod = RGB_White);

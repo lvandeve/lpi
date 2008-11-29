@@ -12,15 +12,55 @@ namespace lpi
 namespace gui
 {
 
+class GUIInputDebug : public GUIInputSDL
+{
+  private:
+    int x;
+    int y;
+    bool lmb;
+    bool rmb;
+  public:
+    void debugSetMousePos(int x, int y)
+    {
+      this->x = x;
+      this->y = y;
+    }
+    void debugSetLMB(bool set)
+    {
+      this->lmb = set;
+    }
+    void debugSetRMB(bool set)
+    {
+      this->rmb = set;
+    }
+  public:
+    //check position of mouse
+    virtual int mouseX() const
+    {
+      return x;
+    }
+    virtual int mouseY() const
+    {
+      return y;
+    }
+    //check the state of the 3 buttons of mouse
+    virtual bool mouseButtonDown(GUIMouseButton button) const
+    {
+      if(button == GUI_LMB)
+        return lmb;
+      else return rmb;
+    }
+};
+
 #define LUT_MY_RESET \
 {\
-  debugSetLMB(0);\
-  debugSetRMB(0);\
-  debugSetMousePos(0, 0);\
+  testinput.debugSetLMB(0);\
+  testinput.debugSetRMB(0);\
+  testinput.debugSetMousePos(0, 0);\
 }
 
-GUIInputSDL* testinput = &lpi::gGUIInput;
-  
+GUIInputDebug testinput;
+
 void unitTest()
 {
   lpi::screen(1024, 768, 0, "Unit Testing...");
@@ -40,30 +80,39 @@ void unitTest()
   LUT_CASE("mouseOver and mouseDown on Dummy")
     Dummy dummy;
     dummy.resize(0, 0, 50, 50);
-    debugSetMousePos(100, 100);
+    testinput.debugSetMousePos(100, 100);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!dummy.mouseOver(testinput))
-    debugSetMousePos(1, 1);
+    testinput.debugSetMousePos(1, 1);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(dummy.mouseOver(testinput))
     LUT_SUB_ASSERT_TRUE(!dummy.mouseDown(testinput))
-    debugSetLMB(1);
+    testinput.debugSetLMB(1);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(dummy.mouseDown(testinput))
-    debugSetMousePos(100, 100);
+    testinput.debugSetMousePos(100, 100);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!dummy.mouseDown(testinput))
   LUT_CASE_END
   
   LUT_CASE("mouseJustDown")
     Dummy dummy;
     dummy.resize(0, 0, 50, 50);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDown(testinput))
-    debugSetMousePos(100, 100);
-    debugSetLMB(1);
+    testinput.debugSetMousePos(100, 100);
+    testinput.debugSetLMB(1);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDown(testinput))
-    debugSetMousePos(20, 20);
+    testinput.debugSetMousePos(20, 20);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(dummy.mouseJustDown(testinput)) //the mouse moved over the element, the mouse button was already down since being outside the element, so it's now down over the element for the first time
     LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDown(testinput)) //now it may not return true anymore!
-    debugSetLMB(0);
+    testinput.debugSetLMB(0);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDown(testinput))
-    debugSetLMB(1);
+    testinput.debugSetLMB(1);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(dummy.mouseJustDown(testinput))
     LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDown(testinput)) //now it may not return true anymore!
   LUT_CASE_END
@@ -71,15 +120,20 @@ void unitTest()
   LUT_CASE("mouseJustDownHere")
     Dummy dummy;
     dummy.resize(0, 0, 50, 50);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDownHere(testinput))
-    debugSetMousePos(100, 100);
-    debugSetLMB(1);
+    testinput.debugSetMousePos(100, 100);
+    testinput.debugSetLMB(1);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDownHere(testinput))
-    debugSetMousePos(20, 20);
+    testinput.debugSetMousePos(20, 20);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDownHere(testinput))
-    debugSetLMB(0);
+    testinput.debugSetLMB(0);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDownHere(testinput))
-    debugSetLMB(1);
+    testinput.debugSetLMB(1);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(dummy.mouseJustDownHere(testinput))
     LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDownHere(testinput)) //now it may not return true anymore!
   LUT_CASE_END
@@ -97,16 +151,17 @@ void unitTest()
     int my = w.top.getCenterY();
     c.handle(testinput);c.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!w.top.mouseJustDownHere(testinput))
-    debugSetMousePos(100, 100);
-    debugSetLMB(1);
+    testinput.debugSetMousePos(100, 100);
+    testinput.debugSetLMB(1);
     c.handle(testinput);c.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!w.top.mouseJustDownHere(testinput))
-    debugSetMousePos(mx, my);
-    LUT_SUB_ASSERT_TRUE(!w.top.mouseJustDownHere(testinput))
-    debugSetLMB(0);
+    testinput.debugSetMousePos(mx, my);
     c.handle(testinput);c.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!w.top.mouseJustDownHere(testinput))
-    debugSetLMB(1);
+    testinput.debugSetLMB(0);
+    c.handle(testinput);c.handle(testinput);
+    LUT_SUB_ASSERT_TRUE(!w.top.mouseJustDownHere(testinput))
+    testinput.debugSetLMB(1);
     c.handle(testinput);c.handle(testinput);
     LUT_SUB_ASSERT_TRUE(w.top.mouseJustDownHere(testinput))
     LUT_SUB_ASSERT_TRUE(!w.top.mouseJustDownHere(testinput)) //now it may not return true anymore!
@@ -115,32 +170,44 @@ void unitTest()
   LUT_CASE("mouseGrabbed")
     Dummy dummy;
     dummy.resize(0, 0, 50, 50);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!dummy.mouseGrabbed(testinput)) //mouse not down yet
-    debugSetMousePos(10, 10);
-    debugSetLMB(1);
+    testinput.debugSetMousePos(10, 10);
+    testinput.debugSetLMB(1);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(dummy.mouseGrabbed(testinput)) //mouse down on element so it's grabbed
-    debugSetMousePos(100, 100);
+    testinput.debugSetMousePos(100, 100);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(dummy.mouseGrabbed(testinput)) //mouse moved away but still down ==> still grabbed
     LUT_SUB_ASSERT_TRUE(dummy.mouseGetGrabX() == 10 && dummy.mouseGetGrabY() == 10)
-    debugSetLMB(0);
+    testinput.debugSetLMB(0);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!dummy.mouseGrabbed(testinput)) //mouse button up ==> not grabbed anymore
-    debugSetLMB(1);
+    testinput.debugSetLMB(1);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!dummy.mouseGrabbed(testinput)) //mouse down somewhere else not on element ==> not grabbed
-    debugSetMousePos(15, 15);
+    testinput.debugSetMousePos(15, 15);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!dummy.mouseGrabbed(testinput)) //mouse still down and moving over element, but it wasn't down HERE, so not grabbed
     /*//now repeat the test to see if states can properly be reused
-    debugSetLMB(0);
+    testinput.debugSetLMB(0);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!dummy.mouseGrabbed(testinput))
-    debugSetLMB(1);
+    testinput.debugSetLMB(1);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(dummy.mouseGrabbed(testinput)) //mouse down on element so it's grabbed
-    debugSetMousePos(100, 100);
+    testinput.debugSetMousePos(100, 100);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(dummy.mouseGrabbed(testinput)) //mouse moved away but still down ==> still grabbed
     LUT_SUB_ASSERT_TRUE(dummy.mouseGetGrabX() == 15 && dummy.mouseGetGrabY() == 15)
-    debugSetLMB(0);
+    testinput.debugSetLMB(0);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!dummy.mouseGrabbed(testinput)) //mouse button up ==> not grabbed anymore
-    debugSetLMB(1);
+    testinput.debugSetLMB(1);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!dummy.mouseGrabbed(testinput)) //mouse down somewhere else not on element ==> not grabbed
-    debugSetMousePos(11, 11);
+    testinput.debugSetMousePos(11, 11);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!dummy.mouseGrabbed(testinput)) //mouse still down and moving over element, but it wasn't down HERE, so not grabbed*/
   LUT_CASE_END
   
@@ -159,18 +226,18 @@ void unitTest()
  
     c.handle(testinput);c.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!w.top.mouseGrabbed(testinput)) //mouse not down yet
-    debugSetMousePos(mx, my);
-    debugSetLMB(1);
+    testinput.debugSetMousePos(mx, my);
+    testinput.debugSetLMB(1);
     c.handle(testinput);c.handle(testinput);
     LUT_SUB_ASSERT_TRUE(w.top.mouseGrabbed(testinput)) //mouse down on element so it's grabbed
-    debugSetMousePos(200, 200);
+    testinput.debugSetMousePos(200, 200);
     c.handle(testinput);c.handle(testinput);
     LUT_SUB_ASSERT_TRUE(w.top.mouseGrabbed(testinput)) //mouse moved away but still down ==> still grabbed
     LUT_SUB_ASSERT_TRUE(w.top.mouseGetGrabX() == mx && w.top.mouseGetGrabY() == my)
-    debugSetLMB(0);
+    testinput.debugSetLMB(0);
     c.handle(testinput);c.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!w.top.mouseGrabbed(testinput)) //mouse button up ==> not grabbed anymore
-    debugSetLMB(1);
+    testinput.debugSetLMB(1);
     c.handle(testinput);c.handle(testinput);
     LUT_SUB_ASSERT_TRUE(w.top.mouseGrabbed(testinput)) //mouse down somewhere else not on element ==> normally not grabbed, BUT, the window moves!! ==> under mouse and grabbed again
   LUT_CASE_END
@@ -190,8 +257,8 @@ void unitTest()
     int wx1 = w.getX0();
     int wy1 = w.getY0();
     
-    debugSetMousePos(mx, my); //mouse above top bar of the window
-    debugSetLMB(1);
+    testinput.debugSetMousePos(mx, my); //mouse above top bar of the window
+    testinput.debugSetLMB(1);
     c.handle(testinput);c.handle(testinput);
     
     int wx2 = w.getX0();
@@ -199,7 +266,7 @@ void unitTest()
     
     LUT_SUB_ASSERT_TRUE(wx1 == wx2 && wy1 == wy2)
     
-    debugSetMousePos(mx + 100, my + 50);
+    testinput.debugSetMousePos(mx + 100, my + 50);
     c.handle(testinput);c.handle(testinput);
     int wx3 = w.getX0();
     int wy3 = w.getY0();
@@ -213,10 +280,12 @@ void unitTest()
   LUT_CASE("mouse independence")
     Dummy dummy;
     dummy.resize(0, 0, 50, 50);
-    debugSetMousePos(10, 10); //mouse above
+    testinput.debugSetMousePos(10, 10); //mouse above
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDown(testinput))
     LUT_SUB_ASSERT_TRUE(!dummy.mouseJustDownHere(testinput))
-    debugSetLMB(1); //press button
+    testinput.debugSetLMB(1); //press button
+    dummy.handle(testinput);
     //now both must return true
     LUT_SUB_ASSERT_TRUE(dummy.mouseJustDown(testinput))
     LUT_SUB_ASSERT_TRUE(dummy.mouseJustDownHere(testinput))
@@ -229,7 +298,8 @@ void unitTest()
   LUT_CASE("mouseOver when active and not active")
     Dummy dummy;
     dummy.resize(0, 0, 50, 50);
-    debugSetMousePos(1, 1);
+    testinput.debugSetMousePos(1, 1);
+    dummy.handle(testinput);
     LUT_SUB_ASSERT_TRUE(dummy.mouseOver(testinput))
     dummy.setElementOver(true);
     LUT_SUB_ASSERT_TRUE(!dummy.mouseOver(testinput))
@@ -247,31 +317,33 @@ void unitTest()
     LUT_SUB_ASSERT_TRUE(!line.isActive())
     
     //move mouse above it and click
-    debugSetMousePos(1, 1);
-    debugSetLMB(1);
+    testinput.debugSetMousePos(1, 1);
+    testinput.debugSetLMB(1);
     line.handle(testinput);
     //it must be active now!
     LUT_SUB_ASSERT_TRUE(line.isActive())
     
     //now release the mouse button
-    debugSetLMB(0);
+    testinput.debugSetLMB(0);
     line.handle(testinput);
     //it should still be active!
     LUT_SUB_ASSERT_TRUE(line.isActive())
     
     //move mouse away
-    debugSetMousePos(100, 100);
+    testinput.debugSetMousePos(100, 100);
     line.handle(testinput);
     //it should still be active!
     LUT_SUB_ASSERT_TRUE(line.isActive())
     
     //move mouse away from it and click
-    debugSetMousePos(100, 100);
-    debugSetLMB(1);
+    testinput.debugSetMousePos(100, 100);
+    testinput.debugSetLMB(1);
     line.handle(testinput);
     //it may not be active anymore after clicking on a location outside (???????)
     LUT_SUB_ASSERT_TRUE(!line.isActive())
   LUT_CASE_END
+  
+  
   LUT_CASE("selfActivate of InputLine in Window")
     Container c;
     Window w;
@@ -287,7 +359,7 @@ void unitTest()
     LUT_SUB_ASSERT_TRUE(!line.isActive())
     
     //now a little test to see if it's at the correct position for these tests below
-    debugSetMousePos(line.getCenterX(), line.getCenterY());
+    testinput.debugSetMousePos(line.getCenterX(), line.getCenterY());
     line.setActive(true);
     line.setElementOver(false);
     LUT_SUB_ASSERT_TRUE(line.mouseOver(testinput))
@@ -295,27 +367,27 @@ void unitTest()
     line.setActive(false);
     
     //move mouse above it and click
-    debugSetMousePos(line.getCenterX(), line.getCenterY());
-    debugSetLMB(1);
+    testinput.debugSetMousePos(line.getCenterX(), line.getCenterY());
+    testinput.debugSetLMB(1);
     c.handle(testinput);
     //it must be active now!
     LUT_SUB_ASSERT_TRUE(line.isActive())
     
     //now release the mouse button
-    debugSetLMB(0);
+    testinput.debugSetLMB(0);
     c.handle(testinput);
     //it should still be active!
     LUT_SUB_ASSERT_TRUE(line.isActive())
     
     //move mouse away
-    debugSetMousePos(100, 100);
+    testinput.debugSetMousePos(100, 100);
     c.handle(testinput);
     //it should still be active!
     LUT_SUB_ASSERT_TRUE(line.isActive())
     
     //move mouse away from it and click
-    debugSetMousePos(100, 100);
-    debugSetLMB(1);
+    testinput.debugSetMousePos(100, 100);
+    testinput.debugSetLMB(1);
     c.handle(testinput);
     //it may not be active anymore after clicking on a location outside (???????)
     LUT_SUB_ASSERT_TRUE(!line.isActive())
@@ -336,16 +408,20 @@ void unitTest()
     dummy2.resize(0, 0, 50, 50);
     w.pushTopAt(&dummy2, 0, 0);
     
-    debugSetMousePos(dummy1.getCenterX(), dummy1.getCenterY()); //doesn't matter if you take center of dummy1 or dummy2, both are exactly at same position
+    testinput.debugSetMousePos(dummy1.getCenterX(), dummy1.getCenterY()); //doesn't matter if you take center of dummy1 or dummy2, both are exactly at same position
     
     dummy1.totallyEnable();
     dummy2.totallyDisable();
+    
+    c.handle(testinput);
     
     LUT_SUB_ASSERT_TRUE(dummy1.mouseOver(testinput))
     LUT_SUB_ASSERT_TRUE(!dummy2.mouseOver(testinput))
     
     dummy1.totallyDisable();
     dummy2.totallyEnable();
+    
+    c.handle(testinput);
     
     LUT_SUB_ASSERT_TRUE(!dummy1.mouseOver(testinput))
     LUT_SUB_ASSERT_TRUE(dummy2.mouseOver(testinput))
@@ -364,15 +440,13 @@ void unitTest()
     int my = w.top.getCenterY();
     
     //grab the window
-    debugSetMousePos(mx, my);
-    debugSetLMB(1);
-    
-    c.handle(testinput);
+    testinput.debugSetMousePos(mx, my);
+    testinput.debugSetLMB(1);
+    c.handle(testinput);c.handle(testinput);
     
     //move
-    debugSetMousePos(200, 200);
-    
-    c.handle(testinput);
+    testinput.debugSetMousePos(200, 200);
+    c.handle(testinput);c.handle(testinput);
     
     //now the window must still be below the mouse
     LUT_SUB_ASSERT_TRUE(w.mouseOver(testinput))
@@ -398,15 +472,15 @@ void unitTest()
     int by = B.top.getCenterY();
     
     //grab the window A
-    debugSetMousePos(ax, ay);
-    debugSetLMB(1);
+    testinput.debugSetMousePos(ax, ay);
+    testinput.debugSetLMB(1);
     
-    c.handle(testinput);
+    c.handle(testinput);c.handle(testinput);
     
     //move it over window B
-    debugSetMousePos(bx, by);
+    testinput.debugSetMousePos(bx, by);
     
-    c.handle(testinput);
+    c.handle(testinput);c.handle(testinput);
     
     //now window A must be over window B, so window A must have mouseOver, window B not
     
@@ -428,12 +502,30 @@ void unitTest()
     int my = w.top.getCenterY();
     
     //grab the window
-    debugSetMousePos(mx, my);
-    debugSetLMB(1);
+    testinput.debugSetMousePos(mx, my);
+    testinput.debugSetLMB(1);
     
     c.handle(testinput);
     
     LUT_SUB_ASSERT_TRUE(w.getX0() == 0 && w.getY0() == 0); //NOT shifted over two pixels
+  LUT_CASE_END
+  
+  //two things on a container, both at the same location, first the one is totallyEnabled and the other totallyDisabled, then vica versa, then each time only the enabled one may return true to mouseOver
+  LUT_CASE("mouseOver works in nested containers")
+    Container c;
+    
+    Window w; //window is nested container in c
+    w.make(0, 0, 100, 100);
+    c.pushTopAt(&w, 0, 0);
+    
+    Dummy dummy;
+    dummy.resize(0, 0, 50, 50);
+    w.pushTopAt(&dummy, 0, 0);
+    
+    testinput.debugSetMousePos(dummy.getCenterX(), dummy.getCenterY());
+    c.handle(testinput); //handle only ONCE, no multiple times to make things "settle"
+    
+    LUT_SUB_ASSERT_TRUE(dummy.mouseOver(testinput)) //the mouse really is over the dummy, and we called handle on the top container so that all input is up to date, so mouseOver of the nested element in it should return true
   LUT_CASE_END
 
   LUT_END_UNIT_TEST

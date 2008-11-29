@@ -51,9 +51,11 @@ gprof > gprof.txt
 #include "lpi_gui_text.h"
 #include "lpi_gui_ex.h"
 #include "lpi_gui_input_sdl.h"
+#include "lpi_gui_drawer_gl.h"
 #include "lpi_draw2dgl.h"
 #include "lpi_audio.h"
 #include "lpi_bignums.h"
+#include "lpi_math.h"
 #include "lpi_tools.h"
 #include "lpi_gl.h"
 #include "lpi_gui_unittest.h"
@@ -64,19 +66,80 @@ gprof > gprof.txt
 #include <iostream>
 #include <cmath>
 
-// class Test : public lpi::gui::Window
-// {
-//   public:
-//   Test()
-//   {
-//     make(10, 100, 200, 200);
-//     addTop();
-//   }
-// };
+static const int width = 1024;
+static const int height = 768;
+
+struct SpawnText
+{
+  double x;
+  double y;
+  double vx;
+  double vy;
+  std::string text;
+  double prev_time;
+  lpi::ColorRGB color;
+  
+  SpawnText(std::string text, double x, double y, const lpi::ColorRGB& color = lpi::RGB_White)
+  : x(x), y(y), text(text), prev_time(lpi::getSeconds()), color(color)
+  {
+    vx = lpi::getRandom(-1.0, 1.0);
+    vy = lpi::getRandom(-1.0, 1.0);
+    double len = std::sqrt(vx*vx+vy*vy);
+    vx /= len;
+    vy /= len;
+    vx *= 100;
+    vy *= 100;
+  }
+  
+  void draw()
+  {
+    lpi::print(text, (int)x, (int)y, color);
+  }
+  
+  void handle()
+  {
+    double dt = lpi::getSeconds() - prev_time;
+    y += vy * (dt);
+    x += vx * (dt);
+    vy += 200.0 * dt;
+    prev_time = lpi::getSeconds();
+  }
+};
+
+struct SpawnTexts
+{
+  std::vector<SpawnText*> spawns;
+  
+  void addSpawn(const std::string& text, int x, int y, const lpi::ColorRGB& color = lpi::RGB_White)
+  {
+    spawns.push_back(new SpawnText(text, (double)x, (double)y, color));
+  }
+  
+  void draw()
+  {
+    for(size_t i = 0; i < spawns.size(); i++)
+      spawns[i]->draw();
+  }
+  
+  void handle()
+  {
+    for(size_t i = 0; i < spawns.size(); i++)
+    {
+      spawns[i]->handle();
+      if(spawns[i]->x < 0 || spawns[i]->x > width || spawns[i]->y < 0 || spawns[i]->y > height)
+      {
+        delete spawns[i];
+        spawns.erase(spawns.begin() + i);
+      }
+    }
+  }
+};
+
+SpawnTexts spawns;
 
 int main(int, char*[]) //the arguments have to be given here, or DevC++ can't link to SDL for some reason
 {
-  lpi::screen(1024, 768, 0, "lpi GUI demo");
+  lpi::screen(width, height, 0, "lpi GUI demo");
   
   lpi::gui::Container c;
   
@@ -153,15 +216,32 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     
     lpi::gui::builtInTexture[37].draw(0, 50);
     
-    c.draw();
-    c.handle(&lpi::gGUIInput);
+    c.draw(lpi::gGUIDrawer);
+    c.handle(lpi::gGUIInput);
+    
+    spawns.draw();
+    spawns.handle();
     
     if(wcb.checked) w1.addScrollbars();
     else w1.removeScrollbars();
     
-    if(sound_button.pressed(&lpi::gGUIInput)) lpi::audioPlay(sound);
+    if(sound_button.pressed(lpi::gGUIInput)) lpi::audioPlay(sound);
     
-    if(tb_unittest.pressed(&lpi::gGUIInput)) lpi::gui::unitTest();
+    if(tb_unittest.pressed(lpi::gGUIInput)) lpi::gui::unitTest();
+    
+    //if(wb.mouseJustOver(lpi::gGUIInput)) spawns.addSpawn("just over", lpi::globalMouseX, lpi::globalMouseY);
+    if(wb.pressed(lpi::gGUIInput)) spawns.addSpawn("pressed", lpi::globalMouseX, lpi::globalMouseY);
+    if(wb.clicked(lpi::gGUIInput)) spawns.addSpawn("clicked", lpi::globalMouseX, lpi::globalMouseY);
+    if(wb.mouseDoubleClicked(lpi::gGUIInput)) spawns.addSpawn("double clicked", lpi::globalMouseX, lpi::globalMouseY);
+    if(wb.mouseTripleClicked(lpi::gGUIInput)) spawns.addSpawn("triple clicked", lpi::globalMouseX, lpi::globalMouseY, lpi::RGB_Yellow);
+    if(wb.mouseQuadrupleClicked(lpi::gGUIInput)) spawns.addSpawn("quadruple clicked", lpi::globalMouseX, lpi::globalMouseY, lpi::RGB_Lightred);
+    if(wb.pressed(lpi::gGUIInput, lpi::gui::GUI_RMB)) spawns.addSpawn("right pressed", lpi::globalMouseX, lpi::globalMouseY);
+    if(wb.clicked(lpi::gGUIInput, lpi::gui::GUI_RMB)) spawns.addSpawn("right clicked", lpi::globalMouseX, lpi::globalMouseY);
+    if(wb.mouseDoubleClicked(lpi::gGUIInput, lpi::gui::GUI_RMB)) spawns.addSpawn("right double clicked", lpi::globalMouseX, lpi::globalMouseY);
+    if(wb.mouseTripleClicked(lpi::gGUIInput, lpi::gui::GUI_RMB)) spawns.addSpawn("right triple clicked", lpi::globalMouseX, lpi::globalMouseY, lpi::RGB_Yellow);
+    if(wb.mouseQuadrupleClicked(lpi::gGUIInput, lpi::gui::GUI_RMB)) spawns.addSpawn("right quadruple clicked", lpi::globalMouseX, lpi::globalMouseY, lpi::RGB_Lightred);
+    if(wb.mouseScrollUp(lpi::gGUIInput)) spawns.addSpawn("scrolled up", lpi::globalMouseX, lpi::globalMouseY);
+    if(wb.mouseScrollDown(lpi::gGUIInput)) spawns.addSpawn("scrolled down", lpi::globalMouseX, lpi::globalMouseY);
     
     lpi::redraw();
     lpi::cls(lpi::RGB_Darkgreen);
