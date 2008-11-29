@@ -147,6 +147,17 @@ extern Pos<Sticky> STICKYRELATIVETOP; //relative in vertical direction, follows 
 extern Pos<Sticky> STICKYRELATIVERIGHT; //relative in horizontal direction, follows right side in vertical direction
 extern Pos<Sticky> STICKYRELATIVEBOTTOM; //relative in vertical direction, follows bottom side in horizontal direction
 
+struct MouseOverState
+{
+  bool over_prev;
+  bool left_prev;
+  
+  MouseOverState();
+  
+  bool mouseJustOver(bool over_now);
+  bool mouseJustLeft(bool over_now);
+};
+
 struct MouseState
 {
   unsigned short downhere_bool1 : 1;
@@ -163,6 +174,19 @@ struct MouseState
   int grabrely;
   
   MouseState();
+  
+  //same mouse functions but with custom MouseState
+  bool mouseDownHere(bool over, bool down);
+  bool mouseJustDown(bool over, bool down);
+  bool mouseJustDownHere(bool over, bool down);
+  bool mouseJustUpHere(bool over, bool down);
+  bool mouseGrabbed(bool over, bool down, int x, int y, int relx, int rely);
+  void mouseGrab(int x, int y, int relx, int rely);
+  void mouseUngrab();
+  int mouseGetGrabX() const { return grabx; }
+  int mouseGetGrabY() const { return graby; }
+  int mouseGetRelGrabX() const { return grabrelx; }
+  int mouseGetRelGrabY() const { return grabrely; }
 };
 
 class ElementShape //describes the shape and mouse handling in this shape
@@ -177,11 +201,9 @@ class ElementShape //describes the shape and mouse handling in this shape
   private:
     ////mouse related data
     MouseState _mouseState[NUM_MOUSE_BUTTONS];
+    MouseOverState mouse_over_state;
     MouseState mouse_state_for_containers; //for bookkeeping by containers that contain this element TODO: make container itself remember one per element
-    
-    bool mouseJustDownHere(bool& prevstate, const IGUIInput& input, GUIMouseButton button = GUI_LMB) const;
-    bool mouseJustDown(bool& prevstate, const IGUIInput& input, GUIMouseButton button = GUI_LMB) const; //generalized version with only boolean given
-  
+
   protected:
 
   public:
@@ -215,6 +237,9 @@ class ElementShape //describes the shape and mouse handling in this shape
     virtual bool mouseGrabbable() const { return true; }
     virtual bool mouseActive() const { return true; } //false if the element should not respond to "clicked", "pressed", etc..
     virtual bool mouseOver(const IGUIInput& input) const; //mouse cursor over the element (and no other element managed by gui container above it)
+    
+    bool mouseJustOver(const IGUIInput& input);
+    bool mouseJustLeft(const IGUIInput& input);
 
     bool mouseDown(const IGUIInput& input, GUIMouseButton button = GUI_LMB) const; //mouse is over and down (does NOT return true if the mouse button is down but the mouse isn't inside this element)
     bool mouseDownHere(const IGUIInput& input, GUIMouseButton button = GUI_LMB); //mouse is over, down, and was pressed while it was on here
@@ -237,23 +262,12 @@ class ElementShape //describes the shape and mouse handling in this shape
     bool mouseGrabbed(const IGUIInput& input, GUIMouseButton button = GUI_LMB); //like mouseDownHere, but keeps returning true if you move the mouse away from the element while keeping button pressed
     void mouseGrab(const IGUIInput& input, GUIMouseButton button = GUI_LMB); //sets states as if element were grabbed
     void mouseUngrab(GUIMouseButton button = GUI_LMB); //sets states as if element were not grabbed
-    int mouseGetGrabX(GUIMouseButton button = GUI_LMB) const { return mouseGetGrabX(_mouseState[button]); } //absolute location where you last started grabbing (x)
-    int mouseGetGrabY(GUIMouseButton button = GUI_LMB) const { return mouseGetGrabY(_mouseState[button]); }
-    int mouseGetRelGrabX(GUIMouseButton button = GUI_LMB) const { return mouseGetRelGrabX(_mouseState[button]); } //relative location where you last started grabbing (x)
-    int mouseGetRelGrabY(GUIMouseButton button = GUI_LMB) const { return mouseGetRelGrabY(_mouseState[button]); }
+    int mouseGetGrabX(GUIMouseButton button = GUI_LMB) const { return _mouseState[button].mouseGetGrabX(); } //absolute location where you last started grabbing (x)
+    int mouseGetGrabY(GUIMouseButton button = GUI_LMB) const { return _mouseState[button].mouseGetGrabY(); }
+    int mouseGetRelGrabX(GUIMouseButton button = GUI_LMB) const { return _mouseState[button].mouseGetRelGrabX(); } //relative location where you last started grabbing (x)
+    int mouseGetRelGrabY(GUIMouseButton button = GUI_LMB) const { return _mouseState[button].mouseGetRelGrabY(); }
     
-    //same mouse functions but with custom MouseState
-    bool mouseDownHere(MouseState& state, const IGUIInput& input, GUIMouseButton button = GUI_LMB) const;
-    bool mouseJustDown(MouseState& state, const IGUIInput& input, GUIMouseButton button = GUI_LMB) const;
-    bool mouseJustDownHere(MouseState& state, const IGUIInput& input, GUIMouseButton button = GUI_LMB) const;
-    bool mouseJustUpHere(MouseState& state, const IGUIInput& input, GUIMouseButton button = GUI_LMB) const;
-    bool mouseGrabbed(MouseState& state, const IGUIInput& input, GUIMouseButton button = GUI_LMB) const;
-    void mouseGrab(MouseState& state, const IGUIInput& input) const;
-    void mouseUngrab(MouseState& state) const;
-    int mouseGetGrabX(const MouseState& state) const { return state.grabx; }
-    int mouseGetGrabY(const MouseState& state) const { return state.graby; }
-    int mouseGetRelGrabX(const MouseState& state) const { return state.grabrelx; }
-    int mouseGetRelGrabY(const MouseState& state) const { return state.grabrely; }
+
     
     MouseState& getMouseStateForContainer() { return mouse_state_for_containers; }
 };

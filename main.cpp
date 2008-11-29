@@ -229,7 +229,8 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     
     if(tb_unittest.pressed(lpi::gGUIInput)) lpi::gui::unitTest();
     
-    //if(wb.mouseJustOver(lpi::gGUIInput)) spawns.addSpawn("just over", lpi::globalMouseX, lpi::globalMouseY);
+    if(wb.mouseJustOver(lpi::gGUIInput)) spawns.addSpawn("just over", lpi::globalMouseX, lpi::globalMouseY);
+    if(wb.mouseJustLeft(lpi::gGUIInput)) spawns.addSpawn("just left", lpi::globalMouseX, lpi::globalMouseY);
     if(wb.pressed(lpi::gGUIInput)) spawns.addSpawn("pressed", lpi::globalMouseX, lpi::globalMouseY);
     if(wb.clicked(lpi::gGUIInput)) spawns.addSpawn("clicked", lpi::globalMouseX, lpi::globalMouseY);
     if(wb.mouseDoubleClicked(lpi::gGUIInput)) spawns.addSpawn("double clicked", lpi::globalMouseX, lpi::globalMouseY);
