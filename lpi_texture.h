@@ -76,10 +76,13 @@ class Texture
   */
   public:
     
+    //width and height of the texture
     int getU() const {return u;}
     int getV() const {return v;}
+    //width and height as powers of two (this will be the actual size of the buffer, because OpenGL only supports such textures)
     int getU2() const {return u2;}
     int getV2() const {return v2;}
+    //multiply openGL texture coordinates between 0.0 and 1.0 with u3 and v3 to let OpenGL draw them correct even when not power of two
     double getU3() const {return u3;}
     double getV3() const {return v3;}
     
@@ -132,16 +135,11 @@ class Texture
     void upload(); //sets the texture to openGL with correct datatype and such. Everytime something changes in the data in the buffer, upload it again to let the videocard/API know the changes. Also, use upload AFTER a screen is already set! And when the screen changes resolution, everything has to be uploaded again.
     void reupload(); //call this after you changed the screen (causing the textures to be erased from the video card)
     
-    void getAlignedBuffer(std::vector<unsigned char>& out)
-    {
-      out = buffer;
-    }
+    //get/set buffer that has the (possible non power of two) size of the wanted image (u * v RGBA pixels)
+    void getAlignedBuffer(std::vector<unsigned char>& out);
+    void setAlignedBuffer(const std::vector<unsigned char>& in);
     
-    void setAlignedBuffer(const std::vector<unsigned char>& in)
-    {
-      buffer = in;
-    }
-    
+    //get buffer in power of two form (u2 * v2 RGBA pixels)
     std::vector<unsigned char>& getOpenGLBuffer()
     {
       return buffer;

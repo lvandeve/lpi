@@ -24,6 +24,8 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_gl.h"
 #include "lpi_base64.h"
 
+#include <algorithm>
+
 namespace lpi
 {
 
@@ -378,6 +380,24 @@ void Texture::drawRepeated(int x1, int y1, int x2, int y2, double scalex, double
     glTexCoord2d(+coorx, +coory); glVertex3d(x2, y2, 1);
     glTexCoord2d(+coorx,    0.0); glVertex3d(x2, y1, 1);
   glEnd();
+}
+
+void Texture::getAlignedBuffer(std::vector<unsigned char>& out)
+{
+  //out = buffer;
+  out.clear();
+  for(size_t y = 0; y < v; y++)
+  {
+    out.insert(out.end(), buffer.begin() + 4 * y * u2, buffer.begin() + 4 * y * u2 + 4 * u);
+  }
+}
+
+void Texture::setAlignedBuffer(const std::vector<unsigned char>& in)
+{
+  for(size_t y = 0; y < v; y++)
+  {
+    std::copy(in.begin() + 4 * y * u, in.begin() + 4 * y * u + 4 * u, buffer.begin() + 4 * y * u2);
+  }
 }
 
 void loadTextures(std::vector<unsigned char>& buffer, std::vector<Texture>& textures, int widths, int heights, int w, int h, const AlphaEffect& effect)
