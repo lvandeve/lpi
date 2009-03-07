@@ -64,7 +64,7 @@ InputLine::InputLine()
   this->type = 0;
   this->allowedChars = 0;
   this->title = "";
-  this->selfActivate = 0;
+  this->control_active = 0;
   
   this->text = "";
   cursor = 0;
@@ -95,15 +95,13 @@ void InputLine::make(int x, int y, unsigned long l, const Markup& markup, int ty
   this->setSizeY( markup.getHeight()); //font height
   this->setSizeX((title.length() + l) * markup.getWidth());
   
-  this->active = 0;
+  this->active = 1;
   this->visible = 1;
   this->present = 1;
-  
-  this->selfActivate = 1; //with this true, it'll disable itself if you click outside of it, and turn on again if you click inside
 }
 
 //this function draws the line, and makes sure it gets handled too
-void InputLine::drawWidget(IGUIDrawer& /*drawer*/) const
+void InputLine::drawWidget(IGUIDrawer& drawer) const
 {
   print(title, x0, y0, titleMarkup);
 
@@ -122,7 +120,7 @@ void InputLine::drawWidget(IGUIDrawer& /*drawer*/) const
   else if(type == 2) print(getInteger(), inputX, inputY, markup);
   
   //draw the cursor if active
-  if(active && int(draw_time * 2.0) % 2 == 0)
+  if(control_active && (int(draw_time * 2.0) % 2 == 0 || mouseDown(drawer.getInput())))
   {
     int cursorXDraw = inputX + cursor * markup.getWidth();
     drawLine(cursorXDraw, inputY, cursorXDraw, inputY + markup.getHeight(), cursorColor);
@@ -157,6 +155,9 @@ int InputLine::enter()
 
 void InputLine::handleWidget(const IGUIInput& input) //both check if you pressed enter, and also check letter keys pressed, backspace, etc...
 {
+  autoActivate(input, auto_activate_mouse_state, control_active);
+  if(!control_active) return;
+  
   draw_time = input.getSeconds();
   
   if(cursor >= text.length()) cursor = text.length();
@@ -173,12 +174,18 @@ void InputLine::handleWidget(const IGUIInput& input) //both check if you pressed
           text.erase(cursor, 1);
         }
         break;
-      case 13:
+      case 13: //enter
         entered = 1;
+        break;
+      case 127: //delete
+        if(cursor <= text.size())
+        {
+          text.erase(cursor, 1);
+        }
         break;
       //a few certainly not meant to be printed ones
       case 0:
-        break; 
+        break;
       case 10: break;
       default:
         if(text.length() < l) text.insert(cursor, 1, ascii);
@@ -187,7 +194,6 @@ void InputLine::handleWidget(const IGUIInput& input) //both check if you pressed
     }
   }
   
-  if(input.keyPressed(SDLK_DELETE)) text.erase(cursor, 1);
   if(input.keyPressed(SDLK_HOME)) cursor = 0;
   if(input.keyPressed(SDLK_END))
   {
@@ -195,8 +201,8 @@ void InputLine::handleWidget(const IGUIInput& input) //both check if you pressed
     while(text[pos] != 0 && pos < text.length()) pos++;
     cursor = pos;
   }
-  if(input.keyPressed(SDLK_LEFT)) if(cursor > 0) cursor--;
-  if(input.keyPressed(SDLK_RIGHT)) if(cursor < text.length()) cursor++;
+  if(input.keyPressedTime(SDLK_LEFT, 0.5, 0.025)) if(cursor > 0) cursor--;
+  if(input.keyPressedTime(SDLK_RIGHT, 0.5, 0.025)) if(cursor < text.length()) cursor++;
 
   if(mouseDown(input))
   {
@@ -954,13 +960,12 @@ void InputBox::make(int x, int y, int sizex, int sizey, int maxLines, int border
   this->multiText.markup = markup;
   this->panel = panel;
   this->cursorColor = cursorColor;
-  this->active = 0; 
+  this->active = 1; 
   this->visible = 1;
   this->present = 1;
   this->cursor = 0;
-  this->selfActivate = 0;
+  this->control_active = 0;
   this->border = border;
-  this->selfActivate = 1;
   
   init();
 }
@@ -1020,7 +1025,7 @@ void InputBox::drawWidget(IGUIDrawer& drawer) const
   bar.draw(drawer);
   
   //draw the cursor if active
-  if(active && int(draw_time * 2.0) % 2 == 0)
+  if(control_active && int(draw_time * 2.0) % 2 == 0)
   {
     unsigned long cursorLine;
     unsigned long cursorColumn;
@@ -1035,6 +1040,9 @@ void InputBox::drawWidget(IGUIDrawer& drawer) const
 
 void InputBox::handleWidget(const IGUIInput& input)
 {
+  autoActivate(input, auto_activate_mouse_state, control_active);
+  if(!control_active) return;
+  
   draw_time = input.getSeconds();
   
   bool scrollerMayJump = 0;

@@ -1,3 +1,5 @@
+#pragma once
+
 /*
 Copyright (c) 2005-2008 Lode Vandevenne
 All rights reserved.
@@ -24,12 +26,10 @@ utilities to parse things
 it uses the C-locale and ascii or UTF-8 strings
 */
 
-#ifndef LPI_PARSE_H_INCLUDED
-#define LPI_PARSE_H_INCLUDED
-
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <vector>
 
 namespace lpi
 {
@@ -87,6 +87,12 @@ void skipThenParseStringUntil(std::string& out, size_t& pos, size_t end, const s
 //skip, then parse the string until the predicate returns false on the current character or until the end
 void skipThenParseStringWhile(std::string& out, size_t& pos, size_t end, const std::string& in, bool predicate(char));
 
-#endif
+////////////////////////////////////////////////////////////////////////////////
+
+void find(std::vector<bool>& matches, const std::string& text, const std::string& to_find);
+void searchAndReplace(std::string& o_text, const std::string& i_text, const std::string& from, const std::string& to);
+void searchAndReplace(std::string& io_text, const std::string& from, const std::string& to);
+void searchAndReplace(std::string& o_text, const std::string& i_text, const std::string& from, const std::string& to, const std::vector<std::string>& exclude);
+void searchAndReplace(std::string& io_text, const std::string& from, const std::string& to, const std::vector<std::string>& exclude);
 
 } //namespace lpi

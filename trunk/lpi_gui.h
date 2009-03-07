@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2009 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -66,6 +66,8 @@ class InternalContainer //container inside elements, for elements that contain s
     
     size_t findElementIndex(Element* element);
     void removeElement(Element* element);
+    
+    void updateRelativeSize(Element* element, Element* parent);
   
   private:
     void initSubElement(Element* element, const Pos<Sticky>& sticky, Element* parent);
@@ -97,8 +99,6 @@ class Element : public ElementShape
 {
   private:
     
-    MouseState auto_activate_mouse_state; //for the autoActivate() function //TODO: make this pointer, to save memory. If it's 0, no selfactivate
-    
   protected:
     
     bool elementOver; //true if there is an element over this element, causing the mouse NOT to be over this one (Z-order related)
@@ -115,19 +115,19 @@ class Element : public ElementShape
     ToolTipManager* tooltipmanager;
 
   public: //TODO: make these not-public
-    bool selfActivate;
     
     ////minimum size
     int minSizeX; //you can't resize this element to something smaller than this
-    int minSizeY;
+    int minSizeY; //TODO: make this virtual private functions instead of member variables
     
     ////parameters for "sticky" system
     Pos<Sticky> sticky; //the sticky value for each of the 4 sides of this child widget
-    Pos<double> relativePos; //position in coordinates in range [0.0, 1.0], relative to parent element's size, for the RELATIVE sticky types
+    Pos<double> relativePos; //position in coordinates in range [0.0, 1.0], relative to parent element's size, for the RELATIVE sticky types. TODO: remember this in the parent or the InternalContainer of the parent instead
     
   protected:
     void addSubElement(Element* element, const Pos<Sticky>& sticky = STICKYTOPLEFT); //only used for INTERNAL parts of the gui element, such as the buttons in a scrollbar, hence this function is protected
-
+    void autoActivate(const IGUIInput& input, MouseState& auto_activate_mouse_state, bool& control_active); //utility function used by text input controls, they need a member variable like "MouseState auto_activate_mouse_state" in them for this and a bool "control_active", and in their handleWidget, put, "autoActivate(input, auto_activate_mouse_state, control_active); if(!control_active) return;"
+    
   public:
     Element();
     virtual ~Element(){};
@@ -138,8 +138,8 @@ class Element : public ElementShape
     void setVisible(bool i_visible) { visible = i_visible; }
     void setActive(bool i_active) { active = i_active; }
     void setPresent(bool i_present) { present = i_present; }
-    void totallyDisable() {visible = active = present = false;} //this sets visible, active and present all at once
-    void totallyEnable() {visible = active = present = true;}
+    void totallyDisable(); //this sets visible, active and present all at once
+    void totallyEnable();
     
     ////mouse overrides
     virtual bool mouseOver(const IGUIInput& input) const;
@@ -148,13 +148,12 @@ class Element : public ElementShape
     
     ////core functions of gui::Elements
     void draw(IGUIDrawer& drawer) const; //will draw the actual widget and do some other always-to-do stuff, do NOT override this function
-    virtual void drawWidget(IGUIDrawer& drawer) const = 0; //called by draw(), this one can be overloaded for each widget defined below
     void handle(const IGUIInput& input);
-    virtual void handleWidget(const IGUIInput& input);
     void move(int x, int y);
-    virtual void moveWidget(int /*x*/, int /*y*/); //Override this if you have subelements, unless you use getAutoSubElement.
     
-    void autoActivate(const IGUIInput& input);
+    virtual void drawWidget(IGUIDrawer& drawer) const = 0; //called by draw(), this one can be overloaded for each widget defined below
+    virtual void handleWidget(const IGUIInput& input);
+    virtual void moveWidget(int x, int y); //Override this if you have subelements, unless you use getAutoSubElement.
     
     void moveTo(int x, int y);
     void moveCenterTo(int x, int y);
@@ -180,7 +179,8 @@ class Element : public ElementShape
     bool hasElementOver() const;
 
     ////for debugging: if you've got no idea what's going on with a GUI element, this function at least is guaranteed to show where it is (if in screen)
-    void drawDebugBorder(const ColorRGB& color = RGB_White) const;
+    void drawDebugBorder(IGUIDrawer& drawer, const ColorRGB& color = RGB_Red) const;
+    void drawDebugCross(IGUIDrawer& drawer, const ColorRGB& color = RGB_Red) const;
 };
 
 class Label //convenience class: elements that want an optional label (e.g. checkboxes) can inherit from this and use drawLabel(this) in their drawWidget function
@@ -534,12 +534,13 @@ class ScrollElement : public Element //a.k.a "ScrollZone"
       bars.vbar.forwardScroll(scroll);
     }
     
+    void updateBars(); //this is called automatically now and then, but can also be called by you at any time when the element changed position to ensure the scrollers position won't override your new position
+  
   protected:
   
     virtual bool mouseInVisibleZone(const IGUIInput& input) const; //is the mouse in the zone where elements are drawn
     
     void initBars();
-    void updateBars();
     void toggleBars(); //turns the bars on or of depending on if they're needed or not
 };
 
@@ -645,6 +646,7 @@ class Window : public Element
     //these scrollbars will be part of the container
     void addScrollbars();
     void removeScrollbars();
+    void updateScroll(); //call this after elements inside window changed size or position. It updates size of container to elements inside it, then updates scroll (updateBars()). I've had this work very well together with a zoomable and movable image inside a window with scrollbars!!
     
     ////optional part "top"
     Rule top; //not a "back" one, so that you can easily detect mouse on it, for dragging
@@ -832,6 +834,36 @@ class Image : public Element
     Image();
     void make(int x, int y, Texture* image=&builtInTexture[37], const ColorRGB& colorMod = RGB_White);
     void make(int x, int y, int sizex, int sizey, Texture* image=&builtInTexture[37], const ColorRGB& colorMod = RGB_White);
+};
+
+class Tabs : public Element
+{
+  private:
+    struct Tab : public Element
+    {
+      std::string name; //name of this tab
+      Container container; //contains the GUI elements inside this tab
+      
+      virtual void drawWidget(IGUIDrawer& drawer) const;
+    };
+    
+    std::vector<Tab*> tabs;
+    size_t selected_tab;
+    
+    void generateTabSizes();
+    void updateActiveContainer();
+    
+  public:
+    Tabs();
+    ~Tabs();
+    
+    void addTab(const std::string& name);
+    size_t getNumTabs() const;
+    Container& getTabContent(size_t index) const;
+    void clear();
+    
+    virtual void drawWidget(IGUIDrawer& drawer) const;
+    virtual void handleWidget(const IGUIInput& input);
 };
 
 } //namespace gui

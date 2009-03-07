@@ -32,10 +32,6 @@ TODO: fix possible broken elements
 
 #include "lpi_gui.h"
 
-#include "lpi_color.h"
-#include "lpi_texture.h"
-#include "lpi_text.h"
-
 
 namespace lpi
 {
@@ -49,6 +45,8 @@ class InputLine : public Element //input text line
     unsigned long cursor; //position of the cursor (0 = before first char)
     bool entered; //after you pressed enter!
     double draw_time; //for drawing the blinking cursor
+    MouseState auto_activate_mouse_state;
+    bool control_active;
     
   public:
     unsigned long l; //max length
@@ -79,6 +77,8 @@ class InputLine : public Element //input text line
     
     void setTitle(const std::string& i_title);
     const std::string& getTitle() const;
+    
+    bool isControlActive() const { return control_active; } //i.e., the cursor is blinking and it's listening to keyboard input
    
     void clear();
     //return values of check():
@@ -241,6 +241,9 @@ class InputBox : public Element
     double draw_time; //for drawing the blinking cursor
     
     void init();
+    
+    MouseState auto_activate_mouse_state;
+    bool control_active;
     
   public:
     int maxLines;

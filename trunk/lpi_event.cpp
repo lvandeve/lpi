@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2009 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -24,6 +24,20 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 namespace lpi
 {
+
+KeyState::KeyState()
+{
+  for(size_t i = 0; i < NUM; i++)
+  {
+    keyReleased[i] = false;
+    keyWarmedUp[i] = false;
+    lastTime[i] = 0;
+  }
+  
+  singlePrevious = 0;
+  singleKeyTime = 0;
+  singleWarmedUp = false;
+}
 
 class Inkeys //this class contains which keys are pressed (need to do readKeys to get updated state)
 {
@@ -83,7 +97,7 @@ namespace
 //the state is there to be able to have different tests that don't screw up each other's values: give them a different state
 bool keyPressed(int key, KeyState* state) //use the SDL key code here, like SDLK_KP7 for keypad 7
 {
-  if(key < 0 || key > 1024) return 0; //the state only remembers 1024 keys...
+  if(key < 0 || key > (int)KeyState::NUM) return 0; //the state only remembers KeyState::NUM keys...
   
   if(!state) state = &static_state;
   
@@ -98,7 +112,7 @@ bool keyPressed(int key, KeyState* state) //use the SDL key code here, like SDLK
 
 bool keyPressedTime(int key, double time, double warmupTime, double repTime, KeyState* state) //use the SDL key code here, like SDLK_KP7 for keypad 7
 {
-  if(key < 0 || key > 1024) return 0; //the state only remembers 1024 keys...
+  if(key < 0 || key > (int)KeyState::NUM) return 0; //the state only remembers KeyState::NUM keys...
     
   if(!state) state = &static_state;
   
@@ -241,14 +255,9 @@ The following bits disable the following:
 Note that this function can also return things like when you pressed backspace, ...
 */
 
-char previousChar[16];
-double keyTime[16];
-bool warmed_up[16];
-
-int unicodeKey(int allowedChars, double time, double warmupTime, double repTime, int index)
+int unicodeKey(int allowedChars, double time, double warmupTime, double repTime, KeyState* state)
 {
-  if(index < 0) index = 0;
-  if(index > 15) index %= 16;
+  if(!state) state = &static_state;
   
   int asciiChar = 0;
   if ((event.key.keysym.unicode & 0xFF80) == 0)
@@ -279,37 +288,38 @@ int unicodeKey(int allowedChars, double time, double warmupTime, double repTime,
           case SDLK_KP_PERIOD: inputChar = '.'; break;
         }
       }
-
+      
+      
       //below is the system that prevents typing 100s of times the same char when holding down the key. It uses warmup and rate
-      if(inputChar == previousChar[index])
+      if(inputChar == state->singlePrevious)
       {
         asciiChar = 0;
         
         //if waited long enough, asciiChar can be set to inputChar anyway!
-        if(time - keyTime[index] > warmupTime && !warmed_up[index])
+        if(time - state->singleKeyTime > warmupTime && !state->singleWarmedUp)
         {
-          keyTime[index] = time;
-          warmed_up[index] = true;
+          state->singleKeyTime = time;
+          state->singleWarmedUp = true;
         }
-        else if(time - keyTime[index] > repTime && warmed_up[index])
+        else if(time - state->singleKeyTime > repTime && state->singleWarmedUp)
         {
-          previousChar[index] = inputChar;
+          state->singlePrevious = inputChar;
           asciiChar = inputChar;
-          keyTime[index] = time;
+          state->singleKeyTime = time;
         }
 
       }
       else
       {
-        previousChar[index] = inputChar;
+        state->singlePrevious = inputChar;
         asciiChar = inputChar;
-        keyTime[index] = time;
-        warmed_up[index] = 0;
+        state->singleKeyTime = time;
+        state->singleWarmedUp = 0;
       }
       
     }
     else
-    previousChar[index] = 0; //so that you CAN press the same key twice in a row if you release it!
+    state->singlePrevious = 0; //so that you CAN press the same key twice in a row if you release it!
   }
   
   if(allowedChars & 1)
@@ -408,6 +418,17 @@ void end()
 {
   SDL_Quit();
   std::exit(1);
+}
+
+void setMousePos(int x, int y)
+{
+  SDL_WarpMouse(x, y);
+}
+
+void changeMousePos(int x, int y)
+{
+  checkMouse();
+  SDL_WarpMouse(globalMouseX + x, globalMouseY + y);
 }
 
 } //namespace lpi

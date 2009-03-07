@@ -23,6 +23,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_time.h"
 
 #include <cstdlib> //abs on int
+#include <iostream>
 
 namespace lpi
 {
@@ -48,8 +49,8 @@ bool GUIInputSDL::mouseButtonDown(GUIMouseButton button) const
 {
   if(button == GUI_LMB)
     return globalLMB;
-  /*else if(button == GUI_MMB)
-    return globalMMB;*/
+  else if(button == GUI_MMB)
+    return globalMMB;
   else if(button == GUI_RMB)
     return globalRMB;
   else return false;
@@ -65,6 +66,16 @@ bool GUIInputSDL::mouseWheelDown() const
   return globalMouseWheelDown;
 }
 
+void GUIInputSDL::setMousePos(int x, int y) const
+{
+  lpi::setMousePos(x, y);
+}
+
+void GUIInputSDL::changeMousePos(int x, int y) const
+{
+  lpi::changeMousePos(x, y);
+}
+
 bool GUIInputSDL::keyDown(int key) const
 {
   return lpi::keyDown(key);
@@ -75,9 +86,14 @@ bool GUIInputSDL::keyPressed(int key) const
   return lpi::keyPressed(key, &keystate);
 }
 
-int GUIInputSDL::unicodeKey(int allowedChars, double time, double warmupTime, double repTime) const
+bool GUIInputSDL::keyPressedTime(int key, double warmupTime, double repTime) const
 {
-  return lpi::unicodeKey(allowedChars, time, warmupTime, repTime);
+  return lpi::keyPressedTime(key, getSeconds(), warmupTime, repTime, &keystate);
+}
+
+int GUIInputSDL::unicodeKey(int allowedChars, double warmupTime, double repTime) const
+{
+  return lpi::unicodeKey(allowedChars, getSeconds(), warmupTime, repTime, &keystate);
 }
 
 } //namespace gui

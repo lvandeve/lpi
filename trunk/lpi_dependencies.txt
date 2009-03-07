@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2009 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -45,7 +45,7 @@ lpi_math: some mathematics useful for games (random, quadratic solve, ...) but n
 lpi_math2d: 2D vector math
 lpi_math3d: 3D vector, matrix, transformation and camera math
 lpi_math4d: 4D vector and matrix
-lpi_parse: parsing utilities (they might be considered a bit a weird way of parsing)
+lpi_parse: parsing utilities
 lpi_pathfind: A* path finding, useful for some games
 lpi_screen: set up the SDL + OpenGL screen
 lpi_text: font and text drawing --> TODO: should split this up in the non-screen dependent stuff and the screen dependent stuff
@@ -126,6 +126,8 @@ then it isn't always mentioned that A indirectly depends on C.
 *) lpi_gui: SDL, OpenGL, lpi_gui_base, lpi_gui_draw, lpi_color, lpi_texture, lpi_text, lpi_gl, lpi_draw2dgl
 
 *) lpi_gui_draw: SDL, OpenGL, lodepng, lpi_text, lpi_texture, lpi_gl, lpi_color, lpi_draw2dgl, lpi_xml, lpi_file, lpi_base64
+
+*) lpi_gui_dynamic: SDL, OpenGL, lpi_gui
 
 *) lpi_gui_ex: SDL, OpenGL, lpi_gui
 

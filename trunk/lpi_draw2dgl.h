@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2009 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -31,7 +31,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 namespace lpi
 {
-
+//NOTE: as much as possible, the "to" pixel itself is not included, e.g. a rectangle from 0-100 is 100 pixels, not 101 pixels in size (0, ..., 99 are filled, 100 not)
 void pset(int x, int y, const ColorRGB& color);
 void drawPoint(int x, int y, const ColorRGB& color); //same as pset but with other name
 void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color, int clipx1, int clipy1, int clipx2, int clipy2);

@@ -23,6 +23,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include "lpi_texture.h"
 #include "lpi_color.h"
+#include "lpi_parse.h"
 
 #include <string>
 #include <vector>
@@ -213,35 +214,6 @@ template<typename T> int print(const T& val, int x = 0, int y = 0, const Markup&
 }
 
 void printCentered(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W, unsigned long forceLength=0);
-
-//usage: std::string str = valtostr(25454.91654654f);
-template<typename T>
-std::string valtostr(const T& val)
-{
-  std::ostringstream sstream;
-  sstream << val;
-  return sstream.str();
-}
-
-//usage: double val = strtoval<double>("465498.654");
-template<typename T>
-T strtoval(const std::string& s)
-{
-  std::istringstream sstream(s);
-  T val;
-  sstream >> val;
-  return val;
-}
-
-//length is decimal precision of the floating point number
-template<typename T>
-std::string valtostr(const T& val, int length, bool fixed = true)
-{
-  std::ostringstream sstream;
-  if(fixed) sstream << std::fixed;
-  sstream << std::setprecision(length) << val;
-  return sstream.str();
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 //FORMATTED TEXT///////////////////////////////////////////////////////////////

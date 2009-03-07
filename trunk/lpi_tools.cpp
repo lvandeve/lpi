@@ -26,19 +26,21 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_screen.h"
 #include "lpi_file.h"
 #include "lpi_base64.h"
+#include "lpi_parse.h"
 
 #include <SDL/SDL.h>
 
 namespace lpi
 {
 
-void binaryFileToBase64File(const std::string& outfilename, const std::string& infilename)
+void binaryFileToBase64File(const std::string& outfilename, const std::string& infilename, bool cppnewlines)
 {
   std::string base64;
   std::vector<unsigned char> file;
   
   loadFile(file, infilename);
   encodeBase64(base64, file);
+  if(cppnewlines) searchAndReplace(base64, "\n", "\\n\\\n");
   saveFile(base64, outfilename);
 }
 

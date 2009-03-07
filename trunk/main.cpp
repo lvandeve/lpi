@@ -59,6 +59,7 @@ gprof > gprof.txt
 #include "lpi_tools.h"
 #include "lpi_gl.h"
 #include "lpi_gui_unittest.h"
+#include "lpi_xml.h"
 #include "lodepng.h"
 #include "lodewav.h"
 
@@ -143,13 +144,33 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   
   lpi::gui::Container c;
   
+  lpi::gui::Button tb;
+  tb.makeText(20, 530, "Save Built In GUI To PNGs");
+  c.pushTop(&tb);
+  lpi::gui::Button tb2;
+  tb2.makeText(20, 540, "GUI PNGs to base 64 TXT");
+  c.pushTop(&tb2);
+  
+  lpi::gui::Button tb_unittest;
+  tb_unittest.makeText(20, 550, "Unit Test");
+  c.pushTop(&tb_unittest);
+  
   lpi::gui::Window w;
   w.make(50, 50, 300, 300);
   w.addTop();
   w.addTitle("Window 2");
   w.addCloseButton();
   w.setColor(lpi::RGBA_White(192));
+  w.addResizer();
   c.pushTop(&w);
+  
+  lpi::gui::Tabs tabs;
+  tabs.resize(0, 0, w.getSizeX(), w.getSizeY() - 32);
+  tabs.addTab("tab 1");
+  tabs.addTab("tab 2");
+  tabs.addTab("tab 3");
+  tabs.addTab("tab 4");
+  w.pushTopAt(&tabs, 0, 16, lpi::gui::STICKYRELATIVE);
   
   lpi::gui::Window w1;
   w1.make(100, 100, 500, 500);
@@ -184,19 +205,12 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   bl.make(500, 80, 8, 0, 24);
   c.pushTop(&bl);*/
   
-  lpi::gui::Button tb;
-  tb.makeText(20, 540, "Text Button");
-  c.pushTop(&tb);
-  
-  lpi::gui::Button tb_unittest;
-  tb_unittest.makeText(20, 550, "Unit Test");
-  c.pushTop(&tb_unittest);
-  
   lpi::gui::Button wb;
   wb.makeTextPanel(0, 0, "window button");
   wb.autoTextSize(4);
   wb.centerText();
-  w.pushTopAt(&wb, 20, 20);
+  tabs.getTabContent(0).pushTopAt(&wb, 20, 50);
+  //w.pushTopAt(&wb, 20, 50);
   
   lpi::gui::Checkbox wcb;
   wcb.make(0, 0);
@@ -228,6 +242,32 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     if(sound_button.pressed(lpi::gGUIInput)) lpi::audioPlay(sound);
     
     if(tb_unittest.pressed(lpi::gGUIInput)) lpi::gui::unitTest();
+    
+    if(tb.clicked(lpi::gGUIInput))
+    {
+      lpi::xml::XMLTree tree;
+      tree.parse(lpi::gui::builtInGuiData);
+      
+      for(size_t i = 0; i < tree.children.size(); i++)
+      {
+        if(tree.children[i]->content.name == "textures_small")
+        {
+          lpi::base64StringToBinaryFile("textures_small.png", tree.children[i]->content.value);
+        }
+        else if(tree.children[i]->content.name == "icons_small")
+        {
+          lpi::base64StringToBinaryFile("icons_small.png", tree.children[i]->content.value);
+        }
+      }
+    }
+    
+    if(tb2.clicked(lpi::gGUIInput))
+    {
+      lpi::binaryFileToBase64File("textures_small_new.txt", "textures_small_new.png", true);
+      lpi::binaryFileToBase64File("icons_small_new.txt", "icons_small_new.png", true);
+      lpi::binaryFileToBase64File("textures_small.txt", "textures_small.png", true);
+      lpi::binaryFileToBase64File("icons_small.txt", "icons_small.png", true);
+    }
     
     if(wb.mouseJustOver(lpi::gGUIInput)) spawns.addSpawn("just over", lpi::globalMouseX, lpi::globalMouseY);
     if(wb.mouseJustLeft(lpi::gGUIInput)) spawns.addSpawn("just left", lpi::globalMouseX, lpi::globalMouseY);

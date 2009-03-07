@@ -314,33 +314,33 @@ void unitTest()
     
     //initially it's not active
     line.handle(testinput); //handle line all the time to let the selfActivate system work
-    LUT_SUB_ASSERT_TRUE(!line.isActive())
+    LUT_SUB_ASSERT_TRUE(!line.isControlActive())
     
     //move mouse above it and click
     testinput.debugSetMousePos(1, 1);
     testinput.debugSetLMB(1);
     line.handle(testinput);
     //it must be active now!
-    LUT_SUB_ASSERT_TRUE(line.isActive())
+    LUT_SUB_ASSERT_TRUE(line.isControlActive())
     
     //now release the mouse button
     testinput.debugSetLMB(0);
     line.handle(testinput);
     //it should still be active!
-    LUT_SUB_ASSERT_TRUE(line.isActive())
+    LUT_SUB_ASSERT_TRUE(line.isControlActive())
     
     //move mouse away
     testinput.debugSetMousePos(100, 100);
     line.handle(testinput);
     //it should still be active!
-    LUT_SUB_ASSERT_TRUE(line.isActive())
+    LUT_SUB_ASSERT_TRUE(line.isControlActive())
     
     //move mouse away from it and click
     testinput.debugSetMousePos(100, 100);
     testinput.debugSetLMB(1);
     line.handle(testinput);
     //it may not be active anymore after clicking on a location outside (???????)
-    LUT_SUB_ASSERT_TRUE(!line.isActive())
+    LUT_SUB_ASSERT_TRUE(!line.isControlActive())
   LUT_CASE_END
   
   
@@ -356,41 +356,33 @@ void unitTest()
     
     //initially it's not active
     c.handle(testinput); //handle line all the time to let the selfActivate system work
-    LUT_SUB_ASSERT_TRUE(!line.isActive())
-    
-    //now a little test to see if it's at the correct position for these tests below
-    testinput.debugSetMousePos(line.getCenterX(), line.getCenterY());
-    line.setActive(true);
-    line.setElementOver(false);
-    LUT_SUB_ASSERT_TRUE(line.mouseOver(testinput))
-    line.setElementOver(true);
-    line.setActive(false);
+    LUT_SUB_ASSERT_TRUE(!line.isControlActive())
     
     //move mouse above it and click
     testinput.debugSetMousePos(line.getCenterX(), line.getCenterY());
     testinput.debugSetLMB(1);
     c.handle(testinput);
     //it must be active now!
-    LUT_SUB_ASSERT_TRUE(line.isActive())
+    LUT_SUB_ASSERT_TRUE(line.isControlActive())
     
     //now release the mouse button
     testinput.debugSetLMB(0);
     c.handle(testinput);
     //it should still be active!
-    LUT_SUB_ASSERT_TRUE(line.isActive())
+    LUT_SUB_ASSERT_TRUE(line.isControlActive())
     
     //move mouse away
     testinput.debugSetMousePos(100, 100);
     c.handle(testinput);
     //it should still be active!
-    LUT_SUB_ASSERT_TRUE(line.isActive())
+    LUT_SUB_ASSERT_TRUE(line.isControlActive())
     
     //move mouse away from it and click
     testinput.debugSetMousePos(100, 100);
     testinput.debugSetLMB(1);
     c.handle(testinput);
     //it may not be active anymore after clicking on a location outside (???????)
-    LUT_SUB_ASSERT_TRUE(!line.isActive())
+    LUT_SUB_ASSERT_TRUE(!line.isControlActive())
   LUT_CASE_END
   
   //two things on a container, both at the same location, first the one is totallyEnabled and the other totallyDisabled, then vica versa, then each time only the enabled one may return true to mouseOver
