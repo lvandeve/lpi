@@ -106,4 +106,78 @@ void skipThenParseStringWhile(std::string& out, size_t& pos, size_t end, const s
   parseStringWhile(out, pos, end, in, predicate);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+//will make the booleans at the positions of matching strings, true
+void find(std::vector<bool>& matches, const std::string& text, const std::string& to_find)
+{
+  for(size_t i = 0; i < text.size(); i++)
+  {
+    bool match = true;
+    
+    for(size_t j = 0; j < to_find.size(); j++)
+      if(text[i + j] != to_find[j]) { match = false; break; }
+
+    if(match)
+      for(size_t j = 0; j < to_find.size(); j++) matches[i + j] = true;
+  }
+}
+
+void searchAndReplace(std::string& o_text, const std::string& i_text, const std::string& from, const std::string& to)
+{
+  for(size_t i = 0; i < i_text.size(); i++)
+  {
+    bool match = true;
+    
+    for(size_t j = 0; j < from.size(); j++)
+      if(i_text[i + j] != from[j]) { match = false; break; }
+
+    if(match)
+    {
+      o_text += to;
+      i += from.size() - 1;
+    }
+    else o_text += i_text[i];
+  }
+}
+
+void searchAndReplace(std::string& io_text, const std::string& from, const std::string& to)
+{
+  std::string result;
+  searchAndReplace(result, io_text, from, to);
+  io_text = result;
+}
+
+void searchAndReplace(std::string& o_text, const std::string& i_text, const std::string& from, const std::string& to, const std::vector<std::string>& exclude)
+{
+  std::vector<bool> exclude_chars; //exclude those characters
+  exclude_chars.resize(i_text.size(), false);
+  
+  for(size_t i = 0; i < exclude.size(); i++) find(exclude_chars, i_text, exclude[i]);
+  
+  for(size_t i = 0; i < i_text.size(); i++)
+  {
+    bool match = true;
+    
+    for(size_t j = 0; j < from.size(); j++)
+      if(i_text[i + j] != from[j] || exclude_chars[i]) { match = false; break; }
+
+    if(match)
+    {
+      o_text += to;
+      i += from.size() - 1;
+    }
+    else o_text += i_text[i];
+  }
+}
+
+void searchAndReplace(std::string& io_text, const std::string& from, const std::string& to, const std::vector<std::string>& exclude)
+{
+  std::string result;
+  searchAndReplace(result, io_text, from, to, exclude);
+  io_text = result;
+}
+
+
+
 } //namespace lpi

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2009 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -51,6 +51,7 @@ struct TextureSet //contains the actual texture data, not just pointers
 };
 
 extern Texture builtInTexture[128];
+extern const std::string builtInGuiData;
 
 /*
 a BackPanel is a collection of 9 textures that should be tileable (except the corners)
@@ -139,7 +140,7 @@ class BackRule
 #define DEFAULTHRULE BackRule(1)
 #define DEFAULTVRULE BackRule(2)
 
-extern BackPanel builtInPanel[4];
+extern BackPanel builtInPanel[6];
 extern BackRule builtInRule[2];
 
 struct GuiSet
@@ -169,11 +170,16 @@ struct GuiSet
   const Texture* whiteRoundButton;
   const Texture* scrollBarPairCorner; //the cornerpiece of a scrollbarpair
   const Texture* crossHair; //for example to indicate a 2D location on a map, color picker, ...
+  const Texture* tabUnSelected[9];
+  const Texture* tabSelected[9];
+  
   
   const BackPanel* windowPanel;
   const BackPanel* buttonPanel;
   const BackPanel* buttonOverPanel;
   const BackPanel* buttonDownPanel;
+  const BackPanel* tabUnSelectedPanel;
+  const BackPanel* tabSelectedPanel;
   
   const BackRule* sliderHRule;
   const BackRule* sliderVRule;
@@ -197,8 +203,9 @@ class GUIDrawerGL : public IGUIDrawer
     GUIDrawerGL(GuiSet* set);
     
     virtual void drawLine(int x0, int y0, int x1, int y1, const ColorRGB& color);
-    virtual void fillRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color);
+    virtual void drawRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled);
     virtual void drawText(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W);
+    virtual void drawTextCentered(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W);
     virtual void drawTexture(int x, int y, const Texture* texture, const ColorRGB& colorMod = RGB_White);
     
     virtual void setSmallestScissor(int x0, int y0, int x1, int y1);

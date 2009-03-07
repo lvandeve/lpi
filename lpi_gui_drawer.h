@@ -69,6 +69,9 @@ enum GUIPart
   GP_WINDOW_TOP,
   GP_WINDOW_CLOSE,
   GP_WINDOW_RESIZER,
+  //tabs
+  GP_TAB_UNSELECTED,
+  GP_TAB_SELECTED,
   //menu
   GP_MENU_PANEL,
   GP_MENU_SEPARATOR,
@@ -94,8 +97,9 @@ class IGUIDrawer
   public:
     virtual ~IGUIDrawer(){};
     virtual void drawLine(int x0, int y0, int x1, int y1, const ColorRGB& color) = 0;
-    virtual void fillRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color) = 0;
+    virtual void drawRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled) = 0;
     virtual void drawText(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W) = 0;
+    virtual void drawTextCentered(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W) = 0;
     virtual void drawTexture(int x, int y, const Texture* texture, const ColorRGB& colorMod = RGB_White) = 0;
     
     //things that need to be done before and after the drawing, e.g. setting the scissor

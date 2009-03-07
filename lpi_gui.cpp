@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2009 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -89,14 +89,18 @@ void InternalContainer::setElementOver(bool state)
   }
 }
 
-
-void InternalContainer::initSubElement(Element* element, const Pos<Sticky>& sticky, Element* parent)
+void InternalContainer::updateRelativeSize(Element* element, Element* parent)
 {
-  element->sticky = sticky;
   element->relativePos.x0 = (element->getX0() - parent->getX0()) / (double)(parent->getSizeX());
   element->relativePos.y0 = (element->getY0() - parent->getY0()) / (double)(parent->getSizeY());
   element->relativePos.x1 = (element->getX1() - parent->getX0()) / (double)(parent->getSizeX());
   element->relativePos.y1 = (element->getY1() - parent->getY0()) / (double)(parent->getSizeY());
+}
+
+void InternalContainer::initSubElement(Element* element, const Pos<Sticky>& sticky, Element* parent)
+{
+  element->sticky = sticky;
+  updateRelativeSize(element, parent);
 }
 
 void InternalContainer::addSubElement(Element* element, const Pos<Sticky>& sticky, Element* parent)
@@ -148,6 +152,18 @@ ToolTipManager defaultTooltipManager;
 GuiElement is the mother class of all the other GUI classes below.
 */
 
+void Element::totallyDisable()
+{
+  visible = active = present = false;
+  setElementOver(true); //so that sub-elements are also recursively hidden for "mouseOver" events
+} //this sets visible, active and present all at once
+
+void Element::totallyEnable()
+{
+  visible = active = present = true;
+  setElementOver(false);
+}
+
 void Element::addSubElement(Element* element, const Pos<Sticky>& sticky)
 {
   ic.addSubElement(element, sticky, this);
@@ -155,19 +171,24 @@ void Element::addSubElement(Element* element, const Pos<Sticky>& sticky)
 
 Element::Element() : elementOver(false)
                    , tooltipenabled(false)
-                   , selfActivate(false)
                    , minSizeX(0)
                    , minSizeY(0)
 {
   totallyEnable();
 }
 
-void Element::drawDebugBorder(const ColorRGB& color) const
+void Element::drawDebugBorder(IGUIDrawer& drawer, const ColorRGB& color) const
 {
-  drawLine(x0    , y0    , x0    , y1 - 1, color);
-  drawLine(x1 - 1, y0    , x1 - 1, y1 - 1, color);
-  drawLine(x0    , y0    , x1 - 1, y0    , color);
-  drawLine(x0    , y1 - 1, x1 - 1, y1 - 1, color);
+  drawer.drawLine(x0    , y0    , x0    , y1 - 1, color);
+  drawer.drawLine(x1 - 1, y0    , x1 - 1, y1 - 1, color);
+  drawer.drawLine(x0    , y0    , x1 - 1, y0    , color);
+  drawer.drawLine(x0    , y1 - 1, x1 - 1, y1 - 1, color);
+}
+
+void Element::drawDebugCross(IGUIDrawer& drawer, const ColorRGB& color) const
+{
+  drawer.drawLine(x0, y0    , x1    , y1 - 1, color);
+  drawer.drawLine(x0, y1 - 1, x1 - 1, y0    , color);
 }
 
 void Element::drawToolTip(const IGUIInput& input) const
@@ -247,26 +268,21 @@ void Element::moveCenterTo(int x, int y)
   this->moveTo(x - this->getSizeX() / 2, y - this->getSizeY() / 2);
 }
 
-void Element::autoActivate(const IGUIInput& input)
+void Element::autoActivate(const IGUIInput& input, MouseState& auto_activate_mouse_state, bool& control_active)
 {
   bool over = mouseOver(input), down = input.mouseButtonDown(GUI_LMB); //for shorter notation
   
-  if(selfActivate)
+  if(auto_activate_mouse_state.mouseDownHere(over, down)) control_active = 1;
+  else
   {
-    if(auto_activate_mouse_state.mouseDownHere(over, down)) active = 1;
-    else
-    {
-      bool grabbed = auto_activate_mouse_state.mouseGrabbed(over, down, input.mouseX(), input.mouseY(), mouseGetRelPosX(input), mouseGetRelPosY(input));
-      if(!over && down && !grabbed) active = 0; //"forceActive" enabled so that this disactivating also works if mouseActive is false!
-      //without the mouseGrabbed() test, it'll become inactive when you grab the scrollbar scroller and go outside with the mouse = annoying
-    }
+    bool grabbed = auto_activate_mouse_state.mouseGrabbed(over, down, input.mouseX(), input.mouseY(), mouseGetRelPosX(input), mouseGetRelPosY(input));
+    if(!over && down && !grabbed) control_active = 0; //"forceActive" enabled so that this disactivating also works if mouseActive is false!
+    //without the mouseGrabbed() test, it'll become inactive when you grab the scrollbar scroller and go outside with the mouse = annoying
   }
 }
 
 void Element::handle(const IGUIInput& input)
 {
-  autoActivate(input);
-  
   if(!active) return;
   
   handleWidget(input);
@@ -651,9 +667,28 @@ void ScrollElement::handleWidget(const IGUIInput& input)
   if(element) element->handle(input);
   
   bars.handle(input);
-  int scrollx = x0 - int(bars.hbar.scrollPos); //the scrollpos is 0 if a bar is not enabled
-  int scrolly = y0 - int(bars.vbar.scrollPos);
-  moveAreaTo(scrollx, scrolly);
+  
+  if(element)
+  {
+    int scrollx = x0 - int(bars.hbar.scrollPos); //the scrollpos is 0 if a bar is not enabled
+    int scrolly = y0 - int(bars.vbar.scrollPos);
+    
+    //if bars are not enabled (if their size is 0), the position of the element should not be affected except that it should stay inside the scroll area
+    if(bars.hbar.scrollSize == 0)
+    {
+      scrollx = element->getX0();
+      if(scrollx + element->getSizeX() > x1) scrollx = x1 - element->getSizeX();
+      if(scrollx < x0) scrollx = x0;
+    }
+    if(bars.vbar.scrollSize == 0)
+    {
+      scrolly = element->getY0();
+      if(scrolly + element->getSizeY() > y1) scrolly = y1 - element->getSizeY();
+      if(scrolly < y0) scrolly = y0;
+    }
+    
+    moveAreaTo(scrollx, scrolly);
+  }
   
   updateBars();
 }
@@ -691,7 +726,7 @@ void ScrollElement::make(int x, int y, int sizex, int sizey, Element* element)
 
 void ScrollElement::moveAreaTo(int x, int y)
 {
-  if(element)element->moveTo(x, y);
+  if(element) element->moveTo(x, y);
 }
 
 void ScrollElement::initBars()
@@ -714,8 +749,12 @@ void ScrollElement::updateBars()
 
   bars.hbar.scrollSize = element->getSizeX() - getVisibleSizeX();
   bars.vbar.scrollSize = element->getSizeY() - getVisibleSizeY();
+  bars.vbar.scrollPos = y0 - element->getY0();
+  bars.hbar.scrollPos = x0 - element->getX0();
   if(bars.hbar.scrollSize < 0) bars.hbar.scrollSize = 0;
   if(bars.vbar.scrollSize < 0) bars.vbar.scrollSize = 0;
+  if(bars.hbar.scrollPos < 0) bars.hbar.scrollPos = 0;
+  if(bars.vbar.scrollPos < 0) bars.vbar.scrollPos = 0;
   if(bars.hbar.scrollPos > bars.hbar.scrollSize) bars.hbar.scrollPos = bars.hbar.scrollSize;
   if(bars.vbar.scrollPos > bars.vbar.scrollSize) bars.vbar.scrollPos = bars.vbar.scrollSize;
 }
@@ -1139,6 +1178,12 @@ void Window::removeScrollbars()
   ic.removeElement(&scroll);
   addSubElement(&container, STICKYFULL);
   container.resize(scroll.getX0(), scroll.getY0(), scroll.getX1(), scroll.getY1());
+}
+
+void Window::updateScroll()
+{
+  container.setSizeToElements();
+  scroll.updateBars();
 }
 
 //this function could be obsolete once there's the resize function
@@ -2516,8 +2561,10 @@ void BulletList::make(int x, int y, unsigned long amount, int xDiff, int yDiff, 
   {
     bullet.push_back(prototype);
     bullet[i].moveTo(x + xDiff * i, y + yDiff * i);
-    addSubElement(&bullet[i]); //TODO: fix this big memory corruption problem and Element copying
   }
+  
+  for(unsigned long i = 0; i < amount; i++)
+    addSubElement(&bullet[i]); //TODO: make bullet a vector of pointers to Bullet, now it copies elements, and gives wrong pointers if you add an element.
   
   //NOTE: DIT IS NIET CORRECT, DEZE FORMULES
   this->setSizeX(amount * xDiff + prototype.getSizeX());
@@ -2545,6 +2592,9 @@ void BulletList::make(int x, int y, unsigned long amount, int xDiff, int yDiff, 
     bullet.push_back(prototype);
     bullet[i].moveTo(xPos, yPos);
   }
+  
+  for(unsigned long i = 0; i < amount; i++)
+    addSubElement(&bullet[i]); //TODO: make bullet a vector of pointers to Bullet, now it copies elements, and gives wrong pointers if you add an element.
   
   setCorrectSize();
 }
@@ -2721,6 +2771,113 @@ void Image::drawWidget(IGUIDrawer& /*drawer*/) const
 {
   image->draw(x0, y0, colorMod, getSizeX(), getSizeY());
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+void Tabs::Tab::drawWidget(IGUIDrawer& drawer) const
+{
+  (void)drawer; //the tab is drawn by Tabs because only Tabs knows which tab is selected and which not
+}
+
+Tabs::Tabs()
+: selected_tab(0)
+{
+}
+
+Tabs::~Tabs()
+{
+  clear();
+}
+
+void Tabs::clear()
+{
+  for(size_t i = 0; i < tabs.size(); i++)
+    delete tabs[i];
+  tabs.clear();
+  selected_tab = 0;
+}
+
+void Tabs::generateTabSizes()
+{
+  size_t num = tabs.size();
+  size_t dx = getSizeX();
+  static const int TABHEIGHT = 16;
+  
+  for(size_t i = 0; i < tabs.size(); i++)
+  {
+    tabs[i]->resize(x0 + (dx * i) / num, y0, x0 + (dx * (i + 1)) / num, TABHEIGHT);
+    ic.updateRelativeSize(tabs[i], this);
+    tabs[i]->container.resize(x0, TABHEIGHT, x1, y1);
+    ic.updateRelativeSize(&tabs[i]->container, this);
+  }
+}
+
+void Tabs::addTab(const std::string& name)
+{
+  tabs.push_back(new Tab);
+  tabs.back()->name = name;
+  addSubElement(tabs.back(), STICKYRELATIVEHORIZONTAL0);
+  addSubElement(&tabs.back()->container, STICKYRELATIVEHORIZONTALFULL);
+  generateTabSizes();
+}
+
+size_t Tabs::getNumTabs() const
+{
+  return tabs.size();
+}
+
+Container& Tabs::getTabContent(size_t index) const
+{
+  return tabs[index]->container;
+}
+
+void Tabs::drawWidget(IGUIDrawer& drawer) const
+{
+  for(size_t i = 0; i < tabs.size(); i++)
+  {
+    if(i == selected_tab)
+      drawer.drawGUIPart(GP_TAB_SELECTED, tabs[i]->getX0(), tabs[i]->getY0(), tabs[i]->getX1(), tabs[i]->getY1());
+    else
+      drawer.drawGUIPart(GP_TAB_UNSELECTED, tabs[i]->getX0(), tabs[i]->getY0(), tabs[i]->getX1(), tabs[i]->getY1());
+    drawer.drawTextCentered(tabs[i]->name, tabs[i]->getCenterX(), tabs[i]->getCenterY(), TS_B);
+    
+    tabs[i]->container.draw(drawer);
+  }
+}
+
+void Tabs::updateActiveContainer()
+{
+  for(size_t i = 0; i < tabs.size(); i++)
+  {
+    if(i == selected_tab)
+    {
+      tabs[i]->container.totallyEnable();
+    }
+    else
+    {
+      tabs[i]->container.totallyDisable();
+    }
+  }
+}
+
+void Tabs::handleWidget(const IGUIInput& input)
+{
+  for(size_t i = 0; i < tabs.size(); i++)
+  {
+    if(tabs[i]->pressed(input))
+      selected_tab = i;
+  }
+  
+  updateActiveContainer();
+  
+  for(size_t i = 0; i < tabs.size(); i++)
+  {
+    tabs[i]->container.handle(input);
+  }
+}
+
 
 } //namespace gui
 } //namespace lpi

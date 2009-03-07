@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2009 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -37,7 +37,7 @@ namespace gui
 {
 
 Texture builtInTexture[128];
-BackPanel builtInPanel[4];
+BackPanel builtInPanel[6];
 BackRule builtInRule[2];
 
 
@@ -57,27 +57,49 @@ const std::string builtInGuiData = "\
 <gui>\n\
 \n\
   <textures_small>\n\
-iVBORw0KGgoAAAANSUhEUgAAAIAAAABgCAMAAADipIp7AAAAclBMVEUAAAABAQGAgICEhISFhYWJ\n\
-iYmKioqNjY2Pj4+RkZGUlJSVlZWZmZmampqenp6ioqKmpqanp6erq6usrKyvr6+xsbGzs7O2tra3\n\
-t7e7u7u8vLzAwMDHx8fPz8/X19fg4ODo6Ojw8PD4+Pj/AAD/AP////9MjY55AAAD5UlEQVRo3u2Z\n\
-27baOAyG/6gpZRialKEMpdpnWe//inNhK3GclCST01p7oQuxtAXShy1L3gSqqiK1BgCRWqe2m1mg\n\
-zCzCphVNGyAiETK9AUCe5yK5aTjnUEmIMdIeCbDb7UR2puEcrpfzqSyOh/0Ozo23Y1EHSaQFsN/v\n\
-Rfam5wVQ6gB4enoSeTINHA4HkYPpWQGUurbg+flZ5Nk0cDweRY6mhwIgsbkDQKmzBl5eXkReTANF\n\
-UYgUpuEcrqGkqgTsJUoIoAHAzC0AJee0A+D19VXk1TRQlqVIadqvAAAgSsDMzJF91x/npw6At7c3\n\
-kTfTwOl0EjmZRv837FuhRv6OInx/fxd5Nw2cz2eRs2n07/GgIrT8HQAfHx8iH6aBy+UicjE90ymw\n\
-/F010JwNwPV6Fbmangegyk8DAG63m8jN9CytOMo/ACDpjDPMnzi/w+bj2G0sGwGohhfF2Pk9k5Bz\n\
-5JwSYdz8nnMRwjF0Dlf4hKhap7d5h1VqANcLTmVxRDQ8TmVx5EVWQP3Wq6p/teFSFmgMl7LgZbaA\n\
-yDny4ojqGkim26ljfi9YA6sCxH2wBlhvC8Lx0wCgqxdhVQka9YFNjmFSA+s1onYNrNuKVcmpktrr\n\
-6sPIzn/UBzaS6krWvJAQNf8dp/5m3pDoj8P86ZWMKLmi9ebnW120uV9R4HtR/vApoA0Jfn/3WgoA\n\
-f/39vSh//PMT3QBoGrMD4JsB/IsuADQt6ZHRAPhaA/xCGwCJuTnA3FuALzHAb6QAbfsBsDXA4xRs\n\
-3og+YSseOYzS8UvJ7wWLj2NOpDdBR0BfqqFgybl2Eaf3uxEArXOeLnl6gSFtAcRb0tqiqQDJjcp1\n\
-ADSKslWkk1egtQUpQPNYto7pVIDeRpY0plaj+nQA6Ra0hlNqPwA+HcDjFGzeiFZvxQMApg2jvnHc\n\
-vkPquHHcO+8XttG3xIvbD4BPA4DE5oaN5P3cAkASkEcCIAHgBCCJz5wAIAnAjQDV0/BgV0/DowT3\n\
-Pn/XD77Vz/vtDfa83+wh/mPiTwGQAHAEsOg3HLQCA/a4p0am1sD2p+DRiLYD2HwcTw7oJU+uMYPt\n\
-9F4+2g7x0Mww3AY4/gmnK+F9f4jHjQwj7CEAWeadWeb9RN5HFABysMYZcjAn9h/9wwAyn78CIJ8/\n\
-AORg1ShD7mPEtiLxk/kHbUGWZUF5PxEZBix/TZBbiNpWAA2/h88H10CWZX4Zgt8/9/M1kFcRfMS8\n\
-jmC2AjVByG8EA4sw5K/8lp+RRwEYeZyfg63hyFZ+oppgMsA6K3BvC9aogftFuPwp6DuGK/SBnka0\n\
-dCfsb8XTZsEcw2jCNJxpHP9v+Q/413JTkDduzAAAAABJRU5ErkJggg==\n\
+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\n\
   </textures_small>\n\
 \n\
   <icons_small>\n\
@@ -232,10 +254,10 @@ void initBuiltInGuiTexturesSmall(const std::vector<unsigned char>& png)
   builtInGuiSet.checkBox[1] = &builtInTexture[34];
   
   //bullet unchecked
-  builtInTexture[35].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 64, 80, 80, 96);
+  builtInTexture[35].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 96, 16, 112);
   builtInGuiSet.bullet[0] = &builtInTexture[35];
   //bullet checked
-  builtInTexture[36].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 96, 80, 112, 96);
+  builtInTexture[36].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 96, 48, 112);
   builtInGuiSet.bullet[1] = &builtInTexture[36];
   
   //horizontal line
@@ -278,6 +300,31 @@ void initBuiltInGuiTexturesSmall(const std::vector<unsigned char>& png)
   builtInTexture[58].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 112, 0, 128, 16);
   builtInGuiSet.resizer = &builtInTexture[58];
   
+  //tab unselected
+  builtInTexture[60].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  0,  112,  4,  116);
+  builtInTexture[61].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  6,  112, 10,  116);
+  builtInTexture[62].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 12,  112, 16,  116);
+  builtInTexture[63].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  0,  118,  4, 122);
+  builtInTexture[64].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  6,  118, 10, 122);
+  builtInTexture[65].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 12,  118, 16, 122);
+  builtInTexture[66].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  0, 124,  4, 128);
+  builtInTexture[67].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  6, 124, 10, 128);
+  builtInTexture[68].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 12, 124, 16, 128);
+  for(size_t i = 0; i < 9; i++) builtInGuiSet.tabUnSelected[i] = &builtInTexture[i + 60];
+  
+  //tab selected
+  builtInTexture[69].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 16,  112, 20,  116);
+  builtInTexture[70].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 22,  112, 26,  116);
+  builtInTexture[71].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 28,  112, 32,  116);
+  builtInTexture[72].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 16,  118, 20, 122);
+  builtInTexture[73].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 22,  118, 23, 122);
+  builtInTexture[74].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 28,  118, 32, 122);
+  builtInTexture[75].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 124, 20, 128);
+  builtInTexture[76].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 22, 124, 26, 128);
+  builtInTexture[77].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 28, 124, 32, 128);
+  for(size_t i = 0; i < 9; i++) builtInGuiSet.tabSelected[i] = &builtInTexture[i + 69];
+  
+  
   //panels
   builtInPanel[0].makeTextured(builtInGuiSet.windowTextures[0]/*, RGB_White*/);
   builtInGuiSet.windowPanel = &builtInPanel[0];
@@ -287,6 +334,10 @@ void initBuiltInGuiTexturesSmall(const std::vector<unsigned char>& png)
   builtInGuiSet.buttonOverPanel = &builtInPanel[2];
   builtInPanel[3].makeTextured(builtInGuiSet.buttonDownTextures[0]/*, RGB_Grey*/);
   builtInGuiSet.buttonDownPanel = &builtInPanel[3];
+  builtInPanel[4].makeTextured(builtInGuiSet.tabUnSelected[0]/*, RGB_Grey*/);
+  builtInGuiSet.tabUnSelectedPanel = &builtInPanel[4];
+  builtInPanel[5].makeTextured(builtInGuiSet.tabSelected[0]/*, RGB_Grey*/);
+  builtInGuiSet.tabSelectedPanel = &builtInPanel[5];
   
   //rules (= 1D versions of panels)
   builtInRule[0] = BackRule(1);
@@ -614,14 +665,19 @@ void GUIDrawerGL::drawLine(int x0, int y0, int x1, int y1, const ColorRGB& color
   lpi::drawLine(x0, y0, x1, y1, color);
 }
 
-void GUIDrawerGL::fillRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color)
+void GUIDrawerGL::drawRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled)
 {
-  lpi::drawRectangle(x0, y0, x1, y1, color, true);
+  lpi::drawRectangle(x0, y0, x1, y1, color, filled);
 }
 
 void GUIDrawerGL::drawText(const std::string& text, int x, int y, const Markup& markup)
 {
   lpi::print(text, x, y, markup);
+}
+
+void GUIDrawerGL::drawTextCentered(const std::string& text, int x, int y, const Markup& markup)
+{
+  lpi::printCentered(text, x, y, markup);
 }
 
 void GUIDrawerGL::drawTexture(int x, int y, const Texture* texture, const ColorRGB& colorMod)
@@ -636,6 +692,16 @@ void GUIDrawerGL::drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, bool
     case GP_WINDOW_PANEL:
     {
       guiset->windowPanel->draw(x0, y0, x1 - x0, y1 - y0, color);
+      break;
+    }
+    case GP_TAB_UNSELECTED:
+    {
+      guiset->tabUnSelectedPanel->draw(x0, y0, x1 - x0, y1 - y0, color);
+      break;
+    }
+    case GP_TAB_SELECTED:
+    {
+      guiset->tabSelectedPanel->draw(x0, y0, x1 - x0, y1 - y0, color);
       break;
     }
     default:

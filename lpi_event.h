@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2009 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -61,14 +61,23 @@ void readKeys();
 
 struct KeyState
 {
+  KeyState();
+  
+  static const size_t NUM = 1024;
+  
   /*
   used for remembering if the keys were held down last frame, for e.g. keyPressed and keyPressedTime
   if you don't give a KeyState to keyPressed or keyPressedTime, it uses a default one
   you want to use a second one if you want to have independent checking of keyPressed
   */
-  bool keyReleased[1024];
-  bool keyWarmedUp[1024]; //for keyPressedTime
-  double lastTime[1024]; //for keyPressedTime; last time it returned true
+  bool keyReleased[NUM];
+  bool keyWarmedUp[NUM]; //for keyPressedTime
+  double lastTime[NUM]; //for keyPressedTime; last time it returned true
+  
+  //for "unicodeKey" (called "single" because it doesn't have to remember a separate one for each key)
+  int singlePrevious;
+  double singleKeyTime;
+  bool singleWarmedUp;
 };
 
 bool keyDown(int key);
@@ -83,13 +92,15 @@ int mouseXDiffWarp();
 int mouseYDiffWarp();
 void resetMouseDiffFunctions();
 
+void setMousePos(int x, int y);
+void changeMousePos(int x, int y);
+
 /*
 warmup = "warmup time": how long it takes before the key starts repeating
 rate = repetition rate of the key after the warmupTime
 having released the key resets the warmup
-timingIndex = index of variable that remembers key timing, so you can have different independent inputs (max 15)
 */
-int unicodeKey(int allowedChars, double time, double warmupTime = 0.5, double repTime = 0.025, int index = 0);
+int unicodeKey(int allowedChars, double time, double warmupTime = 0.5, double repTime = 0.025, KeyState* state = 0);
 
 //these were moved from general to input because they depend so much on input
 void sleep();

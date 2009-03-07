@@ -32,10 +32,6 @@ TODO: fix menu and other such elements
 
 #include "lpi_gui.h"
 
-#include "lpi_color.h"
-#include "lpi_texture.h"
-#include "lpi_text.h"
-
 
 namespace lpi
 {

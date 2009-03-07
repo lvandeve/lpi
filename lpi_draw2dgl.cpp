@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2009 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -127,9 +127,9 @@ void drawRectangle(int x1, int y1, int x2, int y2, const ColorRGB& color, bool f
   else
   {
     drawLine(x1, y1, x2, y1, color);
-    drawLine(x1, y2, x2, y2, color);
+    drawLine(x1, y2 - 1, x2, y2 - 1, color);
     drawLine(x1, y1, x1, y2, color);
-    drawLine(x2, y1, x2, y2, color);
+    drawLine(x2 - 1, y1, x2 - 1, y2, color);
   }
 }
 

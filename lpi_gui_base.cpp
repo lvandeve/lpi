@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2009 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -373,6 +373,14 @@ void MouseState::mouseGrab(int x, int y, int relx, int rely)
 //ELEMENTSHAPE
 ////////////////////////////////////////////////////////////////////////////////
 
+void ElementShape::initPosition(int x0, int y0, int x1, int y1)
+{
+  this->x0 = x0;
+  this->y0 = y0;
+  this->x1 = x1;
+  this->y1 = y1;
+}
+
 int ElementShape::mouseGetRelPosX(const IGUIInput& input) const
 {
   return input.mouseX() - x0;
@@ -473,6 +481,16 @@ void ElementShape::mouseGrab(const IGUIInput& input, GUIMouseButton button)
 void ElementShape::mouseUngrab(GUIMouseButton button)
 {
   _mouseState[button].mouseUngrab();
+}
+
+int ElementShape::mouseGetGrabDiffX(const IGUIInput& input, GUIMouseButton button) const
+{
+  return mouseGetRelGrabX(button) - mouseGetRelPosX(input);
+}
+
+int ElementShape::mouseGetGrabDiffY(const IGUIInput& input, GUIMouseButton button) const
+{
+  return mouseGetRelGrabY(button) - mouseGetRelPosY(input);
 }
 
 bool ElementShape::mouseJustDown(const IGUIInput& input, GUIMouseButton button)

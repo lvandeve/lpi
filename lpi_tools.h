@@ -31,7 +31,7 @@ to/from base64 files, to create built-in textures for GUI and font or extract th
 namespace lpi
 {
 
-  void binaryFileToBase64File(const std::string& outfilename, const std::string& infilename);
+  void binaryFileToBase64File(const std::string& outfilename, const std::string& infilename, bool cppnewlines);
   void base64FileToBinaryFile(const std::string& outfilename, const std::string& infilename);
   void base64StringToBinaryFile(const std::string& outfilename, const std::string& in);
 

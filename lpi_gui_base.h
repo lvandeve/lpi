@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2009 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -32,13 +32,13 @@ enum Direction
   V  //vertical
 };
 
-//const static int NUM_MOUSE_BUTTONS = 3; //lmb, mmb, rmb
-const static int NUM_MOUSE_BUTTONS = 2; //lmb, rmb
+const static int NUM_MOUSE_BUTTONS = 3; //lmb, mmb, rmb
+//const static int NUM_MOUSE_BUTTONS = 2; //lmb, rmb
 
 enum GUIMouseButton
 {
   GUI_LMB,
-  //GUI_MMB,
+  GUI_MMB,
   GUI_RMB
 };
 
@@ -59,6 +59,9 @@ class IGUIInput
     //check the state of the 3 buttons of mouse
     virtual bool mouseButtonDown(GUIMouseButton button) const = 0;
     
+    virtual void setMousePos(int x, int y) const = 0;
+    virtual void changeMousePos(int x, int y) const = 0;
+    
     virtual bool doubleClicked(GUIMouseButton button) const = 0;
     virtual bool tripleClicked(GUIMouseButton button) const = 0;
     virtual bool quadrupleClicked(GUIMouseButton button) const = 0;
@@ -71,7 +74,8 @@ class IGUIInput
     
     virtual bool keyDown(int key) const = 0;
     virtual bool keyPressed(int key) const = 0; //only returns true the first time the key is down and you check (can use mutable variable internally for this)
-    virtual int unicodeKey(int allowedChars, double time, double warmupTime = 0.5, double repTime = 0.025) const = 0;
+    virtual bool keyPressedTime(int key, double warmupTime = 0.5, double repTime = 0.025) const = 0;
+    virtual int unicodeKey(int allowedChars, double warmupTime = 0.5, double repTime = 0.025) const = 0;
 };
 
 class IGUIInputClick : public IGUIInput //this one already implements the double clicking in a way
@@ -218,6 +222,7 @@ class ElementShape //describes the shape and mouse handling in this shape
     void setY0(int y0) { this->y0 = y0; }
     void setX1(int x1) { this->x1 = x1; }
     void setY1(int y1) { this->y1 = y1; }
+    void initPosition(int x0, int y0, int x1, int y1);
     
     int getSizeX() const { return x1 - x0; } //get the size of this element
     int getSizeY() const { return y1 - y0; }
@@ -266,7 +271,8 @@ class ElementShape //describes the shape and mouse handling in this shape
     int mouseGetGrabY(GUIMouseButton button = GUI_LMB) const { return _mouseState[button].mouseGetGrabY(); }
     int mouseGetRelGrabX(GUIMouseButton button = GUI_LMB) const { return _mouseState[button].mouseGetRelGrabX(); } //relative location where you last started grabbing (x)
     int mouseGetRelGrabY(GUIMouseButton button = GUI_LMB) const { return _mouseState[button].mouseGetRelGrabY(); }
-    
+    int mouseGetGrabDiffX(const IGUIInput& input, GUIMouseButton button = GUI_LMB) const; //return difference between grab position and current mouse position
+    int mouseGetGrabDiffY(const IGUIInput& input, GUIMouseButton button = GUI_LMB) const;
 
     
     MouseState& getMouseStateForContainer() { return mouse_state_for_containers; }

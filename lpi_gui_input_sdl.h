@@ -47,10 +47,14 @@ class GUIInputSDL : public IGUIInputClick
     virtual bool mouseWheelUp() const;
     virtual bool mouseWheelDown() const;
     
+    virtual void setMousePos(int x, int y) const;
+    virtual void changeMousePos(int x, int y) const;
+    
     //keyboard keys
     virtual bool keyDown(int key) const;
     virtual bool keyPressed(int key) const; //only returns true the first time the key is down and you check
-    virtual int unicodeKey(int allowedChars, double time, double warmupTime = 0.5, double repTime = 0.025) const;
+    virtual bool keyPressedTime(int key, double warmupTime = 0.5, double repTime = 0.025) const;
+    virtual int unicodeKey(int allowedChars, double warmupTime = 0.5, double repTime = 0.025) const;
 };
 
 } //namespace gui
