@@ -26,7 +26,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
-//Draw a line from (x1, y1) to (x2, y2) on the OpenGL screen
+//Draw a line from (x1, y1) to (x2, y2) on the OpenGL screen. NOTE: end coordinates should not be included in the line
 void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color, int clipx1, int clipy1, int clipx2, int clipy2)
 {
   //don't clip if the user gives no clipping area by making clipx2 smaller than clipx1
@@ -59,6 +59,7 @@ void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color, int clipx1,
     glVertex2d(x2 + 0.5, y2 + 0.5);
   glEnd();
 }
+
 void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color)
 {
   drawLine(x1, y1, x2, y2, color, 0, 0, screenWidth(), screenHeight());
@@ -102,13 +103,11 @@ void gradientLine(int x1, int y1, int x2, int y2, const ColorRGB& color1, const 
   glEnd();
 }
 
-//Draw an untextured, filled, rectangle on screen from (x1, y1) to (x2, y2)
+//Draw an untextured, filled, rectangle on screen from (x1, y1) to (x2, y2). The end coordinates should NOT be included
 void drawRectangle(int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled)
 {
   if(filled)
   {
-    x2++;
-    y2++;
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
     glDisable(GL_TEXTURE_2D);
@@ -116,12 +115,14 @@ void drawRectangle(int x1, int y1, int x2, int y2, const ColorRGB& color, bool f
     glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
     
     setOpenGLScissor(); //everything that draws something must always do this
+    
+    static const double OGLDIFF = 0.0;
   
     glBegin(GL_QUADS);
-      glVertex3d(x2, y1, 1);
-      glVertex3d(x1, y1, 1);
-      glVertex3d(x1, y2, 1);
-      glVertex3d(x2, y2, 1);
+      glVertex3d(x2 - OGLDIFF, y1          , 1);
+      glVertex3d(x1          , y1          , 1);
+      glVertex3d(x1          , y2 - OGLDIFF, 1);
+      glVertex3d(x2 - OGLDIFF, y2 - OGLDIFF, 1);
     glEnd();
   }
   else
@@ -133,7 +134,85 @@ void drawRectangle(int x1, int y1, int x2, int y2, const ColorRGB& color, bool f
   }
 }
 
-//Draw a rectangle with 4 different corner colors on screen from (x1, y1) to (x2, y2)
+void drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled)
+{
+  if(filled)
+  {
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
+  
+    glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
+    
+    setOpenGLScissor(); //everything that draws something must always do this
+    
+    //static const double OGLDIFFX = 0.0, OGLDIFFY = 0.0;
+  
+    glBegin(GL_TRIANGLES);
+      glVertex3d(x0, y0, 1);
+      glVertex3d(x1, y1, 1);
+      glVertex3d(x2, y2, 1);
+    glEnd();
+  }
+  else
+  {
+    drawLine(x0, y0, x1, y1, color);
+    drawLine(x1, y1, x2, y2, color);
+    drawLine(x2, y2, x0, y0, color);
+  }
+}
+
+void drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color, bool filled)
+{
+  if(filled)
+  {
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
+  
+    glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
+    
+    setOpenGLScissor(); //everything that draws something must always do this
+    
+    //static const double OGLDIFFX = 0.0, OGLDIFFY = 0.0;
+  
+    glBegin(GL_QUADS);
+      glVertex3d(x0, y0, 1);
+      glVertex3d(x1, y1, 1);
+      glVertex3d(x2, y2, 1);
+      glVertex3d(x3, y3, 1);
+    glEnd();
+  }
+  else
+  {
+    drawLine(x0, y0, x1, y1, color);
+    drawLine(x1, y1, x2, y2, color);
+    drawLine(x2, y2, x3, y3, color);
+    drawLine(x3, y3, x0, y0, color);
+  }
+}
+
+void gradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3)
+{
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
+  glDisable(GL_TEXTURE_2D);
+  
+  setOpenGLScissor(); //everything that draws something must always do this
+  
+  glBegin(GL_QUADS);
+    glColor4f(color0.r / 255.0, color0.g / 255.0, color0.b / 255.0, color0.a / 255.0);
+    glVertex3d(x0, y0, 1);
+    glColor4f(color1.r / 255.0, color1.g / 255.0, color1.b / 255.0, color1.a / 255.0);
+    glVertex3d(x1, y1, 1);
+    glColor4f(color2.r / 255.0, color2.g / 255.0, color2.b / 255.0, color2.a / 255.0);
+    glVertex3d(x2, y2, 1);
+    glColor4f(color3.r / 255.0, color3.g / 255.0, color3.b / 255.0, color3.a / 255.0);
+    glVertex3d(x3, y3, 1);
+  glEnd();
+}
+
+//Draw a rectangle with 4 different corner colors on screen from (x1, y1) to (x2, y2). The end coordinates should NOT be included
 void gradientRectangle(int x1, int y1, int x2, int y2, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3, const ColorRGB& color4)
 {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

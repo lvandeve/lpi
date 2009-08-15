@@ -49,25 +49,29 @@ void InternalContainer::resize(const Pos<int>& oldPos, const Pos<int>& newPos)  
     else if(e.sticky.x0 == RELATIVE00) newPos2.x0 = newPos.x0 + (int)(e.relativePos.x0 * w);
     else if(e.sticky.x0 == RELATIVE11) newPos2.x0 = newPos.x0 + (int)(e.relativePos.x1 * w) - e.getSizeX();
     else if(e.sticky.x0 == BOTTOMRIGHT) newPos2.x0 = e.getX0() + dx1;
+    else if(e.sticky.x0 == CENTER) newPos2.x0 = e.getX0() + (dx0 + dx1) / 2;
     else /*if(e.sticky.x0 == NOTHING)*/ newPos2.x0 = e.getX0();
     
     if(e.sticky.y0 == TOPLEFT) newPos2.y0 = e.getY0() + dy0;
     else if(e.sticky.y0 == RELATIVE00) newPos2.y0 = newPos.y0 + (int)(e.relativePos.y0 * h);
     else if(e.sticky.y0 == RELATIVE11) newPos2.y0 = newPos.y0 + (int)(e.relativePos.y1 * h) - e.getSizeY();
     else if(e.sticky.y0 == BOTTOMRIGHT) newPos2.y0 = e.getY0() + dy1;
-    else /*if(e.sticky.x0 == NOTHING)*/ newPos2.y0 = e.getY0();
+    else if(e.sticky.y0 == CENTER) newPos2.y0 = e.getY0() + (dy0 + dy1) / 2;
+    else /*if(e.sticky.y0 == NOTHING)*/ newPos2.y0 = e.getY0();
     
     if(e.sticky.x1 == TOPLEFT) newPos2.x1 = e.getX1() + dx0;
     else if(e.sticky.x1 == RELATIVE11) newPos2.x1 = newPos.x0 + (int)(e.relativePos.x1 * w);
-    else if(e.sticky.x0 == RELATIVE00) newPos2.x1 = newPos.x0 + (int)(e.relativePos.x0 * w) + e.getSizeX();
+    else if(e.sticky.x1 == RELATIVE00) newPos2.x1 = newPos.x0 + (int)(e.relativePos.x0 * w) + e.getSizeX();
     else if(e.sticky.x1 == BOTTOMRIGHT) newPos2.x1 = e.getX1() + dx1;
-    else /*if(e.sticky.x0 == NOTHING)*/ newPos2.x1 = e.getX1();
+    else if(e.sticky.x1 == CENTER) newPos2.x1 = e.getX1() + (dx0 + dx1) / 2;
+    else /*if(e.sticky.x1 == NOTHING)*/ newPos2.x1 = e.getX1();
     
     if(e.sticky.y1 == TOPLEFT) newPos2.y1 = e.getY1() + dy0;
     else if(e.sticky.y1 == RELATIVE11) newPos2.y1 = newPos.y0 + (int)(e.relativePos.y1 * h);
-    else if(e.sticky.y0 == RELATIVE00) newPos2.y1 = newPos.y0 + (int)(e.relativePos.y0 * h) + e.getSizeY();
+    else if(e.sticky.y1 == RELATIVE00) newPos2.y1 = newPos.y0 + (int)(e.relativePos.y0 * h) + e.getSizeY();
     else if(e.sticky.y1 == BOTTOMRIGHT) newPos2.y1 = e.getY1() + dy1;
-    else /*if(e.sticky.x0 == NOTHING)*/ newPos2.y1 = e.getY1();
+    else if(e.sticky.y1 == CENTER) newPos2.y1 = e.getY1() + (dy0 + dy1) / 2;
+    else /*if(e.sticky.y1 == NOTHING)*/ newPos2.y1 = e.getY1();
   
     e.resize(newPos2.x0, newPos2.y0, newPos2.x1, newPos2.y1);
   }
@@ -161,7 +165,7 @@ void Element::totallyDisable()
 void Element::totallyEnable()
 {
   visible = active = present = true;
-  setElementOver(false);
+  //setElementOver(false); //don't do this, other things already handle this, the reason for not doing this is, if you constantly totallyEnable an element, then all the elementOver mechanism of containers won't work properly anymore
 }
 
 void Element::addSubElement(Element* element, const Pos<Sticky>& sticky)
@@ -2322,7 +2326,7 @@ void Checkbox::addFrontImage(const Texture* texture)
 {
   addFrontImage(texture, texture, texture, texture, colorMod[0], colorMod[1], colorMod[2], colorMod[3]);
 }
-//constructor for checkbox with text title
+
 void Checkbox::make(int x, int y, bool checked, const GuiSet* set, int toggleOnMouseUp)
 {
   this->x0 = x;
@@ -2338,6 +2342,27 @@ void Checkbox::make(int x, int y, bool checked, const GuiSet* set, int toggleOnM
   this->colorMod[3] = set->mouseOverColor;
   this->setSizeX(set->checkBox[0]->getU());
   this->setSizeY(set->checkBox[0]->getV());
+  this->toggleOnMouseUp = toggleOnMouseUp;
+  this->totallyEnable();
+  
+  positionText();
+}
+
+void Checkbox::makeSmall(int x, int y, bool checked, const GuiSet* set, int toggleOnMouseUp)
+{
+  this->x0 = x;
+  this->y0 = y;
+  this->checked = checked;
+  this->texture[0] = set->smallCheckBox[0];
+  this->texture[1] = set->smallCheckBox[0];
+  this->texture[2] = set->smallCheckBox[1];
+  this->texture[3] = set->smallCheckBox[1];
+  this->colorMod[0] = set->mainColor;
+  this->colorMod[1] = set->mouseOverColor;
+  this->colorMod[2] = set->mainColor;
+  this->colorMod[3] = set->mouseOverColor;
+  this->setSizeX(set->smallCheckBox[0]->getU());
+  this->setSizeY(set->smallCheckBox[0]->getV());
   this->toggleOnMouseUp = toggleOnMouseUp;
   this->totallyEnable();
   
@@ -2775,6 +2800,9 @@ void Image::drawWidget(IGUIDrawer& /*drawer*/) const
 
 ////////////////////////////////////////////////////////////////////////////////
 
+Tabs::Tab::Tab()
+{
+}
 
 void Tabs::Tab::drawWidget(IGUIDrawer& drawer) const
 {
@@ -2821,6 +2849,7 @@ void Tabs::addTab(const std::string& name)
   addSubElement(tabs.back(), STICKYRELATIVEHORIZONTAL0);
   addSubElement(&tabs.back()->container, STICKYRELATIVEHORIZONTALFULL);
   generateTabSizes();
+  updateActiveContainer();
 }
 
 size_t Tabs::getNumTabs() const
@@ -2862,15 +2891,23 @@ void Tabs::updateActiveContainer()
   }
 }
 
+void Tabs::selectTab(size_t i_index)
+{
+  selected_tab = i_index;
+  updateActiveContainer();
+}
+
 void Tabs::handleWidget(const IGUIInput& input)
 {
   for(size_t i = 0; i < tabs.size(); i++)
   {
+    if(i != selected_tab)
+      tabs[i]->container.setElementOver(true);
     if(tabs[i]->pressed(input))
-      selected_tab = i;
+    {
+      selectTab(i);
+    }
   }
-  
-  updateActiveContainer();
   
   for(size_t i = 0; i < tabs.size(); i++)
   {

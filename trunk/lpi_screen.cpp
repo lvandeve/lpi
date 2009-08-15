@@ -26,9 +26,6 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
-void initBuiltInFontTextures(); //link time dependency to init the built in font textures
-namespace gui { void initBuiltInGui(); } //link time dependency to init the built in gui textures
-
 namespace
 {
   SDL_Surface* scr; //the single SDL surface used
@@ -50,7 +47,7 @@ void screen(int width, int height, bool fullscreen, const char* text)
 
   if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
   {
-    std::printf("Unable to init SDL: %s\n", SDL_GetError());
+    std::cout << std::string("Unable to init SDL: ") + SDL_GetError();
     SDL_Quit();
     std::exit(1);
   }
@@ -76,7 +73,7 @@ void screen(int width, int height, bool fullscreen, const char* text)
   }
   if(scr == 0)
   {
-    std::printf("Unable to set video: %s\n", SDL_GetError());
+    std::cout << std::string("Unable to set video: ") + SDL_GetError();
     SDL_Quit();
     std::exit(1);
   }
@@ -89,9 +86,6 @@ void screen(int width, int height, bool fullscreen, const char* text)
   cls();
   
   //plane.create(RGB_Black, w, h);
-  
-  initBuiltInFontTextures();
-  gui::initBuiltInGui();
 }
 
 /*int screenWidth()

@@ -62,6 +62,8 @@ gprof > gprof.txt
 #include "lpi_xml.h"
 #include "lodepng.h"
 #include "lodewav.h"
+#include "lpi_gui_dynamic.h"
+#include "lpi_gui_color.h"
 
 #include <vector>
 #include <iostream>
@@ -141,6 +143,8 @@ SpawnTexts spawns;
 int main(int, char*[]) //the arguments have to be given here, or DevC++ can't link to SDL for some reason
 {
   lpi::screen(width, height, 0, "lpi GUI demo");
+  lpi::initFont();
+  lpi::gui::GUIDrawerGL::init();
   
   lpi::gui::Container c;
   
@@ -212,6 +216,37 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   tabs.getTabContent(0).pushTopAt(&wb, 20, 50);
   //w.pushTopAt(&wb, 20, 50);
   
+  int dyn_value1 = 12345;
+  std::string dyn_value2 = "hello";
+  bool dyn_value3 = true;
+  double dyn_value4 = 1.5;
+  lpi::gui::DynamicPage dyn;
+  //dyn.setSizeXY(200, 20);
+  dyn.addControl("int", new lpi::gui::DynamicValue<int>(&dyn_value1));
+  dyn.addControl("string", new lpi::gui::DynamicValue<std::string>(&dyn_value2));
+  dyn.addControl("boolean", new lpi::gui::DynamicCheckbox(&dyn_value3));
+  dyn.addControl("double", new lpi::gui::DynamicValue<double>(&dyn_value4));
+  //dyn.resize(0,0,200,100);
+  tabs.getTabContent(1).pushTopAt(&dyn, 20, 50, lpi::gui::STICKYHORIZONTALTOP);
+
+  lpi::gui::TValue<int> tval1;
+  tval1.make(0, 0, &dyn_value1);
+  tabs.getTabContent(1).pushTopAt(&tval1, 20, 140, lpi::gui::STICKYHORIZONTALTOP);
+  lpi::gui::TValue<std::string> tval2;
+  tval2.make(0, 0, &dyn_value2);
+  tabs.getTabContent(1).pushTopAt(&tval2, 20, 148, lpi::gui::STICKYHORIZONTALTOP);
+  lpi::gui::TValue<bool> tval3;
+  tval3.make(0, 0, &dyn_value3);
+  tabs.getTabContent(1).pushTopAt(&tval3, 20, 156, lpi::gui::STICKYHORIZONTALTOP);
+  lpi::gui::TValue<double> tval4;
+  tval4.make(0, 0, &dyn_value4);
+  tabs.getTabContent(1).pushTopAt(&tval4, 20, 164, lpi::gui::STICKYHORIZONTALTOP);
+  
+  lpi::gui::HueCircle_HSV_HV hsv;
+  hsv.resize(0,0,200,200);
+  hsv.setAdaptiveColor(lpi::RGB_Lightred);
+  tabs.getTabContent(2).pushTopAt(&hsv, 20, 50);
+  
   lpi::gui::Checkbox wcb;
   wcb.make(0, 0);
   w1.pushTopAt(&wcb, 20, 20);
@@ -222,6 +257,8 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   
   lpi::audioOpen(44100, 2048);
   
+  tabs.setElementOver(true);
+  
   while(lpi::frame(true, true))
   {
     lpi::print("lpi GUI demo");
@@ -230,8 +267,13 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     
     lpi::gui::builtInTexture[37].draw(0, 50);
     
+    dyn.controlToValue();
+    //dyn.valueToControl();
+    
     c.draw(lpi::gGUIDrawer);
     c.handle(lpi::gGUIInput);
+    
+    
     
     spawns.draw();
     spawns.handle();

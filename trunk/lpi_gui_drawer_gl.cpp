@@ -57,49 +57,57 @@ const std::string builtInGuiData = "\
 <gui>\n\
 \n\
   <textures_small>\n\
-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\n\
+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\n\
+IDCiAIHxfxgyFP1QkQkUAAAAAElFTkSuQmCC\n\
   </textures_small>\n\
 \n\
   <icons_small>\n\
@@ -324,6 +332,12 @@ void initBuiltInGuiTexturesSmall(const std::vector<unsigned char>& png)
   builtInTexture[77].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 28, 124, 32, 128);
   for(size_t i = 0; i < 9; i++) builtInGuiSet.tabSelected[i] = &builtInTexture[i + 69];
   
+  //small check box unchecked
+  builtInTexture[78].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 128, 11, 139);
+  builtInGuiSet.smallCheckBox[0] = &builtInTexture[78];
+  //small check box checked
+  builtInTexture[79].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 128, 43, 139);
+  builtInGuiSet.smallCheckBox[1] = &builtInTexture[79];
   
   //panels
   builtInPanel[0].makeTextured(builtInGuiSet.windowTextures[0]/*, RGB_White*/);
@@ -655,6 +669,11 @@ void BackRule::draw(int x, int y, int length) const
 
 ////////////////////////////////////////////////////////////////////////////////
 
+void GUIDrawerGL::init()
+{
+  initBuiltInGui();
+}
+
 GUIDrawerGL::GUIDrawerGL(GuiSet* set) : guiset(set)
 {
 }
@@ -668,6 +687,21 @@ void GUIDrawerGL::drawLine(int x0, int y0, int x1, int y1, const ColorRGB& color
 void GUIDrawerGL::drawRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled)
 {
   lpi::drawRectangle(x0, y0, x1, y1, color, filled);
+}
+
+void GUIDrawerGL::drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled)
+{
+  lpi::drawTriangle(x0, y0, x1, y1, x2, y2, color, filled);
+}
+
+void GUIDrawerGL::drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color, bool filled)
+{
+  lpi::drawQuad(x0, y0, x1, y1, x2, y2, x3, y3, color, filled);
+}
+
+void GUIDrawerGL::drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3)
+{
+  lpi::gradientQuad(x0, y0, x1, y1, x2, y2, x3, y3, color0, color1, color2, color3);
 }
 
 void GUIDrawerGL::drawText(const std::string& text, int x, int y, const Markup& markup)
