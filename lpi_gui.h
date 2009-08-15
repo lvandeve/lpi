@@ -41,7 +41,6 @@ namespace lpi
 namespace gui
 {
 
-
 class Element;
 
 class InternalContainer //container inside elements, for elements that contain sub elements to work (e.g. scrollbar exists out of background and 3 buttons)
@@ -153,7 +152,7 @@ class Element : public ElementShape
     
     virtual void drawWidget(IGUIDrawer& drawer) const = 0; //called by draw(), this one can be overloaded for each widget defined below
     virtual void handleWidget(const IGUIInput& input);
-    virtual void moveWidget(int x, int y); //Override this if you have subelements, unless you use getAutoSubElement.
+    virtual void moveWidget(int x, int y); //Override this if you have subelements, unless you use addSubElement.
     
     void moveTo(int x, int y);
     void moveCenterTo(int x, int y);
@@ -166,7 +165,7 @@ class Element : public ElementShape
     void growSizeY0(int sizey) { resize(x0        , y1 - sizey, x1        , y1        ); }
     void growSizeX1(int sizex) { resize(x0        , y0        , x0 + sizex, y1        ); }
     void growSizeY1(int sizey) { resize(x0        , y0        , x1        , y0 + sizey); }
-    virtual void resizeWidget(const Pos<int>& newPos); //always called after resize, will resize the other elements to the correct size. Override this if you have subelements, unless you use getAutoSubElement.
+    virtual void resizeWidget(const Pos<int>& newPos); //always called after resize, will resize the other elements to the correct size. Override this if you have subelements, unless you use addSubElement.
     virtual bool isContainer() const; //returns 0 if the type of element isn't a container, 1 if it is (Window, Container, ...); this value is used by for example Container: it brings containers to the top of the screen if you click on them. Actually so far it's only been used for that mouse test. It's something for containers, by containers :p
     void putInScreen(); //puts element in screen if it's outside
     
@@ -175,7 +174,7 @@ class Element : public ElementShape
     void removeToolTip() { tooltipenabled = false; }
     void drawToolTip(const IGUIInput& input) const; //TODO: move this function to ToolTipManager
     
-    virtual void setElementOver(bool state); //ALL gui types that have gui elements inside of them, must set elementOver of all gui elements inside of them too! ==> override this virtual function for those. Override this if you have subelements, unless you use getAutoSubElement.
+    virtual void setElementOver(bool state); //ALL gui types that have gui elements inside of them, must set elementOver of all gui elements inside of them too! ==> override this virtual function for those. Override this if you have subelements, unless you use addSubElement.
     bool hasElementOver() const;
 
     ////for debugging: if you've got no idea what's going on with a GUI element, this function at least is guaranteed to show where it is (if in screen)
@@ -729,6 +728,7 @@ class Checkbox : public Element, public Label
     
     Checkbox();
     void make(int x, int y, bool checked = 0, const GuiSet* set = &builtInGuiSet, int toggleOnMouseUp = 0);
+    void makeSmall(int x, int y, bool checked = 0, const GuiSet* set = &builtInGuiSet, int toggleOnMouseUp = 0);
     void addText(const std::string& text, const Markup& markup = TS_W);
     virtual void drawWidget(IGUIDrawer& drawer) const; //also handles it by calling handle(): toggles when mouse down or not
     virtual void handleWidget(const IGUIInput& input);
@@ -739,6 +739,7 @@ class Checkbox : public Element, public Label
     void check() { checked = true; }
     void uncheck() { checked = false; }
     bool isChecked() { return checked; }
+    bool setChecked(bool check) { checked = check; }
     
     //give it alternative textures than those in the GuiSet
     void setTexturesAndColors(const Texture* texture1, const Texture* texture2, const Texture* texture3, const Texture* texture4, 
@@ -825,6 +826,41 @@ class Text : public Element
     std::string text;
 };
 
+template<typename T>
+class TValue : public Element
+{
+  public:
+    Markup markup;
+    
+    TValue()
+    : value(0)
+    {
+      this->visible = 0;
+      this->active = 0;
+    }
+
+    void make(int x, int y, T* value, const Markup& markup = TS_W)
+    {
+      this->x0 = x;
+      this->y0 = y;
+      this->setSizeX(16 * markup.getWidth());
+      this->setSizeY(markup.getHeight());
+      this->value = value;
+      this->markup = markup;
+      this->totallyEnable();
+    }
+
+    void drawWidget(IGUIDrawer& /*drawer*/) const
+    {
+      if(value) print(valtostr(*value), x0, y0, markup);
+    }
+    
+    void setValue(T* value) { this->value = value; }
+
+  private:
+    T* value;
+};
+
 class Image : public Element
 {
   public:
@@ -843,7 +879,8 @@ class Tabs : public Element
     {
       std::string name; //name of this tab
       Container container; //contains the GUI elements inside this tab
-      
+     
+      Tab(); 
       virtual void drawWidget(IGUIDrawer& drawer) const;
     };
     
@@ -861,6 +898,9 @@ class Tabs : public Element
     size_t getNumTabs() const;
     Container& getTabContent(size_t index) const;
     void clear();
+    
+    size_t getSelectedTab() const { return selected_tab; }
+    void selectTab(size_t i_index);
     
     virtual void drawWidget(IGUIDrawer& drawer) const;
     virtual void handleWidget(const IGUIInput& input);

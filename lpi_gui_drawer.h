@@ -92,14 +92,31 @@ enum GUIPart
 
 class IGUIInput;
 
+/*
+TODO:
+lpi_gui shouldn't keep any textures internally (except things like Image).
+But it should be possible to draw elements with custom styles. These styles should be defined in the Drawer instead.
+But, each GUI element should then be able to keep a sort of "token", "handle" or "pointer" to such a style.
+This style and the handle are created and interpreted by the Drawer.
+The handle should become a parameter of the drawGUIPart function.
+If a handle/token points to something a Drawer doesn't understand (it's created by a different type of drawer), it should ignore it and use default style.
+There are also things the GUI element should be able to get in an abstract way from the style, such as, which standard width or height of the element is associated with this style.
+*/
+
 class IGUIDrawer
 {
   public:
     virtual ~IGUIDrawer(){};
     virtual void drawLine(int x0, int y0, int x1, int y1, const ColorRGB& color) = 0;
     virtual void drawRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled) = 0;
+    virtual void drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled) = 0;
+    virtual void drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color, bool filled) = 0;
+    
+    virtual void drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3) = 0;
+
     virtual void drawText(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W) = 0;
     virtual void drawTextCentered(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W) = 0;
+    
     virtual void drawTexture(int x, int y, const Texture* texture, const ColorRGB& colorMod = RGB_White) = 0;
     
     //things that need to be done before and after the drawing, e.g. setting the scissor

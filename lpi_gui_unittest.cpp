@@ -519,6 +519,98 @@ void unitTest()
     
     LUT_SUB_ASSERT_TRUE(dummy.mouseOver(testinput)) //the mouse really is over the dummy, and we called handle on the top container so that all input is up to date, so mouseOver of the nested element in it should return true
   LUT_CASE_END
+  
+  LUT_CASE("mouseOver on button on window in Tabs, behind other window")
+    Container c;
+
+    Window w2;
+    w2.make(50, 50, 300, 300);
+    w2.addTop();
+    w2.addTitle("Window 2");
+    w2.addCloseButton();
+    w2.setColor(lpi::RGBA_White(192));
+    w2.addResizer();
+    c.pushTop(&w2);
+    
+    Tabs tabs;
+    tabs.resize(0, 0, w2.getSizeX(), w2.getSizeY() - 32);
+    tabs.addTab("tab 1");
+    tabs.addTab("tab 2");
+    tabs.addTab("tab 3");
+    tabs.addTab("tab 4");
+    w2.pushTopAt(&tabs, 0, 16, STICKYRELATIVE);
+    
+    Window w1;
+    w1.make(0, 0, 500, 500);
+    w1.addTop();
+    w1.addTitle("Window 1");
+    w1.addCloseButton();
+    w1.addResizer();
+    w1.setColor(lpi::RGBA_Red(192));
+    c.pushTop(&w1);
+    
+    Button wb;
+    wb.makeTextPanel(0, 0, "window button");
+    wb.autoTextSize(4);
+    wb.centerText();
+    tabs.getTabContent(0).pushTopAt(&wb, 20, 50);
+    
+    testinput.debugSetMousePos(0, 0);
+    c.handle(testinput);
+    
+    testinput.debugSetMousePos(wb.getCenterX(), wb.getCenterY());
+    c.handle(testinput);
+    LUT_SUB_ASSERT_FALSE(wb.mouseOver(testinput)); //it should NOT be over, because the big "window 1" is over this - but some bug once made this be "true" here anyway (elements in tabs were active when another window was over it, due to tabs calling "totallyEnable" on each tab constantly, and totallyEnable had a setElementOver(false) call in it...)
+    
+    w1.move(wb.getX1(), wb.getY1());
+    c.handle(testinput);
+    LUT_SUB_ASSERT_TRUE(wb.mouseOver(testinput)); //window moved away, now mouse should be over the button
+
+  LUT_CASE_END
+  
+  LUT_CASE("mouseOver on different tabs")
+    Container c;
+
+    Window w2;
+    w2.make(50, 50, 300, 300);
+    w2.addTop();
+    w2.addTitle("Window 2");
+    w2.addCloseButton();
+    w2.setColor(lpi::RGBA_White(192));
+    w2.addResizer();
+    c.pushTop(&w2);
+    
+    Tabs tabs;
+    tabs.resize(0, 0, w2.getSizeX(), w2.getSizeY() - 32);
+    tabs.addTab("tab 1");
+    tabs.addTab("tab 2");
+    tabs.addTab("tab 3");
+    tabs.addTab("tab 4");
+    w2.pushTopAt(&tabs, 0, 16, STICKYRELATIVE);
+    
+    
+    Button wb;
+    wb.makeTextPanel(0, 0, "window button");
+    wb.autoTextSize(4);
+    wb.centerText();
+    tabs.getTabContent(0).pushTopAt(&wb, 20, 50);
+    
+    testinput.debugSetMousePos(0, 0);
+    c.handle(testinput);
+    
+    testinput.debugSetMousePos(wb.getCenterX(), wb.getCenterY());
+    c.handle(testinput);
+    LUT_SUB_ASSERT_TRUE(wb.mouseOver(testinput));
+    
+    tabs.selectTab(1);
+    c.handle(testinput);
+    LUT_SUB_ASSERT_FALSE(wb.mouseOver(testinput));
+
+    tabs.selectTab(0);
+    c.handle(testinput);
+    LUT_SUB_ASSERT_TRUE(wb.mouseOver(testinput));
+
+  LUT_CASE_END
 
   LUT_END_UNIT_TEST
 }

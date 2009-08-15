@@ -159,6 +159,7 @@ struct GuiSet
   const Texture* slider; //the button of a slider, the simplified scrollbar (the slider is what the scroller is to scrollbars)
   const Texture* scrollbarBackground;
   const Texture* checkBox[2];
+  const Texture* smallCheckBox[2];
   const Texture* bullet[2];
   const Texture* hline[3];
   const Texture* vline[3];
@@ -202,10 +203,18 @@ class GUIDrawerGL : public IGUIDrawer
   public:
     GUIDrawerGL(GuiSet* set);
     
+    static void init(); //must be called after screen is created
+    
     virtual void drawLine(int x0, int y0, int x1, int y1, const ColorRGB& color);
     virtual void drawRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled);
+    virtual void drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled);
+    virtual void drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color, bool filled);
+    
+    virtual void drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3);
+    
     virtual void drawText(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W);
     virtual void drawTextCentered(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W);
+    
     virtual void drawTexture(int x, int y, const Texture* texture, const ColorRGB& colorMod = RGB_White);
     
     virtual void setSmallestScissor(int x0, int y0, int x1, int y1);

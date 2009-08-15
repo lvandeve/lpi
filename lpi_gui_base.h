@@ -108,6 +108,7 @@ enum Sticky //how to resize child widget with master widget
 {
   TOPLEFT, //follow top/left side of master
   BOTTOMRIGHT, //follow bottom/right side of master
+  CENTER, //follow center of master
   RELATIVE00, //position relative to master, distance of this subelement's side to upper left ("00") corner of subelement will stay constant
   RELATIVE11, //position relative to master, distance of this subelement's side to lower right ("11") corner of subelement will stay constant
   NOTHING //don't do anything in resize(). But in move() it'll still translate.
@@ -123,33 +124,40 @@ struct Pos
 };
 
 //some named combinations for Pos<Sticky> values, more are possible but these are probably the most common
-extern Pos<Sticky> STICKYTOPLEFT; //always keeps same size, stays at same position compared to parent's top left
-extern Pos<Sticky> STICKYTOPRIGHT; //always keeps same size, stays at same position compared to parent's top right
-extern Pos<Sticky> STICKYBOTTOMRIGHT; //always keeps same size, stays at same position compared to parent's bottom right
-extern Pos<Sticky> STICKYBOTTOMLEFT; //always keeps same size, stays at same position compared to parent's bottom left
-extern Pos<Sticky> STICKYFULL; //follows each corresponding side, so it resizes as much as its master
-extern Pos<Sticky> STICKYNOTHING; //don't do anything in resize() of parent, but still move if the parent move()s
+extern const Pos<Sticky> STICKYTOPLEFT; //always keeps same size, stays at same position compared to parent's top left
+extern const Pos<Sticky> STICKYTOPCENTER;
+extern const Pos<Sticky> STICKYTOPRIGHT; //always keeps same size, stays at same position compared to parent's top right
+extern const Pos<Sticky> STICKYCENTERRIGHT;
+extern const Pos<Sticky> STICKYCENTER; //keep same size, follow center
+extern const Pos<Sticky> STICKYCENTERLEFT;
+extern const Pos<Sticky> STICKYBOTTOMRIGHT; //always keeps same size, stays at same position compared to parent's bottom right
+extern const Pos<Sticky> STICKYBOTTOMCENTER;
+extern const Pos<Sticky> STICKYBOTTOMLEFT; //always keeps same size, stays at same position compared to parent's bottom left
+extern const Pos<Sticky> STICKYFULL; //follows each corresponding side, so it resizes as much as its master
+extern const Pos<Sticky> STICKYNOTHING; //don't do anything in resize() of parent, but still move if the parent move()s
 //for e.g. scrollbars:
-extern Pos<Sticky> STICKYVERTICALLEFT; //follows both sides in vertical direction, follows left side
-extern Pos<Sticky> STICKYVERTICALRIGHT; //follows both sides in vertical direction, follows right side
-extern Pos<Sticky> STICKYHORIZONTALTOP; //follows both sides in horizontal direction, follows top side
-extern Pos<Sticky> STICKYHORIZONTALBOTTOM; //follows both sides in horizontal direction, follows bottom side
+extern const Pos<Sticky> STICKYVERTICALLEFT; //follows both sides in vertical direction, follows left side
+extern const Pos<Sticky> STICKYVERTICALCENTER; //follows both sides in vertical direction, follows center
+extern const Pos<Sticky> STICKYVERTICALRIGHT; //follows both sides in vertical direction, follows right side
+extern const Pos<Sticky> STICKYHORIZONTALTOP; //follows both sides in horizontal direction, follows top side
+extern const Pos<Sticky> STICKYHORIZONTALCENTER; //follows both sides in horizontal direction, follows center
+extern const Pos<Sticky> STICKYHORIZONTALBOTTOM; //follows both sides in horizontal direction, follows bottom side
 //some involving relative:
-extern Pos<Sticky> STICKYRELATIVE; //relative in all directions - use for subelements that may be resized too in all directions
-extern Pos<Sticky> STICKYRELATIVE00; //position relative, but size stays constant (position determined by top left corner)
-extern Pos<Sticky> STICKYRELATIVE01; //position relative, but size stays constant (position determined by bottom left corner)
-extern Pos<Sticky> STICKYRELATIVE10; //position relative, but size stays constant (position determined by top right corner)
-extern Pos<Sticky> STICKYRELATIVE11; //position relative, but size stays constant (position determined by bottom right corner)
-extern Pos<Sticky> STICKYRELATIVEHORIZONTAL0; //size and position relative in horizontal direction, position relative in vertical direction
-extern Pos<Sticky> STICKYRELATIVEVERTICAL0; //size and position relative in vertical direction, position relative in horizontal direction
-extern Pos<Sticky> STICKYRELATIVEHORIZONTAL1; //size and position relative in horizontal direction, position relative in vertical direction
-extern Pos<Sticky> STICKYRELATIVEVERTICAL1; //size and position relative in vertical direction, position relative in horizontal direction
-extern Pos<Sticky> STICKYRELATIVEHORIZONTALFULL; //relative in horizontal direction, follows both sides in vertical direction
-extern Pos<Sticky> STICKYRELATIVEVERTICALFULL; //relative in vertical direction, follows both sides in horizontal direction
-extern Pos<Sticky> STICKYRELATIVELEFT; //relative in horizontal direction, follows left side in vertical direction
-extern Pos<Sticky> STICKYRELATIVETOP; //relative in vertical direction, follows top side in horizontal direction
-extern Pos<Sticky> STICKYRELATIVERIGHT; //relative in horizontal direction, follows right side in vertical direction
-extern Pos<Sticky> STICKYRELATIVEBOTTOM; //relative in vertical direction, follows bottom side in horizontal direction
+extern const Pos<Sticky> STICKYRELATIVE; //relative in all directions - use for subelements that may be resized too in all directions
+extern const Pos<Sticky> STICKYRELATIVE00; //position relative, but size stays constant (position determined by top left corner)
+extern const Pos<Sticky> STICKYRELATIVE01; //position relative, but size stays constant (position determined by bottom left corner)
+extern const Pos<Sticky> STICKYRELATIVE10; //position relative, but size stays constant (position determined by top right corner)
+extern const Pos<Sticky> STICKYRELATIVE11; //position relative, but size stays constant (position determined by bottom right corner)
+extern const Pos<Sticky> STICKYRELATIVEHORIZONTAL0; //size and position relative in horizontal direction, position relative in vertical direction
+extern const Pos<Sticky> STICKYRELATIVEVERTICAL0; //size and position relative in vertical direction, position relative in horizontal direction
+extern const Pos<Sticky> STICKYRELATIVEHORIZONTAL1; //size and position relative in horizontal direction, position relative in vertical direction
+extern const Pos<Sticky> STICKYRELATIVEVERTICAL1; //size and position relative in vertical direction, position relative in horizontal direction
+extern const Pos<Sticky> STICKYRELATIVEHORIZONTALFULL; //relative in horizontal direction, follows both sides in vertical direction
+extern const Pos<Sticky> STICKYRELATIVEVERTICALFULL; //relative in vertical direction, follows both sides in horizontal direction
+extern const Pos<Sticky> STICKYRELATIVELEFT; //relative in vertical direction, follows left side in horizontal direction
+extern const Pos<Sticky> STICKYRELATIVETOP; //relative in horizontalvertical direction, follows top side in vertical direction
+extern const Pos<Sticky> STICKYRELATIVERIGHT; //relative in vertical direction, follows right side in horizontal direction
+extern const Pos<Sticky> STICKYRELATIVEBOTTOM; //relative in horizontal direction, follows bottom side in vertical direction
 
 struct MouseOverState
 {
@@ -227,8 +235,9 @@ class ElementShape //describes the shape and mouse handling in this shape
     int getSizeX() const { return x1 - x0; } //get the size of this element
     int getSizeY() const { return y1 - y0; }
     //the functions below are best used after setting x0 and y0
-    void setSizeX(const int sizex) { x1 = x0 + sizex; } //change x1, y1 to get the given size
-    void setSizeY(const int sizey) { y1 = y0 + sizey; }
+    void setSizeX(int sizex) { x1 = x0 + sizex; } //change x1, y1 to get the given size
+    void setSizeY(int sizey) { y1 = y0 + sizey; }
+    void setSizeXY(int sizex, int sizey) { setSizeX(sizex); setSizeY(sizey); }
     int getCenterX() const { return (x0 + x1) / 2; } //the center in screen coordinates
     int getCenterY() const { return (y0 + y1) / 2; }
     int getRelCenterX() const { return (x1 - x0) / 2; } //the half of the size

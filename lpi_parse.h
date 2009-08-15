@@ -53,6 +53,12 @@ T strtoval(const std::string& s)
   return val;
 }
 
+template<>
+inline std::string strtoval<std::string>(const std::string& s)
+{
+  return s;
+}
+
 //length is decimal precision of the floating point number
 template<typename T>
 std::string valtostr(const T& val, int length, bool fixed = true)
