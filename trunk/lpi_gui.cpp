@@ -2090,6 +2090,28 @@ Slider::Slider()
   addSubElement(&slider);
 }
 
+void Slider::makeSmallHorizontal(int x, int y, int length, double scrollSize, const GuiSet* set)
+{
+  this->totallyEnable();
+
+  int sliderCenter = set->smallSliderH->getV() / 2;
+  int rulerCenter = set->smallSliderHRule->t0->getV() / 2;
+  int centerPos = sliderCenter;
+  if(rulerCenter > sliderCenter) centerPos = rulerCenter;
+  
+  this->direction = H;
+  this->scrollPos = 0;
+  this->scrollSize = scrollSize;
+  this->x0 = x;
+  this->y0 = y;
+  this->setSizeX(length);
+  this->setSizeY(set->smallSliderH->getV());
+  this->ruler = set->smallSliderHRule;
+  this->slider.makeImage(x0, y0 + centerPos - sliderCenter, set->smallSliderH, set->smallSliderH, set->smallSliderH, set->mainColor, set->mouseOverColor, set->mouseDownColor);
+//TODO: sticky parameters goed zetten
+  slider.mouseDownVisualStyle = 2;
+}
+
 void Slider::makeHorizontal(int x, int y, int length, double scrollSize, const GuiSet* set)
 {
   this->totallyEnable();

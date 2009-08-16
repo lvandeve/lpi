@@ -157,6 +157,7 @@ struct GuiSet
   const Texture* emptyButton;
   const Texture* roundButton;
   const Texture* slider; //the button of a slider, the simplified scrollbar (the slider is what the scroller is to scrollbars)
+  const Texture* smallSliderH; //button for small horizontal slider
   const Texture* scrollbarBackground;
   const Texture* checkBox[2];
   const Texture* smallCheckBox[2];
@@ -184,6 +185,7 @@ struct GuiSet
   
   const BackRule* sliderHRule;
   const BackRule* sliderVRule;
+  const BackRule* smallSliderHRule;
   
   ColorRGB mainColor; //if the mouse is not over or down a button
   ColorRGB mouseOverColor; //this isn't for panel buttons, but for image buttons like the arrows of a scrollbar, ...

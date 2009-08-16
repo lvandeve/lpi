@@ -56,6 +56,8 @@ How to use it:
 
 //the default constructor
 InputLine::InputLine()
+: sel0(0)
+, sel1(0)
 {
   this->x0 = 0;
   this->y0 = 0;
@@ -65,6 +67,7 @@ InputLine::InputLine()
   this->allowedChars = 0;
   this->title = "";
   this->control_active = 0;
+  this->entering_done = false;
   
   this->text = "";
   cursor = 0;
@@ -100,6 +103,21 @@ void InputLine::make(int x, int y, unsigned long l, const Markup& markup, int ty
   this->present = 1;
 }
 
+bool InputLine::enteringDone() const
+{
+  if(control_active)
+  {
+    entering_done = true;
+    return false;
+  }
+  else if(entering_done)
+  {
+    entering_done = false;
+    return true;
+  }
+  else return false;
+}
+
 //this function draws the line, and makes sure it gets handled too
 void InputLine::drawWidget(IGUIDrawer& drawer) const
 {
@@ -123,94 +141,145 @@ void InputLine::drawWidget(IGUIDrawer& drawer) const
   if(control_active && (int(draw_time * 2.0) % 2 == 0 || mouseDown(drawer.getInput())))
   {
     int cursorXDraw = inputX + cursor * markup.getWidth();
-    drawLine(cursorXDraw, inputY, cursorXDraw, inputY + markup.getHeight(), cursorColor);
+    drawer.drawLine(cursorXDraw, inputY, cursorXDraw, inputY + markup.getFontHeight(), cursorColor);
+  }
+  
+  //draw selection, if any
+  if(sel0 != sel1)
+  {
+    int start = inputX + sel0 * markup.getWidth();
+    int end = inputX + sel1 * markup.getWidth();
+    drawer.drawRectangle(start, inputY, end, inputY + markup.getFontHeight(), ColorRGB(128, 128, 255, 96), true);
   }
 }
 
-//return values of check():
-/*
-0: the text string is empty, and the rest of the things below aren't true either
-&1: the text string is not empty
-&2: you pressed ENTER (to enter the text string!)
-
-normally you'll want to check if the return value is 3: then you entered a non-empty string
-*/
-int InputLine::check() //both check if you pressed enter, and also check letter keys pressed, backspace, etc...
-{   
-  int returnValue = 0;
-  if(text.length() > 0) returnValue |= 1;
-  if(entered) returnValue |= 2;
-  
+//returns true if the user entered text, i.e. if there's text in it, and the user presses enter, and it's active
+bool InputLine::enter()
+{
+  bool result = false;
+  if(entered && text.length() > 0 && active) result = true;
   entered = 0;
-  
-  return returnValue;
+  return result;
 }
 
-//returns true if the user entered text, i.e. if there's text in it, and the user presses enter, and it's active
-int InputLine::enter()
+void InputLine::deleteSelectedText()
 {
-  if((check() & 2) && (check() & 1) && active) return 1;
-  else return 0;
+  int s0 = sel0, s1 = sel1;
+  if(s1 < s0) std::swap(s0, s1);
+  
+  if(s0 < 0) s0 = 0;
+  if(s1 < 0) s1 = 0;
+  if(s0 > text.length()) s0 = text.length();
+  if(s1 > text.length()) s1 = text.length();
+  
+  if(text.size() > 0) text.erase(s0, s1 - s0);
+  
+  sel0 = sel1 = cursor = s0;
 }
 
 void InputLine::handleWidget(const IGUIInput& input) //both check if you pressed enter, and also check letter keys pressed, backspace, etc...
 {
+  if(mouseGrabbed(input))
+  {
+    cursor = mouseToCursor(input.mouseX());
+    sel1 = mouseToCursor(input.mouseX());
+  }
+  if(mouseJustDownHere(input))
+  {
+    sel0 = mouseToCursor(input.mouseX());
+  }
+  
   autoActivate(input, auto_activate_mouse_state, control_active);
-  if(!control_active) return;
-  
-  draw_time = input.getSeconds();
-  
-  if(cursor >= text.length()) cursor = text.length();
-
-  int ascii = input.unicodeKey(allowedChars, 0.5, 0.025);
-  if(ascii)
+  if(control_active)
   {
-    switch(ascii)
+    draw_time = input.getSeconds();
+    
+    if(cursor >= text.length()) cursor = text.length();
+
+    int ascii = input.unicodeKey(allowedChars, 0.5, 0.025);
+    if(ascii)
     {
-      case 8: //backspace
-        if(cursor > 0)
-        {
-          cursor--;
-          text.erase(cursor, 1);
-        }
-        break;
-      case 13: //enter
-        entered = 1;
-        break;
-      case 127: //delete
-        if(cursor <= text.size())
-        {
-          text.erase(cursor, 1);
-        }
-        break;
-      //a few certainly not meant to be printed ones
-      case 0:
-        break;
-      case 10: break;
-      default:
-        if(text.length() < l) text.insert(cursor, 1, ascii);
-        if(text.length() < l || cursor == l - 1) cursor++;
-        break;
+      switch(ascii)
+      {
+        case 8: //backspace
+          if(sel0 == sel1 && cursor > 0)
+          {
+            cursor--;
+            text.erase(cursor, 1);
+          }
+          else if(sel0 != sel1)
+          {
+            deleteSelectedText();
+          }
+          break;
+        case 13: //enter
+          entered = 1;
+          control_active = false;
+          break;
+        case 127: //delete
+          if(sel0 == sel1 && cursor <= text.size())
+          {
+            text.erase(cursor, 1);
+          }
+          else if(sel0 != sel1)
+          {
+            deleteSelectedText();
+          }
+          break;
+        //a few certainly not meant to be printed ones
+        case 0:
+          break;
+        case 10: break;
+        default:
+          if(sel0 != sel1) deleteSelectedText();
+          if(text.length() < l) text.insert(cursor, 1, ascii);
+          if(text.length() < l || cursor == l - 1) cursor++;
+          break;
+      }
     }
+    
+    if(input.keyPressed(SDLK_HOME)) cursor = 0;
+    if(input.keyPressed(SDLK_END))
+    {
+      unsigned long pos = 0;
+      while(text[pos] != 0 && pos < text.length()) pos++;
+      cursor = pos;
+    }
+    if(input.keyPressedTime(SDLK_LEFT, 0.5, 0.025))
+    {
+      if(sel0 == sel1)
+        {if(cursor > 0) cursor--;}
+      else
+        cursor = sel1 = sel0 = (sel1 > sel0 ? sel0 : sel1);
+    }
+    if(input.keyPressedTime(SDLK_RIGHT, 0.5, 0.025))
+    {
+      if(sel0 == sel1)
+        {if(cursor < text.length()) cursor++;}
+      else
+        cursor = sel0 = sel1 = (sel1 < sel0 ? sel0 : sel1);
+    }
+
   }
   
-  if(input.keyPressed(SDLK_HOME)) cursor = 0;
-  if(input.keyPressed(SDLK_END))
+  if(mouseDoubleClicked(input))
   {
-    unsigned long pos = 0;
-    while(text[pos] != 0 && pos < text.length()) pos++;
-    cursor = pos;
+    selectAll();
   }
-  if(input.keyPressedTime(SDLK_LEFT, 0.5, 0.025)) if(cursor > 0) cursor--;
-  if(input.keyPressedTime(SDLK_RIGHT, 0.5, 0.025)) if(cursor < text.length()) cursor++;
+}
 
-  if(mouseDown(input))
-  {
-    int relMouse = input.mouseX() - x0;
-    relMouse -= title.length() * markup.getWidth();
-    if(relMouse / markup.getWidth() < int(text.length())) cursor = relMouse / markup.getWidth();
-    else cursor = text.length();
-  }
+void InputLine::selectAll()
+{
+  sel0 = 0;
+  sel1 = text.size();
+}
+
+int InputLine::mouseToCursor(int mouseX) const
+{
+  int relMouse = mouseX - x0;
+  relMouse -= title.length() * markup.getWidth();
+  if(relMouse / markup.getWidth() < int(text.length())) return relMouse / markup.getWidth();
+  else return text.length();
 }
 
 void InputLine::clear()
