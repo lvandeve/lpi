@@ -168,7 +168,7 @@ class DynamicSlider : public TDymamicPageControl<T>
     
     void setSliderValue(T val)
     {
-      slider.setRelValue(val / (valmax - valmin) - valmin);
+      slider.setRelValue((double)(val - valmin) / (double)(valmax - valmin));
     }
   
   public:
