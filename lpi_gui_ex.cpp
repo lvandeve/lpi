@@ -997,6 +997,113 @@ void Line::drawWidget(IGUIDrawer& /*drawer*/) const
   drawLine(lx0, ly0, lx1, ly1, color);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//GUINSTATESTATE////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+This class is used by NState
+*/
+
+NStateState::NStateState()
+{
+  this->texture = &emptyTexture;
+  this->colorMod = RGB_White;
+  this->enableText = 0;
+  this->text = "";
+}
+
+//constructor for checkbox with text title
+void NStateState::make(Texture* texture, const ColorRGB& colorMod, const std::string& text, const Markup& markup)
+{
+  this->texture = texture;
+  this->colorMod = colorMod;
+  this->text = text;
+  this->markup = markup;
+  if(text != "") enableText = 1;
+  
+  positionText();
+}
+
+
+
+//place the text next to the checkbox
+void NStateState::positionText()
+{
+  textOffsetX = texture->getU() + 2; //need some number of pixels that text is away from the texture, eg 2
+  textOffsetY = texture->getV() / 2 - markup.getHeight() / 2;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//GUINSTATE/////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+This is a sort of advanced checkbox, it can go through multiple states and you can add more states.
+*/
+
+NState::NState()
+{
+  //bad old code, must be fixed!
+  this->active = 0;
+  this->states.clear();
+  this->toggleOnMouseUp = 0;
+}
+
+//constructor for checkbox with text title
+void NState::make(int x, int y, int toggleOnMouseUp)
+{
+  states.clear();
+  this->x0 = x;
+  this->y0 = y;
+  this->toggleOnMouseUp = toggleOnMouseUp;
+  this->totallyEnable();
+  this->setSizeX(0); //no states yet, size 0
+  this->setSizeY(0);
+}
+
+void NState::addState(Texture* texture, const ColorRGB& colorMod, const std::string& text, const Markup& markup)
+{
+  this->setSizeX(texture->getU()); //set the size of the NState to that of the last added texture
+  this->setSizeY(texture->getV());
+  NStateState s;
+  s.make(texture, colorMod, text, markup);
+  states.push_back(s);
+}
+
+
+//see how you click with the mouse and toggle on click
+void NState::handleWidget(const IGUIInput& input)
+{
+  //make sure never both pressed() and clicked() are checked, because one test screws up the other, hence the order of the tests in the if conditions
+  if(states.size() == 0) return;
+  
+  if((toggleOnMouseUp == 0 && pressed(input, GUI_LMB)) || (toggleOnMouseUp == 1 && clicked(input, GUI_LMB)))
+  {
+    if(state >= states.size() - 1) state = 0;
+    else state++;
+  }
+  if((toggleOnMouseUp == 0 && pressed(input, GUI_RMB)) || (toggleOnMouseUp == 1 && clicked(input, GUI_RMB)))
+  {
+    if(state == 0) state = states.size() - 1;
+    else state--;
+  }
+  
+}
+
+//draw the checkbox with a texture depending on it's state
+void NState::drawWidget(IGUIDrawer& /*drawer*/) const
+{
+  if(states.size() == 0) return;
+  
+  NStateState s = states[state];
+  s.texture->draw(x0, y0, s.colorMod);
+  
+  if(s.enableText) print(s.text, x0 + s.textOffsetX, y0 + s.textOffsetY, s.markup);
+  
+  drawLabel(this);
+}
+
 } //namespace gui
 } //namespace lpi
 

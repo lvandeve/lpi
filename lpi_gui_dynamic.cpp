@@ -61,15 +61,18 @@ void DynamicPage::addControl(const std::string& name, IDynamicPageControl* contr
   size_t i = controls.size() - 1;
   int xb = (int)(getSizeX() * title_width);
   int h = control->getSizeY();
-  control->resize(x0 + xb + 1, y0 + i * CONTROLHEIGHT + 1, x1, y0 + (i + 1) * CONTROLHEIGHT);
+  control->resize(x0 + xb + 1, y0 + TITLEHEIGHT + i * CONTROLHEIGHT + 1, x1, y0 + TITLEHEIGHT + (i + 1) * CONTROLHEIGHT);
   addSubElement(control, STICKYRELATIVETOP);
 }
 
 void DynamicPage::drawWidget(IGUIDrawer& drawer) const
 {
+  drawer.drawRectangle(x0, y0, x1, y0 + TITLEHEIGHT, RGB_White, false);
+  drawer.drawText(title, x0 + 4, y0 + 4);
+  
   for(size_t i = 0; i < controls.size(); i++)
   {
-    int y = CONTROLHEIGHT * i;
+    int y = TITLEHEIGHT + CONTROLHEIGHT * i;
     int xb = (int)(getSizeX() * title_width); //"x-between": the divider between title and value
     
     drawer.drawRectangle(x0, y0 + y, x0 + xb, y0 + y + CONTROLHEIGHT, RGB_White, false);
@@ -85,7 +88,12 @@ void DynamicPage::handleWidget(const IGUIInput& input)
   for(size_t i = 0; i < controls.size(); i++)
     controls[i]->handle(input);
   
-  setSizeY(controls.size() * CONTROLHEIGHT);
+  setSizeY(TITLEHEIGHT + controls.size() * CONTROLHEIGHT);
+}
+
+void DynamicPage::setTitle(const std::string& title)
+{
+  this->title = title;
 }
 
 } //namespace gui
