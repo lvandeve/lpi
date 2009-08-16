@@ -229,27 +229,28 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   lpi::gui::DynamicPage dyn;
   //dyn.setSizeXY(200, 20);
   dyn.resize(0,0,280,100);
+  dyn.setTitle("dynamic page");
   dyn.addControl("int", new lpi::gui::DynamicValue<int>(&dyn_value1));
   dyn.addControl("string", new lpi::gui::DynamicValue<std::string>(&dyn_value2));
   dyn.addControl("boolean", new lpi::gui::DynamicCheckbox(&dyn_value3));
   dyn.addControl("double", new lpi::gui::DynamicValue<double>(&dyn_value4));
   dyn.addControl("slider", new lpi::gui::DynamicSlider<float>(&dyn_value5, 0, 100));
   //dyn.resize(0,0,200,100);
-  tabs.getTabContent(1).pushTopAt(&dyn, 10, 50, lpi::gui::STICKYHORIZONTALTOP);
+  tabs.getTabContent(1).pushTopAt(&dyn, 10, 20, lpi::gui::STICKYHORIZONTALTOP);
 
-  lpi::gui::TValue<int> tval1;
+  lpi::gui::PVariable<int> tval1;
   tval1.make(0, 0, &dyn_value1);
   tabs.getTabContent(1).pushTopAt(&tval1, 10, 140, lpi::gui::STICKYHORIZONTALTOP);
-  lpi::gui::TValue<std::string> tval2;
+  lpi::gui::PVariable<std::string> tval2;
   tval2.make(0, 0, &dyn_value2);
   tabs.getTabContent(1).pushTopAt(&tval2, 10, 148, lpi::gui::STICKYHORIZONTALTOP);
-  lpi::gui::TValue<bool> tval3;
+  lpi::gui::PVariable<bool> tval3;
   tval3.make(0, 0, &dyn_value3);
   tabs.getTabContent(1).pushTopAt(&tval3, 10, 156, lpi::gui::STICKYHORIZONTALTOP);
-  lpi::gui::TValue<double> tval4;
+  lpi::gui::PVariable<double> tval4;
   tval4.make(0, 0, &dyn_value4);
   tabs.getTabContent(1).pushTopAt(&tval4, 10, 164, lpi::gui::STICKYHORIZONTALTOP);
-  lpi::gui::TValue<float> tval5;
+  lpi::gui::PVariable<float> tval5;
   tval5.make(0, 0, &dyn_value5);
   tabs.getTabContent(1).pushTopAt(&tval5, 10, 172, lpi::gui::STICKYHORIZONTALTOP);
   
@@ -339,8 +340,8 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     if(wb.mouseDoubleClicked(lpi::gGUIInput, lpi::gui::GUI_MMB)) spawns.addSpawn("middle double clicked", lpi::globalMouseX, lpi::globalMouseY);
     if(wb.mouseTripleClicked(lpi::gGUIInput, lpi::gui::GUI_MMB)) spawns.addSpawn("middle triple clicked", lpi::globalMouseX, lpi::globalMouseY, lpi::RGB_Yellow);
     if(wb.mouseQuadrupleClicked(lpi::gGUIInput, lpi::gui::GUI_MMB)) spawns.addSpawn("middle quadruple clicked", lpi::globalMouseX, lpi::globalMouseY, lpi::RGB_Lightred);
-    if(wb.mouseScrollUp(lpi::gGUIInput)) spawns.addSpawn("scrolled up", lpi::globalMouseX, lpi::globalMouseY);
-    if(wb.mouseScrollDown(lpi::gGUIInput)) spawns.addSpawn("scrolled down", lpi::globalMouseX, lpi::globalMouseY);
+    if(wb.mouseScrollUp(lpi::gGUIInput)) spawns.addSpawn("scrolled up", lpi::globalMouseX, lpi::globalMouseY, lpi::RGB_Black);
+    if(wb.mouseScrollDown(lpi::gGUIInput)) spawns.addSpawn("scrolled down", lpi::globalMouseX, lpi::globalMouseY, lpi::RGB_Black);
     
     lpi::redraw();
     lpi::cls(lpi::RGB_Darkgreen);

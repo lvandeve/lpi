@@ -33,7 +33,7 @@ namespace gui
 {
 
 
-class IDynamicPageControl : public Element
+class IDynamicPageControl : public ElementComposite
 {
   public:
     virtual void controlToValue() = 0;
@@ -270,15 +270,17 @@ class DynamicPageControlDummy : public IDynamicPageControl
     virtual void drawWidget(IGUIDrawer& /*drawer*/) const {};
 };
 
-class DynamicPage : public Element
+class DynamicPage : public ElementComposite
 {
   private:
     std::vector<IDynamicPageControl*> controls;
     std::vector<std::string> control_names;
     
-    double title_width; //number from 0.0 to 1.0
+    double title_width; //title of controls; number from 0.0 to 1.0
+    std::string title; //title on top of this page
     
     const static int CONTROLHEIGHT = 16;
+    const static int TITLEHEIGHT = 16;
   
   public:
   
@@ -287,6 +289,8 @@ class DynamicPage : public Element
   
   void controlToValue();
   void valueToControl();
+  
+  void setTitle(const std::string& title);
   
   //to be overidden if wanted: to handle controls without bound values
   virtual void controlToValueCustom() {};

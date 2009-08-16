@@ -38,7 +38,7 @@ namespace lpi
 namespace gui
 {
 
-class DropMenu : public Element
+class DropMenu : public ElementComposite
 {
   private:
     std::vector<Button> menuButton;
@@ -98,7 +98,7 @@ class DropMenu : public Element
 
 
 
-class Droplist : public Element
+class Droplist : public ElementComposite
 {
   private:
     std::vector<Button> textButton;
@@ -321,11 +321,46 @@ class Variable : public Element //can be anything the typename is: integer, floa
       this->active = 1;
     }
     
-    void setValue(T v) { this->v = v; }
+    void setValue(const T& v) { this->v = v; }
     
     T& getValue() { return this->v; }
     
     const T& getValue() const { return this->v; }
+};
+
+template<typename T>
+class PVariable : public Element //A bit similar purpose to Variable, but, uses a pointer and automatically displays the value (no "set" and "get" needed)
+{
+  public:
+    Markup markup;
+    
+    PVariable()
+    : value(0)
+    {
+      this->visible = 0;
+      this->active = 0;
+    }
+
+    void make(int x, int y, T* value, const Markup& markup = TS_W)
+    {
+      this->x0 = x;
+      this->y0 = y;
+      this->setSizeX(16 * markup.getWidth());
+      this->setSizeY(markup.getHeight());
+      this->value = value;
+      this->markup = markup;
+      this->totallyEnable();
+    }
+
+    void drawWidget(IGUIDrawer& /*drawer*/) const
+    {
+      if(value) print(valtostr(*value), x0, y0, markup);
+    }
+    
+    void setValue(T* value) { this->value = value; }
+
+  private:
+    T* value;
 };
 
 class Rectangle : public Element
@@ -349,6 +384,42 @@ class Line : public Element
     int ly1;
     void make(int x, int y, int sizex=64, int sizey=64, const ColorRGB& color = RGB_Grey);
     void setEndpoints(int x0, int y0, int x1, int y1);
+};
+
+//this is one state of the NState
+class NStateState
+{
+    public:
+    NStateState();
+    int textOffsetX;
+    int textOffsetY;
+    //bool downAndTested; //if mouse is down and that is already handled, leave this on so that it'll ignore mouse till it's back up
+    void positionText(); //automaticly place the text a few pixels next to the checkbox, in the center
+    
+    Texture* texture; //the texture of this state
+    ColorRGB colorMod;
+    
+    bool enableText; //the text is a title drawn next to the checkbox, with automaticly calculated position
+    std::string text;
+    Markup markup;
+    
+    void make(Texture* texture, const ColorRGB& colorMod, const std::string& text = "", const Markup& markup = TS_W);
+};
+
+//circle between N states (you can add states, the make function makes no states). Left mouse click goes to next state, right mouse click goes to previous state.
+class NState : public Element, public Label
+{
+  private:
+  public:
+    unsigned long state;
+    std::vector<NStateState> states;
+    int toggleOnMouseUp;
+        
+    NState();
+    void make(int x, int y, int toggleOnMouseUp = 0);
+    void addState(Texture* texture, const ColorRGB& colorMod = RGB_White, const std::string& text = "", const Markup& markup = TS_W);
+    virtual void drawWidget(IGUIDrawer& drawer) const; //also handles it by calling handle(): toggles when mouse down or not
+    virtual void handleWidget(const IGUIInput& input);
 };
 
 } //namespace gui

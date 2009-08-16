@@ -106,8 +106,6 @@ class Element : public ElementShape
     bool active; //if false, handle() does nothing, and mouse tests return always false
     bool present; //if true, it reacts to the mouse. if false, it ignores the mouse, even if forceActive is true, if a gui element isn't present, it really isn't present
 
-    InternalContainer ic; //TODO: make this a pointer and use new and delete, to decrease memory size of elements that don't use the internal container
-    
     ////data for tooltip, TODO: move this to somewhere else
     std::string tooltip;
     bool tooltipenabled;
@@ -124,7 +122,6 @@ class Element : public ElementShape
     Pos<double> relativePos; //position in coordinates in range [0.0, 1.0], relative to parent element's size, for the RELATIVE sticky types. TODO: remember this in the parent or the InternalContainer of the parent instead
     
   protected:
-    void addSubElement(Element* element, const Pos<Sticky>& sticky = STICKYTOPLEFT); //only used for INTERNAL parts of the gui element, such as the buttons in a scrollbar, hence this function is protected
     void autoActivate(const IGUIInput& input, MouseState& auto_activate_mouse_state, bool& control_active); //utility function used by text input controls, they need a member variable like "MouseState auto_activate_mouse_state" in them for this and a bool "control_active", and in their handleWidget, put, "autoActivate(input, auto_activate_mouse_state, control_active); if(!control_active) return;"
     
   public:
@@ -148,7 +145,8 @@ class Element : public ElementShape
     ////core functions of gui::Elements
     void draw(IGUIDrawer& drawer) const; //will draw the actual widget and do some other always-to-do stuff, do NOT override this function
     void handle(const IGUIInput& input);
-    void move(int x, int y);
+    virtual void move(int x, int y);
+    virtual void resize(int x0, int y0, int x1, int y1); //especially useful for windows and their container; parameters are the new values for x0, y0, x1 and y1 so this function can both move the object to a target and resize
     
     virtual void drawWidget(IGUIDrawer& drawer) const = 0; //called by draw(), this one can be overloaded for each widget defined below
     virtual void handleWidget(const IGUIInput& input);
@@ -156,7 +154,6 @@ class Element : public ElementShape
     
     void moveTo(int x, int y);
     void moveCenterTo(int x, int y);
-    void resize(int x0, int y0, int x1, int y1); //especially useful for windows and their container; parameters are the new values for x0, y0, x1 and y1 so this function can both move the object to a target and resize
     void growX0(int d) { resize(x0 + d, y0    , x1    , y1    ); } //growing can also be shrinking
     void growY0(int d) { resize(x0    , y0 + d, x1    , y1    ); }
     void growX1(int d) { resize(x0    , y0    , x1 + d, y1    ); }
@@ -180,6 +177,20 @@ class Element : public ElementShape
     ////for debugging: if you've got no idea what's going on with a GUI element, this function at least is guaranteed to show where it is (if in screen)
     void drawDebugBorder(IGUIDrawer& drawer, const ColorRGB& color = RGB_Red) const;
     void drawDebugCross(IGUIDrawer& drawer, const ColorRGB& color = RGB_Red) const;
+};
+
+class ElementComposite : public Element //element with "internal container" to automatically handle child elements for you
+{
+  protected:
+    InternalContainer ic;
+    
+  protected:
+    void addSubElement(Element* element, const Pos<Sticky>& sticky = STICKYTOPLEFT); //only used for INTERNAL parts of the gui element, such as the buttons in a scrollbar, hence this function is protected
+  
+  public:
+    virtual void move(int x, int y);
+    virtual void setElementOver(bool state);
+    virtual void resize(int x0, int y0, int x1, int y1);
 };
 
 class Label //convenience class: elements that want an optional label (e.g. checkboxes) can inherit from this and use drawLabel(this) in their drawWidget function
@@ -298,7 +309,7 @@ class Button : public Element
 };
 
 //The Scrollbar
-class Scrollbar : public Element
+class Scrollbar : public ElementComposite
 {
   private:
     double oldTime; //in seconds
@@ -371,7 +382,7 @@ class Scrollbar : public Element
     mutable int forwardedScroll; //forwarded mouse scroll event from other element; +1 is down, -1 is up
 };
 
-class ScrollbarPair : public Element
+class ScrollbarPair : public ElementComposite
 {
   private:
     const GuiSet* scrollbarGuiSet; //the guiSet used for the scrollbars has to be remembered for when remaking them
@@ -404,7 +415,7 @@ class ScrollbarPair : public Element
 };
 
 //the Slider is a simplified version of the scrollbar (no up and down buttons) that also looks different
-class Slider : public Element
+class Slider : public ElementComposite
 {
   public:
     Slider();
@@ -440,7 +451,7 @@ class Invisible : public Element
   virtual void drawWidget(IGUIDrawer& drawer) const;
 };
 
-class Container : public Element
+class Container : public ElementComposite
 {
   protected:
     InternalContainer elements;
@@ -492,7 +503,7 @@ class Container : public Element
     void setSizeToElements(); //makes the size of the container as big as the elements. This resizes the container in a non-sticky way: no element is affected
 };
 
-class ScrollElement : public Element //a.k.a "ScrollZone"
+class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
 {
   /*
   ScrollElement will contain 1 element (which can be a container with more elements).
@@ -592,7 +603,7 @@ class Rule : public Element
 };
 
 //Window is a container for other gui elements that'll move and get drawn at the command of the window
-class Window : public Element
+class Window : public ElementComposite
 {
   protected:
     Container container;
@@ -750,44 +761,8 @@ class Checkbox : public Element, public Label
                               const ColorRGB& color1, const ColorRGB& color2);
 };
 
-//this is one state of the NState
-class NStateState
-{
-    public:
-    NStateState();
-    int textOffsetX;
-    int textOffsetY;
-    //bool downAndTested; //if mouse is down and that is already handled, leave this on so that it'll ignore mouse till it's back up
-    void positionText(); //automaticly place the text a few pixels next to the checkbox, in the center
-    
-    Texture* texture; //the texture of this state
-    ColorRGB colorMod;
-    
-    bool enableText; //the text is a title drawn next to the checkbox, with automaticly calculated position
-    std::string text;
-    Markup markup;
-    
-    void make(Texture* texture, const ColorRGB& colorMod, const std::string& text = "", const Markup& markup = TS_W);
-};
-
-//circle between N states (you can add states, the make function makes no states). Left mouse click goes to next state, right mouse click goes to previous state.
-class NState : public Element, public Label
-{
-  private:
-  public:
-    unsigned long state;
-    std::vector<NStateState> states;
-    int toggleOnMouseUp;
-        
-    NState();
-    void make(int x, int y, int toggleOnMouseUp = 0);
-    void addState(Texture* texture, const ColorRGB& colorMod = RGB_White, const std::string& text = "", const Markup& markup = TS_W);
-    virtual void drawWidget(IGUIDrawer& drawer) const; //also handles it by calling handle(): toggles when mouse down or not
-    virtual void handleWidget(const IGUIInput& input);
-};
-
 //The bulletlist, a list of checkboxes where only one can be selected
-class BulletList : public Element
+class BulletList : public ElementComposite
 {
   public:
     std::vector <Checkbox> bullet;
@@ -827,41 +802,6 @@ class Text : public Element
     std::string text;
 };
 
-template<typename T>
-class TValue : public Element
-{
-  public:
-    Markup markup;
-    
-    TValue()
-    : value(0)
-    {
-      this->visible = 0;
-      this->active = 0;
-    }
-
-    void make(int x, int y, T* value, const Markup& markup = TS_W)
-    {
-      this->x0 = x;
-      this->y0 = y;
-      this->setSizeX(16 * markup.getWidth());
-      this->setSizeY(markup.getHeight());
-      this->value = value;
-      this->markup = markup;
-      this->totallyEnable();
-    }
-
-    void drawWidget(IGUIDrawer& /*drawer*/) const
-    {
-      if(value) print(valtostr(*value), x0, y0, markup);
-    }
-    
-    void setValue(T* value) { this->value = value; }
-
-  private:
-    T* value;
-};
-
 class Image : public Element
 {
   public:
@@ -873,7 +813,7 @@ class Image : public Element
     void make(int x, int y, int sizex, int sizey, Texture* image=&builtInTexture[37], const ColorRGB& colorMod = RGB_White);
 };
 
-class Tabs : public Element
+class Tabs : public ElementComposite
 {
   private:
     struct Tab : public Element

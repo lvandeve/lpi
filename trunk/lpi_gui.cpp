@@ -168,11 +168,6 @@ void Element::totallyEnable()
   //setElementOver(false); //don't do this, other things already handle this, the reason for not doing this is, if you constantly totallyEnable an element, then all the elementOver mechanism of containers won't work properly anymore
 }
 
-void Element::addSubElement(Element* element, const Pos<Sticky>& sticky)
-{
-  ic.addSubElement(element, sticky, this);
-}
-
 Element::Element() : elementOver(false)
                    , tooltipenabled(false)
                    , minSizeX(0)
@@ -252,8 +247,6 @@ void Element::move(int x, int y)
   this->x1 += x;
   this->y1 += y;
   
-  ic.move(x, y);
-  
   moveWidget(x, y);
 }
 
@@ -301,8 +294,6 @@ void Element::handleWidget(const IGUIInput& input)
 void Element::setElementOver(bool state)
 {
   elementOver = state;
-  
-  ic.setElementOver(state);
 }
 
 bool Element::hasElementOver() const
@@ -335,7 +326,6 @@ void Element::resize(int x0, int y0, int x1, int y1)
   if(x1 - x0 < minSizeX) x1 = x0 + minSizeX;
   if(y1 - y0 < minSizeY) y1 = y0 + minSizeY;
 
-  Pos<int> oldPos = { this->x0, this->y0, this->x1, this->y1 };
   Pos<int> newPos = { x0, y0, x1, y1 };
   
   resizeWidget(newPos);
@@ -344,13 +334,43 @@ void Element::resize(int x0, int y0, int x1, int y1)
   this->y0 = y0;
   this->x1 = x1;
   this->y1 = y1;
-  
-  ic.resize(oldPos, newPos);
 }
 
 void Element::resizeWidget(const Pos<int>& /*newPos*/)
 {
   //nothing to do. Overload this for guielements that need to do something to sub elements if they resize.
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void ElementComposite::addSubElement(Element* element, const Pos<Sticky>& sticky)
+{
+  ic.addSubElement(element, sticky, this);
+}
+
+void ElementComposite::move(int x, int y)
+{
+  ic.move(x, y);
+  
+  Element::move(x, y);
+}
+
+void ElementComposite::setElementOver(bool state)
+{
+  Element::setElementOver(state);
+  
+  ic.setElementOver(state);
+}
+
+void ElementComposite::resize(int x0, int y0, int x1, int y1)
+{
+  Pos<int> oldPos = { this->x0, this->y0, this->x1, this->y1 };
+  
+  Element::resize(x0, y0, x1, y1);
+  
+  Pos<int> newPos = { x0, y0, x1, y1 };
+  
+  ic.resize(oldPos, newPos);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2459,113 +2479,6 @@ void Checkbox::drawWidget(IGUIDrawer& drawer) const
   
   if(enableText)
     print(text, x0 + textOffsetX, y0 + textOffsetY, markup);
-  
-  drawLabel(this);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//GUINSTATESTATE////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-/*
-This class is used by NState
-*/
-
-NStateState::NStateState()
-{
-  this->texture = &emptyTexture;
-  this->colorMod = RGB_White;
-  this->enableText = 0;
-  this->text = "";
-}
-
-//constructor for checkbox with text title
-void NStateState::make(Texture* texture, const ColorRGB& colorMod, const std::string& text, const Markup& markup)
-{
-  this->texture = texture;
-  this->colorMod = colorMod;
-  this->text = text;
-  this->markup = markup;
-  if(text != "") enableText = 1;
-  
-  positionText();
-}
-
-
-
-//place the text next to the checkbox
-void NStateState::positionText()
-{
-  textOffsetX = texture->getU() + 2; //need some number of pixels that text is away from the texture, eg 2
-  textOffsetY = texture->getV() / 2 - markup.getHeight() / 2;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//GUINSTATE/////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-/*
-This is a sort of advanced checkbox, it can go through multiple states and you can add more states.
-*/
-
-NState::NState()
-{
-  //bad old code, must be fixed!
-  this->active = 0;
-  this->states.clear();
-  this->toggleOnMouseUp = 0;
-}
-
-//constructor for checkbox with text title
-void NState::make(int x, int y, int toggleOnMouseUp)
-{
-  states.clear();
-  this->x0 = x;
-  this->y0 = y;
-  this->toggleOnMouseUp = toggleOnMouseUp;
-  this->totallyEnable();
-  this->setSizeX(0); //no states yet, size 0
-  this->setSizeY(0);
-}
-
-void NState::addState(Texture* texture, const ColorRGB& colorMod, const std::string& text, const Markup& markup)
-{
-  this->setSizeX(texture->getU()); //set the size of the NState to that of the last added texture
-  this->setSizeY(texture->getV());
-  NStateState s;
-  s.make(texture, colorMod, text, markup);
-  states.push_back(s);
-}
-
-
-//see how you click with the mouse and toggle on click
-void NState::handleWidget(const IGUIInput& input)
-{
-  //make sure never both pressed() and clicked() are checked, because one test screws up the other, hence the order of the tests in the if conditions
-  if(states.size() == 0) return;
-  
-  if((toggleOnMouseUp == 0 && pressed(input, GUI_LMB)) || (toggleOnMouseUp == 1 && clicked(input, GUI_LMB)))
-  {
-    if(state >= states.size() - 1) state = 0;
-    else state++;
-  }
-  if((toggleOnMouseUp == 0 && pressed(input, GUI_RMB)) || (toggleOnMouseUp == 1 && clicked(input, GUI_RMB)))
-  {
-    if(state == 0) state = states.size() - 1;
-    else state--;
-  }
-  
-}
-
-//draw the checkbox with a texture depending on it's state
-void NState::drawWidget(IGUIDrawer& /*drawer*/) const
-{
-  if(states.size() == 0) return;
-  
-  NStateState s = states[state];
-  s.texture->draw(x0, y0, s.colorMod);
-  
-  if(s.enableText) print(s.text, x0 + s.textOffsetX, y0 + s.textOffsetY, s.markup);
   
   drawLabel(this);
 }
