@@ -423,6 +423,7 @@ class Slider : public Element
 
     void makeHorizontal(int x, int y, int length = 100, double scrollSize = 100, const GuiSet* set = &builtInGuiSet);
     void makeVertical(int x, int y, int length = 100, double scrollSize = 100, const GuiSet* set = &builtInGuiSet);
+    void makeSmallHorizontal(int x, int y, int length = 100, double scrollSize = 100, const GuiSet* set = &builtInGuiSet);
     
     double screenPosToScrollPos(int screenPos);
     int scrollPosToScreenPos(double scrollPos);

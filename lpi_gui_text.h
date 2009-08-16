@@ -47,6 +47,11 @@ class InputLine : public Element //input text line
     double draw_time; //for drawing the blinking cursor
     MouseState auto_activate_mouse_state;
     bool control_active;
+    mutable bool entering_done;
+    size_t sel0; //selection start
+    size_t sel1; //selection end
+    
+    int mouseToCursor(int mouseX) const; //absolute mouse position to cursor position
     
   public:
     unsigned long l; //max length
@@ -79,20 +84,16 @@ class InputLine : public Element //input text line
     const std::string& getTitle() const;
     
     bool isControlActive() const { return control_active; } //i.e., the cursor is blinking and it's listening to keyboard input
+    
+    bool enteringDone() const; //returns true if the user has been changing (or not) the text but now is done editing because the control is no longer active for the first time since then
    
     void clear();
-    //return values of check():
-    /*
-TODO: make proper getters here instead of check()
-    0: the text string is empty, and the rest of the things below aren't true either
-    &1: the text string is not empty
-    &2: you pressed ENTER (to enter the text string!)
-    &4: mouse pointer is inside
-    &8: left mouse button is down
-    */
-    int check();
-    int enter();
+
+    bool enter();
     int getInteger() const; //returns any integer number that may be in the string you typed
+    
+    void selectAll();
+    void deleteSelectedText();
 };
 
 /*

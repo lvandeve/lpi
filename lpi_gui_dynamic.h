@@ -132,6 +132,88 @@ class DynamicCheckbox : public TDymamicPageControl<bool>
 };
 
 template<typename T>
+class DynamicSlider : public TDymamicPageControl<T>
+{
+  private:
+    InputLine line;
+    Slider slider;
+    T valmax;
+    T valmin;
+    
+    void ctor(T valmin, T valmax)
+    {
+      this->valmin = valmin;
+      this->valmax = valmax;
+      static const int TEXTSIZE = 64;
+      this->resize(0, 0, TEXTSIZE * 2, 20);
+      
+      slider.makeSmallHorizontal(0, 0, this->getSizeX() - TEXTSIZE, 1.0);
+      slider.move(0, (this->getSizeY() - slider.getSizeY()) / 2);
+      this->addSubElement(&slider, STICKY_FULL_CENTER);
+      
+      line.make(0, 0, 256);
+      //line.move(0, (this->getSizeY() - line.getSizeY()) / 2);
+      line.resize(slider.getX1(), (this->getSizeY() - line.getSizeY()) / 2, slider.getX1() + TEXTSIZE, (this->getSizeY() - line.getSizeY()) / 2 + line.getSizeY());
+      this->addSubElement(&line, STICKY_SIDE1_CENTER);
+
+    }
+
+  protected:
+  
+    T getSliderValue() const
+    {
+      double val = slider.getRelValue();
+      return valmin + val * (valmax - valmin);
+    }
+    
+    void setSliderValue(T val)
+    {
+      slider.setRelValue(val / (valmax - valmin) - valmin);
+    }
+  
+  public:
+  
+    DynamicSlider()
+    {
+      ctor(0.0, 1.0);
+    }
+    
+    DynamicSlider(T* value, T valmin, T valmax)
+    {
+      TDymamicPageControl<T>::bind = value;
+      ctor(valmin, valmax);
+      setValue(value);
+    }
+  
+    virtual void getValue(T* value)
+    {
+      *value = strtoval<T>(line.getText());
+    }
+    
+    virtual void setValue(T* value)
+    {
+      line.setText(valtostr<T>(*value));
+      setSliderValue(*value);
+    }
+    
+    virtual void handleWidget(const IGUIInput& input)
+    {
+      line.handle(input);
+      slider.handle(input);
+      if(line.enteringDone())
+        setSliderValue(strtoval<T>(line.getText()));
+      if(slider.mouseGrabbed(input))
+        line.setText(valtostr<T>(getSliderValue()));
+    }
+    
+    virtual void drawWidget(IGUIDrawer& drawer) const
+    {
+      line.draw(drawer);
+      slider.draw(drawer);
+    }
+};
+
+template<typename T>
 class DynamicValue : public TDymamicPageControl<T>
 {
   private:

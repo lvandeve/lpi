@@ -159,6 +159,25 @@ extern const Pos<Sticky> STICKYRELATIVETOP; //relative in horizontalvertical dir
 extern const Pos<Sticky> STICKYRELATIVERIGHT; //relative in vertical direction, follows right side in horizontal direction
 extern const Pos<Sticky> STICKYRELATIVEBOTTOM; //relative in horizontal direction, follows bottom side in vertical direction
 
+//Different naming scheme for those Stick Pos's. The first part of the name is the horizontal movement, the second the vertical movement.
+//Everything for vertical is similar to that for horizontal, except "left" becomes "top", "right" becomes "bottom".
+//The name-parts mean:
+//Full: left side follows left side of parent, right side follows right side of parent (and similar for vertical)
+//Center: both sides follow the center of the parent
+//Relative: both sides follow the parent relative
+//Relative0: left side follows parent relative, right side follows movement of left side
+//Relative1: right side follows parent relative, left side follows movement of right side
+//Side0: both sides follow left (top) side
+//Side1: both sides follow right (bottom) side
+extern const Pos<Sticky> STICKY_SIDE0_SIDE0;
+extern const Pos<Sticky> STICKY_SIDE0_SIDE1;
+extern const Pos<Sticky> STICKY_SIDE1_SIDE0;
+extern const Pos<Sticky> STICKY_SIDE1_SIDE1;
+extern const Pos<Sticky> STICKY_FULL_CENTER;
+extern const Pos<Sticky> STICKY_SIDE0_CENTER;
+extern const Pos<Sticky> STICKY_SIDE1_CENTER;
+
+
 struct MouseOverState
 {
   bool over_prev;
