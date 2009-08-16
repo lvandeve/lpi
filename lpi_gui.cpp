@@ -1330,6 +1330,7 @@ mouse was down and is released again.
 
 //Empty Constructor
 Button::Button()
+: draw_mouse_button_down_style(false)
 {
   this->enableImage = 0;
   this->enableImage2 = 0;
