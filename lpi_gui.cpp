@@ -45,33 +45,35 @@ void InternalContainer::resize(const Pos<int>& oldPos, const Pos<int>& newPos)  
     Element& e = *elements[i];
     Pos<int> newPos2;
     
-    if(e.sticky.x0 == TOPLEFT) newPos2.x0 = e.getX0() + dx0;
-    else if(e.sticky.x0 == RELATIVE00) newPos2.x0 = newPos.x0 + (int)(e.relativePos.x0 * w);
-    else if(e.sticky.x0 == RELATIVE11) newPos2.x0 = newPos.x0 + (int)(e.relativePos.x1 * w) - e.getSizeX();
-    else if(e.sticky.x0 == BOTTOMRIGHT) newPos2.x0 = e.getX0() + dx1;
-    else if(e.sticky.x0 == CENTER) newPos2.x0 = e.getX0() + (dx0 + dx1) / 2;
-    else /*if(e.sticky.x0 == NOTHING)*/ newPos2.x0 = e.getX0();
+    Sticky2& s = sticky[&e];
     
-    if(e.sticky.y0 == TOPLEFT) newPos2.y0 = e.getY0() + dy0;
-    else if(e.sticky.y0 == RELATIVE00) newPos2.y0 = newPos.y0 + (int)(e.relativePos.y0 * h);
-    else if(e.sticky.y0 == RELATIVE11) newPos2.y0 = newPos.y0 + (int)(e.relativePos.y1 * h) - e.getSizeY();
-    else if(e.sticky.y0 == BOTTOMRIGHT) newPos2.y0 = e.getY0() + dy1;
-    else if(e.sticky.y0 == CENTER) newPos2.y0 = e.getY0() + (dy0 + dy1) / 2;
-    else /*if(e.sticky.y0 == NOTHING)*/ newPos2.y0 = e.getY0();
+    if(s.sticky.x0 == TOPLEFT) newPos2.x0 = e.getX0() + dx0;
+    else if(s.sticky.x0 == RELATIVE00) newPos2.x0 = newPos.x0 + (int)(s.relativePos.x0 * w);
+    else if(s.sticky.x0 == RELATIVE11) newPos2.x0 = newPos.x0 + (int)(s.relativePos.x1 * w) - e.getSizeX();
+    else if(s.sticky.x0 == BOTTOMRIGHT) newPos2.x0 = e.getX0() + dx1;
+    else if(s.sticky.x0 == CENTER) newPos2.x0 = e.getX0() + (dx0 + dx1) / 2;
+    else /*if(s.sticky.x0 == NOTHING)*/ newPos2.x0 = e.getX0();
     
-    if(e.sticky.x1 == TOPLEFT) newPos2.x1 = e.getX1() + dx0;
-    else if(e.sticky.x1 == RELATIVE11) newPos2.x1 = newPos.x0 + (int)(e.relativePos.x1 * w);
-    else if(e.sticky.x1 == RELATIVE00) newPos2.x1 = newPos.x0 + (int)(e.relativePos.x0 * w) + e.getSizeX();
-    else if(e.sticky.x1 == BOTTOMRIGHT) newPos2.x1 = e.getX1() + dx1;
-    else if(e.sticky.x1 == CENTER) newPos2.x1 = e.getX1() + (dx0 + dx1) / 2;
-    else /*if(e.sticky.x1 == NOTHING)*/ newPos2.x1 = e.getX1();
+    if(s.sticky.y0 == TOPLEFT) newPos2.y0 = e.getY0() + dy0;
+    else if(s.sticky.y0 == RELATIVE00) newPos2.y0 = newPos.y0 + (int)(s.relativePos.y0 * h);
+    else if(s.sticky.y0 == RELATIVE11) newPos2.y0 = newPos.y0 + (int)(s.relativePos.y1 * h) - e.getSizeY();
+    else if(s.sticky.y0 == BOTTOMRIGHT) newPos2.y0 = e.getY0() + dy1;
+    else if(s.sticky.y0 == CENTER) newPos2.y0 = e.getY0() + (dy0 + dy1) / 2;
+    else /*if(s.sticky.y0 == NOTHING)*/ newPos2.y0 = e.getY0();
     
-    if(e.sticky.y1 == TOPLEFT) newPos2.y1 = e.getY1() + dy0;
-    else if(e.sticky.y1 == RELATIVE11) newPos2.y1 = newPos.y0 + (int)(e.relativePos.y1 * h);
-    else if(e.sticky.y1 == RELATIVE00) newPos2.y1 = newPos.y0 + (int)(e.relativePos.y0 * h) + e.getSizeY();
-    else if(e.sticky.y1 == BOTTOMRIGHT) newPos2.y1 = e.getY1() + dy1;
-    else if(e.sticky.y1 == CENTER) newPos2.y1 = e.getY1() + (dy0 + dy1) / 2;
-    else /*if(e.sticky.y1 == NOTHING)*/ newPos2.y1 = e.getY1();
+    if(s.sticky.x1 == TOPLEFT) newPos2.x1 = e.getX1() + dx0;
+    else if(s.sticky.x1 == RELATIVE11) newPos2.x1 = newPos.x0 + (int)(s.relativePos.x1 * w);
+    else if(s.sticky.x1 == RELATIVE00) newPos2.x1 = newPos.x0 + (int)(s.relativePos.x0 * w) + e.getSizeX();
+    else if(s.sticky.x1 == BOTTOMRIGHT) newPos2.x1 = e.getX1() + dx1;
+    else if(s.sticky.x1 == CENTER) newPos2.x1 = e.getX1() + (dx0 + dx1) / 2;
+    else /*if(s.sticky.x1 == NOTHING)*/ newPos2.x1 = e.getX1();
+    
+    if(s.sticky.y1 == TOPLEFT) newPos2.y1 = e.getY1() + dy0;
+    else if(s.sticky.y1 == RELATIVE11) newPos2.y1 = newPos.y0 + (int)(s.relativePos.y1 * h);
+    else if(s.sticky.y1 == RELATIVE00) newPos2.y1 = newPos.y0 + (int)(s.relativePos.y0 * h) + e.getSizeY();
+    else if(s.sticky.y1 == BOTTOMRIGHT) newPos2.y1 = e.getY1() + dy1;
+    else if(s.sticky.y1 == CENTER) newPos2.y1 = e.getY1() + (dy0 + dy1) / 2;
+    else /*if(s.sticky.y1 == NOTHING)*/ newPos2.y1 = e.getY1();
   
     e.resize(newPos2.x0, newPos2.y0, newPos2.x1, newPos2.y1);
   }
@@ -95,15 +97,15 @@ void InternalContainer::setElementOver(bool state)
 
 void InternalContainer::updateRelativeSize(Element* element, Element* parent)
 {
-  element->relativePos.x0 = (element->getX0() - parent->getX0()) / (double)(parent->getSizeX());
-  element->relativePos.y0 = (element->getY0() - parent->getY0()) / (double)(parent->getSizeY());
-  element->relativePos.x1 = (element->getX1() - parent->getX0()) / (double)(parent->getSizeX());
-  element->relativePos.y1 = (element->getY1() - parent->getY0()) / (double)(parent->getSizeY());
+  sticky[element].relativePos.x0 = (element->getX0() - parent->getX0()) / (double)(parent->getSizeX());
+  sticky[element].relativePos.y0 = (element->getY0() - parent->getY0()) / (double)(parent->getSizeY());
+  sticky[element].relativePos.x1 = (element->getX1() - parent->getX0()) / (double)(parent->getSizeX());
+  sticky[element].relativePos.y1 = (element->getY1() - parent->getY0()) / (double)(parent->getSizeY());
 }
 
 void InternalContainer::initSubElement(Element* element, const Pos<Sticky>& sticky, Element* parent)
 {
-  element->sticky = sticky;
+  this->sticky[element].sticky = sticky;
   updateRelativeSize(element, parent);
 }
 
@@ -368,7 +370,7 @@ void ElementComposite::resize(int x0, int y0, int x1, int y1)
   
   Element::resize(x0, y0, x1, y1);
   
-  Pos<int> newPos = { x0, y0, x1, y1 };
+  Pos<int> newPos = { this->x0, this->y0, this->x1, this->y1 };
   
   ic.resize(oldPos, newPos);
 }
