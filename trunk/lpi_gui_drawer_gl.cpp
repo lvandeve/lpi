@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <iostream>
 
 #include "lpi_gui_drawer_gl.h"
 
@@ -37,7 +38,7 @@ namespace gui
 {
 
 Texture builtInTexture[128];
-BackPanel builtInPanel[6];
+BackPanel builtInPanel[8];
 BackRule builtInRule[2];
 
 
@@ -57,64 +58,65 @@ const std::string builtInGuiData = "\
 <gui>\n\
 \n\
   <textures_small>\n\
-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\n\
+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\n\
   </textures_small>\n\
 \n\
   <icons_small>\n\
@@ -350,6 +352,30 @@ void initBuiltInGuiTexturesSmall(const std::vector<unsigned char>& png)
   builtInTexture[80].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 96, 112, 101, 123);
   builtInGuiSet.smallSliderH = &builtInTexture[80];
   
+  //border panel
+  builtInTexture[81].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 32, 36, 36);
+  builtInTexture[82].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 38, 32, 42, 36);
+  builtInTexture[83].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 44, 32, 48, 36);
+  builtInTexture[84].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 38, 36, 42);
+  builtInTexture[85].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 38, 38, 42, 42);
+  builtInTexture[86].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 44, 38, 48, 42);
+  builtInTexture[87].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 44, 36, 48);
+  builtInTexture[88].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 38, 44, 42, 48);
+  builtInTexture[89].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 44, 44, 48, 48);
+  for(size_t i = 0; i < 9; i++) builtInGuiSet.borderPanelTextures[i] = &builtInTexture[i + 81];
+  
+  //white panel
+  builtInTexture[90].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 48, 32, 52, 36);
+  builtInTexture[91].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 54, 32, 58, 36);
+  builtInTexture[92].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 32, 64, 36);
+  builtInTexture[93].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 48, 38, 52, 42);
+  builtInTexture[94].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 54, 38, 58, 42);
+  builtInTexture[95].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 38, 64, 42);
+  builtInTexture[96].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 48, 44, 52, 48);
+  builtInTexture[97].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 54, 44, 58, 48);
+  builtInTexture[98].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 44, 64, 48);
+  for(size_t i = 0; i < 9; i++) builtInGuiSet.whitePanelTextures[i] = &builtInTexture[i + 90];
+  
   //panels
   builtInPanel[0].makeTextured(builtInGuiSet.windowTextures[0]/*, RGB_White*/);
   builtInGuiSet.windowPanel = &builtInPanel[0];
@@ -363,7 +389,11 @@ void initBuiltInGuiTexturesSmall(const std::vector<unsigned char>& png)
   builtInGuiSet.tabUnSelectedPanel = &builtInPanel[4];
   builtInPanel[5].makeTextured(builtInGuiSet.tabSelected[0]/*, RGB_Grey*/);
   builtInGuiSet.tabSelectedPanel = &builtInPanel[5];
-  
+  builtInPanel[6].makeTextured(builtInGuiSet.borderPanelTextures[0]/*, RGB_White*/);
+  builtInGuiSet.borderPanel = &builtInPanel[6];
+  builtInPanel[7].makeTextured(builtInGuiSet.whitePanelTextures[0]/*, RGB_White*/);
+  builtInGuiSet.whitePanel = &builtInPanel[7];
+
   //rules (= 1D versions of panels)
   builtInRule[0] = BackRule(1);
   builtInGuiSet.sliderHRule = &builtInRule[0];
@@ -738,6 +768,21 @@ void GUIDrawerGL::drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, bool
     case GP_WINDOW_PANEL:
     {
       guiset->windowPanel->draw(x0, y0, x1 - x0, y1 - y0, color);
+      break;
+    }
+    case GP_BUTTON_PANEL:
+    {
+      guiset->buttonPanel->draw(x0, y0, x1 - x0, y1 - y0, color);
+      break;
+    }
+    case GP_WHITE_PANEL:
+    {
+      guiset->whitePanel->draw(x0, y0, x1 - x0, y1 - y0, color);
+      break;
+    }
+    case GP_PANEL_BORDER:
+    {
+      guiset->borderPanel->draw(x0, y0, x1 - x0, y1 - y0, color);
       break;
     }
     case GP_TAB_UNSELECTED:

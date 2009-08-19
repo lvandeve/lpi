@@ -140,7 +140,7 @@ class BackRule
 #define DEFAULTHRULE BackRule(1)
 #define DEFAULTVRULE BackRule(2)
 
-extern BackPanel builtInPanel[6];
+extern BackPanel builtInPanel[8];
 extern BackRule builtInRule[2];
 
 struct GuiSet
@@ -174,6 +174,8 @@ struct GuiSet
   const Texture* crossHair; //for example to indicate a 2D location on a map, color picker, ...
   const Texture* tabUnSelected[9];
   const Texture* tabSelected[9];
+  const Texture* borderPanelTextures[9];
+  const Texture* whitePanelTextures[9];
   
   
   const BackPanel* windowPanel;
@@ -182,6 +184,8 @@ struct GuiSet
   const BackPanel* buttonDownPanel;
   const BackPanel* tabUnSelectedPanel;
   const BackPanel* tabSelectedPanel;
+  const BackPanel* borderPanel;
+  const BackPanel* whitePanel;
   
   const BackRule* sliderHRule;
   const BackRule* sliderVRule;

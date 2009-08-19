@@ -255,9 +255,13 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   tabs.getTabContent(1).pushTopAt(&tval5, 10, 172);
   
   lpi::gui::HueCircle_HSV_HV hsv;
-  hsv.resize(0,0,200,200);
+  hsv.resize(0,0,120,120);
   hsv.setAdaptiveColor(lpi::RGB_Lightred);
   tabs.getTabContent(2).pushTopAt(&hsv, 20, 50);
+  lpi::gui::ColorPlane colorplane;
+  colorplane.resize(0, 0, 64, 48);
+  colorplane.color = lpi::ColorRGB(128, 255, 255, 192);
+  tabs.getTabContent(2).pushTopAt(&colorplane, 144, 50);
   
   lpi::gui::Checkbox wcb;
   wcb.make(0, 0);

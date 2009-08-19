@@ -153,7 +153,7 @@ class ColorSliderType : public ColorSlider //can dynamically take any color type
     virtual void handleWidget(const IGUIInput& input); //used for debugging...
 };
 
-class ColorSliderEx : public ColorChannelEditor, public Element
+class ColorSliderEx : public ColorChannelEditor, public ElementComposite
 {
   /*
   ColorSlicerEx extends ColorSlicer with multiple features:
@@ -204,7 +204,7 @@ class ColorSliderExType : public ColorSliderEx
     }
 };
 
-class ColorSliders : public ColorEditor, public Element
+class ColorSliders : public ColorEditor, public ElementComposite
 {
   /*
   ColorSliders: multiple sliders, together forming one color, e.g. an R,G,B,A bar, or, a C,M,Y,K,A bar
@@ -397,7 +397,16 @@ class HueCircle_HSL_HL : public HueCircle
   virtual void getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const;
 };
 
-class FGBGColor : public Element
+class ColorPlane : public Element
+{
+  public:
+    ColorRGB color;
+    ColorPlane();
+    virtual void drawWidget(IGUIDrawer& drawer) const;
+};
+
+
+class FGBGColor : public ElementComposite
 {
   /*
   this class represents the following kind of thing (seen in many painting programs):
@@ -414,13 +423,7 @@ class FGBGColor : public Element
   //TODO: if color is out of RGB range, draw some exclamation mark, warning sign or cross over the color in the square
   
   private:
-    class Plane : public Element
-    {
-      public:
-        ColorRGB color;
-        virtual void drawWidget(IGUIDrawer& drawer) const;
-    };
-    
+   
     class Arrows : public Element
     {
       public:
@@ -428,10 +431,10 @@ class FGBGColor : public Element
     };
     
   private:
-    Plane fg;
-    Plane bg;
+    ColorPlane fg;
+    ColorPlane bg;
     Arrows arrows;
-    Plane* selected; //the foreground or background color; this is the color being edited; the selected one is drawn as a "down" button, the other one as "up"
+    ColorPlane* selected; //the foreground or background color; this is the color being edited; the selected one is drawn as a "down" button, the other one as "up"
     
     mutable bool fg_just; //for function that checks if it's just selected
     mutable bool bg_just;

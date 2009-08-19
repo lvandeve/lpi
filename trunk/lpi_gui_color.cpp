@@ -894,6 +894,20 @@ void HueCircle_HSL_HL::getDrawColor(ColorRGB& o_color, double value_angle, doubl
   o_color = HSLtoRGB(convert);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+ColorPlane::ColorPlane()
+: color(RGB_White)
+{
+}
+
+void ColorPlane::drawWidget(IGUIDrawer& drawer) const
+{
+  drawCheckerBackground(drawer, x0, y0, x1, y1);
+  drawer.drawRectangle(x0, y0, x1, y1, color, true);
+  drawer.drawGUIPart(GP_PANEL_BORDER, x0, y0, x1, y1, false, RGB_White);
+}
+
 } //namespace gui
 } //namespace lpi
 
