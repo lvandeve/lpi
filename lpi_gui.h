@@ -50,13 +50,7 @@ class InternalContainer //container inside elements, for elements that contain s
   private:
     std::vector<Element*> elements;
     
-    struct Sticky2
-    {
-      Pos<Sticky> sticky; //the sticky value for each of the 4 sides of this child widget
-      Pos<double> relativePos; //position in coordinates in range [0.0, 1.0], relative to parent element's size, for the RELATIVE sticky types. TODO: remember this in the parent or the InternalContainer of the parent instead
-    };
-    
-    std::map<Element*, Sticky2> sticky;
+    std::map<Element*, Sticky> sticky;
   
   public:
   
@@ -68,18 +62,22 @@ class InternalContainer //container inside elements, for elements that contain s
     void setElementOver(bool state); //this says to all elements whether or not another element is in front of it in Z order, causing mouse to not work
     void setBasicMouseInfo(const IGUIInput& input);
 
-    void addSubElement(Element* element, const Pos<Sticky>& sticky, Element* parent);
-    void insertSubElement(size_t index, Element* element, const Pos<Sticky>& sticky, Element* parent);
+    void addSubElement(Element* element, const Sticky& sticky, Element* parent);
+    void insertSubElement(size_t index, Element* element, const Sticky& sticky, Element* parent);
     
     Element* getElement(size_t i) const { return elements[i]; }
     
     size_t findElementIndex(Element* element);
     void removeElement(Element* element);
     
-    void updateRelativeSize(Element* element, Element* parent);
+    void setSticky(Element* element, const Sticky& sticky, Element* parent);
+    void setStickyRelative(Element* element, Element* parent); //automatically calculates the sticky for completely relative position, based on the current sizes
+    void setStickyFull(Element* element, Element* parent); //automatically calculates the sticky for "full" behaviour, sides will follow parent's corresponding size, compared to current position
   
   private:
-    void initSubElement(Element* element, const Pos<Sticky>& sticky, Element* parent);
+    void initSubElement(Element* element, const Sticky& sticky, Element* parent);
+    void setStickyElementSize(Element* element, Element* parent);
+    void setStickyElementSize(Element* element, const Pos<int>& newPos);
 };
 
 class ToolTipManager //this is made to draw the tooltip at the very end to avoid other gui items to be drawn over it
@@ -191,7 +189,7 @@ class ElementComposite : public Element //element with "internal container" to a
     InternalContainer ic;
     
   protected:
-    void addSubElement(Element* element, const Pos<Sticky>& sticky = STICKYTOPLEFT); //only used for INTERNAL parts of the gui element, such as the buttons in a scrollbar, hence this function is protected
+    void addSubElement(Element* element, const Sticky& sticky = STICKYDEFAULT); //only used for INTERNAL parts of the gui element, such as the buttons in a scrollbar, hence this function is protected
   
   public:
     virtual void move(int x, int y);
@@ -473,19 +471,19 @@ class Container : public ElementComposite
     virtual void drawWidget(IGUIDrawer& drawer) const;
     
     //push the element without affecting absolute position
-    void pushTop(Element* element, const Pos<Sticky>& sticky = STICKYTOPLEFT);
-    void pushBottom(Element* element, const Pos<Sticky>& sticky = STICKYTOPLEFT);
-    void insert(size_t pos, Element* element, const Pos<Sticky>& sticky = STICKYTOPLEFT);
+    void pushTop(Element* element, const Sticky& sticky = STICKYDEFAULT);
+    void pushBottom(Element* element, const Sticky& sticky = STICKYDEFAULT);
+    void insert(size_t pos, Element* element, const Sticky& sticky = STICKYDEFAULT);
     
     //push the element so that its top left is relative to the top left of this container, thus moving it if the container isn't at 0,0
-    void pushTopRelative(Element* element, const Pos<Sticky>& sticky = STICKYTOPLEFT);
-    void pushBottomRelative(Element* element, const Pos<Sticky>& sticky = STICKYTOPLEFT);
-    void insertRelative(size_t pos, Element* element, const Pos<Sticky>& sticky = STICKYTOPLEFT);
+    void pushTopRelative(Element* element, const Sticky& sticky = STICKYDEFAULT);
+    void pushBottomRelative(Element* element, const Sticky& sticky = STICKYDEFAULT);
+    void insertRelative(size_t pos, Element* element, const Sticky& sticky = STICKYDEFAULT);
 
     //push the element at the given x, y (relative to this container's top left)
-    void pushTopAt(Element* element, int x, int y, const Pos<Sticky>& sticky = STICKYTOPLEFT);
-    void pushBottomAt(Element* element, int x, int y, const Pos<Sticky>& sticky = STICKYTOPLEFT);
-    void insertAt(size_t pos, Element* element, int x, int y, const Pos<Sticky>& sticky = STICKYTOPLEFT);
+    void pushTopAt(Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT);
+    void pushBottomAt(Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT);
+    void insertAt(size_t pos, Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT);
     
     Element* getElement(size_t i) const { return elements.getElement(i); }
 
@@ -640,19 +638,19 @@ class Window : public ElementComposite
     void setContainerBorders(int left = 0, int up = -1, int right = -1, int down = -1);
     
     //push the element without affecting absolute position
-    void pushTop(Element* element, const Pos<Sticky>& sticky = STICKYTOPLEFT);
-    void pushBottom(Element* element, const Pos<Sticky>& sticky = STICKYTOPLEFT);
-    void insert(size_t pos, Element* element, const Pos<Sticky>& sticky = STICKYTOPLEFT);
+    void pushTop(Element* element, const Sticky& sticky = STICKYDEFAULT);
+    void pushBottom(Element* element, const Sticky& sticky = STICKYDEFAULT);
+    void insert(size_t pos, Element* element, const Sticky& sticky = STICKYDEFAULT);
     
     //push the element so that its top left is relative to the top left of this container, thus moving it if the container isn't at 0,0
-    void pushTopRelative(Element* element, const Pos<Sticky>& sticky = STICKYTOPLEFT);
-    void pushBottomRelative(Element* element, const Pos<Sticky>& sticky = STICKYTOPLEFT);
-    void insertRelative(size_t pos, Element* element, const Pos<Sticky>& sticky = STICKYTOPLEFT);
+    void pushTopRelative(Element* element, const Sticky& sticky = STICKYDEFAULT);
+    void pushBottomRelative(Element* element, const Sticky& sticky = STICKYDEFAULT);
+    void insertRelative(size_t pos, Element* element, const Sticky& sticky = STICKYDEFAULT);
 
     //push the element at the given x, y (relative to this container's top left)
-    void pushTopAt(Element* element, int x, int y, const Pos<Sticky>& sticky = STICKYTOPLEFT);
-    void pushBottomAt(Element* element, int x, int y, const Pos<Sticky>& sticky = STICKYTOPLEFT);
-    void insertAt(size_t pos, Element* element, int x, int y, const Pos<Sticky>& sticky = STICKYTOPLEFT);
+    void pushTopAt(Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT);
+    void pushBottomAt(Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT);
+    void insertAt(size_t pos, Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT);
 
     void bringToTop(Element* element); //precondition: element must already be in the list
     

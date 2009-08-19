@@ -93,7 +93,7 @@ class DynamicCheckbox : public TDymamicPageControl<bool>
       this->resize(0, 0, 20, 20);
       box.makeSmall(0, 0);
       box.move(0, (getSizeY() - box.getSizeY()) / 2);
-      this->addSubElement(&box, STICKYCENTERLEFT);
+      this->addSubElement(&box, Sticky(0.0, 0, 0.5, -box.getSizeY() / 2, 0.0, box.getSizeX(), 0.5, box.getSizeY()));
     }
     
   public:
@@ -149,13 +149,12 @@ class DynamicSlider : public TDymamicPageControl<T>
       
       slider.makeSmallHorizontal(0, 0, this->getSizeX() - TEXTSIZE, 1.0);
       slider.move(0, (this->getSizeY() - slider.getSizeY()) / 2);
-      this->addSubElement(&slider, STICKY_FULL_CENTER);
+      this->addSubElement(&slider, Sticky(0.0, 0, 0.5, -slider.getSizeY() / 2, 1.0, -TEXTSIZE, 0.5, slider.getSizeY() / 2));
       
       line.make(0, 0, 256);
       //line.move(0, (this->getSizeY() - line.getSizeY()) / 2);
       line.resize(slider.getX1(), (this->getSizeY() - line.getSizeY()) / 2, slider.getX1() + TEXTSIZE, (this->getSizeY() - line.getSizeY()) / 2 + line.getSizeY());
-      this->addSubElement(&line, STICKY_SIDE1_CENTER);
-
+      this->addSubElement(&line, Sticky(1.0, -TEXTSIZE, 0.5, -line.getSizeY() / 2, 1.0, 0, 0.5, line.getSizeY() / 2));
     }
 
   protected:
@@ -224,7 +223,7 @@ class DynamicValue : public TDymamicPageControl<T>
       this->resize(0, 0, 20, 20);
       line.make(this->x0, this->y0, 256);
       line.move(0, (this->getSizeY() - line.getSizeY()) / 2);
-      this->addSubElement(&line, STICKYHORIZONTALCENTER);
+      this->addSubElement(&line, Sticky(0.0, 0, 0.5,  -line.getSizeY() / 2, 1.0, 0, 0.5, line.getSizeY() / 2));
 
     }
   

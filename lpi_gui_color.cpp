@@ -357,9 +357,10 @@ ColorSliderEx::ColorSliderEx(ColorSlider* slider, const std::string& label, doub
   input.resize(LABELSIZEX + 6, 2, LABELSIZEX + EDITBOXSIZEX - 1, EDITBOXSIZEY - 1);
   input.cursorColor = RGB_Black;
   slider->resize(LABELSIZEX, 0, LABELSIZEX, EDITBOXSIZEY);
-  addSubElement(&this->label, STICKYCENTERLEFT);
-  addSubElement(&input, STICKYCENTERRIGHT);
-  addSubElement(slider, STICKYFULL);
+  addSubElement(&this->label, Sticky(0.0, 0, 0.5, -this->label.getSizeY() / 2, 0.0, this->label.getSizeX(), 0.5, this->label.getSizeY() / 2));
+  addSubElement(&input, Sticky(1.0, -input.getSizeX(), 0.5, -input.getSizeY() / 2, 1.0, 0, 0.5, input.getSizeY() / 2));
+  addSubElement(slider);
+  ic.setStickyFull(slider, this);
 }
 
 void ColorSliderEx::fixUpSizes()
@@ -436,7 +437,8 @@ void ColorSliders::fixUpSizes()
   for(size_t i = 0; i < sliders.size(); i++)
   {
     sliders[i]->resize(x0, y0 + 4 * i, x1, y0 + 4 * i + 3);
-    ic.updateRelativeSize(sliders[i], this);
+    //ic.updateRelativeSize(sliders[i], this);
+    ic.setStickyRelative(sliders[i], this);
   }
   resize(x0, y0, x1, origsizey);
   
@@ -456,7 +458,7 @@ ColorSliders::~ColorSliders()
 void ColorSliders::addSlider(ColorSliderEx* slider)
 {
   sliders.push_back(slider);
-  addSubElement(slider, STICKYRELATIVE);
+  addSubElement(slider);
   fixUpSizes();
 }
 

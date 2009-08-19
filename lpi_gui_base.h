@@ -104,16 +104,6 @@ class IGUIInputClick : public IGUIInput //this one already implements the double
     virtual bool quadrupleClicked(GUIMouseButton button) const;
 };
 
-enum Sticky //how to resize child widget with master widget
-{
-  TOPLEFT, //follow top/left side of master
-  BOTTOMRIGHT, //follow bottom/right side of master
-  CENTER, //follow center of master
-  RELATIVE00, //position relative to master, distance of this subelement's side to upper left ("00") corner of subelement will stay constant
-  RELATIVE11, //position relative to master, distance of this subelement's side to lower right ("11") corner of subelement will stay constant
-  NOTHING //don't do anything in resize(). But in move() it'll still translate.
-};
-
 template<typename T>
 struct Pos
 {
@@ -123,61 +113,63 @@ struct Pos
   T y1;
 };
 
-//some named combinations for Pos<Sticky> values, more are possible but these are probably the most common
-extern const Pos<Sticky> STICKYTOPLEFT; //always keeps same size, stays at same position compared to parent's top left
-extern const Pos<Sticky> STICKYTOPCENTER;
-extern const Pos<Sticky> STICKYTOPRIGHT; //always keeps same size, stays at same position compared to parent's top right
-extern const Pos<Sticky> STICKYCENTERRIGHT;
-extern const Pos<Sticky> STICKYCENTER; //keep same size, follow center
-extern const Pos<Sticky> STICKYCENTERLEFT;
-extern const Pos<Sticky> STICKYBOTTOMRIGHT; //always keeps same size, stays at same position compared to parent's bottom right
-extern const Pos<Sticky> STICKYBOTTOMCENTER;
-extern const Pos<Sticky> STICKYBOTTOMLEFT; //always keeps same size, stays at same position compared to parent's bottom left
-extern const Pos<Sticky> STICKYFULL; //follows each corresponding side, so it resizes as much as its master
-extern const Pos<Sticky> STICKYNOTHING; //don't do anything in resize() of parent, but still move if the parent move()s
-//for e.g. scrollbars:
-extern const Pos<Sticky> STICKYVERTICALLEFT; //follows both sides in vertical direction, follows left side
-extern const Pos<Sticky> STICKYVERTICALCENTER; //follows both sides in vertical direction, follows center
-extern const Pos<Sticky> STICKYVERTICALRIGHT; //follows both sides in vertical direction, follows right side
-extern const Pos<Sticky> STICKYHORIZONTALTOP; //follows both sides in horizontal direction, follows top side
-extern const Pos<Sticky> STICKYHORIZONTALCENTER; //follows both sides in horizontal direction, follows center
-extern const Pos<Sticky> STICKYHORIZONTALBOTTOM; //follows both sides in horizontal direction, follows bottom side
-//some involving relative:
-extern const Pos<Sticky> STICKYRELATIVE; //relative in all directions - use for subelements that may be resized too in all directions
-extern const Pos<Sticky> STICKYRELATIVE00; //position relative, but size stays constant (position determined by top left corner)
-extern const Pos<Sticky> STICKYRELATIVE01; //position relative, but size stays constant (position determined by bottom left corner)
-extern const Pos<Sticky> STICKYRELATIVE10; //position relative, but size stays constant (position determined by top right corner)
-extern const Pos<Sticky> STICKYRELATIVE11; //position relative, but size stays constant (position determined by bottom right corner)
-extern const Pos<Sticky> STICKYRELATIVEHORIZONTAL0; //size and position relative in horizontal direction, position relative in vertical direction
-extern const Pos<Sticky> STICKYRELATIVEVERTICAL0; //size and position relative in vertical direction, position relative in horizontal direction
-extern const Pos<Sticky> STICKYRELATIVEHORIZONTAL1; //size and position relative in horizontal direction, position relative in vertical direction
-extern const Pos<Sticky> STICKYRELATIVEVERTICAL1; //size and position relative in vertical direction, position relative in horizontal direction
-extern const Pos<Sticky> STICKYRELATIVEHORIZONTALFULL; //relative in horizontal direction, follows both sides in vertical direction
-extern const Pos<Sticky> STICKYRELATIVEVERTICALFULL; //relative in vertical direction, follows both sides in horizontal direction
-extern const Pos<Sticky> STICKYRELATIVELEFT; //relative in vertical direction, follows left side in horizontal direction
-extern const Pos<Sticky> STICKYRELATIVETOP; //relative in horizontalvertical direction, follows top side in vertical direction
-extern const Pos<Sticky> STICKYRELATIVERIGHT; //relative in vertical direction, follows right side in horizontal direction
-extern const Pos<Sticky> STICKYRELATIVEBOTTOM; //relative in horizontal direction, follows bottom side in vertical direction
+struct Sticky
+{
+  bool sticky; //if true, is handled by resize using d and i, else not
+  Pos<double> d;
+  Pos<int> i;
+  Pos<bool> follow; //if true, this side isn't fixed, it just follows the movement of the point indicated by d
+  
+  Sticky()
+  : sticky(false)
+  , d() //initializes it at 0,0,0,0
+  , i() //initializes it at 0,0,0,0
+  , follow() //initializes it to false,false,false,false
+  {
+  }
+  
+  Sticky(double dx0, int ix0, //left side
+         double dy0, int iy0, //top side
+         double dx1, int ix1, //right side
+         double dy1, int iy1) //bottom side
+  : sticky(true)
+  , follow() //initializes it to false,false,false,false
+  {
+    d.x0 = dx0;
+    d.y0 = dy0;
+    d.x1 = dx1;
+    d.y1 = dy1;
+    i.x0 = ix0;
+    i.y0 = iy0;
+    i.x1 = ix1;
+    i.y1 = iy1;
+  }
 
-//Different naming scheme for those Stick Pos's. The first part of the name is the horizontal movement, the second the vertical movement.
-//Everything for vertical is similar to that for horizontal, except "left" becomes "top", "right" becomes "bottom".
-//The name-parts mean:
-//Full: left side follows left side of parent, right side follows right side of parent (and similar for vertical)
-//Center: both sides follow the center of the parent
-//Relative: both sides follow the parent relative
-//Relative0: left side follows parent relative, right side follows movement of left side
-//Relative1: right side follows parent relative, left side follows movement of right side
-//Side0: both sides follow left (top) side
-//Side1: both sides follow right (bottom) side
-extern const Pos<Sticky> STICKY_SIDE0_SIDE0;
-extern const Pos<Sticky> STICKY_SIDE0_SIDE1;
-extern const Pos<Sticky> STICKY_SIDE1_SIDE0;
-extern const Pos<Sticky> STICKY_SIDE1_SIDE1;
-extern const Pos<Sticky> STICKY_FULL_CENTER;
-extern const Pos<Sticky> STICKY_SIDE0_CENTER;
-extern const Pos<Sticky> STICKY_SIDE1_CENTER;
+  Sticky(double dx0, int ix0, bool followx0, //left side
+         double dy0, int iy0, bool followy0, //top side
+         double dx1, int ix1, bool followx1, //right side
+         double dy1, int iy1, bool followy1) //bottom side
+  : sticky(true)
+  {
+    d.x0 = dx0;
+    d.y0 = dy0;
+    d.x1 = dx1;
+    d.y1 = dy1;
+    i.x0 = ix0;
+    i.y0 = iy0;
+    i.x1 = ix1;
+    i.y1 = iy1;
+    follow.x0 = followx0;
+    follow.y0 = followy0;
+    follow.x1 = followx1;
+    follow.y1 = followy1;
+  }
+};
 
-
+static const Sticky STICKYOFF;
+static const Sticky STICKYTOPLEFT(0.0, 0, true, 0.0, 0, true, 0.0, 0, true, 0.0, 0, true); //follow top left side
+//static const Sticky STICKYFULL(0.0, 0, 1.0, 0, 0.0, 0, 1.0, 0);
+static const Sticky& STICKYDEFAULT = STICKYTOPLEFT;
 struct MouseOverState
 {
   bool over_prev;
