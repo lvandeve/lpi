@@ -79,9 +79,11 @@ enum GUIPart
   GP_EMPTY_BUTTON,
   GP_EMPTY_BUTTON_ROUND,
   //custom colorable
-  GP_WHITE_PANEL,
+  GP_WHITE_PANEL, //panel which can be given any color
   GP_WHITE_BUTTON, //button with same size as scrollbar buttons
   GP_WHITE_BUTTON_ROUND, //button with same size as scrollbar buttons
+  //other panels
+  GP_PANEL_BORDER, //only border, the center is invisible
   //rulers / lines (to divide areas)
   GP_RULER_H,
   GP_RULER_V,

@@ -710,6 +710,7 @@ void ScrollElement::drawWidget(IGUIDrawer& drawer) const
 
 void ScrollElement::moveWidget(int x, int y)
 {
+  ElementComposite::moveWidget(x, y);
   if(element) element->move(x, y);
 }
 
@@ -751,7 +752,7 @@ void ScrollElement::handleWidget(const IGUIInput& input)
 
 void ScrollElement::setElementOver(bool state)
 {
-  Element::setElementOver(state);
+  ElementComposite::setElementOver(state);
   element->setElementOver(state);
 }
 
@@ -772,7 +773,7 @@ void ScrollElement::make(int x, int y, int sizex, int sizey, Element* element)
   bars.make(x, y, sizex, sizey);
   bars.disableV();
   bars.disableH();
-  addSubElement(&bars, Sticky(0.0, 0, 1.0, 0, 0.0, 0, 1.0, 0));
+  addSubElement(&bars, Sticky(0.0, 0, 0.0, 0, 1.0, 0, 1.0, 0));
   
 
   this->element = element;
@@ -2026,8 +2027,8 @@ ScrollbarPair::ScrollbarPair() : venabled(false), henabled(false)
 {
   this->conserveCorner = false;
   scrollbarGuiSet = &builtInGuiSet;
-  addSubElement(&vbar, Sticky(1.0, -vbar.getSizeX(), 0.0, 0, 1.0, 0, 1.0, 0));
-  addSubElement(&hbar, Sticky(0.0,  0, 1.0, -vbar.getSizeY(), 1.0, 0, 1.0, 0));
+  addSubElement(&vbar);
+  addSubElement(&hbar);
 }
 
 int ScrollbarPair::getVisiblex() const
@@ -2059,7 +2060,9 @@ void ScrollbarPair::make(int x, int y, int sizex, int sizey, double scrollSizeH,
   hbar.makeHorizontal(x0, y1 - set->arrowW->getU(), sizex - set->arrowS->getU(),
           scrollSizeH, 0, 0, 1,
           set, 1);
-  
+
+  ic.setSticky(&vbar, Sticky(1.0, -vbar.getSizeX(), 0.0, 0, 1.0, 0, 1.0, 0), this);
+  ic.setSticky(&hbar, Sticky(0.0,  0, 1.0, -hbar.getSizeY(), 1.0, 0, 1.0, 0), this);
   this->venabled = true;
   this->henabled = true;
 }
