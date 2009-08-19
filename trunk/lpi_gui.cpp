@@ -31,6 +31,36 @@ namespace lpi
 namespace gui
 {
 
+void InternalContainer::setStickyElementSize(Element* element, const Pos<int>& newPos)
+{
+  Sticky& s = sticky[element];
+  
+  if(s.sticky)
+  {
+    int w = newPos.x1 - newPos.x0;
+    int h = newPos.y1 - newPos.y0;
+    
+    Pos<int> newPos2;
+    
+    if(!s.follow.x0) newPos2.x0 = newPos.x0 + (int)(s.d.x0 * w + s.i.x0);
+    else newPos2.x0 = element->getX0();
+    if(!s.follow.y0) newPos2.y0 = newPos.y0 + (int)(s.d.y0 * h + s.i.y0);
+    else newPos2.y0 = element->getY0();
+    if(!s.follow.x1) newPos2.x1 = newPos.x0 + (int)(s.d.x1 * w + s.i.x1);
+    else newPos2.x1 = element->getX1();
+    if(!s.follow.y1) newPos2.y1 = newPos.y0 + (int)(s.d.y1 * h + s.i.y1);
+    else newPos2.y1 = element->getY1();
+    
+    element->resize(newPos2.x0, newPos2.y0, newPos2.x1, newPos2.y1);
+  }
+}
+
+void InternalContainer::setStickyElementSize(Element* element, Element* parent)
+{
+  Pos<int> newPos = { parent->getX0(), parent->getY0(), parent->getX1(), parent->getY1() };
+  setStickyElementSize(element, newPos);
+}
+
 void InternalContainer::resize(const Pos<int>& oldPos, const Pos<int>& newPos)  //this function is where the "sticky"-related calculations happen
 {
   int w = newPos.x1 - newPos.x0;
@@ -43,39 +73,23 @@ void InternalContainer::resize(const Pos<int>& oldPos, const Pos<int>& newPos)  
   for(size_t i = 0; i < elements.size(); i++)
   {
     Element& e = *elements[i];
-    Pos<int> newPos2;
+    Sticky& s = sticky[&e];
     
-    Sticky2& s = sticky[&e];
-    
-    if(s.sticky.x0 == TOPLEFT) newPos2.x0 = e.getX0() + dx0;
-    else if(s.sticky.x0 == RELATIVE00) newPos2.x0 = newPos.x0 + (int)(s.relativePos.x0 * w);
-    else if(s.sticky.x0 == RELATIVE11) newPos2.x0 = newPos.x0 + (int)(s.relativePos.x1 * w) - e.getSizeX();
-    else if(s.sticky.x0 == BOTTOMRIGHT) newPos2.x0 = e.getX0() + dx1;
-    else if(s.sticky.x0 == CENTER) newPos2.x0 = e.getX0() + (dx0 + dx1) / 2;
-    else /*if(s.sticky.x0 == NOTHING)*/ newPos2.x0 = e.getX0();
-    
-    if(s.sticky.y0 == TOPLEFT) newPos2.y0 = e.getY0() + dy0;
-    else if(s.sticky.y0 == RELATIVE00) newPos2.y0 = newPos.y0 + (int)(s.relativePos.y0 * h);
-    else if(s.sticky.y0 == RELATIVE11) newPos2.y0 = newPos.y0 + (int)(s.relativePos.y1 * h) - e.getSizeY();
-    else if(s.sticky.y0 == BOTTOMRIGHT) newPos2.y0 = e.getY0() + dy1;
-    else if(s.sticky.y0 == CENTER) newPos2.y0 = e.getY0() + (dy0 + dy1) / 2;
-    else /*if(s.sticky.y0 == NOTHING)*/ newPos2.y0 = e.getY0();
-    
-    if(s.sticky.x1 == TOPLEFT) newPos2.x1 = e.getX1() + dx0;
-    else if(s.sticky.x1 == RELATIVE11) newPos2.x1 = newPos.x0 + (int)(s.relativePos.x1 * w);
-    else if(s.sticky.x1 == RELATIVE00) newPos2.x1 = newPos.x0 + (int)(s.relativePos.x0 * w) + e.getSizeX();
-    else if(s.sticky.x1 == BOTTOMRIGHT) newPos2.x1 = e.getX1() + dx1;
-    else if(s.sticky.x1 == CENTER) newPos2.x1 = e.getX1() + (dx0 + dx1) / 2;
-    else /*if(s.sticky.x1 == NOTHING)*/ newPos2.x1 = e.getX1();
-    
-    if(s.sticky.y1 == TOPLEFT) newPos2.y1 = e.getY1() + dy0;
-    else if(s.sticky.y1 == RELATIVE11) newPos2.y1 = newPos.y0 + (int)(s.relativePos.y1 * h);
-    else if(s.sticky.y1 == RELATIVE00) newPos2.y1 = newPos.y0 + (int)(s.relativePos.y0 * h) + e.getSizeY();
-    else if(s.sticky.y1 == BOTTOMRIGHT) newPos2.y1 = e.getY1() + dy1;
-    else if(s.sticky.y1 == CENTER) newPos2.y1 = e.getY1() + (dy0 + dy1) / 2;
-    else /*if(s.sticky.y1 == NOTHING)*/ newPos2.y1 = e.getY1();
-  
-    e.resize(newPos2.x0, newPos2.y0, newPos2.x1, newPos2.y1);
+    if(s.sticky)
+    {
+      Pos<int> newPos2;
+      
+      if(!s.follow.x0) newPos2.x0 = newPos.x0 + (int)(s.d.x0 * w + s.i.x0);
+      else newPos2.x0 = e.getX0() + (int)(dx0 * (1.0 - s.d.x0) + dx1 * (s.d.x0));
+      if(!s.follow.y0) newPos2.y0 = newPos.y0 + (int)(s.d.y0 * h + s.i.y0);
+      else newPos2.y0 = e.getY0() + (int)(dy0 * (1.0 - s.d.y0) + dy1 * (s.d.y0));
+      if(!s.follow.x1) newPos2.x1 = newPos.x0 + (int)(s.d.x1 * w + s.i.x1);
+      else newPos2.x1 = e.getX1() + (int)(dx0 * (1.0 - s.d.x1) + dx1 * (s.d.x1));
+      if(!s.follow.y1) newPos2.y1 = newPos.y0 + (int)(s.d.y1 * h + s.i.y1);
+      else newPos2.y1 = e.getY1() + (int)(dy0 * (1.0 - s.d.y1) + dy1 * (s.d.y1));
+      
+      e.resize(newPos2.x0, newPos2.y0, newPos2.x1, newPos2.y1);
+    }
   }
 }
 
@@ -95,27 +109,43 @@ void InternalContainer::setElementOver(bool state)
   }
 }
 
-void InternalContainer::updateRelativeSize(Element* element, Element* parent)
+void InternalContainer::setSticky(Element* element, const Sticky& sticky, Element* parent)
 {
-  sticky[element].relativePos.x0 = (element->getX0() - parent->getX0()) / (double)(parent->getSizeX());
-  sticky[element].relativePos.y0 = (element->getY0() - parent->getY0()) / (double)(parent->getSizeY());
-  sticky[element].relativePos.x1 = (element->getX1() - parent->getX0()) / (double)(parent->getSizeX());
-  sticky[element].relativePos.y1 = (element->getY1() - parent->getY0()) / (double)(parent->getSizeY());
+  this->sticky[element] = sticky;
+  setStickyElementSize(element, parent);
 }
 
-void InternalContainer::initSubElement(Element* element, const Pos<Sticky>& sticky, Element* parent)
+void InternalContainer::setStickyRelative(Element* element, Element* parent)
 {
-  this->sticky[element].sticky = sticky;
-  updateRelativeSize(element, parent);
+  Sticky sticky((double)(element->getX0() - parent->getX0()) / (double)(parent->getSizeX()), 0
+              , (double)(element->getY0() - parent->getY0()) / (double)(parent->getSizeY()), 0
+              , (double)(element->getX1() - parent->getX0()) / (double)(parent->getSizeX()), 0
+              , (double)(element->getY1() - parent->getY0()) / (double)(parent->getSizeY()), 0);
+  setSticky(element, sticky, parent);
 }
 
-void InternalContainer::addSubElement(Element* element, const Pos<Sticky>& sticky, Element* parent)
+void InternalContainer::setStickyFull(Element* element, Element* parent)
+{
+  Sticky sticky(0.0, element->getX0() - parent->getX0()
+              , 0.0, element->getY0() - parent->getY0()
+              , 1.0, element->getX1() - parent->getX1()
+              , 1.0, element->getY1() - parent->getY1());
+  setSticky(element, sticky, parent);
+}
+
+void InternalContainer::initSubElement(Element* element, const Sticky& sticky, Element* parent)
+{
+  this->sticky[element] = sticky;
+  setStickyElementSize(element, parent);
+}
+
+void InternalContainer::addSubElement(Element* element, const Sticky& sticky, Element* parent)
 {
   elements.push_back(element);
   initSubElement(element, sticky, parent);
 }
 
-void InternalContainer::insertSubElement(size_t index, Element* element, const Pos<Sticky>& sticky, Element* parent)
+void InternalContainer::insertSubElement(size_t index, Element* element, const Sticky& sticky, Element* parent)
 {
   initSubElement(element, sticky, parent);
   elements.insert(elements.begin() + index, element);
@@ -345,7 +375,7 @@ void Element::resizeWidget(const Pos<int>& /*newPos*/)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ElementComposite::addSubElement(Element* element, const Pos<Sticky>& sticky)
+void ElementComposite::addSubElement(Element* element, const Sticky& sticky)
 {
   ic.addSubElement(element, sticky, this);
 }
@@ -525,51 +555,51 @@ void Container::bringToTop(Element* element) //precondition: element must alread
   elements.getElements().push_back(element);
 }
 
-void Container::pushTop(Element* element, const Pos<Sticky>& sticky)
+void Container::pushTop(Element* element, const Sticky& sticky)
 {
   pushTopAt(element, element->getX0() - x0, element->getY0() - y0, sticky);
 }
 
-void Container::pushBottom(Element* element, const Pos<Sticky>& sticky)
+void Container::pushBottom(Element* element, const Sticky& sticky)
 {
   pushBottomAt(element, element->getX0() - x0, element->getY0() - y0, sticky);
 }
 
-void Container::insert(size_t pos, Element* element, const Pos<Sticky>& sticky)
+void Container::insert(size_t pos, Element* element, const Sticky& sticky)
 {
   insertAt(pos, element, element->getX0() - x0, element->getY0() - y0, sticky);
 }
 
-void Container::pushTopRelative(Element* element, const Pos<Sticky>& sticky)
+void Container::pushTopRelative(Element* element, const Sticky& sticky)
 {
   pushTopAt(element, element->getX0(), element->getY0(), sticky);
 }
 
-void Container::pushBottomRelative(Element* element, const Pos<Sticky>& sticky)
+void Container::pushBottomRelative(Element* element, const Sticky& sticky)
 {
   pushBottomAt(element, element->getX0(), element->getY0(), sticky);
 }
 
-void Container::insertRelative(size_t pos, Element* element, const Pos<Sticky>& sticky)
+void Container::insertRelative(size_t pos, Element* element, const Sticky& sticky)
 {
   insertAt(pos, element, element->getX0(), element->getY0(), sticky);
 }
 
-void Container::pushTopAt(Element* element, int x, int y, const Pos<Sticky>& sticky)
+void Container::pushTopAt(Element* element, int x, int y, const Sticky& sticky)
 {
   remove(element); //prevent duplicates
   element->moveTo(x0 + x, y0 + y);
   elements.addSubElement(element, sticky, this);
 }
 
-void Container::pushBottomAt(Element* element, int x, int y, const Pos<Sticky>& sticky)
+void Container::pushBottomAt(Element* element, int x, int y, const Sticky& sticky)
 {
   remove(element); //prevent duplicates
   element->moveTo(x0 + x, y0 + y);
   elements.insertSubElement(0, element, sticky, this);
 }
 
-void Container::insertAt(size_t pos, Element* element, int x, int y, const Pos<Sticky>& sticky)
+void Container::insertAt(size_t pos, Element* element, int x, int y, const Sticky& sticky)
 {
   remove(element); //prevent duplicates
   element->moveTo(x0 + x, y0 + y);
@@ -742,7 +772,7 @@ void ScrollElement::make(int x, int y, int sizex, int sizey, Element* element)
   bars.make(x, y, sizex, sizey);
   bars.disableV();
   bars.disableH();
-  addSubElement(&bars, STICKYFULL);
+  addSubElement(&bars, Sticky(0.0, 0, 1.0, 0, 0.0, 0, 1.0, 0));
   
 
   this->element = element;
@@ -1045,10 +1075,10 @@ Window::Window()
   this->closed = 0;
   this->resizerOverContainer = 0;
   
-  addSubElement(&top, STICKYHORIZONTALTOP);
-  addSubElement(&resizer, STICKYBOTTOMRIGHT);
-  addSubElement(&container, STICKYFULL);
-  addSubElement(&closeButton, STICKYTOPRIGHT);
+  addSubElement(&top, Sticky(0.0, 0, 0.0, 0, 1.0, 0, 0.0, top.getSizeY()));
+  addSubElement(&resizer, Sticky(1.0, -resizer.getSizeX(), 1.0, -resizer.getSizeY(), 1.0, 0, 1.0, 0));
+  addSubElement(&container, Sticky(0.0, 0, 0.0, 0, 1.0, 0, 1.0, 0));
+  addSubElement(&closeButton, Sticky(1.0, -closeButton.getSizeX(), 0.0, 0, 1.0, 0, 0.0, closeButton.getSizeY()));
   
   minSizeX = 64;
   minSizeY = 64;
@@ -1069,6 +1099,8 @@ void Window::addCloseButton(int offsetX, int offsetY, const GuiSet* set)
   closeButton.makeImage(closeX, closeY, set->closeButton, set->closeButton, set->closeButton, set->mainColor, set->mouseOverColor, set->mouseDownColor);
   closed = 0;
   closeEnabled = 1;
+  
+  ic.setSticky(&closeButton, Sticky(1.0, -closeButton.getSizeX(), 0.0, 0, 1.0, 0, 0.0, closeButton.getSizeY()), this);
 }
 
 void Window::addResizer(const GuiSet* set, bool overContainer, int offsetX, int offsetY)
@@ -1077,10 +1109,12 @@ void Window::addResizer(const GuiSet* set, bool overContainer, int offsetX, int 
   int resizerY = y1 - offsetY - set->resizer->getV();
   resizer.makeImage(resizerX, resizerY, set->resizer, set->resizer, set->resizer, set->mainColor, set->mouseOverColor, set->mouseDownColor);
   enableResizer = true;
+  ic.setSticky(&resizer, Sticky(1.0, -resizer.getSizeX(), 1.0, -resizer.getSizeY(), 1.0, 0, 1.0, 0), this);
   
   if(!overContainer)
   {
     container.resize(container.getX0(), container.getY0(), container.getX1(), container.getY1() - (y1 - resizer.getY0()));
+    ic.setStickyFull(&container, this);
   }
   
   resizerOverContainer = overContainer;
@@ -1120,6 +1154,8 @@ void Window::setContainerBorders(int left, int up, int right, int down)
   if(down < 0) down = left;
   
   container.resize(getContainerLeftmost() + left, getContainerHighest() + up, getContainerRightmost() - right, getContainerLowest() - down);
+  
+  ic.setStickyFull(&container, this);
 }
 
 bool Window::isContainer() const
@@ -1175,14 +1211,17 @@ void Window::addTop(Texture* t0, int offsetLeft, int offsetRight, int offsetTop,
 {
   top.makeHorizontal1(x0 + offsetLeft, y0 + offsetTop, getSizeX() - offsetLeft - offsetRight, t0, colorMod);
   this->enableTop = 1;
+  ic.setSticky(&top, Sticky(0.0, 0, 0.0, 0, 1.0, 0, 0.0, top.getSizeY()), this);
   
   container.resize(container.getX0(), container.getY0() + (top.getY1() - y0), container.getX1(), container.getY1());
+  ic.setStickyFull(&container, this);
 }
 
 
 void Window::initContainer()
 {
   container.make(x0, y0, getSizeX(), getSizeY());
+  ic.setStickyFull(&container, this);
 }
 
 //to let the scrollbars work properly, call this AFTER using setContainerBorders, addTop, addResizer and such of the window
@@ -1192,8 +1231,9 @@ void Window::addScrollbars()
   
   scroll.make(container.getX0(), container.getY0(), container.getSizeX(), container.getSizeY(), &container);
   container.setSizeToElements();
-  ic.removeElement(&container);
-  addSubElement(&scroll, STICKYFULL);
+  ic.removeElement(&container); //the scrollbars must control the container now
+  addSubElement(&scroll);
+  ic.setStickyFull(&scroll, this);
 }
 
 void Window::removeScrollbars()
@@ -1202,8 +1242,9 @@ void Window::removeScrollbars()
   
   scroll.element = 0;
   ic.removeElement(&scroll);
-  addSubElement(&container, STICKYFULL);
+  addSubElement(&container);
   container.resize(scroll.getX0(), scroll.getY0(), scroll.getX1(), scroll.getY1());
+  ic.setStickyFull(&container, this);
 }
 
 void Window::updateScroll()
@@ -1294,47 +1335,47 @@ void Window::bringToTop(Element* element) //precondition: element must already b
   container.bringToTop(element);
 }
 
-void Window::pushTopAt(Element* element, int x, int y, const Pos<Sticky>& sticky)
+void Window::pushTopAt(Element* element, int x, int y, const Sticky& sticky)
 {
   container.pushTopAt(element, x, y, sticky);
 }
 
-void Window::pushBottomAt(Element* element, int x, int y, const Pos<Sticky>& sticky)
+void Window::pushBottomAt(Element* element, int x, int y, const Sticky& sticky)
 {
   container.pushBottomAt(element, x, y, sticky);
 }
 
-void Window::insertAt(size_t pos, Element* element, int x, int y, const Pos<Sticky>& sticky)
+void Window::insertAt(size_t pos, Element* element, int x, int y, const Sticky& sticky)
 {
   container.insertAt(pos, element, x, y, sticky);
 }
 
-void Window::pushTop(Element* element, const Pos<Sticky>& sticky)
+void Window::pushTop(Element* element, const Sticky& sticky)
 {
   container.pushTop(element, sticky);
 }
 
-void Window::pushBottom(Element* element, const Pos<Sticky>& sticky)
+void Window::pushBottom(Element* element, const Sticky& sticky)
 {
   container.pushBottom(element, sticky);
 }
 
-void Window::insert(size_t pos, Element* element, const Pos<Sticky>& sticky)
+void Window::insert(size_t pos, Element* element, const Sticky& sticky)
 {
   container.insert(pos, element, sticky);
 }
 
-void Window::pushTopRelative(Element* element, const Pos<Sticky>& sticky)
+void Window::pushTopRelative(Element* element, const Sticky& sticky)
 {
   container.pushTopRelative(element, sticky);
 }
 
-void Window::pushBottomRelative(Element* element, const Pos<Sticky>& sticky)
+void Window::pushBottomRelative(Element* element, const Sticky& sticky)
 {
   container.pushBottomRelative(element, sticky);
 }
 
-void Window::insertRelative(size_t pos, Element* element, const Pos<Sticky>& sticky)
+void Window::insertRelative(size_t pos, Element* element, const Sticky& sticky)
 {
   container.insertRelative(pos, element, sticky);
 }
@@ -1985,8 +2026,8 @@ ScrollbarPair::ScrollbarPair() : venabled(false), henabled(false)
 {
   this->conserveCorner = false;
   scrollbarGuiSet = &builtInGuiSet;
-  addSubElement(&vbar, STICKYVERTICALRIGHT);
-  addSubElement(&hbar, STICKYHORIZONTALBOTTOM);
+  addSubElement(&vbar, Sticky(1.0, -vbar.getSizeX(), 0.0, 0, 1.0, 0, 1.0, 0));
+  addSubElement(&hbar, Sticky(0.0,  0, 1.0, -vbar.getSizeY(), 1.0, 0, 1.0, 0));
 }
 
 int ScrollbarPair::getVisiblex() const
@@ -2252,7 +2293,7 @@ void Slider::handleWidget(const IGUIInput& input)
     if(scrollPos < 0) scrollPos = 0;
     if(scrollPos > scrollSize) scrollPos = scrollSize;
     
-    slider.moveTo(x0 + scrollPosToScreenPos(scrollPos), slider.getY0());
+    slider.moveTo(x0 + scrollPosToScreenPos(scrollPos), getCenterY() - slider.getSizeY() / 2);
   }
   else //if(direction == V)
   {
@@ -2271,7 +2312,7 @@ void Slider::handleWidget(const IGUIInput& input)
     if(scrollPos < 0) scrollPos = 0;
     if(scrollPos > scrollSize) scrollPos = scrollSize;
     
-    slider.moveTo(slider.getX0(), y0 + scrollPosToScreenPos(scrollPos));
+    slider.moveTo(getCenterX() - slider.getSizeX() / 2, y0 + scrollPosToScreenPos(scrollPos));
   }
 }
 
@@ -2774,9 +2815,11 @@ void Tabs::generateTabSizes()
   for(size_t i = 0; i < tabs.size(); i++)
   {
     tabs[i]->resize(x0 + (dx * i) / num, y0, x0 + (dx * (i + 1)) / num, TABHEIGHT);
-    ic.updateRelativeSize(tabs[i], this);
+    //ic.updateRelativeSize(tabs[i], this);
+    ic.setSticky(tabs[i], Sticky(i * (1.0 / tabs.size()), 0, 0.0, 0, (i + 1) * (1.0 / tabs.size()), 0, 0.0, TABHEIGHT), this);
     tabs[i]->container.resize(x0, TABHEIGHT, x1, y1);
-    ic.updateRelativeSize(&tabs[i]->container, this);
+    //ic.updateRelativeSize(&tabs[i]->container, this);
+    ic.setSticky(&tabs[i]->container, Sticky(0.0, 0, 0.0, TABHEIGHT, 1.0, 0, 1.0, 0), this);
   }
 }
 
@@ -2784,8 +2827,8 @@ void Tabs::addTab(const std::string& name)
 {
   tabs.push_back(new Tab);
   tabs.back()->name = name;
-  addSubElement(tabs.back(), STICKYRELATIVEHORIZONTAL0);
-  addSubElement(&tabs.back()->container, STICKYRELATIVEHORIZONTALFULL);
+  addSubElement(tabs.back());
+  addSubElement(&tabs.back()->container);
   generateTabSizes();
   updateActiveContainer();
 }

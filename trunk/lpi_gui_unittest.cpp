@@ -538,7 +538,7 @@ void unitTest()
     tabs.addTab("tab 2");
     tabs.addTab("tab 3");
     tabs.addTab("tab 4");
-    w2.pushTopAt(&tabs, 0, 16, STICKYRELATIVE);
+    w2.pushTopAt(&tabs, 0, 16, lpi::gui::Sticky(0.1, 0, 0.1, 0, 0.9, 0, 0.5, 0));
     
     Window w1;
     w1.make(0, 0, 500, 500);
@@ -586,7 +586,7 @@ void unitTest()
     tabs.addTab("tab 2");
     tabs.addTab("tab 3");
     tabs.addTab("tab 4");
-    w2.pushTopAt(&tabs, 0, 16, STICKYRELATIVE);
+    w2.pushTopAt(&tabs, 0, 16, lpi::gui::Sticky(0.1, 0, 0.1, 0, 0.9, 0, 0.5, 0));
     
     
     Button wb;
