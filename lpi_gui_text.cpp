@@ -169,8 +169,8 @@ void InputLine::deleteSelectedText()
   
   if(s0 < 0) s0 = 0;
   if(s1 < 0) s1 = 0;
-  if(s0 > text.length()) s0 = text.length();
-  if(s1 > text.length()) s1 = text.length();
+  if(s0 > (int)text.length()) s0 = text.length();
+  if(s1 > (int)text.length()) s1 = text.length();
   
   if(text.size() > 0) text.erase(s0, s1 - s0);
   

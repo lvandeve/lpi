@@ -31,13 +31,23 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
+void drawLine(unsigned char* buffer, int w, int h, int x1, int y1, int x2, int y2, const ColorRGB& color);
 void drawLine(unsigned char* buffer, int w, int h, int x1, int y1, int x2, int y2, const ColorRGB& color, int clipx1, int clipy1, int clipx2, int clipy2);
-bool clipLine(int x1, int y1, int x2, int y2, int& x3, int& y3, int& x4, int& y4, int left, int top, int right, int bottom);
 void horLine(unsigned char* buffer, int w, int h, int y, int x1, int x2, const ColorRGB& color);
 void verLine(unsigned char* buffer, int w, int h, int x, int y1, int y2, const ColorRGB& color);
+void drawCircle(unsigned char* buffer, int w, int h, int x, int y, int radius, const ColorRGB& color);
 void drawDisk(unsigned char* buffer, int buffer_w, int buffer_h, int xc, int yc, int radius, const ColorRGB& color);
-void pset(unsigned char* buffer, int w, int h, int x, int y, const ColorRGB& color);
+void drawEllipse(unsigned char* buffer, int w, int h, int cx, int cy, int radiusx, int radiusy, const ColorRGB& color);
+void drawBezier(unsigned char* buffer, int w, int h, int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color);
+//drawPixel checks if the pixel is inside the buffer (it's simply not drawn if outside)
+void drawPixel(unsigned char* buffer, int w, int h, int x, int y, const ColorRGB& color);
+//pset does NOT check if the pixel is actually in the buffer (risk for out of bounds)
+void pset(unsigned char* buffer, int w, int x, int y, const ColorRGB& color);
 
+
+//helper functions for 2D graphics
+bool bezier_nearly_flat(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3);
+bool clipLine(int x1, int y1, int x2, int y2, int& x3, int& y3, int& x4, int& y4, int left, int top, int right, int bottom);
 
 } //end of namespace lpi
 

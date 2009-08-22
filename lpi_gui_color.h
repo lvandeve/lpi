@@ -405,6 +405,16 @@ class ColorPlane : public Element
     virtual void drawWidget(IGUIDrawer& drawer) const;
 };
 
+class PColorPlane : public Element
+{
+  private:
+    ColorRGB* color;
+
+  public:
+    PColorPlane(ColorRGB* color);
+    virtual void drawWidget(IGUIDrawer& drawer) const;
+};
+
 
 class FGBGColor : public ElementComposite
 {

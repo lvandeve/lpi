@@ -755,7 +755,7 @@ class Checkbox : public Element, public Label
     void check() { checked = true; }
     void uncheck() { checked = false; }
     bool isChecked() { return checked; }
-    bool setChecked(bool check) { checked = check; }
+    void setChecked(bool check) { checked = check; }
     
     //give it alternative textures than those in the GuiSet
     void setTexturesAndColors(const Texture* texture1, const Texture* texture2, const Texture* texture3, const Texture* texture4, 

@@ -60,7 +60,6 @@ void DynamicPage::addControl(const std::string& name, IDynamicPageControl* contr
   
   size_t i = controls.size() - 1;
   int xb = (int)(getSizeX() * title_width);
-  int h = control->getSizeY();
   control->resize(x0 + xb + 1, y0 + TITLEHEIGHT + i * CONTROLHEIGHT + 1, x1, y0 + TITLEHEIGHT + (i + 1) * CONTROLHEIGHT);
   addSubElement(control, Sticky(0.0, x0 + xb + 1, 0.0, TITLEHEIGHT + i * CONTROLHEIGHT + 1, 1.0, 0, 0.0, TITLEHEIGHT + (i + 1) * CONTROLHEIGHT));
 }
