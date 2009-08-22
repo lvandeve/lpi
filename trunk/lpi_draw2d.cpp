@@ -26,25 +26,66 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
-//Draw a line from (x1, y1) to (x2, y2) on a buffer where the color is 4 unsigned chars (with bresenham)
-void drawLine(unsigned char* buffer, int buffer_w, int buffer_h, int x1, int y1, int x2, int y2, const ColorRGB& color, int clipx1, int clipy1, int clipx2, int clipy2)
+//helper-function for drawing bezier curves (a stop condition)
+bool bezier_nearly_flat(double x0, double y0,
+                        double x1, double y1,
+                        double x2, double y2,
+                        double x3, double y3)
 {
-  //don't clip if the user gives no clipping area by making clipx2 smaller than clipx1
-  bool clip = (clipx2 >= clipx1);
-  
-  //clip if some point is outside the clipping area
-  if(clip)
-  if(x1 < clipx1 || x1 >= clipx2 || x2 < clipx1 || x2 >= clipx2 || y1 < clipy1 || y1 >= clipy2 || y2 < clipy1 || y2 >= clipy2)
+    double dist = std::fabs(x0 - x3) + fabs(y0 - y3);
+    
+    double precision = 20; //20 = quite high, 5 = visible line segments, 2 = way too low
+    
+    if(std::fabs(x0 + x2 - x1 - x1) +
+       std::fabs(y0 + y2 - y1 - y1) +
+       std::fabs(x1 + x3 - x2 - x2) +
+       std::fabs(y1 + y3 - y2 - y2) <= dist / precision)
+    {
+        return true;
+    }
+    else return false;
+}
+
+void recursive_bezier(unsigned char* buffer, int w, int h,
+                      double x0, double y0, //endpoint
+                      double x1, double y1, //handle
+                      double x2, double y2, //handle
+                      double x3, double y3, //endpoint
+                      const ColorRGB& color,
+                      int n = 0) //extra recursion test for safety
+{
+  if(bezier_nearly_flat(x0, y0, x1, y1, x2, y2, x3, y3) || n > 20)
   {
-    int x3, y3, x4, y4;
-    if(!clipLine(x1, y1, x2, y2, x3, y3, x4, y4, clipx1, clipy1, clipx2, clipy2)) return;
-    x1 = x3;
-    y1 = y3;
-    x2 = x4;
-    y2 = y4;
+    drawLine(buffer, w, h, (int)x0, (int)y0, (int)x3, (int)y3, color);
   }
+  else
+  {
+    double x01   = (x0 + x1) / 2;
+    double y01   = (y0 + y1) / 2;
+    double x12   = (x1 + x2) / 2;
+    double y12   = (y1 + y2) / 2;
+    double x23   = (x2 + x3) / 2;
+    double y23   = (y2 + y3) / 2;
+    double x012  = (x01 + x12) / 2;
+    double y012  = (y01 + y12) / 2;
+    double x123  = (x12 + x23) / 2;
+    double y123  = (y12 + y23) / 2;
+    double x0123 = (x012 + x123) / 2;
+    double y0123 = (y012 + y123) / 2;
+    
+    recursive_bezier(buffer, w, h, x0, y0, x01, y01, x012, y012, x0123, y0123, color, n + 1); 
+    recursive_bezier(buffer, w, h, x0123, y0123, x123, y123, x23, y23, x3, y3, color, n + 1);
+  }
+}
 
+void drawBezier(unsigned char* buffer, int w, int h, int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color)
+{
+  recursive_bezier(buffer, w, h, x0, y0, x1, y1, x2, y2, x3, y3, color);
+}
 
+//this one does NOT check if the line is inside the buffer! (hence only width, not height, as parameter)
+void bresenhamLine(unsigned char* buffer, int w, int x1, int y1, int x2, int y2, const ColorRGB& color)
+{
   //draw the line with bresenham
   int deltax = std::abs((double)(x2 - x1));    // The difference between the x's
   int deltay = std::abs((double)(y2 - y1));    // The difference between the y's
@@ -92,7 +133,7 @@ void drawLine(unsigned char* buffer, int buffer_w, int buffer_h, int x1, int y1,
   }
   for (curpixel = 0; curpixel <= numpixels; curpixel++)
   {
-    pset(buffer, buffer_w, buffer_h, x, y, color);  // Draw the current pixel
+    pset(buffer, w, x, y, color);  // Draw the current pixel
     num += numadd;        // Increase the numerator by the top of the fraction
     if (num >= den)       // Check if numerator >= denominator
     {
@@ -103,6 +144,34 @@ void drawLine(unsigned char* buffer, int buffer_w, int buffer_h, int x1, int y1,
     x += xinc2;         // Change the x as appropriate
     y += yinc2;         // Change the y as appropriate
   }
+}
+
+//Draw a line from (x1, y1) to (x2, y2) on a buffer where the color is 4 unsigned chars (with bresenham)
+void drawLine(unsigned char* buffer, int w, int h, int x1, int y1, int x2, int y2, const ColorRGB& color)
+{
+  drawLine(buffer, w, h, x1, y1, x2, y2, color, 0, 0, w, h);
+}
+
+void drawLine(unsigned char* buffer, int buffer_w, int buffer_h, int x1, int y1, int x2, int y2, const ColorRGB& color, int clipx1, int clipy1, int clipx2, int clipy2)
+{
+  //make sure clipping area isn't bigger than the buffer
+  if(clipx1 < 0) clipx1 = 0;
+  if(clipy1 < 0) clipy1 = 0;
+  if(clipx2 >= buffer_w) clipx2 = buffer_w - 1;
+  if(clipy2 >= buffer_h) clipy2 = buffer_h - 1;
+  
+  //clip if some point is outside the clipping area
+  if(x1 < clipx1 || x1 >= clipx2 || x2 < clipx1 || x2 >= clipx2 || y1 < clipy1 || y1 >= clipy2 || y2 < clipy1 || y2 >= clipy2)
+  {
+    int x3, y3, x4, y4;
+    if(!clipLine(x1, y1, x2, y2, x3, y3, x4, y4, clipx1, clipy1, clipx2, clipy2)) return;
+    x1 = x3;
+    y1 = y3;
+    x2 = x4;
+    y2 = y4;
+  }
+  
+  bresenhamLine(buffer, buffer_w, x1, y1, x2, y2, color);
 }
 
 //Fast horizontal line from (x1,y) to (x2,y), with rgb color
@@ -137,7 +206,96 @@ void verLine(unsigned char* buffer, int buffer_w, int buffer_h, int x, int y1, i
   }
 }
 
-//Filled bresenham circle with center at (xc,yc) with radius and red green blue color
+void drawEllipse(unsigned char* buffer, int w, int h, int cx, int cy, int radiusx, int radiusy, const ColorRGB& color)
+{
+  int twoASquare = 2*radiusx*radiusx;
+  int twoBSquare = 2*radiusy*radiusy;
+  int x = radiusx;
+  int y = 0;
+  int xchange = radiusy*radiusy*(1 - 2*radiusx);
+  int ychange = radiusx*radiusx;
+  int ellipseError = 0;
+  int stoppingx = twoBSquare*radiusx;
+  int stoppingy = 0;
+
+  while(stoppingx >= stoppingy)
+  {
+    drawPixel(buffer, w, h, cx+x, cy+y, color);
+    drawPixel(buffer, w, h, cx-x, cy+y, color);
+    drawPixel(buffer, w, h, cx-x, cy-y, color);
+    drawPixel(buffer, w, h, cx+x, cy-y, color);
+
+    y++;
+    stoppingy += twoASquare;
+    ellipseError += ychange;
+    ychange += twoASquare;
+    if((2*ellipseError + xchange) > 0)
+    {
+      x--;
+      stoppingx -= twoBSquare;
+      ellipseError += xchange;
+      xchange += twoBSquare;
+    }
+  }
+        
+  x = 0;
+  y = radiusy;
+  xchange = radiusy*radiusy;
+  ychange = radiusx*radiusx*(1 - 2*radiusy);
+  ellipseError = 0;
+  stoppingx = 0;
+  stoppingy = twoASquare*radiusy;
+  while ( stoppingx <= stoppingy )
+  {
+    drawPixel(buffer, w, h, cx+x, cy+y, color);
+    drawPixel(buffer, w, h, cx-x, cy+y, color);
+    drawPixel(buffer, w, h, cx-x, cy-y, color);
+    drawPixel(buffer, w, h, cx+x, cy-y, color);
+    
+    x++;
+    stoppingx += twoBSquare;
+    ellipseError += xchange;
+    xchange += twoBSquare;
+    if ((2*ellipseError + ychange) > 0 )
+    {
+      y--;
+      stoppingy -= twoASquare;
+      ellipseError += ychange;
+      ychange += twoASquare;
+    }
+  }
+}
+
+void drawCircle(unsigned char* buffer, int w, int h, int cx, int cy, int radius, const ColorRGB& color)
+{
+  int x = radius;
+  int y = 0;
+  int xchange = 1 - 2*radius;
+  int ychange = 1;
+  int radiuserror = 0;
+  while(x >= y)
+  {
+    drawPixel(buffer, w, h, cx + x, cy + y, color);
+    drawPixel(buffer, w, h, cx - x, cy + y, color);
+    drawPixel(buffer, w, h, cx - x, cy - y, color);
+    drawPixel(buffer, w, h, cx + x, cy - y, color);
+    drawPixel(buffer, w, h, cx + y, cy + x, color);
+    drawPixel(buffer, w, h, cx - y, cy + x, color);
+    drawPixel(buffer, w, h, cx - y, cy - x, color);
+    drawPixel(buffer, w, h, cx + y, cy - x, color);
+    y++;
+    radiuserror += ychange;
+    ychange += 2;
+    if(2*radiuserror + xchange > 0 )
+    {
+      x--;
+      radiuserror += xchange;
+      xchange += 2;
+    }
+  }
+}
+
+//Filled bresenham circle with center at (xc,yc) with radius and RGB color
 void drawDisk(unsigned char* buffer, int buffer_w, int buffer_h, int xc, int yc, int radius, const ColorRGB& color)
 {
   if(xc + radius < 0 || xc - radius >= buffer_w || yc + radius < 0 || yc - radius >= buffer_h) return; //every single pixel outside screen, so don't waste time on it
@@ -168,11 +326,18 @@ void drawDisk(unsigned char* buffer, int buffer_w, int buffer_h, int xc, int yc,
   }
 }
 
-//Set a pixel on a buffer where the color is 4 unsigned chars (w and h are the width and height of the buffer)
-void pset(unsigned char* buffer, int buffer_w, int buffer_h, int x, int y, const ColorRGB& color)
+
+void drawPixel(unsigned char* buffer, int buffer_w, int buffer_h, int x, int y, const ColorRGB& color)
 {
   if(x < 0 || y < 0 || x >= buffer_w || y >= buffer_h) return;
   
+  pset(buffer, buffer_w, x, y, color);
+}
+
+//Set a pixel on a buffer
+//pset does NOT check if the pixel is actually in the buffer (risk for out of bounds)
+void pset(unsigned char* buffer, int buffer_w, int x, int y, const ColorRGB& color)
+{
   int bufferPos = 4 * buffer_w * y + 4 * x;
   buffer[bufferPos + 0] = color.r;
   buffer[bufferPos + 1] = color.g;

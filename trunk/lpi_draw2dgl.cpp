@@ -65,6 +65,42 @@ void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color)
   drawLine(x1, y1, x2, y2, color, 0, 0, screenWidth(), screenHeight());
 }
 
+void recursive_bezier(double x0, double y0, //endpoint
+                      double x1, double y1, //handle
+                      double x2, double y2, //handle
+                      double x3, double y3, //endpoint
+                      const ColorRGB& color,
+                      int n = 0) //extra recursion test for safety
+{
+  if(bezier_nearly_flat(x0, y0, x1, y1, x2, y2, x3, y3) || n > 20)
+  {
+    drawLine((int)x0, (int)y0, (int)x3, (int)y3, color);
+  }
+  else
+  {
+    double x01   = (x0 + x1) / 2;
+    double y01   = (y0 + y1) / 2;
+    double x12   = (x1 + x2) / 2;
+    double y12   = (y1 + y2) / 2;
+    double x23   = (x2 + x3) / 2;
+    double y23   = (y2 + y3) / 2;
+    double x012  = (x01 + x12) / 2;
+    double y012  = (y01 + y12) / 2;
+    double x123  = (x12 + x23) / 2;
+    double y123  = (y12 + y23) / 2;
+    double x0123 = (x012 + x123) / 2;
+    double y0123 = (y012 + y123) / 2;
+    
+    recursive_bezier(x0, y0, x01, y01, x012, y012, x0123, y0123, color, n + 1); 
+    recursive_bezier(x0123, y0123, x123, y123, x23, y23, x3, y3, color, n + 1);
+  }
+}
+
+void drawBezier(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color)
+{
+  recursive_bezier(x0, y0, x1, y1, x2, y2, x3, y3, color);
+}
+
 void pset(int x, int y, const ColorRGB& color)
 {
   //draw the point with OpenGL
@@ -233,6 +269,73 @@ void gradientRectangle(int x1, int y1, int x2, int y2, const ColorRGB& color1, c
   glEnd();
 }
 
+void drawEllipse(int x, int y, double radiusx, double radiusy, const ColorRGB& color)
+{
+  static const double pi = 3.141592653589793238;
+  static const size_t numsegments = 32;
+  
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
+  glDisable(GL_TEXTURE_2D);
+  glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
+  setOpenGLScissor(); //everything that draws something must always do this
+  
+  glBegin(GL_LINE_STRIP);
+    double angle = 0;
+    for(size_t i = 0; i < numsegments; i++)
+    {
+      glVertex3d(x + std::cos(angle) * radiusx, y + std::sin(angle) * radiusy, 1);
+      angle += 2 * pi / numsegments;
+    }
+    glVertex3d(x + radiusx, y, 1);
+  glEnd();
+}
+
+void drawFilledEllipse(int x, int y, double radiusx, double radiusy, const ColorRGB& color)
+{
+  static const double pi = 3.141592653589793238;
+  static const size_t numsegments = 32;
+  
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
+  glDisable(GL_TEXTURE_2D);
+  glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
+  setOpenGLScissor(); //everything that draws something must always do this
+  
+  glBegin(GL_TRIANGLE_FAN);
+    glVertex3d(x, y, 1);
+    double angle = 0;
+    for(size_t i = 0; i < numsegments; i++)
+    {
+      glVertex3d(x + std::cos(angle) * radiusx, y + std::sin(angle) * radiusy, 1);
+      angle += 2 * pi / numsegments;
+    }
+    glVertex3d(x + radiusx, y, 1);
+  glEnd();
+}
+
+void drawCircle(int x, int y, double radius, const ColorRGB& color)
+{
+  static const double pi = 3.141592653589793238;
+  static const size_t numsegments = 32;
+  
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
+  glDisable(GL_TEXTURE_2D);
+  glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
+  setOpenGLScissor(); //everything that draws something must always do this
+  
+  glBegin(GL_LINE_STRIP);
+    double angle = 0;
+    for(size_t i = 0; i < numsegments; i++)
+    {
+      glVertex3d(x + std::cos(angle) * radius, y + std::sin(angle) * radius, 1);
+      angle += 2 * pi / numsegments;
+    }
+    glVertex3d(x + radius, y, 1);
+  glEnd();
+}
+
 void drawDisk(int x, int y, double radius, const ColorRGB& color)
 {
   static const double pi = 3.141592653589793238;
@@ -282,5 +385,32 @@ void drawGradientDisk(int x, int y, double radius, const ColorRGB& color1, const
     glVertex3d(x + radius, y, 1);
   glEnd();
 }
+
+void drawGradientEllipse(int x, int y, double radiusx, double radiusy, const ColorRGB& color1, const ColorRGB& color2)
+{
+  static const double pi = 3.141592653589793238;
+  static const size_t numsegments = 32;
+  
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
+  glDisable(GL_TEXTURE_2D);
+  //glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
+  setOpenGLScissor(); //everything that draws something must always do this
+  
+  glBegin(GL_TRIANGLE_FAN);
+    glColor4f(color1.r / 255.0, color1.g / 255.0, color1.b / 255.0, color1.a / 255.0);
+    glVertex3d(x, y, 1);
+    glColor4f(color2.r / 255.0, color2.g / 255.0, color2.b / 255.0, color2.a / 255.0);
+    double angle = 0;
+    for(size_t i = 0; i < numsegments; i++)
+    {
+      
+      glVertex3d(x + std::cos(angle) * radiusx, y + std::sin(angle) * radiusy, 1);
+      angle += 2 * pi / numsegments;
+    }
+    glVertex3d(x + radiusx, y, 1);
+  glEnd();
+}
+
 } //end of namespace lpi
 

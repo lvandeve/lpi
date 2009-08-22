@@ -859,7 +859,24 @@ void HueCircle::drawWidget(IGUIDrawer& drawer) const
 
 void HueCircle::handleWidget(const IGUIInput& input)
 {
-  (void)input;
+  if(mouseGrabbed(input))
+  {
+    double x = (double)(mouseGetRelPosX(input) - getSizeX() / 2) / (double)(getSizeX() / 2);
+    double y = (double)(mouseGetRelPosY(input) - getSizeX() / 2) / (double)(getSizeY() / 2);
+    
+    value_axial = std::sqrt(x*x+y*y);
+    if(value_axial < 0.0) value_axial = 0.0;
+    if(value_axial > 1.0) value_axial = 1.0;
+
+    const static double pi = 3.14159;
+    double theta = atan2(y, x);
+    value_angle = theta / (2.0 * pi);
+    if(value_angle < 0.0) value_angle = 1.0 + value_angle;
+    if(value_angle < 0.0) value_angle = 0.0;
+    if(value_angle > 1.0) value_angle = 1.0;
+    
+    setChanged();
+  }
 }
 
 void HueCircle_HSV_HS::getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const
@@ -905,6 +922,20 @@ void ColorPlane::drawWidget(IGUIDrawer& drawer) const
 {
   drawCheckerBackground(drawer, x0, y0, x1, y1);
   drawer.drawRectangle(x0, y0, x1, y1, color, true);
+  drawer.drawGUIPart(GP_PANEL_BORDER, x0, y0, x1, y1, false, RGB_White);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+PColorPlane::PColorPlane(ColorRGB* color)
+: color(color)
+{
+}
+
+void PColorPlane::drawWidget(IGUIDrawer& drawer) const
+{
+  drawCheckerBackground(drawer, x0, y0, x1, y1);
+  drawer.drawRectangle(x0, y0, x1, y1, *color, true);
   drawer.drawGUIPart(GP_PANEL_BORDER, x0, y0, x1, y1, false, RGB_White);
 }
 

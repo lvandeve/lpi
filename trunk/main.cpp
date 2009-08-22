@@ -52,6 +52,7 @@ gprof > gprof.txt
 #include "lpi_gui_ex.h"
 #include "lpi_gui_input_sdl.h"
 #include "lpi_gui_drawer_gl.h"
+#include "lpi_draw2d.h"
 #include "lpi_draw2dgl.h"
 #include "lpi_audio.h"
 #include "lpi_bignums.h"
@@ -64,6 +65,7 @@ gprof > gprof.txt
 #include "lodewav.h"
 #include "lpi_gui_dynamic.h"
 #include "lpi_gui_color.h"
+#include "lodepng.h"
 
 #include <vector>
 #include <iostream>
@@ -140,8 +142,18 @@ struct SpawnTexts
 
 SpawnTexts spawns;
 
+//void littletemporarytest()
+//{
+  //std::vector<unsigned char> buffer(512*512*4, 0);
+  //lpi::drawCircle(&buffer[0], 512, 512, 255, 255, 100, lpi::RGB_Lightblue);
+  //lpi::drawDisk(&buffer[0], 512, 512, 255, 255, 80, lpi::RGB_Lightred);
+  //lpi::drawBezier(&buffer[0],512,512, 60,10, 70,10, 75,20, 55,15, lpi::RGB_Yellow);
+  //lpi::drawEllipse(&buffer[0], 512, 512, 255, 255, 150, 50, lpi::RGB_Lightblue);
+  //LodePNG::encode("testje.png", buffer, 512, 512);
+//}
+
 int main(int, char*[]) //the arguments have to be given here, or DevC++ can't link to SDL for some reason
-{
+{//littletemporarytest();
   lpi::screen(width, height, 0, "lpi GUI demo");
   lpi::initFont();
   lpi::gui::GUIDrawerGL::init();
@@ -254,13 +266,14 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   tval5.make(0, 0, &dyn_value5);
   tabs.getTabContent(1).pushTopAt(&tval5, 10, 172);
   
-  lpi::gui::HueCircle_HSV_HV hsv;
+  lpi::gui::HueCircle_HSV_HS hsv;
   hsv.resize(0,0,120,120);
-  hsv.setAdaptiveColor(lpi::RGB_Lightred);
+  hsv.setAdaptiveColor(lpi::RGBA_Lightred(192));
   tabs.getTabContent(2).pushTopAt(&hsv, 20, 50);
-  lpi::gui::ColorPlane colorplane;
+  lpi::ColorRGB color;
+  lpi::gui::PColorPlane colorplane(&color);
   colorplane.resize(0, 0, 64, 48);
-  colorplane.color = lpi::ColorRGB(128, 255, 255, 192);
+  //colorplane.color = lpi::ColorRGB(128, 255, 255, 192);
   tabs.getTabContent(2).pushTopAt(&colorplane, 144, 50);
   
   lpi::gui::Checkbox wcb;
@@ -279,7 +292,9 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   {
     lpi::print("lpi GUI demo");
     
-    lpi::drawGradientDisk(600, 400, 100, lpi::ColorRGB(128, 255, 128, 255), lpi::ColorRGB(255, 128, 128, 128));
+    lpi::drawGradientEllipse(600, 400, 100, 50, lpi::ColorRGB(128, 255, 128, 255), lpi::ColorRGB(255, 128, 128, 128));
+    lpi::drawBezier(600,100, 700,100, 750,200, 550,150, lpi::RGB_Lightred);
+    lpi::drawCircle(600, 400, 110, lpi::ColorRGB(128, 255, 128, 255));
     
     lpi::gui::builtInTexture[37].draw(0, 50);
     
@@ -289,7 +304,8 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     c.draw(lpi::gGUIDrawer);
     c.handle(lpi::gGUIInput);
     
-    
+    lpi::ColorHSV colorHSV(hsv.getValueAngle() * 255, hsv.getValueAxial() * 255, 255);
+    color = lpi::HSVtoRGB(colorHSV);
     
     spawns.draw();
     spawns.handle();
