@@ -122,8 +122,9 @@ class IGUIDrawer
     virtual void drawTexture(int x, int y, const Texture* texture, const ColorRGB& colorMod = RGB_White) = 0;
     
     //things that need to be done before and after the drawing, e.g. setting the scissor
-    virtual void setSmallestScissor(int x0, int y0, int x1, int y1) = 0;
-    virtual void resetScissor() = 0;
+    virtual void setScissor(int x0, int y0, int x1, int y1) = 0;
+    virtual void setSmallestScissor(int x0, int y0, int x1, int y1) = 0; //the result will be smaller than the given coordinates and the last active scissor
+    virtual void resetScissor() = 0; //pops the last set scissor, bringing the previous one back (it works like a stack, "set" pushes, "reset" pops)
     
     //not all GUI parts use all input parameters! only x0 and y0 are always used.
     virtual void drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, bool inactive = false, const ColorRGB& color = RGB_White) = 0;

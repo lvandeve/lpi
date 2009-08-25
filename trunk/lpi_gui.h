@@ -35,7 +35,7 @@ lpi_gui: an OpenGL GUI
 #include "lpi_text.h"
 
 #include "lpi_gui_drawer.h"
-#include "lpi_gui_drawer_gl.h" //TODO: make lpi_gui independent of this header inclusion
+#include "lpi_gui_drawer_gl.h" //TODO: make lpi_gui independent of this header inclusion (requires removing all GuiSet references)
 
 
 namespace lpi
@@ -88,7 +88,7 @@ class ToolTipManager //this is made to draw the tooltip at the very end to avoid
     
   public:
     void registerMe(const Element* element); //can register only one per frame (last one to register will get drawn); guiElements should do this in the draw function.
-    void draw(const IGUIInput& input) const; //this will call the drawTooltip function of the one registered element, call this after drawing all gui elements
+    void draw(IGUIDrawer& drawer) const; //this will call the drawTooltip function of the one registered element, call this after drawing all gui elements
     void enableToolTips(bool set) { enabled = set; }
     ToolTipManager() : element(0), enabled(true) {}
 };
@@ -108,8 +108,9 @@ class Element : public ElementShape
     
   protected:
     
+    
+    //TODO: try to eliminate some of these booleans. Visible and Active can go together. ElementOver is needed of course for the correct handling of elements in containers. Present can maybe be comined with active and visible too???
     bool elementOver; //true if there is an element over this element, causing the mouse NOT to be over this one (Z-order related)
-
     bool visible; //if false, the draw() function doesn't draw anything
     bool active; //if false, handle() does nothing, and mouse tests return always false
     bool present; //if true, it reacts to the mouse. if false, it ignores the mouse, even if forceActive is true, if a gui element isn't present, it really isn't present
@@ -123,7 +124,7 @@ class Element : public ElementShape
     
     ////minimum size
     int minSizeX; //you can't resize this element to something smaller than this
-    int minSizeY; //TODO: make this virtual private functions instead of member variables
+    int minSizeY; //TODO: make this virtual private functions instead of member variables, or even better, remove this completely and make the resize function of elements determine this
     
   protected:
     void autoActivate(const IGUIInput& input, MouseState& auto_activate_mouse_state, bool& control_active); //utility function used by text input controls, they need a member variable like "MouseState auto_activate_mouse_state" in them for this and a bool "control_active", and in their handleWidget, put, "autoActivate(input, auto_activate_mouse_state, control_active); if(!control_active) return;"
@@ -173,7 +174,7 @@ class Element : public ElementShape
     ////optional tooltip. Drawing it must be controlled by a higher layer, e.g. see the Container's implementation. //TODO: make tooltip class and only have pointer to it here, being 0 if no tooltip, to decrease memory footprint of element, OR, store every info of the tooltip in ToolTipManager
     void addToolTip(const std::string& text, ToolTipManager* tooltipmanager = &defaultTooltipManager) { tooltipenabled = true; tooltip = text; this->tooltipmanager = tooltipmanager;}
     void removeToolTip() { tooltipenabled = false; }
-    void drawToolTip(const IGUIInput& input) const; //TODO: move this function to ToolTipManager
+    void drawToolTip(IGUIDrawer& drawer) const; //TODO: move this function to ToolTipManager
     
     virtual void setElementOver(bool state); //ALL gui types that have gui elements inside of them, must set elementOver of all gui elements inside of them too! ==> override this virtual function for those. Override this if you have subelements, unless you use addSubElement in ElementComposite.
     bool hasElementOver() const;
@@ -259,7 +260,6 @@ class Button : public Element
     
     ////part "panel"
     bool enablePanel;
-    const BackPanel* panel[3];
     int panelOffsetx;
     int panelOffsety;
     
@@ -273,12 +273,7 @@ class Button : public Element
     int mouseDownVisualStyle;
 
     ////make functions
-    //make full
-    void make(int x, int y, int sizex, int sizey, //basic properties
-              bool enableImage, Texture* texture1, Texture* texture2, Texture* texture3, int imageOffsetx, int imageOffsety, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3, //image
-              bool enableText, const std::string& text, int textOffsetx, int textOffsety, const Markup& markup1, const Markup& markup2, const Markup& markup3, //text
-              bool enablePanel, const BackPanel* panel1 = &builtInPanel[1], const BackPanel* panel2 = &builtInPanel[2], const BackPanel* panel3 = &builtInPanel[3], int panelOffsetx = 0, int panelOffsety = 0); //panel
-    
+
     //image only constructor (without offset)
     void makeImage(int x, int y,
                    const Texture* texture1, const Texture* texture2, const Texture* texture3, const ColorRGB& imageColor1 = RGB_White, const ColorRGB& imageColor2 = RGB_Brightred, const ColorRGB& imageColor3 = RGB_Grey); //image
@@ -292,13 +287,11 @@ class Button : public Element
     
     //text only constructor (without offset)
     void makeText(int x, int y, //basic properties
-                  const std::string& text, //text
-                  const GuiSet* set = &builtInGuiSet);
+                  const std::string& text); //text
     
     //panel + text constructor (text always in center of panel, no offsets and thinking needed)
     //this is the constructor with default parameters
-    void makeTextPanel(int x, int y, const std::string& text = "", int sizex = 64, int sizey = 24, //basic properties + actual text
-                       const GuiSet* set = &builtInGuiSet); //panel
+    void makeTextPanel(int x, int y, const std::string& text = "", int sizex = 64, int sizey = 24); //basic properties + actual text
 
     virtual void drawWidget(IGUIDrawer& drawer) const;
     virtual void handleWidget(const IGUIInput& input);

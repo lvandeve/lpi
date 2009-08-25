@@ -142,15 +142,15 @@ struct SpawnTexts
 
 SpawnTexts spawns;
 
-//void littletemporarytest()
-//{
-  //std::vector<unsigned char> buffer(512*512*4, 0);
-  //lpi::drawCircle(&buffer[0], 512, 512, 255, 255, 100, lpi::RGB_Lightblue);
-  //lpi::drawDisk(&buffer[0], 512, 512, 255, 255, 80, lpi::RGB_Lightred);
-  //lpi::drawBezier(&buffer[0],512,512, 60,10, 70,10, 75,20, 55,15, lpi::RGB_Yellow);
-  //lpi::drawEllipse(&buffer[0], 512, 512, 255, 255, 150, 50, lpi::RGB_Lightblue);
-  //LodePNG::encode("testje.png", buffer, 512, 512);
-//}
+void littletemporarytest()
+{
+  std::vector<unsigned char> buffer(512*512*4, 0);
+  lpi::drawCircle(&buffer[0], 512, 512, 255, 255, 100, lpi::RGB_Lightblue);
+  lpi::drawDisk(&buffer[0], 512, 512, 255, 255, 80, lpi::RGB_Lightred);
+  lpi::drawBezier(&buffer[0],512,512, 60,10, 70,10, 75,20, 55,15, lpi::RGB_Yellow);
+  lpi::drawFilledEllipse(&buffer[0], 512, 512, 255, 255, 150, 50, lpi::RGBA_Lightblue(128));
+  LodePNG::encode("testje.png", buffer, 512, 512);
+}
 
 int main(int, char*[]) //the arguments have to be given here, or DevC++ can't link to SDL for some reason
 {//littletemporarytest();
@@ -171,23 +171,6 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   tb_unittest.makeText(20, 550, "Unit Test");
   c.pushTop(&tb_unittest);
   
-  lpi::gui::Window w;
-  w.make(50, 50, 300, 300);
-  w.addTop();
-  w.addTitle("Window 2");
-  w.addCloseButton();
-  w.setColor(lpi::RGBA_White(224));
-  w.addResizer();
-  c.pushTop(&w);
-  
-  lpi::gui::Tabs tabs;
-  tabs.resize(0, 0, w.getSizeX(), w.getSizeY() - 32);
-  tabs.addTab("tab 1");
-  tabs.addTab("tab 2");
-  tabs.addTab("tab 3");
-  tabs.addTab("tab 4");
-  w.pushTopAt(&tabs, 0, 16, lpi::gui::Sticky(0.0, 0, 0.1, 0, 1.0, 0, 0.9, 0));
-  
   lpi::gui::Window w1;
   w1.make(100, 100, 500, 500);
   w1.addTop();
@@ -196,7 +179,25 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   w1.addResizer();
   w1.setColor(lpi::RGBA_Red(192));
   c.pushTop(&w1);
+
+  lpi::gui::Window w2;
+  w2.make(50, 50, 300, 300);
+  w2.addTop();
+  w2.addTitle("Window 2");
+  w2.addCloseButton();
+  w2.setColor(lpi::RGBA_White(224));
+  w2.addResizer();
+  c.pushTop(&w2);
   
+  lpi::gui::Tabs tabs;
+  tabs.resize(0, 0, w2.getSizeX(), w2.getSizeY() - 32);
+  tabs.addTab("tab 1");
+  tabs.addTab("tab 2");
+  tabs.addTab("tab 3");
+  tabs.addTab("tab 4");
+  w2.pushTopAt(&tabs, 0, 16, lpi::gui::Sticky(0.0, 0, 0.1, 0, 1.0, 0, 0.9, 0));
+
+
   lpi::gui::Button sound_button;
   sound_button.makeTextPanel(20, 500, "sound");
   w1.pushTopAt(&sound_button, 15, 50);
@@ -231,8 +232,9 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   wb.autoTextSize(4);
   wb.centerText();
   tabs.getTabContent(0).pushTopAt(&wb, 20, 50);
-  //w.pushTopAt(&wb, 20, 50);
+  //w2.pushTopAt(&wb, 20, 50);
   
+  //lpi::ColorRGB dyn_value0 = lpi::RGBA_Lightblue(224);
   int dyn_value1 = 12345;
   std::string dyn_value2 = "hello";
   bool dyn_value3 = true;
@@ -242,6 +244,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   //dyn.setSizeXY(200, 20);
   dyn.resize(0,0,280,100);
   dyn.setTitle("dynamic page");
+  //dyn.addControl("color", new lpi::gui::DynamicColor(&dyn_value0));
   dyn.addControl("int", new lpi::gui::DynamicValue<int>(&dyn_value1));
   dyn.addControl("string", new lpi::gui::DynamicValue<std::string>(&dyn_value2));
   dyn.addControl("boolean", new lpi::gui::DynamicCheckbox(&dyn_value3));
@@ -249,6 +252,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   dyn.addControl("slider", new lpi::gui::DynamicSlider<float>(&dyn_value5, 0, 100));
   //dyn.resize(0,0,200,100);
   tabs.getTabContent(1).pushTopAt(&dyn, 10, 20);
+  tabs.selectTab(1);
 
   lpi::gui::PVariable<int> tval1;
   tval1.make(0, 0, &dyn_value1);

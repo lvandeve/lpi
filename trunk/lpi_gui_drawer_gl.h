@@ -223,6 +223,7 @@ class GUIDrawerGL : public IGUIDrawer
     
     virtual void drawTexture(int x, int y, const Texture* texture, const ColorRGB& colorMod = RGB_White);
     
+    virtual void setScissor(int x0, int y0, int x1, int y1);
     virtual void setSmallestScissor(int x0, int y0, int x1, int y1);
     virtual void resetScissor();
     

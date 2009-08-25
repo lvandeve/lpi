@@ -38,6 +38,7 @@ void verLine(unsigned char* buffer, int w, int h, int x, int y1, int y2, const C
 void drawCircle(unsigned char* buffer, int w, int h, int x, int y, int radius, const ColorRGB& color);
 void drawDisk(unsigned char* buffer, int buffer_w, int buffer_h, int xc, int yc, int radius, const ColorRGB& color);
 void drawEllipse(unsigned char* buffer, int w, int h, int cx, int cy, int radiusx, int radiusy, const ColorRGB& color);
+void drawFilledEllipse(unsigned char* buffer, int w, int h, int cx, int cy, int radiusx, int radiusy, const ColorRGB& color);
 void drawBezier(unsigned char* buffer, int w, int h, int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color);
 //drawPixel checks if the pixel is inside the buffer (it's simply not drawn if outside)
 void drawPixel(unsigned char* buffer, int w, int h, int x, int y, const ColorRGB& color);

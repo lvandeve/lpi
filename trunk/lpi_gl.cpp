@@ -204,10 +204,10 @@ void setScissor(int left, int top, int right, int bottom)
   if(bottom < top) bottom = top;
   
   //the values stored in the std::vectors are transformed to opengl viewport coordinates, AND right and bottom actually contain the size instead of coordinates (because OpenGL works that way)
-  clipLeft.insert(clipLeft.begin(), left);
-  clipTop.insert(clipTop.begin(), top);
-  clipRight.insert(clipRight.begin(), right);
-  clipBottom.insert(clipBottom.begin(), bottom);
+  clipLeft.push_back(left);
+  clipTop.push_back(top);
+  clipRight.push_back(right);
+  clipBottom.push_back(bottom);
   
   setOpenGLScissor();
 }
@@ -220,10 +220,10 @@ void setSmallestScissor(int left, int top, int right, int bottom)
   int smallestBottom = bottom;
   
   
-  if(clipLeft[0] > smallestLeft) smallestLeft = clipLeft[0]; //de meest rechtse van de linkerzijden
-  if(clipTop[0] > smallestTop) smallestTop = clipTop[0]; //de laagste van de top zijden
-  if(clipRight[0] < smallestRight) smallestRight = clipRight[0]; //de meest linkse van de rechtse zijden
-  if(clipBottom[0] < smallestBottom) smallestBottom = clipBottom[0]; //de hoogste van de bodem zijden
+  if(clipLeft.back() > smallestLeft) smallestLeft = clipLeft.back(); //de meest rechtse van de linkerzijden
+  if(clipTop.back() > smallestTop) smallestTop = clipTop.back(); //de laagste van de top zijden
+  if(clipRight.back() < smallestRight) smallestRight = clipRight.back(); //de meest linkse van de rechtse zijden
+  if(clipBottom.back() < smallestBottom) smallestBottom = clipBottom.back(); //de hoogste van de bodem zijden
   
   //if(smallestLeft < smallestRight) smallestLeft = 0, smallestRight = 1;
   //if(smallestTop < smallestBottom) smallestTop = 0, smallestBottom = 1;
@@ -237,7 +237,7 @@ void setOpenGLScissor()
 {
   GLint array[4];
   glGetIntegerv(GL_VIEWPORT, array); //array[3] contains the height in pixels of the viewport
-  glScissor(clipLeft[0], array[3] - clipBottom[0], clipRight[0] - clipLeft[0], clipBottom[0] - clipTop[0]);
+  glScissor(clipLeft.back(), array[3] - clipBottom.back(), clipRight.back() - clipLeft.back(), clipBottom.back() - clipTop.back());
 }
 
 //reset the scissor area back to the previous coordinates before your last setScissor call (works like a stack)
@@ -245,10 +245,10 @@ void resetScissor()
 {
   if(clipLeft.size() > 1)
   {
-    clipLeft.erase(clipLeft.begin());
-    clipTop.erase(clipTop.begin());
-    clipRight.erase(clipRight.begin());
-    clipBottom.erase(clipBottom.begin());
+    clipLeft.pop_back();
+    clipTop.pop_back();
+    clipRight.pop_back();
+    clipBottom.pop_back();
   }
   
   setOpenGLScissor();

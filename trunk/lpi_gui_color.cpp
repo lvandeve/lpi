@@ -913,20 +913,6 @@ void HueCircle_HSL_HL::getDrawColor(ColorRGB& o_color, double value_angle, doubl
 
 ////////////////////////////////////////////////////////////////////////////////
 
-ColorPlane::ColorPlane()
-: color(RGB_White)
-{
-}
-
-void ColorPlane::drawWidget(IGUIDrawer& drawer) const
-{
-  drawCheckerBackground(drawer, x0, y0, x1, y1);
-  drawer.drawRectangle(x0, y0, x1, y1, color, true);
-  drawer.drawGUIPart(GP_PANEL_BORDER, x0, y0, x1, y1, false, RGB_White);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 PColorPlane::PColorPlane(ColorRGB* color)
 : color(color)
 {
@@ -934,9 +920,19 @@ PColorPlane::PColorPlane(ColorRGB* color)
 
 void PColorPlane::drawWidget(IGUIDrawer& drawer) const
 {
-  drawCheckerBackground(drawer, x0, y0, x1, y1);
+  int checkersize = 8;
+  if(getSizeX() < 16 && getSizeY() < 16) checkersize = getSizeX() / 2;
+  drawCheckerBackground(drawer, x0, y0, x1, y1, checkersize, checkersize);
   drawer.drawRectangle(x0, y0, x1, y1, *color, true);
   drawer.drawGUIPart(GP_PANEL_BORDER, x0, y0, x1, y1, false, RGB_White);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+ColorPlane::ColorPlane()
+: PColorPlane(&color)
+, color(RGB_White)
+{
 }
 
 } //namespace gui
