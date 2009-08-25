@@ -228,7 +228,9 @@ class GUIDrawerGL : public IGUIDrawer
     virtual void resetScissor();
     
     //not all GUI parts use all input parameters! only x0 and y0 are always used.
-    virtual void drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, bool inactive, const ColorRGB& color);
+    virtual void drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, bool inactive = false);
+    virtual void drawGUIPartColor(GUIPartColor part, const ColorRGB& color, int x0, int y0, int x1, int y1, bool inactive = false);
+    virtual void drawGUIPartText(GUIPartText part, const std::string& text, int x0, int y0, int x1, int y1, bool inactive = false);
     
     //input
     virtual IGUIInput& getInput();

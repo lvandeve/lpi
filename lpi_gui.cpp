@@ -1293,7 +1293,7 @@ void Window::handleWidget(const IGUIInput& input)
 
 void Window::drawWidget(IGUIDrawer& drawer) const
 {
-  drawer.drawGUIPart(GP_WINDOW_PANEL, x0, y0, x1, y1, false, colorMod);
+  drawer.drawGUIPartColor(GPC_WINDOW_PANEL, colorMod, x0, y0, x1, y1, false);
   if(enableTop)
   {
     top.draw(drawer); //draw top bar before the elements, or it'll appear above windows relative to the current window
@@ -1617,7 +1617,14 @@ void Button::drawWidget(IGUIDrawer& drawer) const
   }
   if(enableImage) image[style]->draw(x0 + imageOffsetx, y0 + imageOffsety, imageColor[style]);
   if(enableImage2) image2[style]->draw(x0 + imageOffsetx2, y0 + imageOffsety2, imageColor2[style]);
-  if(enableText) printFormatted(text, x0 + textOffsetx + textDownOffset, y0 + textOffsety + textDownOffset, markup[style]);
+  if(enableText && !enablePanel)
+  {
+    if(style == 0) drawer.drawGUIPartText(GPT_TEXT_BUTTON, text, x0, y0, x1, y1);
+    else if(style == 1) drawer.drawGUIPartText(GPT_TEXT_BUTTON_OVER, text, x0, y0, x1, y1);
+    else if(style == 2) drawer.drawGUIPartText(GPT_TEXT_BUTTON_DOWN, text, x0, y0, x1, y1);
+  }
+  else printFormatted(text, x0 + textOffsetx + textDownOffset, y0 + textOffsety + textDownOffset, markup[style]);
+  
   
   //NOTE: ik heb de print functies nu veranderd naar printFormatted! Zo kan je gekleurde texten enzo printen met # codes
 }
