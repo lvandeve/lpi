@@ -159,8 +159,8 @@ size_t InternalContainer::findElementIndex(Element* element)
 
 void InternalContainer::removeElement(Element* element)
 {
-  size_t index = findElementIndex(element);
-  if(index < elements.size()) elements.erase(elements.begin() + index);
+  elements.erase(std::remove(elements.begin(), elements.end(), element), elements.end());
+  sticky.erase(sticky.find(element));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -172,10 +172,10 @@ void ToolTipManager::registerMe(const Element* element)
   this->element = element;
 }
 
-void ToolTipManager::draw(const IGUIInput& input) const
+void ToolTipManager::draw(IGUIDrawer& drawer) const
 {
   if(enabled && element)
-    element->drawToolTip(input);
+    element->drawToolTip(drawer);
 }
 
 ToolTipManager defaultTooltipManager;
@@ -222,9 +222,9 @@ void Element::drawDebugCross(IGUIDrawer& drawer, const ColorRGB& color) const
   drawer.drawLine(x0, y1 - 1, x1 - 1, y0    , color);
 }
 
-void Element::drawToolTip(const IGUIInput& input) const
+void Element::drawToolTip(IGUIDrawer& drawer) const
 {
-  if(tooltipenabled && mouseOver(input))
+  if(tooltipenabled && mouseOver(drawer.getInput()))
   {
     int numlines = 1;
     int linelength = 0;
@@ -242,10 +242,10 @@ void Element::drawToolTip(const IGUIInput& input) const
     if(linelength > longestline) longestline = linelength;
     int sizex = longestline * TS_Black6.getWidth() + 4;
     int sizey = 2 +  TS_Black6.getHeight() * numlines;
-    int x = input.mouseX();
-    int y = input.mouseY() - sizey;
-    drawRectangle(x, y, x + sizex, y + sizey, RGBA_Lightyellow(224));
-    printText(tooltip, x + 2, y + 2, TS_Black6);
+    int x = drawer.getInput().mouseX();
+    int y = drawer.getInput().mouseY() - sizey;
+    drawer.drawRectangle(x, y, x + sizex, y + sizey, RGBA_Lightyellow(224), true);
+    drawer.drawText(tooltip, x + 2, y + 2, TS_Black6);
   }
 }
 
@@ -1423,51 +1423,6 @@ Button::Button()
   this->mouseDownVisualStyle = 0;
 }
 
-//Full Constructor
-void Button::make
-(
-  int x, int y, int sizex, int sizey, //basic properties
-  bool enableImage, Texture* texture1, Texture* texture2, Texture* texture3, int imageOffsetx, int imageOffsety, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3, //image
-  bool enableText, const std::string& text, int textOffsetx, int textOffsety, const Markup& markup1, const Markup& markup2, const Markup& markup3, //text
-  bool enablePanel, const BackPanel* panel1, const BackPanel* panel2, const BackPanel* panel3, int panelOffsetx, int panelOffsety //panel
-)
-{
-  this->x0 = x;
-  this->y0 = y;
-  this->setSizeX(sizex);
-  this->setSizeY(sizey);
-  
-  this->enableImage = enableImage;
-  this->enableText = enableText;
-  this->enablePanel = enablePanel;
-
-  this->image[0] = texture1;
-  this->image[1] = texture2;
-  this->image[2] = texture3;
-  this->imageOffsetx = imageOffsetx;
-  this->imageOffsety = imageOffsety;
-  this->imageColor[0] = imageColor1;
-  this->imageColor[1] = imageColor2;
-  this->imageColor[2] = imageColor3;
-  
-  this->text = text;
-  this->textOffsetx = textOffsetx;
-  this->textOffsety = textOffsety;
-  this->markup[0] = markup1;
-  this->markup[1] = markup2;
-  this->markup[2] = markup3;
-  
-  this->panel[0] = panel1;
-  this->panel[1] = panel2;
-  this->panel[2] = panel3;
-  this->panelOffsetx = panelOffsetx;
-  this->panelOffsety = panelOffsety;
-  
-  this->totallyEnable();
-  
-  this->mouseDownVisualStyle = 0;
-}
-
 void Button::addFrontImage
 (
   const Texture* texture1, const Texture* texture2, const Texture* texture3, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3
@@ -1558,8 +1513,7 @@ void Button::makeImage
 void Button::makeText
 (
   int x, int y, //basic properties
-  const std::string& text, //text
-  const GuiSet* set
+  const std::string& text //text
 )
 {
   this->x0 = x;
@@ -1584,9 +1538,6 @@ void Button::makeText
   this->text = text;
   this->textOffsetx = 0;
   this->textOffsety = 0;
-  this->markup[0] = set->textButtonMarkup[0];
-  this->markup[1] = set->textButtonMarkup[1];
-  this->markup[2] = set->textButtonMarkup[2];
   
   this->totallyEnable();
   
@@ -1598,8 +1549,7 @@ void Button::makeText
 //constructor for button with panel and text, auto generated text offset
 void Button::makeTextPanel
 (
-  int x, int y, const std::string& text, int sizex, int sizey, //basic properties + text
-  const GuiSet* set //panel
+  int x, int y, const std::string& text, int sizex, int sizey //basic properties + text
 )
 {
   this->x0 = x;
@@ -1623,13 +1573,6 @@ void Button::makeTextPanel
   this->text = text;
   this->textOffsetx = 0;
   this->textOffsety = 0;
-  this->markup[0] = set->panelButtonMarkup[0];
-  this->markup[1] = set->panelButtonMarkup[0];
-  this->markup[2] = set->panelButtonMarkup[0];
-  
-  this->panel[0] = set->buttonPanel;
-  this->panel[1] = set->buttonOverPanel;
-  this->panel[2] = set->buttonDownPanel;
   
   this->panelOffsetx = 0;
   this->panelOffsety = 0;
@@ -1666,7 +1609,12 @@ void Button::drawWidget(IGUIDrawer& drawer) const
   int textDownOffset = 0;
   if(style == 2) textDownOffset = 1; //on mouseDown, the text goes down a bit too
   
-  if(enablePanel) panel[style]->draw(x0 + panelOffsetx, y0 + panelOffsety, getSizeX(), getSizeY());
+  if(enablePanel)
+  {
+    if(style == 0) drawer.drawGUIPart(GP_BUTTON_PANEL, x0, y0, x1, y1);
+    else if(style == 1) drawer.drawGUIPart(GP_BUTTON_OVER_PANEL, x0, y0, x1, y1);
+    else if(style == 2) drawer.drawGUIPart(GP_BUTTON_DOWN_PANEL, x0, y0, x1, y1);
+  }
   if(enableImage) image[style]->draw(x0 + imageOffsetx, y0 + imageOffsety, imageColor[style]);
   if(enableImage2) image2[style]->draw(x0 + imageOffsetx2, y0 + imageOffsety2, imageColor2[style]);
   if(enableText) printFormatted(text, x0 + textOffsetx + textDownOffset, y0 + textOffsety + textDownOffset, markup[style]);
@@ -1697,7 +1645,7 @@ void Button::centerText()
   textOffsety = (getSizeY() / 2) - (markup[0].getHeight() / 2);
 }
 
-void  Button::makeImage(int x, int y,  const Texture* texture123, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3)
+void Button::makeImage(int x, int y,  const Texture* texture123, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3)
 {
   makeImage(x, y, texture123, texture123, texture123, imageColor1, imageColor2, imageColor3);
 }

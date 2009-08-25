@@ -266,6 +266,62 @@ void drawEllipse(unsigned char* buffer, int w, int h, int cx, int cy, int radius
   }
 }
 
+void drawFilledEllipse(unsigned char* buffer, int w, int h, int cx, int cy, int radiusx, int radiusy, const ColorRGB& color)
+{
+  int twoASquare = 2*radiusx*radiusx;
+  int twoBSquare = 2*radiusy*radiusy;
+  int x = radiusx;
+  int y = 0;
+  int xchange = radiusy*radiusy*(1 - 2*radiusx);
+  int ychange = radiusx*radiusx;
+  int ellipseError = 0;
+  int stoppingx = twoBSquare*radiusx;
+  int stoppingy = 0;
+
+  while(stoppingx >= stoppingy)
+  {
+    horLine(buffer, w, h, cy-y, cx-x, cx + x, color);
+    horLine(buffer, w, h, cy+y, cx-x, cx + x, color);
+
+    y++;
+    stoppingy += twoASquare;
+    ellipseError += ychange;
+    ychange += twoASquare;
+    if((2*ellipseError + xchange) > 0)
+    {
+      x--;
+      stoppingx -= twoBSquare;
+      ellipseError += xchange;
+      xchange += twoBSquare;
+    }
+  }
+        
+  x = 0;
+  y = radiusy;
+  xchange = radiusy*radiusy;
+  ychange = radiusx*radiusx*(1 - 2*radiusy);
+  ellipseError = 0;
+  stoppingx = 0;
+  stoppingy = twoASquare*radiusy;
+  while ( stoppingx <= stoppingy )
+  {
+    horLine(buffer, w, h, cy-y, cx-x, cx + x, color);
+    horLine(buffer, w, h, cy+y, cx-x, cx + x, color);
+
+    x++;
+    stoppingx += twoBSquare;
+    ellipseError += xchange;
+    xchange += twoBSquare;
+    if ((2*ellipseError + ychange) > 0 )
+    {
+      y--;
+      stoppingy -= twoASquare;
+      ellipseError += ychange;
+      ychange += twoASquare;
+    }
+  }
+}
+
 void drawCircle(unsigned char* buffer, int w, int h, int cx, int cy, int radius, const ColorRGB& color)
 {
   int x = radius;

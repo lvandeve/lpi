@@ -397,14 +397,6 @@ class HueCircle_HSL_HL : public HueCircle
   virtual void getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const;
 };
 
-class ColorPlane : public Element
-{
-  public:
-    ColorRGB color;
-    ColorPlane();
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-};
-
 class PColorPlane : public Element
 {
   private:
@@ -413,6 +405,13 @@ class PColorPlane : public Element
   public:
     PColorPlane(ColorRGB* color);
     virtual void drawWidget(IGUIDrawer& drawer) const;
+};
+
+class ColorPlane : public PColorPlane
+{
+  public:
+    ColorRGB color;
+    ColorPlane();
 };
 
 

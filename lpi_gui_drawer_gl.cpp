@@ -775,6 +775,16 @@ void GUIDrawerGL::drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, bool
       guiset->buttonPanel->draw(x0, y0, x1 - x0, y1 - y0, color);
       break;
     }
+    case GP_BUTTON_OVER_PANEL:
+    {
+      guiset->buttonOverPanel->draw(x0, y0, x1 - x0, y1 - y0, color);
+      break;
+    }
+    case GP_BUTTON_DOWN_PANEL:
+    {
+      guiset->buttonDownPanel->draw(x0, y0, x1 - x0, y1 - y0, color);
+      break;
+    }
     case GP_WHITE_PANEL:
     {
       guiset->whitePanel->draw(x0, y0, x1 - x0, y1 - y0, color);
@@ -798,6 +808,11 @@ void GUIDrawerGL::drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, bool
     default:
       return;
   }
+}
+
+void GUIDrawerGL::setScissor(int x0, int y0, int x1, int y1)
+{
+  lpi::setScissor(x0, y0, x1, y1);
 }
 
 void GUIDrawerGL::setSmallestScissor(int x0, int y0, int x1, int y1)

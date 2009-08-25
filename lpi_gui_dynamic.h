@@ -22,6 +22,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include "lpi_gui.h"
 #include "lpi_gui_text.h"
+#include "lpi_gui_color.h"
 #include <iostream>
 
 #include <vector>
@@ -93,7 +94,7 @@ class DynamicCheckbox : public TDymamicPageControl<bool>
       this->resize(0, 0, 20, 20);
       box.makeSmall(0, 0);
       box.move(0, (getSizeY() - box.getSizeY()) / 2);
-      this->addSubElement(&box, Sticky(0.0, 0, 0.5, -box.getSizeY() / 2, 0.0, box.getSizeX(), 0.5, box.getSizeY()));
+      this->addSubElement(&box, Sticky(0.0, 0, 0.5, -box.getSizeY() / 2, 0.0, box.getSizeX(), 0.5, box.getSizeY() / 2));
     }
     
   public:
@@ -259,6 +260,66 @@ class DynamicValue : public TDymamicPageControl<T>
     virtual void drawWidget(IGUIDrawer& drawer) const
     {
       line.draw(drawer);
+    }
+};
+
+class DynamicColor : public TDymamicPageControl<ColorRGB>
+{
+  private:
+    PColorPlane box;
+
+    class Edit : public Window
+    {
+    };
+    
+    Edit edit;
+    
+    void ctor()
+    {
+      this->resize(0, 0, 20, 20);
+      box.resize(0, 0, 12, 12);
+      box.move(1, 1);
+      this->addSubElement(&box, Sticky(0.0, 0, 0.5, -box.getSizeY() / 2, 0.0, box.getSizeX(), 0.5, box.getSizeY() / 2));
+      edit.resize(0, 20, 256, 128);
+      edit.totallyDisable();
+      this->addSubElement(&edit);
+    }
+    
+  public:
+  
+    DynamicColor(ColorRGB* value)
+    : box(value)
+    {
+      this->bind = value;
+      ctor();
+    }
+  
+    virtual void getValue(ColorRGB* value)
+    {
+      (void)value;
+    }
+    
+    virtual void setValue(ColorRGB* value)
+    {
+      (void)value;
+    }
+    
+    virtual void handleWidget(const IGUIInput& input)
+    {
+      box.handle(input);
+      
+      if(this->clicked(input))
+      {
+        edit.totallyEnable();
+      }
+    }
+    
+    virtual void drawWidget(IGUIDrawer& drawer) const
+    {
+      box.draw(drawer);
+      drawer.setScissor(edit.getX0(), edit.getY0(), edit.getX1(), edit.getY1());
+      edit.draw(drawer);
+      drawer.resetScissor();
     }
 };
 
