@@ -33,6 +33,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
+void initFont(); //to be called after screen() was called
 
 static const int NUMFONT = 256;
 
@@ -107,20 +108,13 @@ struct Markup
   int charSpacing; //how many pixels between two characters (increases width), can be negative (letters will be drawn on top of each other)
   int lineSpacing; //how many pixels between two lines (increased height), can be negative
   
+  Markup();
   Markup(const ColorRGB& color1, const ColorRGB& color2 = RGB_Black, int style = 0, Font* font = &builtInFont8x8, int charSpacing = 0, int lineSpacing = 1);
   
   int getWidth() const;
   int getHeight() const;
-  
-  Markup()
-  {
-    font = &builtInFont8x8;
-    color1 = RGB_White;
-    color2 = RGB_Black;
-    style = 0;
-    charSpacing = 0;
-    lineSpacing = 1;
-  }
+  int getFontWidth() const;
+  int getFontHeight() const;
 };
 
 Markup operator/(Markup ts, int a);
@@ -131,6 +125,7 @@ Markup operator/(Markup ts, int a);
 #define TS_B Markup(lpi::RGB_Black, lpi::RGB_Invisible, 0, &lpi::builtInFont8x8) //shortcut for default black text
 #define TS_BG Markup(lpi::RGB_White, lpi::RGB_Black, 1, &lpi::builtInFont8x8) //default white text on black background
 #define TS_Shadow Markup(lpi::RGB_White, lpi::RGB_Black, 18, &lpi::builtInFont8x8) //white text with black shadow bottom right
+#define TS_ShadowInv Markup(lpi::RGB_Black, lpi::RGB_White, 18, &lpi::builtInFont8x8) //black text with white shadow bottom right
 #define TS_Red Markup(lpi::RGB_Red, lpi::RGB_Black, 0, &lpi::builtInFont8x8) //default red text
 #define TS_Green Markup(lpi::RGB_Green, lpi::RGB_Black, 0, &lpi::builtInFont8x8) //default green text
 #define TS_Grey Markup(lpi::RGB_Grey, lpi::RGB_Black, 0, &lpi::builtInFont8x8) //default grey text
@@ -154,6 +149,7 @@ Markup operator/(Markup ts, int a);
 #define TS_B6  Markup(lpi::RGB_Black, lpi::RGB_White, 0, &lpi::builtInFont6x6) //shortcut for default black text
 #define TS_BG6  Markup(lpi::RGB_White, lpi::RGB_Black, 1, &lpi::builtInFont6x6) //default white text on black background
 #define TS_Shadow6  Markup(lpi::RGB_White, lpi::RGB_Black, 18, &lpi::builtInFont6x6) //white text with black shadow bottom right
+#define TS_ShadowInv6 Markup(lpi::RGB_Black, lpi::RGB_White, 18, &lpi::builtInFont6x6) //black text with white shadow bottom right
 #define TS_Red6  Markup(lpi::RGB_Red, lpi::RGB_Black, 0, &lpi::builtInFont6x6) //default red text
 #define TS_Green6  Markup(lpi::RGB_Green, lpi::RGB_Black, 0, &lpi::builtInFont6x6) //default green text
 #define TS_Grey6  Markup(lpi::RGB_Grey, lpi::RGB_Black, 0, &lpi::builtInFont6x6) //default grey text
@@ -177,6 +173,7 @@ Markup operator/(Markup ts, int a);
 #define TS_B4  Markup(lpi::RGB_Black, lpi::RGB_White, 0, &lpi::builtInFont4x5) //shortcut for default black text
 #define TS_BG4  Markup(lpi::RGB_White, lpi::RGB_Black, 1, &lpi::builtInFont4x5) //default white text on black background
 #define TS_Shadow4  Markup(lpi::RGB_White, lpi::RGB_Black, 18, &lpi::builtInFont4x5) //white text with black shadow bottom right
+#define TS_ShadowInv4 Markup(lpi::RGB_Black, lpi::RGB_White, 18, &lpi::builtInFont4x5) //black text with white shadow bottom right
 #define TS_Red4  Markup(lpi::RGB_Red, lpi::RGB_Black, 0, &lpi::builtInFont4x5) //default red text
 #define TS_Green4  Markup(lpi::RGB_Green, lpi::RGB_Black, 0, &lpi::builtInFont4x5) //default green text
 #define TS_Grey4  Markup(lpi::RGB_Grey, lpi::RGB_Black, 0, &lpi::builtInFont4x5) //default grey text

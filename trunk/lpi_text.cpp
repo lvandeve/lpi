@@ -25,6 +25,11 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
+void initFont()
+{
+  initBuiltInFontTextures();
+}
+
 namespace
 {
   int getScreenHeight()
@@ -51,6 +56,16 @@ int Font::getHeight()
   else return 0;
 }
 
+Markup::Markup()
+{
+  font = &builtInFont8x8;
+  color1 = RGB_White;
+  color2 = RGB_Black;
+  style = 0;
+  charSpacing = 0;
+  lineSpacing = 1;
+}
+
 //Markup struct constructor
 Markup::Markup(const ColorRGB& color1, const ColorRGB& color2, int style, Font* font, int charSpacing, int lineSpacing)
 {
@@ -68,6 +83,16 @@ Markup operator/(Markup ts, int a)
   ts.color2 = ts.color2 / a;
   
   return ts;
+}
+
+int Markup::getFontWidth() const
+{
+  return font->getWidth();
+}
+
+int Markup::getFontHeight() const
+{
+  return font->getHeight();
 }
 
 int Markup::getWidth() const
