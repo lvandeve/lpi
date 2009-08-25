@@ -92,6 +92,24 @@ enum GUIPart
   GP_CROSSHAIR
 };
 
+//GUI parts that require a custom color
+enum GUIPartColor
+{
+  GPC_WINDOW_PANEL, //colored windows
+  GPC_WHITE_PANEL, //panel which can be given any color
+  GPC_WHITE_BUTTON, //button with same size as scrollbar buttons
+  GPC_WHITE_BUTTON_ROUND //button with same size as scrollbar buttons
+};
+
+//GUI parts that require a text string
+enum GUIPartText
+{
+  //text button (NOT the text on a button with a panel, but a plain text-only button)
+  GPT_TEXT_BUTTON,
+  GPT_TEXT_BUTTON_OVER,
+  GPT_TEXT_BUTTON_DOWN
+};
+
 class IGUIInput;
 
 /*
@@ -127,7 +145,9 @@ class IGUIDrawer
     virtual void resetScissor() = 0; //pops the last set scissor, bringing the previous one back (it works like a stack, "set" pushes, "reset" pops)
     
     //not all GUI parts use all input parameters! only x0 and y0 are always used.
-    virtual void drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, bool inactive = false, const ColorRGB& color = RGB_White) = 0;
+    virtual void drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, bool inactive = false) = 0;
+    virtual void drawGUIPartColor(GUIPartColor part, const ColorRGB& color, int x0, int y0, int x1, int y1, bool inactive = false) = 0;
+    virtual void drawGUIPartText(GUIPartText part, const std::string& text, int x0, int y0, int x1, int y1, bool inactive = false) = 0;
     
     //input
     virtual IGUIInput& getInput() = 0;

@@ -761,48 +761,95 @@ void GUIDrawerGL::drawTexture(int x, int y, const Texture* texture, const ColorR
   texture->draw(x, y, colorMod);
 }
 
-void GUIDrawerGL::drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, bool /*inactive*/, const ColorRGB& color)
+void GUIDrawerGL::drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, bool /*inactive*/)
 {
   switch(part)
   {
     case GP_WINDOW_PANEL:
     {
-      guiset->windowPanel->draw(x0, y0, x1 - x0, y1 - y0, color);
+      guiset->windowPanel->draw(x0, y0, x1 - x0, y1 - y0);
       break;
     }
     case GP_BUTTON_PANEL:
     {
-      guiset->buttonPanel->draw(x0, y0, x1 - x0, y1 - y0, color);
+      guiset->buttonPanel->draw(x0, y0, x1 - x0, y1 - y0);
       break;
     }
     case GP_BUTTON_OVER_PANEL:
     {
-      guiset->buttonOverPanel->draw(x0, y0, x1 - x0, y1 - y0, color);
+      guiset->buttonOverPanel->draw(x0, y0, x1 - x0, y1 - y0);
       break;
     }
     case GP_BUTTON_DOWN_PANEL:
     {
-      guiset->buttonDownPanel->draw(x0, y0, x1 - x0, y1 - y0, color);
+      guiset->buttonDownPanel->draw(x0, y0, x1 - x0, y1 - y0);
       break;
     }
     case GP_WHITE_PANEL:
     {
-      guiset->whitePanel->draw(x0, y0, x1 - x0, y1 - y0, color);
+      guiset->whitePanel->draw(x0, y0, x1 - x0, y1 - y0);
       break;
     }
     case GP_PANEL_BORDER:
     {
-      guiset->borderPanel->draw(x0, y0, x1 - x0, y1 - y0, color);
+      guiset->borderPanel->draw(x0, y0, x1 - x0, y1 - y0);
       break;
     }
     case GP_TAB_UNSELECTED:
     {
-      guiset->tabUnSelectedPanel->draw(x0, y0, x1 - x0, y1 - y0, color);
+      guiset->tabUnSelectedPanel->draw(x0, y0, x1 - x0, y1 - y0);
       break;
     }
     case GP_TAB_SELECTED:
     {
-      guiset->tabSelectedPanel->draw(x0, y0, x1 - x0, y1 - y0, color);
+      guiset->tabSelectedPanel->draw(x0, y0, x1 - x0, y1 - y0);
+      break;
+    }
+    default:
+      return;
+  }
+}
+
+void GUIDrawerGL::drawGUIPartColor(GUIPartColor part, const ColorRGB& color, int x0, int y0, int x1, int y1, bool inactive)
+{
+  (void)inactive;
+  
+  switch(part)
+  {
+    case GPC_WINDOW_PANEL:
+    {
+      guiset->windowPanel->draw(x0, y0, x1 - x0, y1 - y0, color);
+      break;
+    }
+    case GPC_WHITE_PANEL:
+    {
+      guiset->whitePanel->draw(x0, y0, x1 - x0, y1 - y0, color);
+      break;
+    }
+    default:
+      return;
+  }
+}
+
+void GUIDrawerGL::drawGUIPartText(GUIPartText part, const std::string& text, int x0, int y0, int x1, int y1, bool inactive)
+{
+  (void)inactive;
+  
+  switch(part)
+  {
+    case GPT_TEXT_BUTTON:
+    {
+      drawTextCentered(text, (x0+x1)/2, (y0+y1)/2, guiset->textButtonMarkup[0]);
+      break;
+    }
+    case GPT_TEXT_BUTTON_OVER:
+    {
+      drawTextCentered(text, (x0+x1)/2, (y0+y1)/2, guiset->textButtonMarkup[1]);
+      break;
+    }
+    case GPT_TEXT_BUTTON_DOWN:
+    {
+      drawTextCentered(text, (x0+x1)/2, (y0+y1)/2, guiset->textButtonMarkup[2]);
       break;
     }
     default:

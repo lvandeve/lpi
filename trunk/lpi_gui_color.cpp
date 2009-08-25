@@ -924,7 +924,7 @@ void PColorPlane::drawWidget(IGUIDrawer& drawer) const
   if(getSizeX() < 16 && getSizeY() < 16) checkersize = getSizeX() / 2;
   drawCheckerBackground(drawer, x0, y0, x1, y1, checkersize, checkersize);
   drawer.drawRectangle(x0, y0, x1, y1, *color, true);
-  drawer.drawGUIPart(GP_PANEL_BORDER, x0, y0, x1, y1, false, RGB_White);
+  drawer.drawGUIPart(GP_PANEL_BORDER, x0, y0, x1, y1, false);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
