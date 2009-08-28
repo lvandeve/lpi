@@ -102,9 +102,11 @@ Possible things to check if your gui::Elements aren't behaving as they should:
 -The gui element constructors and make functions must be called AFTER the textures are loaded, otherwise the textures have size 0 and thus the gui element will have size 0
 -mouse functions like pressed() work only once per time, pressed will return "true" only once per guielement, until the mouse button is up again and then down again
 */
-class Element : public ElementShape
+class Element : public ElementRectangular
 {
   private:
+  
+    MouseState mouse_state_for_containers; //for bookkeeping by containers that contain this element TODO: make container itself remember one per element
     
   protected:
     
@@ -178,6 +180,8 @@ class Element : public ElementShape
     
     virtual void setElementOver(bool state); //ALL gui types that have gui elements inside of them, must set elementOver of all gui elements inside of them too! ==> override this virtual function for those. Override this if you have subelements, unless you use addSubElement in ElementComposite.
     bool hasElementOver() const;
+    
+    MouseState& getMouseStateForContainer() { return mouse_state_for_containers; }
 
     ////for debugging: if you've got no idea what's going on with a GUI element, this function at least is guaranteed to show where it is (if in screen)
     void drawDebugBorder(IGUIDrawer& drawer, const ColorRGB& color = RGB_Red) const;

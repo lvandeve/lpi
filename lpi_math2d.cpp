@@ -216,6 +216,18 @@ double dot(const Vector2& v, const Vector2& w)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+//returns the component of v in the direction dir (so it's v projected on normalize(dir))
+Vector2 getComponentInDirection(const Vector2& v, const Vector2& dir)
+{
+  Vector2 dirn = normalize(dir);
+  double mag = dot(v, dirn);
+  Vector2 proj = mag * dirn;
+  return proj;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+
 //not perspective correct
 void barycentric(double& alpha, double& beta, double& gamma, const lpi::Vector2& a, const lpi::Vector2& b, const lpi::Vector2& c, const lpi::Vector2& p)
 {

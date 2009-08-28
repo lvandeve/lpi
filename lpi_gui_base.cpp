@@ -177,6 +177,45 @@ bool IGUIInputClick::quadrupleClicked(GUIMouseButton button) const
   return tclick;
 }
 
+double IGUIInputClick::mouseSpeedImp(int pos, std::vector<int>& mousePosHistory, std::vector<double>& mousePosTimeHistory) const
+{
+  static const size_t MIN_VALUES = 2;
+  static const size_t MAX_VALUES = 3;
+  //static const double TRACK_TIME = 0.1; //how a long mouse history we want to track
+  
+  mousePosHistory.push_back(pos);
+  mousePosTimeHistory.push_back(getSeconds());
+  
+  double dt = mousePosTimeHistory.back() - mousePosTimeHistory[0];
+  size_t size = mousePosHistory.size();
+  
+  
+  double result = dt == 0 ? 0 : (double)(mousePosHistory.back() - mousePosHistory[0]) / dt;
+
+  bool remove = false;
+  if(size > MAX_VALUES) remove = true;
+  //if(dt > TRACK_TIME) remove = true;
+  if(size < MIN_VALUES) remove = false;
+
+  if(remove)
+  {
+    mousePosHistory.erase(mousePosHistory.begin());
+    mousePosTimeHistory.erase(mousePosTimeHistory.begin());
+  }
+  
+  return result;
+}
+
+double IGUIInputClick::mouseSpeedX() const
+{
+  return mouseSpeedImp(mouseX(), mousePosXHistory, mousePosXTimeHistory);
+}
+
+double IGUIInputClick::mouseSpeedY() const
+{
+  return mouseSpeedImp(mouseY(), mousePosYHistory, mousePosYTimeHistory);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 MouseOverState::MouseOverState()
@@ -347,70 +386,6 @@ void MouseState::mouseGrab(int x, int y, int relx, int rely)
 //ELEMENTSHAPE
 ////////////////////////////////////////////////////////////////////////////////
 
-void ElementShape::initPosition(int x0, int y0, int x1, int y1)
-{
-  this->x0 = x0;
-  this->y0 = y0;
-  this->x1 = x1;
-  this->y1 = y1;
-}
-
-int ElementShape::mouseGetRelPosX(const IGUIInput& input) const
-{
-  return input.mouseX() - x0;
-}
-
-int ElementShape::mouseGetRelPosY(const IGUIInput& input) const
-{
-  return input.mouseY() - y0;
-}
-
-bool ElementShape::isInside(int x, int y) const
-{
-  if(x >= x0 && x < x1 && y >= y0 && y < y1) return true;
-  else return false;
-  
-  
-  //old "shape" code. Now, to get a shape like triangle, make child class of the gui element and override mouseOverShape with the new shape code
-  /*switch(shape)
-  {
-    case 0: //rectangle
-      over = 1;
-      break;
-    case 1: //triangle pointing up
-      relX = globalMouseX - x0;
-      relY = globalMouseY - y0;
-      symX = std::abs(getSizex() / 2 - relX); //it's symmetrical
-      if(relY >= (2 * symX * getSizey()) / getSizex()) over = 1;
-      break;
-    case 2: //triangle pointing right
-      relX = globalMouseX - x0;
-      relY = globalMouseY - y0;
-      symY = std::abs(getSizey() / 2 - relY); //it's symmetrical
-      if(getSizex() - relX >= (2 * symY * getSizex()) / getSizey()) over = 1;
-      break;
-    case 3: //triangle pointing down
-      relX = globalMouseX - x0;
-      relY = globalMouseY - y0;
-      symX = std::abs(getSizex() / 2 - relX); //it's symmetrical
-      if(getSizey() - relY >= (2 * symX * getSizey()) / getSizex()) over = 1;
-    case 4: //triangle pointing left
-      relX = globalMouseX - x0;
-      relY = globalMouseY - y0;
-      symY = std::abs(getSizey() / 2 - relY); //it's symmetrical
-      if(relX >= (2 * symY * getSizey()) / getSizey()) over = 1;
-      break;
-    default: //rectangle
-      over = 1;
-      break;
-  }*/
-}
-
-bool ElementShape::mouseOver(const IGUIInput& input) const
-{
-  return isInside(input.mouseX(), input.mouseY());
-}
-
 bool ElementShape::mouseJustOver(const IGUIInput& input)
 {
   return mouse_over_state.mouseJustOver(mouseOver(input));
@@ -517,15 +492,87 @@ bool ElementShape::mouseQuadrupleClicked(const IGUIInput& input, GUIMouseButton 
   return mouseOver(input) && input.quadrupleClicked(button);
 }
 
-ElementShape::ElementShape() : x0(0),
-                               y0(0),
-                               x1(0),
-                               y1(0)
-{}
+ElementShape::ElementShape()
+{
+}
 
+bool ElementShape::mouseOver(const IGUIInput& input) const
+{
+  return isInside(input.mouseX(), input.mouseY());
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 
 ////////////////////////////////////////////////////////////////////////////////
+//ELEMENTRECTANGULAR
+////////////////////////////////////////////////////////////////////////////////
+
+ElementRectangular::ElementRectangular() : x0(0),
+                                           y0(0),
+                                           x1(0),
+                                           y1(0)
+{
+}
+
+void ElementRectangular::initPosition(int x0, int y0, int x1, int y1)
+{
+  this->x0 = x0;
+  this->y0 = y0;
+  this->x1 = x1;
+  this->y1 = y1;
+}
+
+int ElementRectangular::mouseGetRelPosX(const IGUIInput& input) const
+{
+  return input.mouseX() - x0;
+}
+
+int ElementRectangular::mouseGetRelPosY(const IGUIInput& input) const
+{
+  return input.mouseY() - y0;
+}
+
+bool ElementRectangular::isInside(int x, int y) const
+{
+  if(x >= x0 && x < x1 && y >= y0 && y < y1) return true;
+  else return false;
+  
+  
+  //old "shape" code. Now, to get a shape like triangle, make child class of the gui element and override mouseOverShape with the new shape code
+  /*switch(shape)
+  {
+    case 0: //rectangle
+      over = 1;
+      break;
+    case 1: //triangle pointing up
+      relX = globalMouseX - x0;
+      relY = globalMouseY - y0;
+      symX = std::abs(getSizex() / 2 - relX); //it's symmetrical
+      if(relY >= (2 * symX * getSizey()) / getSizex()) over = 1;
+      break;
+    case 2: //triangle pointing right
+      relX = globalMouseX - x0;
+      relY = globalMouseY - y0;
+      symY = std::abs(getSizey() / 2 - relY); //it's symmetrical
+      if(getSizex() - relX >= (2 * symY * getSizex()) / getSizey()) over = 1;
+      break;
+    case 3: //triangle pointing down
+      relX = globalMouseX - x0;
+      relY = globalMouseY - y0;
+      symX = std::abs(getSizex() / 2 - relX); //it's symmetrical
+      if(getSizey() - relY >= (2 * symX * getSizey()) / getSizex()) over = 1;
+    case 4: //triangle pointing left
+      relX = globalMouseX - x0;
+      relY = globalMouseY - y0;
+      symY = std::abs(getSizey() / 2 - relY); //it's symmetrical
+      if(relX >= (2 * symY * getSizey()) / getSizey()) over = 1;
+      break;
+    default: //rectangle
+      over = 1;
+      break;
+  }*/
+}
 
 
 
