@@ -153,7 +153,7 @@ void littletemporarytest()
 }
 
 int main(int, char*[]) //the arguments have to be given here, or DevC++ can't link to SDL for some reason
-{//littletemporarytest();
+{//std::cout<<sizeof(lpi::gui::Element)<<std::endl;//littletemporarytest();
   lpi::screen(width, height, 0, "lpi GUI demo");
   lpi::initFont();
   lpi::gui::GUIDrawerGL::init();

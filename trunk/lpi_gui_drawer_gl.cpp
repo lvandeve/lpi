@@ -849,7 +849,7 @@ void GUIDrawerGL::drawGUIPartText(GUIPartText part, const std::string& text, int
     }
     case GPT_TEXT_BUTTON_DOWN:
     {
-      drawTextCentered(text, (x0+x1)/2, (y0+y1)/2, guiset->textButtonMarkup[2]);
+      drawTextCentered(text, (x0+x1)/2 + 2, (y0+y1)/2 + 2, guiset->textButtonMarkup[2]);
       break;
     }
     default:
