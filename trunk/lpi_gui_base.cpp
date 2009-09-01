@@ -179,8 +179,8 @@ bool IGUIInputClick::quadrupleClicked(GUIMouseButton button) const
 
 double IGUIInputClick::mouseSpeedImp(int pos, std::vector<int>& mousePosHistory, std::vector<double>& mousePosTimeHistory) const
 {
-  static const size_t MIN_VALUES = 2;
-  static const size_t MAX_VALUES = 3;
+  static const size_t MIN_VALUES = 3;
+  static const size_t MAX_VALUES = 4;
   //static const double TRACK_TIME = 0.1; //how a long mouse history we want to track
   
   mousePosHistory.push_back(pos);

@@ -154,7 +154,7 @@ void littletemporarytest()
 
 int main(int, char*[]) //the arguments have to be given here, or DevC++ can't link to SDL for some reason
 {//std::cout<<sizeof(lpi::gui::Element)<<std::endl;//littletemporarytest();
-  lpi::screen(width, height, 0, "lpi GUI demo");
+  lpi::screen(width, height, 0, true, "lpi GUI demo");
   lpi::initFont();
   lpi::gui::GUIDrawerGL::init();
   
@@ -292,9 +292,15 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   
   tabs.setElementOver(true);
   
+  lpi::GameTime gametime;
+  gametime.init_fps();
+  
   while(lpi::frame(true, true))
   {
+    gametime.update();
+    
     lpi::print("lpi GUI demo");
+    lpi::print(gametime.fps(), 0, 8);
     
     lpi::drawGradientEllipse(600, 400, 100, 50, lpi::ColorRGB(128, 255, 128, 255), lpi::ColorRGB(255, 128, 128, 128));
     lpi::drawBezier(600,100, 700,100, 750,200, 550,150, lpi::RGB_Lightred);

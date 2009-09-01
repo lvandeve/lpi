@@ -44,6 +44,7 @@ class Vector3 //memory: exactly 3 doubles
   
   Vector3();
   Vector3(double x, double y, double z);
+  Vector3(const Vector3& other);
   
   double length() const;
   double lengthsq() const;
@@ -318,6 +319,7 @@ double degToRad(double deg);
 Vector3 normalOfTriangle(const Vector3& a, const Vector3& b, const Vector3& c); //calculate normal of a triangle
 Vector3 projectOnPlane(const Vector3& v, const Vector3& n); //project vector v on the plane of which n is the normal
 double rotationAroundAxis(const Vector3& a, const Vector3& b, const Vector3& axis);
+//precondition of getComponentInDirection: dir must be a normalized vector!
 Vector3 getComponentInDirection(const Vector3& v, const Vector3& dir);
 bool hasOppositeDirection(const Vector3& v, const Vector3& w);
 bool sideOfPlaneGivenByNormal(const Vector3& p, const Vector3& n);

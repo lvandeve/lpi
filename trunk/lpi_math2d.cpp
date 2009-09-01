@@ -34,6 +34,10 @@ Vector2::Vector2() /*: x(0.0), y(0.0)*/
 {
 }
 
+Vector2::Vector2(const Vector2& other) : x(other.x), y(other.y)
+{
+}
+
 Vector2& Vector2::operator+=(const Vector2& v)
 {
   x += v.x;
@@ -216,13 +220,15 @@ double dot(const Vector2& v, const Vector2& w)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-//returns the component of v in the direction dir (so it's v projected on normalize(dir))
+//returns the component of v in the direction dir (dir must be normalized, otherwise the factor is wrong)
 Vector2 getComponentInDirection(const Vector2& v, const Vector2& dir)
 {
-  Vector2 dirn = normalize(dir);
+  /*Vector2 dirn = normalize(dir);
   double mag = dot(v, dirn);
   Vector2 proj = mag * dirn;
-  return proj;
+  return proj;*/
+  
+  return dir * dot(v, dir);
 }
 
 

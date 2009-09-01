@@ -210,6 +210,11 @@ template<typename T> int print(const T& val, int x = 0, int y = 0, const Markup&
   else return printString(text, x, y, markup, forceLength);
 }
 
+template<typename T> int print(const T& val, int x, int y, const ColorRGB& color, bool useNewline = false, unsigned long forceLength=0)
+{
+  return print(val, x, y, Markup(color), useNewline, forceLength);
+}
+
 void printCentered(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W, unsigned long forceLength=0);
 
 ///////////////////////////////////////////////////////////////////////////////
