@@ -26,6 +26,15 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
+static int numSegmentsHelper(double radius)
+{
+  static const int DEFAULT = 64;
+  if(radius > DEFAULT / 3)
+    return DEFAULT;
+  else if(radius > 3) return (int)(radius * 3);
+  else return 3;
+}
+
 //Draw a line from (x1, y1) to (x2, y2) on the OpenGL screen. NOTE: end coordinates should not be included in the line
 void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color, int clipx1, int clipy1, int clipx2, int clipy2)
 {
@@ -317,7 +326,7 @@ void drawFilledEllipse(int x, int y, double radiusx, double radiusy, const Color
 void drawCircle(int x, int y, double radius, const ColorRGB& color)
 {
   static const double pi = 3.141592653589793238;
-  static const size_t numsegments = 32;
+  static const size_t numsegments = numSegmentsHelper(radius);
   
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_BLEND);
@@ -339,7 +348,7 @@ void drawCircle(int x, int y, double radius, const ColorRGB& color)
 void drawDisk(int x, int y, double radius, const ColorRGB& color)
 {
   static const double pi = 3.141592653589793238;
-  static const size_t numsegments = 32;
+  static const size_t numsegments = numSegmentsHelper(radius);
   
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_BLEND);
@@ -363,7 +372,7 @@ void drawDisk(int x, int y, double radius, const ColorRGB& color)
 void drawGradientDisk(int x, int y, double radius, const ColorRGB& color1, const ColorRGB& color2)
 {
   static const double pi = 3.141592653589793238;
-  static const size_t numsegments = 32;
+  static const size_t numsegments = numSegmentsHelper(radius);
   
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_BLEND);

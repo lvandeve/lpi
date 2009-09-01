@@ -39,7 +39,7 @@ This function sets up an SDL window ready for OpenGL graphics.
 You can choose the resolution, whether or not it's fullscreen, and a caption for the window.
 This also inits everything else of the lpi application, so lpi::screen currently acts as init function.
 */
-void screen(int width, int height, bool fullscreen, const char* text)
+void screen(int width, int height, bool fullscreen, bool enable_fsaa, const char* text)
 {
   int colorDepth = 32;
   w = width;
@@ -47,7 +47,7 @@ void screen(int width, int height, bool fullscreen, const char* text)
 
   if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
   {
-    std::cout << std::string("Unable to init SDL: ") + SDL_GetError();
+    std::cout << "Unable to init SDL: " << SDL_GetError() << std::endl;
     SDL_Quit();
     std::exit(1);
   }
@@ -60,23 +60,35 @@ void screen(int width, int height, bool fullscreen, const char* text)
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   
-  if(fullscreen)
+  //FSAA
+
+  if(enable_fsaa)
   {
-    scr = SDL_SetVideoMode(width, height, colorDepth, SDL_FULLSCREEN | SDL_OPENGL);
-    lock();
-    fullscreenMode = 1;
+    SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 ) ;
+    SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, 4 ) ;
   }
-  else
+  
+  Uint32 flags = SDL_OPENGL;
+  if(fullscreen) flags |= SDL_FULLSCREEN;
+  fullscreenMode = fullscreen;
+  
+
+  scr = SDL_SetVideoMode(width, height, colorDepth, flags);
+  if(scr == 0 && (enable_fsaa))
   {
-    scr = SDL_SetVideoMode(width, height, colorDepth, SDL_OPENGL);
-    fullscreenMode = 0;
+    std::cout << "FSAA failed" << std::endl;
+    SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 0) ;
+    SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, 0) ;
+    scr = SDL_SetVideoMode(width, height, colorDepth, flags);
   }
   if(scr == 0)
   {
-    std::cout << std::string("Unable to set video: ") + SDL_GetError();
+    std::cout << "Unable to set video: " << SDL_GetError() << std::endl;
     SDL_Quit();
     std::exit(1);
   }
+  if(fullscreen) lock();
+  fullscreenMode = 1;
   SDL_WM_SetCaption(text, NULL);
   
   initGL();

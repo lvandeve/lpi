@@ -38,6 +38,7 @@ class Vector2
   
   Vector2(double x, double y);
   Vector2();
+  Vector2(const Vector2& other);
   
   Vector2& operator+=(const Vector2& v);
   Vector2& operator-=(const Vector2& v);
@@ -72,6 +73,7 @@ double distancesq(const Vector2& v, const Vector2& w);
 double manhattan(const Vector2& v, const Vector2& w);
 double dot(const Vector2& v, const Vector2& w);
 
+//precondition: dir must be normalized!!
 Vector2 getComponentInDirection(const Vector2& v, const Vector2& dir);
 
 //barycentric non-perspective correct coordinates for rasterizing 2D triangle; to make perspective correct, use barycentric_persp of lpi_math3d after this

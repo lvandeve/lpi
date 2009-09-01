@@ -36,7 +36,7 @@ namespace lpi
 
 extern int screenMode; //0 = 2D screen, 1 = 3D screen, this is used by the set2DScreen and set3DScreen functions to only change when not changed to this mode already
 
-void screen(int width, int height, bool fullscreen, const char* text);
+void screen(int width, int height, bool fullscreen, bool enable_fsaa, const char* text);
 void lock();
 void unlock();
 void cls(const ColorRGB& color = RGB_Black);

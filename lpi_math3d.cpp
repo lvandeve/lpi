@@ -36,6 +36,10 @@ Vector3::Vector3() /*: x(0.0), y(0.0), z(0.0)*/
 {
 }
 
+Vector3::Vector3(const Vector3& other) : x(other.x), y(other.y), z(other.z)
+{
+}
+
 Vector3& Vector3::operator+=(const Vector3& v)
 {
   x += v.x;
@@ -1204,13 +1208,15 @@ double rotationAroundAxis(const Vector3& a, const Vector3& b, const Vector3& axi
   return angle;
 }
 
-//returns the component of v in the direction dir (so it's v projected on normalize(dir))
+//returns the component of v in the direction dir (dir must be normalized, otherwise the factor is wrong)
 Vector3 getComponentInDirection(const Vector3& v, const Vector3& dir)
 {
-  Vector3 dirn = normalize(dir);
+  /*Vector3 dirn = normalize(dir);
   double mag = dot(v, dirn);
   Vector3 proj = mag * dirn;
-  return proj;
+  return proj;*/
+  
+  return dir * dot(v, dir);
 }
 
 //returns if the angle between the two vectors is larger than 90 degrees or not, if it's larger they have opposite direction

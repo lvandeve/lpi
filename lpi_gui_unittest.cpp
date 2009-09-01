@@ -63,7 +63,7 @@ GUIInputDebug testinput;
 
 void unitTest()
 {
-  lpi::screen(1024, 768, 0, "Unit Testing...");
+  lpi::screen(1024, 768, 0, false, "Unit Testing...");
   
   LUT_START_UNIT_TEST
   
