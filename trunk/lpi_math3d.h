@@ -326,8 +326,8 @@ bool sideOfPlaneGivenByNormal(const Vector3& p, const Vector3& n);
 bool sideOfPlaneGivenByThreePoints(const Vector3& p, const Vector3& a, const Vector3& b, const Vector3& c);
 bool sideOfPlaneGivenByTwoVectors(const Vector3& p, const Vector3& X, const Vector3& Y);
 double angleWithPlaneGivenByTwoVectors(const Vector3& v, const Vector3& X, const Vector3& Y);
-double distance(const Vector3& p, const Vector3& a, const Vector3& b);
-double distance(const Vector3& p, const Vector3& a, const Vector3& b, const Vector3& c);
+double distance(const Vector3& p, const Vector3& a, const Vector3& b); //get distance from point p to the line given by a and b
+double distance(const Vector3& p, const Vector3& a, const Vector3& b, const Vector3& c); //get distance from point p to the plane given by a, b and c
 bool linesegmentThroughSphere(const Vector3& a, const Vector3& b, const Vector3& p, double radius);
 Vector3 linePlaneIntersection(const Vector3& a, const Vector3& b, const Vector3& p, const Vector3& q, const Vector3& r);
 void planeEquation(const Vector3& a, const Vector3& b, const Vector3& c, double& u, double& v, double& w, double& t);

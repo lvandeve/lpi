@@ -373,6 +373,14 @@ void Element::resizeWidget(const Pos<int>& /*newPos*/)
   //nothing to do. Overload this for guielements that need to do something to sub elements if they resize.
 }
 
+void Element::drag(const IGUIInput& input, GUIMouseButton button)
+{
+  if(mouseGrabbed(input, button))
+  {
+    moveTo(input.mouseX() - mouseGetRelGrabX(), input.mouseY() - mouseGetRelGrabY());
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void ElementComposite::addSubElement(Element* element, const Sticky& sticky)

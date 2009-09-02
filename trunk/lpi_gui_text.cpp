@@ -177,6 +177,11 @@ void InputLine::deleteSelectedText()
   sel0 = sel1 = cursor = s0;
 }
 
+void InputLine::activate(bool i_active)
+{
+  control_active = i_active;
+}
+
 void InputLine::handleWidget(const IGUIInput& input) //both check if you pressed enter, and also check letter keys pressed, backspace, etc...
 {
   if(mouseGrabbed(input))

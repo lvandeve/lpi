@@ -231,6 +231,18 @@ Vector2 getComponentInDirection(const Vector2& v, const Vector2& dir)
   return dir * dot(v, dir);
 }
 
+//get distance from point p to the line given by a and b
+double distance(const Vector2& p, const Vector2& a, const Vector2& b)
+{
+  //Explanationn of the formula: see Vector3 version of this function.
+  
+  double k = -((b.x-a.x)*(a.x-p.x)+(b.y-a.y)*(a.y-p.y))/((b.x-a.x)*(b.x-a.x) + (b.y-a.y)*(b.y-a.y));
+  Vector2 q;
+  q.x = a.x + k * (b.x - a.x);
+  q.y = a.y + k * (b.y - a.y);
+  
+  return distance(p, q);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 

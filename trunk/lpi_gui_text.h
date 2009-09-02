@@ -94,6 +94,8 @@ class InputLine : public Element //input text line
     
     void selectAll();
     void deleteSelectedText();
+    
+    void activate(bool i_active = true);
 };
 
 /*
