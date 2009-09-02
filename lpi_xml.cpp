@@ -265,10 +265,10 @@ void convert(std::string& out, const void* in) //NOTE: currently not safe if wri
   out.resize(out.size() + 16);
   for(int i = 0; i < 16; i++)
   {
-    char symbol = address % 16;
+    unsigned char symbol = address % 16;
     if(symbol < 10) symbol += '0';
     else symbol += ('A' - 10);
-    out[pos + 16 - i] = symbol;
+    out[pos + 15 - i] = symbol;
     address >>= 4;
   }
 }
@@ -376,26 +376,23 @@ void unconvert(const void*& out, const std::string& in, size_t pos, size_t end) 
   //it was saved as 64-bit hex string, including "0x" and always 16+2 symbols, e.g. "0x0123456789ABCDEF"
   std::string s(in, pos, end - pos);
   size_t address = 0;
-std::cout<<"s: "<<s<<" "<<pos<<" "<<end<<std::endl;
   if(s.size() > 2 && s[0] == '0' && s[1] == 'x') //hex
   {
     size_t size = s.size() - 2;
     for(size_t i = 0; i < size; i++)
     {
-      char symbol = s[size + 2 - i];
+      address <<= 4;
+      unsigned char symbol = s[2 + i];
       if(symbol >= '0' && symbol <= '9') symbol -= '0';
       else symbol -= ('A' - 10);
       address |= symbol;
-      address <<= 4;
     }
   }
   else //decimal
   {
     std::stringstream ss(s);
     ss >> address;
-std::cout<<"wuuu: "<<ss.str()<<std::endl;
   }
-std::cout<<"wiii: "<<address<<std::endl;
   out = (void*)address;
 }
 
@@ -1002,7 +999,7 @@ namespace xmltest
         if(elementname == "name") xml::unconvert(name, in, elementpos.cb, elementpos.ce);
       }
       
-      ref.lastold = old_address;
+      ref.addPair(old_address, xml::RefRes::getAddress(this));
     }
     
     void generateAttributes(std::string& out) const
@@ -1110,7 +1107,6 @@ namespace xmltest
         {
           monstertypes.push_back(new MonsterType);
           monstertypes.back()->parseXML(in, elementpos, ref);
-          ref.addPair(ref.lastold, xml::RefRes::getAddress(monstertypes.back()));
         }
         else if(elementname == "sizex") xml::unconvert(sizex, in, elementpos.cb, elementpos.ce);
         else if(elementname == "sizey") xml::unconvert(sizey, in, elementpos.cb, elementpos.ce);
@@ -1195,8 +1191,8 @@ namespace xmltest
     std::cout << xml_out; //after generating the xml again, output it again, it should be the same as the input (except the whitespace, which is indented in a fixed way)
     
     std::cout << std::endl;
-    std::cout << "RefRes anti-segfault test (should say \"dragon\"):" << std::endl;
-    std::cout << world.monsters[0]->type->name << std::endl; //if this segfaults, the RefRes system doesn't work correctly, or there aren't enough monsters / no correct types&id's in the xml code
+    std::cout << "RefRes anti-segfault test (should say \"dragon, rat\"):" << std::endl;
+    std::cout << world.monsters[0]->type->name << ", " << world.monsters[1]->type->name << " " << std::endl; //if this segfaults, the RefRes system doesn't work correctly, or there aren't enough monsters / no correct types&id's in the xml code
     std::cout << std::endl;
   }
   

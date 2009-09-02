@@ -186,6 +186,8 @@ class Element : public ElementRectangular
     ////for debugging: if you've got no idea what's going on with a GUI element, this function at least is guaranteed to show where it is (if in screen)
     void drawDebugBorder(IGUIDrawer& drawer, const ColorRGB& color = RGB_Red) const;
     void drawDebugCross(IGUIDrawer& drawer, const ColorRGB& color = RGB_Red) const;
+    
+    void drag(const IGUIInput& input, GUIMouseButton button = GUI_LMB);
 };
 
 class ElementComposite : public Element //element with "internal container" to automatically handle child elements for you

@@ -416,7 +416,6 @@ struct RefRes //reference resolver
   */
   std::map<const void*, void*> pointers;
   std::vector<void**> clients; //these will be resolved at the end
-  const void* lastold; //used to communicate address to the caller
   
   void addPair(const void* old, void* newa); //register a old/new value pair
   void addClient(void** client, void* address); //register a client, that will be resolved (correct address stored in it) at the end
@@ -519,53 +518,102 @@ int parseRefRes(T& t, const std::string& in, size_t& pos, size_t end)
 template<typename T>
 int parseRefRes(T& t, const std::string& in, size_t& pos)
 {
-  return parse(t, in, pos, in.size());
+  return parseRefRes(t, in, pos, in.size());
 }
 
 template<typename T>
 int parseRefRes(T& t, const std::string& in)
 {
   size_t pos = 0;
-  return parse(t, in, pos, in.size());
+  return parseRefRes(t, in, pos, in.size());
 }
 
 /*
-The generate functions require two functions in the type:
+Class which can be used for generating tags, in 3 steps:
+step1 = before adding attributes
+(then you must add attributes)
+step2 = after adding attributes, before adding content
+(then you must add content, one indentation level further)
+step3 = after adding content
+See the generate() template function to see an example of this class
+in use and for an explanation when you want to use this class instead
+of the template generate function.
+
+The steps are done in constructor and destructor, except step2 if you
+want to add attributes in between. In that case, you have to indicate
+when you're done adding attributes with attributesDone()
+*/
+class Generate
+{
+  private:
+  std::string& out;
+  std::string name;
+  size_t indent;
+  size_t size_before_adding_tag_close_symbol;
+  size_t size_before_adding_content;
+  
+  public:
+  
+  Generate(std::string& out, const std::string& name, size_t indent = 0, bool attributes = false)
+  : out(out)
+  , name(name)
+  , indent(indent)
+  , size_before_adding_tag_close_symbol(0)
+  , size_before_adding_content(0)
+  {
+    //"step1"
+    for(size_t i = 0; i < indent; i++) out += xml_indentation_symbol;
+    out += "<" + name;
+    
+    if(!attributes) attributesDone();
+  }
+  
+  void attributesDone()
+  {
+    //"step2"
+    size_before_adding_tag_close_symbol = out.size(); //you can't know for sure how much characters the newline symbol will be
+    out += ">" + xml_newline_symbol;
+    size_before_adding_content = out.size();
+  }
+  
+  ~Generate()
+  {
+    //"step3"
+    size_t size_after_adding_content = out.size();
+    
+    if(size_before_adding_content == size_after_adding_content) //make this a singleton tag
+    {
+      out.resize(size_before_adding_tag_close_symbol); //remove the newline and >, to put a singleton tag end instead
+      out += "/>";
+    }
+    else
+    {
+      for(size_t i = 0; i < indent; i++) out += xml_indentation_symbol;
+
+      out += "</" + name + ">";
+    }
+    out += xml_newline_symbol;
+  }
+};
+
+/*
+The generate function requires two functions in the type T:
   void generateContent(std::string& out, size_t indent) const
   and
   void generateAttributes(std::string& out) const
 I found no way to allow putting them in one function without too much temporary std::string copies.
+Also this means for each nested tag you need another class with these two functions.
+If you don't want that, you can use the Generate class a bit higher up instead, it allows
+you to use custom functions to generate attributes and content between step1, step2 and step3.
 */
 
 template<typename T>
 void generate(std::string& out, const std::string& name, const T& t, size_t indent = 0)
 {
-  for(size_t i = 0; i < indent; i++) out += xml_indentation_symbol;
-
-  indent++;
-  
-  out += "<" + name;
+  Generate generator(out, name, indent, true);
   t.generateAttributes(out);
-  size_t size_before_adding_tag_close_symbol = out.size(); //you can't know for sure how much characters the newline symbol will be
-  out += ">" + xml_newline_symbol;
-  size_t size_before_adding_content = out.size();
-  t.generateContent(out, indent);
-  size_t size_after_adding_content = out.size();
-  
-  indent--;
-  
-  if(size_before_adding_content == size_after_adding_content) //make this a singleton tag
-  {
-    out.resize(size_before_adding_tag_close_symbol); //remove the newline and >, to put a singleton tag end instead
-    out += "/>";
-  }
-  else
-  {
-    for(size_t i = 0; i < indent; i++) out += xml_indentation_symbol;
-
-    out += "</" + name + ">";
-  }
-  out += xml_newline_symbol;
+  generator.attributesDone();
+  t.generateContent(out, indent + 1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
