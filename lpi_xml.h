@@ -408,23 +408,62 @@ int parseAttribute(const std::string& in, size_t& pos, size_t end, std::string& 
 
 struct RefRes //reference resolver
 {
+  typedef int Key;
+  
+  Key index;
+  
+  RefRes() : index(0) {}
+  
   /*
   RefRes is the reference (or pointer/address) resolver.
   When generating, let things that are pointed to save their address, and let things that point to it
   save the pointer value. When parsing, RefRes can then resolve everything back.
   Please see the World/Monster/MonsterType example in the .cpp file for usage.
   */
-  std::map<const void*, void*> pointers;
-  std::vector<void**> clients; //these will be resolved at the end
+  std::map<const void*, Key> pointers_writing;
+  std::map<Key, const void*> pointers_reading;
   
-  void addPair(const void* old, void* newa); //register a old/new value pair
-  void addClient(void** client, void* address); //register a client, that will be resolved (correct address stored in it) at the end
+  struct Client
+  {
+    const void** ref; //pointer to the pointer that must be made to point to the correct value when resolving
+    Key id; //the id assiciated with this reference
+  };
+  
+  std::vector<Client> clients; //these will be resolved at the end
+  
+  
+  ///For Reading
+  
+  void addPair(Key id, void* address) //register a old/new value pair
+  {
+    pointers_reading[id] = address;
+  }
+  
+  template<typename T>
+  void addClient(Key id, T*& ref) //register a client, that will be resolved (correct address stored in it) at the end
+  {
+    clients.resize(clients.size() + 1);
+    clients.back().id = id;
+    clients.back().ref = (const void**)(&ref);
+    (*(clients.back().ref)) = 0; //set it to null, so it's still null in case the reference remains unresolved
+  }
+  
   void resolve(); //store the new values in all the clients
 
-  /*use RefRes::getAddress(this) instead of "this" or pointers to a member to write the address to the XML,
-  to make sure an unambigous address is written to it (using the convert or generateSimpleElement function with void*)*/
-  template<typename T> static void* getAddress(T* t) { return static_cast<void*>(t); }
-  template<typename T> static const void* getAddress(const T* t) { return static_cast<const void*>(t); }
+  ///For Writing
+  
+  template<typename T>
+  Key getKey(const T* t)
+  {
+    const void* old = static_cast<const void*>(t);
+    if(pointers_writing.find(old) == pointers_writing.end())
+    {
+      pointers_writing[old] = index;
+      index++;
+    }
+    
+    return pointers_writing[old];
+  }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -614,6 +653,24 @@ void generate(std::string& out, const std::string& name, const T& t, size_t inde
   t.generateAttributes(out);
   generator.attributesDone();
   t.generateContent(out, indent + 1);
+}
+
+//RefRes version
+
+template<typename T>
+void generateRefRes(std::string& out, const std::string& name, const T& t, size_t indent, RefRes& refres)
+{
+  Generate generator(out, name, indent, true);
+  t.generateAttributes(out, refres);
+  generator.attributesDone();
+  t.generateContent(out, indent + 1, refres);
+}
+
+template<typename T>
+void generateRefRes(std::string& out, const std::string& name, const T& t, size_t indent = 0)
+{
+  RefRes refres;
+  generateRefRes(out, name, t, indent, refres);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

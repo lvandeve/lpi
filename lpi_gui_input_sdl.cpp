@@ -91,9 +91,9 @@ bool GUIInputSDL::keyPressedTime(int key, double warmupTime, double repTime) con
   return lpi::keyPressedTime(key, getSeconds(), warmupTime, repTime, &keystate);
 }
 
-int GUIInputSDL::unicodeKey(int allowedChars, double warmupTime, double repTime) const
+int GUIInputSDL::unicodeKey(double warmupTime, double repTime) const
 {
-  return lpi::unicodeKey(allowedChars, getSeconds(), warmupTime, repTime, &keystate);
+  return lpi::unicodeKey(getSeconds(), warmupTime, repTime, &keystate);
 }
 
 } //namespace gui

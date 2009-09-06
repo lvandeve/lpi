@@ -65,14 +65,13 @@ class InputLine : public Element //input text line
     2: integer number
     */
     int type;
-    int allowedChars; //0 enables all, enabling bits disables certain symbols, see the unicode input function
     std::string title;
     std::string text;
         
     InputLine();
     void make(int x, int y, unsigned long l,
               const Markup& markup = TS_W,
-              int type = 0, int allowedChars = 0, const std::string& title = "", const Markup& titleMarkup = TS_W, const ColorRGB& cursorColor = RGB_White);
+              int type = 0, const std::string& title = "", const Markup& titleMarkup = TS_W, const ColorRGB& cursorColor = RGB_White);
     
     virtual void drawWidget(IGUIDrawer& drawer) const;
     virtual void handleWidget(const IGUIInput& input);

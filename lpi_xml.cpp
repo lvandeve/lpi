@@ -709,23 +709,12 @@ int getColumnNumber(const std::string& fulltext, size_t pos)
 // 2.) Reference Resolver Tool
 ////////////////////////////////////////////////////////////////////////////////
 
-void RefRes::addPair(const void* old, void* newa)
-{
-  pointers[old] = newa;
-}
-
-void RefRes::addClient(void** client, void* address)
-{
-  *client = address;
-  clients.push_back(client);
-}
-
 void RefRes::resolve() //store the new values in all the clients
 {
   for(size_t i = 0; i < clients.size(); i++)
   {
-    const void* old = *(clients[i]);
-    *(clients[i]) = pointers[old];
+    const void* newval = pointers_reading[clients[i].id];
+    (*(clients[i].ref)) = newval;
   }
 }
 
@@ -983,14 +972,18 @@ namespace xmltest
     {
       xml::ElementPos elementpos;
       std::string elementname;
-      const void* old_address = 0;
       
       //content
       while(parseElement(in, pos.cb, pos.ce, elementname, elementpos) == xml::SUCCESS)
       {
         if(elementname == "constitution") xml::unconvert(constitution, in, elementpos.cb, elementpos.ce);
         else if(elementname == "strength") xml::unconvert(strength, in, elementpos.cb, elementpos.ce);
-        else if(elementname == "id") xml::unconvert(old_address, in, elementpos.cb, elementpos.ce);
+        else if(elementname == "id")
+        {
+          int key = 0;
+          xml::unconvert(key, in, elementpos.cb, elementpos.ce);
+          ref.addPair(key, this);
+        }
       }
       
       //attributes
@@ -999,17 +992,17 @@ namespace xmltest
         if(elementname == "name") xml::unconvert(name, in, elementpos.cb, elementpos.ce);
       }
       
-      ref.addPair(old_address, xml::RefRes::getAddress(this));
+      
     }
     
-    void generateAttributes(std::string& out) const
+    void generateAttributes(std::string& out, xml::RefRes&) const
     {
       xml::generateAttribute(out, "name", name);
     }
     
-    void generateContent(std::string& out, size_t indent) const
+    void generateContent(std::string& out, size_t indent, xml::RefRes& ref) const
     {
-      xml::generateSimpleElement(out, "id", xml::RefRes::getAddress(this), indent);
+      xml::generateSimpleElement(out, "id", ref.getKey(this), indent);
       xml::generateSimpleElement(out, "constitution", constitution, indent);
       xml::generateSimpleElement(out, "strength", strength, indent);
     }
@@ -1021,7 +1014,7 @@ namespace xmltest
     double x;
     double y;
     
-    void parseXML(const std::string& in, xml::ElementPos& pos, xml::RefRes& /*ref*/)
+    void parseXML(const std::string& in, xml::ElementPos& pos, xml::RefRes&)
     {
       xml::ElementPos elementpos;
       std::string elementname;
@@ -1033,13 +1026,13 @@ namespace xmltest
       }
     }
     
-    void generateContent(std::string& out, size_t indent) const
+    void generateContent(std::string& out, size_t indent, xml::RefRes&) const
     {
       xml::generateSimpleElement(out, "x", x, indent);
       xml::generateSimpleElement(out, "y", y, indent);
     }
     
-    void generateAttributes(std::string&) const {} //needed because no default function can be given to template
+    void generateAttributes(std::string&, xml::RefRes&) const {} //needed because no default function can be given to template
   };
   
   class Monster
@@ -1062,21 +1055,21 @@ namespace xmltest
         else if(elementname == "position") position.parseXML(in, elementpos, ref);
         else if(elementname == "type")
         {
-          void* address;
-          xml::unconvert(address, in, elementpos.cb, elementpos.ce);
-          ref.addClient((void**)(&type), address);
+          int key;
+          xml::unconvert(key, in, elementpos.cb, elementpos.ce);
+          ref.addClient(key, type);
         }
       }
     }
     
-    void generateContent(std::string& out, size_t indent) const
+    void generateContent(std::string& out, size_t indent, xml::RefRes& ref) const
     {
-      xml::generateSimpleElement(out, "type", xml::RefRes::getAddress(type), indent);
+      xml::generateSimpleElement(out, "type", ref.getKey(type), indent);
       xml::generateSimpleElement(out, "health", health, indent);
-      xml::generate(out, "position", position, indent);
+      xml::generateRefRes(out, "position", position, indent, ref);
     }
     
-    void generateAttributes(std::string&) const {} //needed because no default function can be given to template
+    void generateAttributes(std::string&, xml::RefRes&) const {} //needed because no default function can be given to template
   };
   
   class World
@@ -1113,23 +1106,23 @@ namespace xmltest
       }
     }
     
-    void generateContent(std::string& out, size_t indent) const
+    void generateContent(std::string& out, size_t indent, xml::RefRes& ref) const
     {
       xml::generateSimpleElement(out, "sizex", sizex, indent);
       xml::generateSimpleElement(out, "sizey", sizey, indent);
       
       for(size_t i = 0; i < monstertypes.size(); i++)
       {
-        xml::generate(out, "monstertype", *monstertypes[i], indent); //or alternatively you can use "monstertypes[i]->generate(out, "monstertype", indent);"
+        xml::generateRefRes(out, "monstertype", *monstertypes[i], indent, ref); //or alternatively you can use "monstertypes[i]->generate(out, "monstertype", indent);"
       }
       
       for(size_t i = 0; i < monsters.size(); i++)
       {
-        xml::generate(out, "monster", *monsters[i], indent); //or alternatively you can use "monsters[i]->generate(out, "monster", indent);"
+        xml::generateRefRes(out, "monster", *monsters[i], indent, ref); //or alternatively you can use "monsters[i]->generate(out, "monster", indent);"
       }
     }
     
-    void generateAttributes(std::string&) const {} //needed because no default function can be given to template
+    void generateAttributes(std::string&, xml::RefRes&) const {} //needed because no default function can be given to template
   };
   
   void xmltest()
@@ -1187,7 +1180,7 @@ namespace xmltest
       std::cout << "parsing error " << result << " on line " << xml::getLineNumber(xml_in, pos) << std::endl;
     
     std::string xml_out;
-    xml::generate(xml_out, "world", world);
+    xml::generateRefRes(xml_out, "world", world);
     std::cout << xml_out; //after generating the xml again, output it again, it should be the same as the input (except the whitespace, which is indented in a fixed way)
     
     std::cout << std::endl;

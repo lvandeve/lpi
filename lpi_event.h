@@ -100,7 +100,7 @@ warmup = "warmup time": how long it takes before the key starts repeating
 rate = repetition rate of the key after the warmupTime
 having released the key resets the warmup
 */
-int unicodeKey(int allowedChars, double time, double warmupTime = 0.5, double repTime = 0.025, KeyState* state = 0);
+int unicodeKey(double time, double warmupTime = 0.5, double repTime = 0.025, KeyState* state = 0);
 
 //these were moved from general to input because they depend so much on input
 void sleep();

@@ -54,7 +54,7 @@ class GUIInputSDL : public IGUIInputClick
     virtual bool keyDown(int key) const;
     virtual bool keyPressed(int key) const; //only returns true the first time the key is down and you check
     virtual bool keyPressedTime(int key, double warmupTime = 0.5, double repTime = 0.025) const;
-    virtual int unicodeKey(int allowedChars, double warmupTime = 0.5, double repTime = 0.025) const;
+    virtual int unicodeKey(double warmupTime = 0.5, double repTime = 0.025) const;
 };
 
 } //namespace gui

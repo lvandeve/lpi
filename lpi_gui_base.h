@@ -79,7 +79,7 @@ class IGUIInput
     virtual bool keyDown(int key) const = 0;
     virtual bool keyPressed(int key) const = 0; //only returns true the first time the key is down and you check (can use mutable variable internally for this)
     virtual bool keyPressedTime(int key, double warmupTime = 0.5, double repTime = 0.025) const = 0;
-    virtual int unicodeKey(int allowedChars, double warmupTime = 0.5, double repTime = 0.025) const = 0;
+    virtual int unicodeKey(double warmupTime = 0.5, double repTime = 0.025) const = 0;
 };
 
 class IGUIInputClick : public IGUIInput //this one already implements the double clicking in a way, and also the mouse speed
