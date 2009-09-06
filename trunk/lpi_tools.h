@@ -28,12 +28,16 @@ to/from base64 files, to create built-in textures for GUI and font or extract th
 #ifndef LPI_TOOLS_H_INCLUDED
 #define LPI_TOOLS_H_INCLUDED
 
+#include "lpi_color.h"
+
 namespace lpi
 {
 
   void binaryFileToBase64File(const std::string& outfilename, const std::string& infilename, bool cppnewlines);
   void base64FileToBinaryFile(const std::string& outfilename, const std::string& infilename);
   void base64StringToBinaryFile(const std::string& outfilename, const std::string& in);
+  
+  void graphicalKeyBoardNumberTest(const ColorRGB& color = RGB_Black);
 
 } //namespace lpi
 

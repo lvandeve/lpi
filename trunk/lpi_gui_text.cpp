@@ -64,7 +64,6 @@ InputLine::InputLine()
   this->l = 0;
   this->markup = TS_White;
   this->type = 0;
-  this->allowedChars = 0;
   this->title = "";
   this->control_active = 0;
   this->entering_done = false;
@@ -74,7 +73,7 @@ InputLine::InputLine()
   entered = 0;
 }
 
-void InputLine::make(int x, int y, unsigned long l, const Markup& markup, int type, int allowedChars, const std::string& title, const Markup& titleMarkup, const ColorRGB& cursorColor)
+void InputLine::make(int x, int y, unsigned long l, const Markup& markup, int type, const std::string& title, const Markup& titleMarkup, const ColorRGB& cursorColor)
 {
   this->x0 = x;
   this->y0 = y;
@@ -83,17 +82,11 @@ void InputLine::make(int x, int y, unsigned long l, const Markup& markup, int ty
   this->titleMarkup = titleMarkup;
   this->cursorColor = cursorColor;
   this->type = type;
-  this->allowedChars = allowedChars;
   this->title = title;
   
   this->text = "";
   cursor = 0;
   entered = 0;
-  
-  if(type == 2) //if the type is "integer"
-  {
-    allowedChars |= 3; //set "disable text" and "disable special symbols" to true
-  }
   
   this->setSizeY( markup.getHeight()); //font height
   this->setSizeX((title.length() + l) * markup.getWidth());
@@ -201,7 +194,7 @@ void InputLine::handleWidget(const IGUIInput& input) //both check if you pressed
     
     if(cursor >= text.length()) cursor = text.length();
 
-    int ascii = input.unicodeKey(allowedChars, 0.5, 0.025);
+    int ascii = input.unicodeKey(0.5, 0.025);
     if(ascii)
     {
       switch(ascii)
@@ -1168,7 +1161,7 @@ void InputBox::handleWidget(const IGUIInput& input)
      scrollerMayJump = 1;
   }
 
-  int ascii = input.unicodeKey(0, 0.5, 0.025);
+  int ascii = input.unicodeKey(0.5, 0.025);
   if(ascii)
   {
     switch(ascii)

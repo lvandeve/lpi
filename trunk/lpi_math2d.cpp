@@ -232,7 +232,7 @@ Vector2 getComponentInDirection(const Vector2& v, const Vector2& dir)
 }
 
 //get distance from point p to the line given by a and b
-double distance(const Vector2& p, const Vector2& a, const Vector2& b)
+double distancePointLine(const Vector2& p, const Vector2& a, const Vector2& b)
 {
   //Explanationn of the formula: see Vector3 version of this function.
   
@@ -242,6 +242,20 @@ double distance(const Vector2& p, const Vector2& a, const Vector2& b)
   q.y = a.y + k * (b.y - a.y);
   
   return distance(p, q);
+}
+
+double distancePointLineSegment(const Vector2& p, const Vector2& a, const Vector2& b)
+{
+  double k = -((b.x-a.x)*(a.x-p.x)+(b.y-a.y)*(a.y-p.y))/((b.x-a.x)*(b.x-a.x) + (b.y-a.y)*(b.y-a.y));
+  if(k < 0) return distance(p, a);
+  else if(k > 1) return distance(p, b);
+  else
+  {
+    Vector2 q;
+    q.x = a.x + k * (b.x - a.x);
+    q.y = a.y + k * (b.y - a.y);
+    return distance(p, q);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -268,6 +282,16 @@ void barycentric(double& alpha, double& beta, double& gamma, const lpi::Vector2&
   gamma = (ba.x * pa.y - ba.y * pa.x) * invdenom;
   beta  = (ca.y * pa.x - ca.x * pa.y) * invdenom;
   alpha = 1.0 - beta - gamma;
+}
+
+
+bool intersectLineSegmentLineSegment(Vector2& result, const Vector2& a0, const Vector2& a1, const Vector2& b0, const Vector2& b1)
+{
+  double noemer = ((b1.y-b0.y)*(a1.x-a0.x) - (b1.x-b0.x)*(a1.y-a0.y));
+  double ua = ((b1.x-b0.x)*(a0.y-b0.y) - (b1.y-b0.y)*(a0.x-b0.x)) / noemer;
+  double ub = ((a1.x-a0.x)*(a0.y-b0.y) - (a1.y-a0.y)*(a0.x-b0.x)) / noemer;
+  result = a0 + ua * (a1 - a0);
+  return (ua >= 0.0 && ua <= 1.0 && ub >= 0.0 && ub <= 1.0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

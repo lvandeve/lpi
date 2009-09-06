@@ -20,6 +20,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include "lpi_event.h"
 #include <cstdlib>
+#include <iostream>
 
 
 namespace lpi
@@ -112,7 +113,7 @@ bool keyPressed(int key, KeyState* state) //use the SDL key code here, like SDLK
 
 bool keyPressedTime(int key, double time, double warmupTime, double repTime, KeyState* state) //use the SDL key code here, like SDLK_KP7 for keypad 7
 {
-  if(key < 0 || key > (int)KeyState::NUM) return 0; //the state only remembers KeyState::NUM keys...
+  if(key < 0 || key > (int)KeyState::NUM) return false; //the state only remembers KeyState::NUM keys...
     
   if(!state) state = &static_state;
   
@@ -244,27 +245,23 @@ void resetMouseDiffFunctions()
 
 /*
 This function returns which unicode key you're pressing, to type.
-allowedChars disables or enables some characters such as numbers, special symbols, ...
-
-If allowedChars is 0, all symbols are enabled
-The following bits disable the following:
-&1: disable punctuation symbols like ,(?.:
-&2: disable numbers
-&4: disable letters
-
 Note that this function can also return things like when you pressed backspace, ...
+The intention of this function is to be used for controls in which you can type text.
 */
 
-int unicodeKey(int allowedChars, double time, double warmupTime, double repTime, KeyState* state)
+int unicodeKey(double time, double warmupTime, double repTime, KeyState* state)
 {
   if(!state) state = &static_state;
   
   int asciiChar = 0;
-  if ((event.key.keysym.unicode & 0xFF80) == 0)
+  if((event.key.keysym.unicode & 0xFF80) == 0)
   {
-    if(event.type == SDL_KEYDOWN)
+    static int sym = -1; //TODO: move this into KeyState?
+    if(event.type == SDL_KEYDOWN) sym = event.key.keysym.unicode;
+    if(event.type == SDL_KEYUP) sym = -1;
+    if(sym >= 0)
     {
-      int inputChar = event.key.keysym.unicode & 0x7F;
+      int inputChar = sym & 0x7F;
       //handle numpad too, because it's not included in SDL's unicode thingie
       if(asciiChar == 0)
       {
@@ -289,7 +286,6 @@ int unicodeKey(int allowedChars, double time, double warmupTime, double repTime,
         }
       }
       
-      
       //below is the system that prevents typing 100s of times the same char when holding down the key. It uses warmup and rate
       if(inputChar == state->singlePrevious)
       {
@@ -307,7 +303,6 @@ int unicodeKey(int allowedChars, double time, double warmupTime, double repTime,
           asciiChar = inputChar;
           state->singleKeyTime = time;
         }
-
       }
       else
       {
@@ -318,53 +313,15 @@ int unicodeKey(int allowedChars, double time, double warmupTime, double repTime,
       }
       
     }
-    else
-    state->singlePrevious = 0; //so that you CAN press the same key twice in a row if you release it!
+    else state->singlePrevious = 0; //so that you CAN press the same key twice in a row if you release it!
   }
   
-  if(allowedChars & 1)
-  {
-    if(asciiChar < 0) asciiChar = 0; //signed extended ascii symbols
-    if(asciiChar < 32 && asciiChar != 13 && asciiChar != 8) asciiChar = 0; //<32 ones, except enter and backspace
-    if(asciiChar < 48 && asciiChar >= 32) asciiChar = 0; //before the numbers
-    if(asciiChar > 57 && asciiChar < 65) asciiChar = 0; //between numbers and capitals
-    if(asciiChar > 90 && asciiChar < 97) asciiChar = 0; //between capitals and small letters
-    if(asciiChar > 122) asciiChar = 0; //after the small letters
-  }
-  if(allowedChars & 2)
-  {
-    if(asciiChar >= 47 && asciiChar <= 57) asciiChar = 0; //disable numbers too
-  }
-  if(allowedChars & 4)
-  {
-    if(asciiChar >= 65 && asciiChar <= 90) asciiChar = 0; //capitals
-    if(asciiChar >= 97 && asciiChar <= 122) asciiChar = 0; //small letters
-  }
   //disable unexpected special symbols except enter and backspace
   if(asciiChar < 32 && asciiChar != 13 && asciiChar != 8) asciiChar = 0; //<32 ones, except enter and backspace
-  //some special ascii chars if you press left control with a keypad key
-  readKeys();
-  if(inkeys[SDLK_LCTRL] && !(allowedChars & 1))
-  switch(asciiChar)
-  {
-    case '0': asciiChar = 128; break; //de franse c-dit
-    case '1': asciiChar = 137; break; //e with trema: � zoals in Belgi�
-    case '2': asciiChar = 129; break; //u met 2 puntjes 
-    case '3': asciiChar = 164; break; //n wiht ~, like the spanish se�or 
-    case '4': asciiChar = 168; break; //upside down question mark
-    case '5': asciiChar = 173; break; //upside down exclamation mark
-    case '6': asciiChar = 224; break; //alpha 
-    case '7': asciiChar = 234; break; //large omega or ohm
-    case '8': asciiChar = 227; break; //pi
-    case '9': asciiChar = 230; break; //mu or micro
-    case '/': asciiChar = 127; break; //pentagram
-    case '*': asciiChar = 236; break; //infinity 
-    case '-': asciiChar = 3; break; //heart
-    case '+': asciiChar = 241; break; // +/-
-    case '.': asciiChar = 1; break; //smiley
-  }  
+ 
   return asciiChar;
 }
+
 
 
 //Waits until you press a key. First the key has to be loose, this means, if you put two sleep functions in a row, the second will only work after you first released the key.

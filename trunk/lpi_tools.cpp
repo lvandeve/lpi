@@ -27,6 +27,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_file.h"
 #include "lpi_base64.h"
 #include "lpi_parse.h"
+#include "lpi_event.h"
 
 #include <SDL/SDL.h>
 
@@ -59,6 +60,16 @@ void base64StringToBinaryFile(const std::string& outfilename, const std::string&
   std::vector<unsigned char> file;
   decodeBase64(file, in);
   saveFile(file, outfilename);
+}
+
+void graphicalKeyBoardNumberTest(const ColorRGB& color)
+{
+  for(size_t i = 0; i < 1024; i++) if(lpi::keyDown(i))
+  {
+    int x = (i % 32) * 32;
+    int y = (i / 32) * 8;
+    lpi::print(i, x, y, color);
+  }
 }
 
 } //namespace lpi
