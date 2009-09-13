@@ -30,21 +30,21 @@ namespace lpi
 {
 
 
-Texture emptyTexture;
+TextureGL emptyTexture;
 
 
 //****************************************************************************//
 ////////////////////////////////////////////////////////////////////////////////
-//Texture Class/////////////////////////////////////////////////////////////////
+//TextureGL Class/////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 //****************************************************************************//
-Texture::Texture()
+TextureGL::TextureGL()
 {
   deleteBuffer();
   generated = false;
 }
 
-void Texture::operator*=(double a)
+void TextureGL::operator*=(double a)
 {
   for(size_t y = 0; y < v2; y++)
   for(size_t x = 0; x < u2; x++)
@@ -57,7 +57,7 @@ void Texture::operator*=(double a)
 }
 
 //make memory for the buffer of the texture
-void Texture::makeBuffer(int u, int v)
+void TextureGL::makeBuffer(int u, int v)
 {
   //find first larger power of two of width and store it in u2
   int u2 = 1;
@@ -78,162 +78,13 @@ void Texture::makeBuffer(int u, int v)
 }
 
 //free the memory again
-void Texture::deleteBuffer()
+void TextureGL::deleteBuffer()
 {
   buffer.clear();
 }
 
-void Texture::create(const ColorRGB& color, int w, int h)
-{
-  //if anything is invalid, use full rectangle instead
-  if(w < 0) w = 0;
-  if(h < 0) h = 0;
-
-  deleteBuffer();
-  makeBuffer(w, h);
-  
-  for(size_t y = 0; y < v2; y++)
-  for(size_t x = 0; x < u2; x++)
-  {
-    this->buffer[4 * u2 * y + 4 * x + 0] = color.r;
-    this->buffer[4 * u2 * y + 4 * x + 1] = color.g;
-    this->buffer[4 * u2 * y + 4 * x + 2] = color.b;
-    this->buffer[4 * u2 * y + 4 * x + 3] = color.a;
-  }
-
-  upload();
-}
-
-/*
-This loads the texture from a buffer or from a part of the buffer in the rectangle (x1,y1)-(x2,y2)
-To get full buffer, make x1 = -1
-w and h are width and height of the buffer, and the function assumes the memory of the buffer is big enough for that
-The width of the texture buffer becomes x2 - x1, y2 - y1
-Note that the buffer has an third dimension for the color channels and alpha
-*/
-void Texture::create(unsigned char * buffer, int w, int h, const AlphaEffect& effect, int x1, int y1, int x2, int y2)
-{
-  //if anything is invalid, use full rectangle instead
-  if(x1 < 0 || y1 < 0 || x2 < 0 || y2 < 0 || x1 > w || y1 > h || x2 > w || y2 > h || x1 > x2 || y1 > y2)
-  {
-    x1 = 0;
-    y1 = 0;
-    x2 = w;
-    y2 = h;
-  }
-
-  deleteBuffer();
-  makeBuffer(x2 - x1, y2 - y1);
-  for(int y = 0; y < y2 - y1; y++)
-  for(int x = 0; x < x2 - x1; x++)
-  for(int c = 0; c < 4; c++)
-  {
-    this->buffer[4 * u2 * y + 4 * x + c] = buffer[4 * w * (y1 + y) + 4 * (x1 + x) + c];
-  }
-  
-  calculateAlpha(effect);
-  upload();
-}
-
-namespace
-{
-  bool isPowerOfTwo(int n) //does not work properly if n is <= 0, then an extra test n > 0 should be added
-  {
-    return !(n & (n - 1)); //this checks if the integer n is a power of two or not
-  }
-}
-
-/*
-Load the texture from a file
-currently works with the png loader function
-*/
-void Texture::create(const std::string& filename, const AlphaEffect& effect, int x1, int y1, int x2, int y2)
-{
-  LodePNG::Decoder pngdec;
-
-  std::vector<unsigned char> file;
-  LodePNG::loadFile(file, filename);
-  
-  //create the image and info std::vectors
-  std::vector<unsigned char> image;
-  
-  //load the png and if it gives an error return it
-  pngdec.decode(image, file);
-  if(pngdec.hasError())
-  {
-    std::cout << "\npng loading error " << pngdec.getError() << " in file " << filename;
-    return;
-  }
-  
-  if(x1 == -1 && y1 == -1 && x2 == -1 && y2 == -1 && isPowerOfTwo(pngdec.getWidth()) && isPowerOfTwo(pngdec.getHeight())) //this should be faster
-  {
-    deleteBuffer();
-    makeBuffer(pngdec.getWidth(), pngdec.getHeight());
-    buffer.swap(image);
-    calculateAlpha(effect);
-    upload();
-  }
-  else create(&image[0], pngdec.getWidth(), pngdec.getHeight(), effect, x1, y1, x2, y2);
-}
-
-/*
-Same as create, but only the alpha channel is affected, and no buffer is made so make sure the texture already has the correct size (and rgb colors) before you create its alpha channel.
-The RED channel of the input image is used to make this alpha channel!
-*/
-void Texture::createAlpha(unsigned char * buffer, int w, int h, int x1, int y1, int x2, int y2)
-{
-  //if anything is invalid, use full rectangle instead
-  if(x1 < 0 || y1 < 0 || x2 < 0 || y2 < 0 || x1 > w || y1 > h || x2 > w || y2 > h || x1 > x2 || y1 > y2)
-  {
-    x1 = 0;
-    y1 = 0;
-    x2 = w;
-    y2 = h;
-  }
-
-  for(int y = 0; y < y2 - y1; y++)
-  for(int x = 0; x < x2 - x1; x++)
-  {
-    this->buffer[4 * u2 * y + 4 * x + 3] = buffer[4 * w * (y1 + y) + 4 * (x1 + x) + 0];
-  }
-  
-  upload();
-}
-
-/*
-Load the texture's alpha channel from a file
-Make sure the alpha channel file is NOT larger than the current size the texture has!
-*/
-void Texture::createAlpha(const std::string& filename, int x1, int y1, int x2, int y2)
-{
-  LodePNG::Decoder pngdec;
-  
-  std::vector<unsigned char> file;
-  LodePNG::loadFile(file, filename);
-  
-  //create the image and info std::vectors
-  std::vector<unsigned char> image;
-  
-  //load the png and if it gives an error return it
-  pngdec.decode(image, file);
-  if(pngdec.hasError())
-  {
-    std::cout << "\npng loading error " << pngdec.getError() << " in file " << filename;
-    return;
-  }
-  
-  createAlpha(&image[0], pngdec.getWidth(), pngdec.getHeight(), x1, y1, x2, y2);
-}
-
-//Create an alpha channel for the texture with the wanted effect
-void Texture::calculateAlpha(const AlphaEffect& effect)
-{
-  createImageAlpha(&buffer[0], u2, v2, effect);
-  upload();
-}
-
 //This generates the OpenGL texture so that OpenGL can use it, also use after changing the texture buffer
-void Texture::upload()
+void TextureGL::upload()
 {
   if(!generated)
   {
@@ -244,14 +95,14 @@ void Texture::upload()
   glTexImage2D(GL_TEXTURE_2D, 0, 4, u2, v2, 0, GL_RGBA, GL_UNSIGNED_BYTE, &buffer[0]);
 }
 
-void Texture::reupload()
+void TextureGL::reupload()
 {
   generated = false;
   upload();
 }
 
 //make this the selected one for drawing
-void Texture::bind() const
+void TextureGL::bind() const
 {
   glBindTexture(GL_TEXTURE_2D, texture[0]);
   if(enabledSmoothing())
@@ -266,123 +117,123 @@ void Texture::bind() const
   }
 }
 
-//Draw the texture on screen
-void Texture::draw(int x, int y, const ColorRGB& colorMod, int sizex, int sizey, int skewx, int skewy) const
-{
-  if(sizex < 0) sizex = u;
-  if(sizey < 0) sizey = v;
-  if(sizex == 0 || sizey == 0) return;
-  glEnable(GL_TEXTURE_2D);
+////Draw the texture on screen
+//void TextureGL::draw(int x, int y, const ColorRGB& colorMod, int sizex, int sizey, int skewx, int skewy) const
+//{
+//  if(sizex < 0) sizex = u;
+//  if(sizey < 0) sizey = v;
+//  if(sizex == 0 || sizey == 0) return;
+//  glEnable(GL_TEXTURE_2D);
+//
+//  glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
+//  bind();
+//
+//  setOpenGLScissor(); //everything that draws something must always do this
+//
+//  //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
+//  glBegin(GL_QUADS);
+//    glTexCoord2d(0.0, 0.0); glVertex2d(x + 0     + skewx, y + 0     + 0    );
+//    glTexCoord2d(+u3, 0.0); glVertex2d(x + sizex + skewx, y + 0     + skewy);
+//    glTexCoord2d(+u3, +v3); glVertex2d(x + sizex + 0    , y + sizey + skewy);
+//    glTexCoord2d(0.0, +v3); glVertex2d(x + 0     + 0    , y + sizey + 0    );
+//  glEnd();
+//}
+//
+////Draw the texture on screen
+//void TextureGL::draw(int x1, int y1, int x2, int y2, const ColorRGB& colorMod) const
+//{
+//  if(x2 - x1 == 0 || y2 - y1 == 0) return;
+//  glEnable(GL_TEXTURE_2D);
+//
+//  glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
+//  bind();
+//
+//  setOpenGLScissor(); //everything that draws something must always do this
+//
+//  //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
+//  glBegin(GL_QUADS);
+//    glTexCoord2d(0.0, 0.0); glVertex3d(x1, y1, 1);
+//    glTexCoord2d(+u3, 0.0); glVertex3d(x2, y1, 1);
+//    glTexCoord2d(+u3, +v3); glVertex3d(x2, y2, 1);
+//    glTexCoord2d(0.0, +v3); glVertex3d(x1, y2 , 1);
+//  glEnd();
+//}
+//
+//void TextureGL::draw(int x, int y, double scalex, double scaley, const ColorRGB& colorMod) const
+//{
+//  double sizex = u * scalex;
+//  double sizey = v * scaley;
+//  if(sizex == 0.0 || sizey == 0.0) return;
+//  glEnable(GL_TEXTURE_2D);
+//
+//  glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
+//  bind();
+//
+//  setOpenGLScissor(); //everything that draws something must always do this
+//
+//  //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
+//  glBegin(GL_QUADS);
+//    glTexCoord2d(0.0, 0.0); glVertex3d(x + 0  , y + 0  , 1);
+//    glTexCoord2d(+u3, 0.0); glVertex3d(x + sizex, y + 0  , 1);
+//    glTexCoord2d(+u3, +v3); glVertex3d(x + sizex, y + sizey, 1);
+//    glTexCoord2d(0.0, +v3); glVertex3d(x + 0  , y + sizey, 1);
+//  glEnd();
+//}
+//
+//void TextureGL::draw(int x, int y, double scale, const ColorRGB& colorMod) const
+//{
+//  draw(x, y, scale, scale, colorMod);
+//}
+//
+////Draw the texture on screen where x and y are the center instead of the top left corner
+//void TextureGL::drawCentered(int x, int y, const ColorRGB& colorMod, int sizex, int sizey, int skewx, int skewy) const
+//{
+//  if(sizex < 0) sizex = u;
+//  if(sizey < 0) sizey = v;
+//  if(sizex == 0 || sizey == 0) return;
+//  draw(x - sizex / 2, y - sizey / 2, colorMod, sizex, sizey, skewx, skewy);
+//}
+//
+//void TextureGL::drawCentered(int x, int y, double scalex, double scaley, const ColorRGB& colorMod) const
+//{
+//  int sizex = int(u * scalex);
+//  int sizey = int(v * scaley);
+//  if(sizex == 0 || sizey == 0) return;
+//  draw(x - sizex / 2, y - sizey / 2, scalex, scaley, colorMod);
+//}
+//
+//void TextureGL::drawCentered(int x, int y, double scale, const ColorRGB& colorMod) const
+//{
+//  drawCentered(x, y, scale, scale, colorMod);
+//}
+//
+///*
+//draws the texture repeated, useful to fill something with a tilable texture
+//The texture size must be a power of 2, or you get ugly black things in between
+//scale is a scaling factor of the texture
+//*/
+//void TextureGL::drawRepeated(int x1, int y1, int x2, int y2, double scalex, double scaley, const ColorRGB& colorMod) const
+//{
+//  glEnable(GL_TEXTURE_2D);
+//
+//  glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
+//  bind();
+//
+//  setOpenGLScissor(); //everything that draws something must always do this
+//  
+//  double coorx = (double(x2 - x1) / u) / scalex;//(u3 * (x2 - x1)) / scalex;
+//  double coory = (double(y2 - y1) / v) / scaley; //(v3 * (y2 - y1)) / scaley;
+//
+//  //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
+//  glBegin(GL_QUADS);
+//    glTexCoord2d(0.0,       0.0); glVertex3d(x1, y1, 1);
+//    glTexCoord2d(0.0,    +coory); glVertex3d(x1, y2, 1);
+//    glTexCoord2d(+coorx, +coory); glVertex3d(x2, y2, 1);
+//    glTexCoord2d(+coorx,    0.0); glVertex3d(x2, y1, 1);
+//  glEnd();
+//}
 
-  glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
-  bind();
-
-  setOpenGLScissor(); //everything that draws something must always do this
-
-  //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
-  glBegin(GL_QUADS);
-    glTexCoord2d(0.0, 0.0); glVertex2d(x + 0     + skewx, y + 0     + 0    );
-    glTexCoord2d(+u3, 0.0); glVertex2d(x + sizex + skewx, y + 0     + skewy);
-    glTexCoord2d(+u3, +v3); glVertex2d(x + sizex + 0    , y + sizey + skewy);
-    glTexCoord2d(0.0, +v3); glVertex2d(x + 0     + 0    , y + sizey + 0    );
-  glEnd();
-}
-
-//Draw the texture on screen
-void Texture::draw(int x1, int y1, int x2, int y2, const ColorRGB& colorMod) const
-{
-  if(x2 - x1 == 0 || y2 - y1 == 0) return;
-  glEnable(GL_TEXTURE_2D);
-
-  glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
-  bind();
-
-  setOpenGLScissor(); //everything that draws something must always do this
-
-  //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
-  glBegin(GL_QUADS);
-    glTexCoord2d(0.0, 0.0); glVertex3d(x1, y1, 1);
-    glTexCoord2d(+u3, 0.0); glVertex3d(x2, y1, 1);
-    glTexCoord2d(+u3, +v3); glVertex3d(x2, y2, 1);
-    glTexCoord2d(0.0, +v3); glVertex3d(x1, y2 , 1);
-  glEnd();
-}
-
-void Texture::draw(int x, int y, double scalex, double scaley, const ColorRGB& colorMod) const
-{
-  double sizex = u * scalex;
-  double sizey = v * scaley;
-  if(sizex == 0.0 || sizey == 0.0) return;
-  glEnable(GL_TEXTURE_2D);
-
-  glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
-  bind();
-
-  setOpenGLScissor(); //everything that draws something must always do this
-
-  //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
-  glBegin(GL_QUADS);
-    glTexCoord2d(0.0, 0.0); glVertex3d(x + 0  , y + 0  , 1);
-    glTexCoord2d(+u3, 0.0); glVertex3d(x + sizex, y + 0  , 1);
-    glTexCoord2d(+u3, +v3); glVertex3d(x + sizex, y + sizey, 1);
-    glTexCoord2d(0.0, +v3); glVertex3d(x + 0  , y + sizey, 1);
-  glEnd();
-}
-
-void Texture::draw(int x, int y, double scale, const ColorRGB& colorMod) const
-{
-  draw(x, y, scale, scale, colorMod);
-}
-
-//Draw the texture on screen where x and y are the center instead of the top left corner
-void Texture::drawCentered(int x, int y, const ColorRGB& colorMod, int sizex, int sizey, int skewx, int skewy) const
-{
-  if(sizex < 0) sizex = u;
-  if(sizey < 0) sizey = v;
-  if(sizex == 0 || sizey == 0) return;
-  draw(x - sizex / 2, y - sizey / 2, colorMod, sizex, sizey, skewx, skewy);
-}
-
-void Texture::drawCentered(int x, int y, double scalex, double scaley, const ColorRGB& colorMod) const
-{
-  int sizex = int(u * scalex);
-  int sizey = int(v * scaley);
-  if(sizex == 0 || sizey == 0) return;
-  draw(x - sizex / 2, y - sizey / 2, scalex, scaley, colorMod);
-}
-
-void Texture::drawCentered(int x, int y, double scale, const ColorRGB& colorMod) const
-{
-  drawCentered(x, y, scale, scale, colorMod);
-}
-
-/*
-draws the texture repeated, useful to fill something with a tilable texture
-The texture size must be a power of 2, or you get ugly black things in between
-scale is a scaling factor of the texture
-*/
-void Texture::drawRepeated(int x1, int y1, int x2, int y2, double scalex, double scaley, const ColorRGB& colorMod) const
-{
-  glEnable(GL_TEXTURE_2D);
-
-  glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
-  bind();
-
-  setOpenGLScissor(); //everything that draws something must always do this
-  
-  double coorx = (double(x2 - x1) / u) / scalex;//(u3 * (x2 - x1)) / scalex;
-  double coory = (double(y2 - y1) / v) / scaley; //(v3 * (y2 - y1)) / scaley;
-
-  //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
-  glBegin(GL_QUADS);
-    glTexCoord2d(0.0,       0.0); glVertex3d(x1, y1, 1);
-    glTexCoord2d(0.0,    +coory); glVertex3d(x1, y2, 1);
-    glTexCoord2d(+coorx, +coory); glVertex3d(x2, y2, 1);
-    glTexCoord2d(+coorx,    0.0); glVertex3d(x2, y1, 1);
-  glEnd();
-}
-
-void Texture::getAlignedBuffer(std::vector<unsigned char>& out)
+void TextureGL::getAlignedBuffer(std::vector<unsigned char>& out)
 {
   //out = buffer;
   out.clear();
@@ -392,7 +243,7 @@ void Texture::getAlignedBuffer(std::vector<unsigned char>& out)
   }
 }
 
-void Texture::setAlignedBuffer(const std::vector<unsigned char>& in)
+void TextureGL::setAlignedBuffer(const std::vector<unsigned char>& in)
 {
   for(size_t y = 0; y < v; y++)
   {
@@ -400,7 +251,7 @@ void Texture::setAlignedBuffer(const std::vector<unsigned char>& in)
   }
 }
 
-void loadTextures(std::vector<unsigned char>& buffer, std::vector<Texture>& textures, int widths, int heights, int w, int h, const AlphaEffect& effect)
+void loadTextures(std::vector<unsigned char>& buffer, std::vector<TextureGL>& textures, int widths, int heights, int w, int h, const AlphaEffect& effect)
 {
   int numx, numy;
    
@@ -422,13 +273,13 @@ void loadTextures(std::vector<unsigned char>& buffer, std::vector<Texture>& text
   for(int x = 0; x < numx; x++)
   {
     textures.resize(textures.size() + 1);
-    textures.back().create(&buffer[0], w, h, effect, x * widths, y * heights, (x + 1) * widths, (y + 1) * heights);
+    makeTextureFromBuffer(&textures.back(), &buffer[0], w, h, effect, x * widths, y * heights, (x + 1) * widths, (y + 1) * heights);
   }
 } 
 
 /*
 */
-void loadTextures(const std::string& filename, std::vector<Texture>& textures, int widths, int heights, const AlphaEffect& effect)
+void loadTextures(const std::string& filename, std::vector<TextureGL>& textures, int widths, int heights, const AlphaEffect& effect)
 {
   LodePNG::Decoder pngdec;
   
@@ -448,7 +299,7 @@ void loadTextures(const std::string& filename, std::vector<Texture>& textures, i
   loadTextures(image, textures, widths, heights, pngdec.getWidth(), pngdec.getHeight(), effect);
 }
 
-void loadTexturesAlpha(std::vector<unsigned char>& buffer, std::vector<Texture>& textures, int widths, int heights, int w, int h)
+void loadTexturesAlpha(std::vector<unsigned char>& buffer, std::vector<TextureGL>& textures, int widths, int heights, int w, int h)
 {
   int numx, numy;
    
@@ -470,14 +321,14 @@ void loadTexturesAlpha(std::vector<unsigned char>& buffer, std::vector<Texture>&
   for(int y = 0; y < numy; y++)
   for(int x = 0; x < numx; x++)
   {
-    textures[index].createAlpha(&buffer[0], w, h, x * widths, y * heights, (x + 1) * widths, (y + 1) * heights);
+    makeTextureAlphaFromBuffer(&textures[index], &buffer[0], w, h, x * widths, y * heights, (x + 1) * widths, (y + 1) * heights);
     index++;
   }
 } 
 
 /*
 */
-void loadTexturesAlpha(const std::string& filename, std::vector<Texture>& textures, int widths, int heights)
+void loadTexturesAlpha(const std::string& filename, std::vector<TextureGL>& textures, int widths, int heights)
 {
   LodePNG::Decoder pngdec;
   
@@ -902,7 +753,7 @@ AlphaEffect::AlphaEffect(int style, unsigned char alpha, const ColorRGB& alphaCo
   this->alphaColor = alphaColor;
 }
 
-void loadTexturesFromBase64PNG(std::vector<Texture>& textures, const std::string& base64, int widths, int heights, const AlphaEffect& effect)
+void loadTexturesFromBase64PNG(std::vector<TextureGL>& textures, const std::string& base64, int widths, int heights, const AlphaEffect& effect)
 {
   LodePNG::Decoder pngdec;
   std::vector<unsigned char> decoded64, pixels;
@@ -912,5 +763,156 @@ void loadTexturesFromBase64PNG(std::vector<Texture>& textures, const std::string
   loadTextures(pixels, textures, widths, heights, pngdec.getWidth(), pngdec.getHeight(), effect);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+void makeTextureSolid(ITexture* texture, const ColorRGB& color, size_t w, size_t h)
+{
+  texture->setSize(w, h);
+  
+  size_t u2 = texture->getU2();
+  unsigned char* tbuffer = texture->getBuffer();
+  
+  for(size_t y = 0; y < w; y++)
+  for(size_t x = 0; x < h; x++)
+  {
+    tbuffer[4 * u2 * y + 4 * x + 0] = color.r;
+    tbuffer[4 * u2 * y + 4 * x + 1] = color.g;
+    tbuffer[4 * u2 * y + 4 * x + 2] = color.b;
+    tbuffer[4 * u2 * y + 4 * x + 3] = color.a;
+  }
+
+  texture->update();
+}
+
+/*
+This loads the texture from a buffer or from a part of the buffer in the rectangle (x1,y1)-(x2,y2)
+To get full buffer, make x1 = -1
+w and h are width and height of the buffer, and the function assumes the memory of the buffer is big enough for that
+The width of the texture buffer becomes x2 - x1, y2 - y1
+Note that the buffer has an third dimension for the color channels and alpha
+*/
+void makeTextureFromBuffer(ITexture* texture, unsigned char* buffer, size_t w, size_t h, const AlphaEffect& effect, int x1, int y1, int x2, int y2)
+{
+  //out of range values means the user doesn't want to use sub-rectangle
+  if(x1 < 0 || y1 < 0 || x2 < 0 || y2 < 0 || x1 > (int)w || y1 > (int)h || x2 > (int)w || y2 > (int)h || x1 > x2 || y1 > y2)
+  {
+    x1 = 0;
+    y1 = 0;
+    x2 = w;
+    y2 = h;
+  }
+  
+  texture->setSize(x2 - x1, y2 - y1);
+  
+  size_t u2 = texture->getU2();
+  unsigned char* tbuffer = texture->getBuffer();
+
+  for(int y = 0; y < y2 - y1; y++)
+  for(int x = 0; x < x2 - x1; x++)
+  for(int c = 0; c < 4; c++)
+  {
+    tbuffer[4 * u2 * y + 4 * x + c] = buffer[4 * w * (y1 + y) + 4 * (x1 + x) + c];
+  }
+  
+  applyAlphaEffect(texture, effect);
+  texture->update();
+}
+
+namespace
+{
+  bool isPowerOfTwo(int n) //does not work properly if n is <= 0, then an extra test n > 0 should be added
+  {
+    return !(n & (n - 1)); //this checks if the integer n is a power of two or not
+  }
+}
+
+/*
+Load the texture from a file
+currently works with the png loader function
+*/
+void makeTextureFromPNGFile(ITexture* texture, const std::string& filename, const AlphaEffect& effect, int x1, int y1, int x2, int y2)
+{
+  LodePNG::Decoder pngdec;
+
+  std::vector<unsigned char> file;
+  LodePNG::loadFile(file, filename);
+  
+  //create the image and info std::vectors
+  std::vector<unsigned char> image;
+  
+  //load the png and if it gives an error return it
+  pngdec.decode(image, file);
+  if(pngdec.hasError())
+  {
+    std::cout << "\npng loading error " << pngdec.getError() << " in file " << filename;
+    return;
+  }
+  
+  makeTextureFromBuffer(texture, &image[0], pngdec.getWidth(), pngdec.getHeight(), effect, x1, y1, x2, y2);
+}
+
+/*
+Same as create, but only the alpha channel is affected, and no buffer is made so make sure the texture already has the correct size (and rgb colors) before you create its alpha channel.
+The RED channel of the input image is used to make this alpha channel!
+*/
+void makeTextureAlphaFromBuffer(ITexture* texture, unsigned char* buffer, size_t w, size_t h, int x1, int y1, int x2, int y2)
+{
+  //if anything is invalid, use full rectangle instead
+  if(w > texture->getU()) w = texture->getU();
+  if(h > texture->getV()) h = texture->getV();
+  if(x1 < 0 || y1 < 0 || x2 < 0 || y2 < 0 || x1 > (int)w || y1 > (int)h || x2 > (int)w || y2 > (int)h || x1 > x2 || y1 > y2)
+  {
+    x1 = 0;
+    y1 = 0;
+    x2 = w;
+    y2 = h;
+  }
+  
+  size_t u2 = texture->getU2();
+  unsigned char* tbuffer = texture->getBuffer();
+
+  for(int y = 0; y < y2 - y1; y++)
+  for(int x = 0; x < x2 - x1; x++)
+  {
+    tbuffer[4 * u2 * y + 4 * x + 3] = buffer[4 * w * (y1 + y) + 4 * (x1 + x) + 0];
+  }
+  
+  texture->update();
+}
+
+/*
+Load the texture's alpha channel from a file
+Make sure the alpha channel file is NOT larger than the current size the texture has!
+*/
+void makeTextureAlphaFromPNGFile(ITexture* texture, const std::string& filename, int x1, int y1, int x2, int y2)
+{
+  LodePNG::Decoder pngdec;
+  
+  std::vector<unsigned char> file;
+  LodePNG::loadFile(file, filename);
+  
+  //create the image and info std::vectors
+  std::vector<unsigned char> image;
+  
+  //load the png and if it gives an error return it
+  pngdec.decode(image, file);
+  if(pngdec.hasError())
+  {
+    std::cout << "\npng loading error " << pngdec.getError() << " in file " << filename;
+    return;
+  }
+  
+  makeTextureAlphaFromBuffer(texture, &image[0], pngdec.getWidth(), pngdec.getHeight(), x1, y1, x2, y2);
+}
+
+//Create an alpha channel for the texture with the wanted effect
+void applyAlphaEffect(ITexture* texture, const AlphaEffect& effect)
+{
+  createImageAlpha(texture->getBuffer(), texture->getU2(), texture->getV2(), effect);
+  texture->update();
+}
 
 } //namespace lpi

@@ -19,6 +19,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 */
 
 #include "lpi_text.h"
+#include "lpi_draw2dgl.h"
 #include "lodepng.h"
 
 
@@ -128,6 +129,8 @@ y: y position of top left corner of the letter
 markup: the text style, see in the header near Markup for an explanation
 */
 
+Drawer2DGL TEMPDRAWER; //todo: move font drawing functions to inside IDrawer2D instead of here
+
 void drawLetter(unsigned char n, int x, int y, const Markup& markup)
 {
   Font* FONT = markup.font;
@@ -142,24 +145,24 @@ void drawLetter(unsigned char n, int x, int y, const Markup& markup)
   if(markup.style & 128) shadowy -= 2;
   if(markup.style & 256) shadowy += 2;
   
-  int italic = 0;
+  int italic = 0; //todo: this doesn't work anymore, no function to draw skewed texture available currently!!
   if(markup.style & 1024) italic = 1;
   
   //draw the background, using the "completely filled" letter: ascii char 219
   if(markup.style & 1)
   {
-    (FONT->texture)[219].draw(x, y, markup.color2, -1, -1, italic);
+    TEMPDRAWER.drawTexture(&(FONT->texture)[219], x, y, markup.color2);
   }
   if(markup.style > 1)
   {
-    (FONT->texture)[n].draw(x + shadowx, y + shadowy, markup.color2, -1, -1, italic);
+    TEMPDRAWER.drawTexture(&(FONT->texture)[n], x + shadowx, y + shadowy, markup.color2);
   }
   
-  (FONT->texture)[n].draw(x, y, markup.color1, -1, -1, italic);
+  TEMPDRAWER.drawTexture(&(FONT->texture)[n], x, y, markup.color1);
   
   if(markup.style & 512) //bold
   {
-    (FONT->texture)[n].draw(x + 1, y, markup.color1, -1, -1, italic);
+    TEMPDRAWER.drawTexture(&(FONT->texture)[n], x + 1, y, markup.color1);
   }
 }
 

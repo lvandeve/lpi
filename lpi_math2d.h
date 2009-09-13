@@ -61,7 +61,7 @@ Vector2 operator*(const Vector2& v, double a);
 Vector2 operator*(double a, const Vector2& v);
 Vector2 operator/(const Vector2& v, double a);
 Vector2 operator+(const Vector2& v, const Vector2& w);
-Vector2 operator-(const Vector2& v, const Vector2& w);
+Vector2 operator-(const Vector2& v, const Vector2& w); //a - b is b----->a
 Vector2 operator-(const Vector2& v);
 
 double length(const Vector2& v);

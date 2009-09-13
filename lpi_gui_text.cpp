@@ -1088,7 +1088,7 @@ int InputBox::getLinesVisible() const
 
 void InputBox::drawWidget(IGUIDrawer& drawer) const
 {
-  panel.draw(x0, y0, getSizeX(), getSizeY());
+  panel.draw(drawer, x0, y0, getSizeX(), getSizeY());
   bar.draw(drawer);
   
   //draw the cursor if active

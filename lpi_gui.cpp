@@ -976,9 +976,9 @@ void Panel::setSize(int x, int y, int sizex, int sizey)
   this->setSizeY(sizey);
 }
 
-void Panel::drawWidget(IGUIDrawer& /*drawer*/) const
+void Panel::drawWidget(IGUIDrawer& drawer) const
 {
-  panel.draw(x0, y0, getSizeX(), getSizeY());
+  panel.draw(drawer, x0, y0, getSizeX(), getSizeY());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1050,10 +1050,10 @@ void Rule::setSize(int x, int y, int length)
   else this->setSizeY(length);
 }
 
-void Rule::drawWidget(IGUIDrawer& /*drawer*/) const
+void Rule::drawWidget(IGUIDrawer& drawer) const
 {
-  if(line.direction == H) line.draw(x0, y0, getSizeX());
-  else line.draw(x0, y0, getSizeY());
+  if(line.direction == H) line.draw(drawer, x0, y0, getSizeX());
+  else line.draw(drawer, x0, y0, getSizeY());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1623,8 +1623,8 @@ void Button::drawWidget(IGUIDrawer& drawer) const
     else if(style == 1) drawer.drawGUIPart(GP_BUTTON_OVER_PANEL, x0, y0, x1, y1);
     else if(style == 2) drawer.drawGUIPart(GP_BUTTON_DOWN_PANEL, x0, y0, x1, y1);
   }
-  if(enableImage) image[style]->draw(x0 + imageOffsetx, y0 + imageOffsety, imageColor[style]);
-  if(enableImage2) image2[style]->draw(x0 + imageOffsetx2, y0 + imageOffsety2, imageColor2[style]);
+  if(enableImage) drawer.drawTexture(image[style], x0 + imageOffsetx, y0 + imageOffsety, imageColor[style]);
+  if(enableImage2) drawer.drawTexture(image2[style], x0 + imageOffsetx2, y0 + imageOffsety2, imageColor2[style]);
   if(enableText && !enablePanel)
   {
     if(style == 0) drawer.drawGUIPartText(GPT_TEXT_BUTTON, text, x0, y0, x1, y1);
@@ -1948,11 +1948,13 @@ void Scrollbar::drawWidget(IGUIDrawer& drawer) const
   //in the drawRepeated functions, sizeButton is divided through two, so if the arrow buttons have a few transparent pixels, in one half of the button you see the background through, in the other half not
   if(direction == V)
   {
-    txBack->drawRepeated(x0, y0 + getSliderStart(), x1, y0 + getSliderEnd(), 1.0, 1.0, colorMod);
+    //todo: draw this using drawer.drawGUIPart
+    drawer.drawTextureRepeated(txBack, x0, y0 + getSliderStart(), x1, y0 + getSliderEnd(), colorMod);
   }
   else
   {
-    txBack->drawRepeated(x0 + getSliderStart(), y0, x0 + getSliderEnd(), y1, 1.0, 1.0, colorMod);
+    //todo: draw this using drawer.drawGUIPart
+    drawer.drawTextureRepeated(txBack, x0 + getSliderStart(), y0, x0 + getSliderEnd(), y1, colorMod);
   }
   buttonUp.draw(drawer);
   buttonDown.draw(drawer);
@@ -2102,7 +2104,7 @@ void ScrollbarPair::drawWidget(IGUIDrawer& drawer) const
 {
   if(venabled) vbar.draw(drawer);
   if(henabled) hbar.draw(drawer);
-  if((venabled && henabled && !conserveCorner) || ((venabled || henabled) && conserveCorner)) txCorner->draw(x1 - txCorner->getU(), y1 - txCorner->getV());
+  if((venabled && henabled && !conserveCorner) || ((venabled || henabled) && conserveCorner)) drawer.drawGUIPart(GP_SCROLLBARPAIR_CORNER, x1, y1, x1, y1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2226,7 +2228,7 @@ void Slider::drawWidget(IGUIDrawer& drawer) const
     int centerPos = slider.getRelCenterY();
     if(rulerCenter > centerPos) centerPos = rulerCenter;
     
-    ruler->draw(x0, y0 + centerPos - rulerCenter, getSizeX());
+    ruler->draw(drawer, x0, y0 + centerPos - rulerCenter, getSizeX());
     slider.draw(drawer);
   }
   else //if(direction == V)
@@ -2235,7 +2237,7 @@ void Slider::drawWidget(IGUIDrawer& drawer) const
     int centerPos = slider.getRelCenterX();
     if(rulerCenter > centerPos) centerPos = rulerCenter;
     
-    ruler->draw(x0 + centerPos - rulerCenter, y0, getSizeY());
+    ruler->draw(drawer, x0 + centerPos - rulerCenter, y0, getSizeY());
     slider.draw(drawer);
   }
 }
@@ -2405,10 +2407,10 @@ void Checkbox::makeSmall(int x, int y, bool checked, const GuiSet* set, int togg
   this->x0 = x;
   this->y0 = y;
   this->checked = checked;
-  this->texture[0] = set->smallCheckBox[0];
+  /*this->texture[0] = set->smallCheckBox[0];
   this->texture[1] = set->smallCheckBox[0];
   this->texture[2] = set->smallCheckBox[1];
-  this->texture[3] = set->smallCheckBox[1];
+  this->texture[3] = set->smallCheckBox[1];*/
   this->colorMod[0] = set->mainColor;
   this->colorMod[1] = set->mouseOverColor;
   this->colorMod[2] = set->mainColor;
@@ -2475,16 +2477,8 @@ void Checkbox::handleWidget(const IGUIInput& input)
 //draw the checkbox with a texture depending on it's state
 void Checkbox::drawWidget(IGUIDrawer& drawer) const
 {
-  /*if(checked) texture2->draw(x0, y0, colorMod2);
-  else texture1->draw(x0, y0, colorMod1);*/
-  int i = 0;
-  if(mouseOver(drawer.getInput())) i++;
-  if(checked) i += 2;
-  
-  texture[i]->draw(x0, y0, colorMod[i]);
-  
-  if(enableImage2)
-    texture2[i]->draw(x0, y0, colorMod2[i]);
+  if(checked) drawer.drawGUIPart(GP_CHECKBOX_ON, x0, y0, x1, y1);
+  else drawer.drawGUIPart(GP_CHECKBOX_OFF, x0, y0, x1, y1);
   
   if(enableText)
     print(text, x0 + textOffsetX, y0 + textOffsetY, markup);
@@ -2708,14 +2702,13 @@ void Text::setText(const std::string& text)
 Image is a simple texture but as child class of Element
 */
 
-Image::Image()
+Image::Image() : image(0)
 {
   this->visible = 0;
   this->active = 0;
-  this->image = &emptyTexture;
 }
 
-void Image::make(int x, int y, Texture* image, const ColorRGB& colorMod)
+void Image::make(int x, int y, ITexture* image, const ColorRGB& colorMod)
 {
   this->x0 = x;
   this->y0 = y;
@@ -2726,7 +2719,7 @@ void Image::make(int x, int y, Texture* image, const ColorRGB& colorMod)
   this->totallyEnable();
 }
 
-void Image::make(int x, int y, int sizex, int sizey, Texture* image, const ColorRGB& colorMod)
+void Image::make(int x, int y, int sizex, int sizey, ITexture* image, const ColorRGB& colorMod)
 {
   this->x0 = x;
   this->y0 = y;
@@ -2737,9 +2730,9 @@ void Image::make(int x, int y, int sizex, int sizey, Texture* image, const Color
   this->totallyEnable();
 }
 
-void Image::drawWidget(IGUIDrawer& /*drawer*/) const
+void Image::drawWidget(IGUIDrawer& drawer) const
 {
-  image->draw(x0, y0, colorMod, getSizeX(), getSizeY());
+  drawer.drawTextureSized(image, x0, y0, getSizeX(), getSizeY(), colorMod);
 }
 
 

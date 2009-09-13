@@ -487,5 +487,46 @@ bool clipLine(int x1, int y1, int x2, int y2, int & x3, int & y3, int & x4, int 
   }
 }
 
+void ADrawer2D::drawEllipse(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled)
+{
+  drawEllipseCentered((x0 + x1) / 2, (y0 + y1) / 2, x1 - x0, y1 - y0, color, filled);
+}
+
+void ADrawer2D::drawCircle(int x, int y, int radius, const ColorRGB& color, bool filled)
+{
+  drawEllipseCentered(x, y, radius, radius, color, filled);
+}
+
+void ADrawer2D::convertTextureIfNeeded(ITexture*& texture)
+{
+  if(!supportsTexture(texture))
+  {
+    ITexture* newtexture = createTexture(texture);
+    delete texture;
+    texture = newtexture;
+  }
+}
+
+void ADrawer2D::drawTextureCentered(const ITexture* texture, int x, int y, const ColorRGB& colorMod)
+{
+  drawTexture(texture, x - texture->getU() / 2, y - texture->getV() / 2, colorMod);
+}
+
+void ADrawer2D::drawTextureSizedCentered(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod)
+{
+  drawTextureSized(texture, x, y, x - sizex / 2, y - sizey / 2, colorMod);
+}
+
+//void ADrawer2D::drawTextureTransformedCentered(const ITexture* texture, int x, int y, const double* matrix, const ColorRGB& colorMod)
+//{
+//  double cx = texture.getU() / 2.0;
+//  double cy = texture.getV() / 2.0;
+//  
+//  double tx = matrix[0] * cx + matrix[1] * cy;
+//  double ty = matrix[2] * cx + matrix[3] * cy;
+//  
+//  drawTextureTransformed(texture, x + (int)(cx - tx), y + (int)(cy - ty), matrix, colorMod);
+//}
+
 } //end of namespace lpi
 

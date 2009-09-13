@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+//TODO: this file doesn't represent the current state of LPI anymore while the "drawers" are being refactored
 
 lpi units
 ---------

@@ -421,5 +421,189 @@ void drawGradientEllipse(int x, int y, double radiusx, double radiusy, const Col
   glEnd();
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+size_t Drawer2DGL::getWidth()
+{
+  return lpi::screenWidth();
+}
+
+size_t Drawer2DGL::getHeight()
+{
+  return lpi::screenHeight();
+}
+
+void Drawer2DGL::setScissor(int x0, int y0, int x1, int y1)
+{
+  lpi::setScissor(x0, y0, x1, y1);
+}
+
+void Drawer2DGL::setSmallestScissor(int x0, int y0, int x1, int y1)
+{
+  lpi::setSmallestScissor(x0, y0, x1, y1);
+}
+
+void Drawer2DGL::resetScissor()
+{
+  lpi::resetScissor();
+}
+
+void Drawer2DGL::drawPoint(int x, int y, const ColorRGB& color)
+{
+  lpi::drawPoint(x, y, color);
+}
+
+void Drawer2DGL::drawLine(int x0, int y0, int x1, int y1, const ColorRGB& color)
+{
+  lpi::drawLine(x0, y0, x1, y1, color);
+}
+
+void Drawer2DGL::drawBezier(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color)
+{
+  lpi::drawBezier(x0, y0, x1, y1, x2, y2, x3, y3, color);
+}
+
+    
+void Drawer2DGL::drawRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled)
+{
+  lpi::drawRectangle(x0, y0, x1, y1, color, filled);
+}
+
+void Drawer2DGL::drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled)
+{
+  lpi::drawTriangle(x0, y0, x1, y1, x2, y2, color, filled);
+}
+
+void Drawer2DGL::drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color, bool filled)
+{
+  lpi::drawQuad(x0, y0, x1, y1, x2, y2, x3, y3, color, filled);
+}
+
+void Drawer2DGL::drawCircle(int x, int y, int radius, const ColorRGB& color, bool filled)
+{
+  filled ? lpi::drawDisk(x, y, (double)radius, color) : lpi::drawCircle(x, y, (double)radius, color);
+}
+
+void Drawer2DGL::drawEllipseCentered(int x, int y, int radiusx, int radiusy, const ColorRGB& color, bool filled)
+{
+  filled ? lpi::drawFilledEllipse(x, y, radiusx, radiusy, color) : lpi::drawEllipse(x, y, radiusx, radiusy, color);
+}
+
+void Drawer2DGL::drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3)
+{
+  lpi::gradientQuad(x0, y0, x1, y1, x2, y2, x3, y3, color0, color1, color2, color3);
+}
+
+bool Drawer2DGL::supportsTexture(ITexture* texture)
+{
+  return dynamic_cast<TextureGL*>(texture);
+}
+
+ITexture* Drawer2DGL::createTexture()
+{
+  return new TextureGL();
+}
+
+ITexture* Drawer2DGL::createTexture(ITexture* texture)
+{
+  TextureGL* gl = new TextureGL();
+  makeTextureFromBuffer(gl
+                      , texture->getBuffer(), texture->getU2(), texture->getV2()
+                      , AE_Opaque
+                      , 0, 0, texture->getU(), texture->getV());
+  return gl;
+}
+
+    
+void Drawer2DGL::drawTexture(const ITexture* texture, int x, int y, const ColorRGB& colorMod)
+{
+  drawTextureSized(texture, x, y, texture->getU(), texture->getV(), colorMod);
+}
+
+void Drawer2DGL::drawTextureSized(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod)
+{
+  if(sizex == 0 || sizey == 0) return;
+  
+  const TextureGL* texturegl = dynamic_cast<const TextureGL*>(texture);
+  if(!texturegl) return;
+
+  glEnable(GL_TEXTURE_2D);
+
+  glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
+  texturegl->bind();
+
+  lpi::setOpenGLScissor(); //everything that draws something must always do this //TODO: investigate that statement
+  
+  double u3 = (double)texturegl->getU() / (double)texturegl->getU2();
+  double v3 = (double)texturegl->getV() / (double)texturegl->getV2();
+
+  //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
+  glBegin(GL_QUADS);
+    glTexCoord2d(0.0, 0.0); glVertex2d(x +          0, y +          0);
+    glTexCoord2d(+u3, 0.0); glVertex2d(x + (int)sizex, y +          0);
+    glTexCoord2d(+u3, +v3); glVertex2d(x + (int)sizex, y + (int)sizey);
+    glTexCoord2d(0.0, +v3); glVertex2d(x +          0, y + (int)sizey);
+  glEnd();
+}
+
+void Drawer2DGL::drawTextureRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, const ColorRGB& colorMod)
+{
+  if(x0 == x1 || y0 == y1) return;
+  
+  const TextureGL* texturegl = dynamic_cast<const TextureGL*>(texture);
+  if(!texturegl) return;
+  
+  glEnable(GL_TEXTURE_2D);
+
+  glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
+  texturegl->bind();
+
+  lpi::setOpenGLScissor(); //everything that draws something must always do this //TODO: investigate that statement
+  
+  bool simple = true;
+  if(x1 - x0 > (int)texture->getU() && texture->getU() != texture->getU2()) simple = false;
+  if(y1 - y0 > (int)texture->getV() && texture->getV() != texture->getV2()) simple = false;
+  
+  if(simple)
+  {
+    double coorx = (double(x1 - x0) / texturegl->getU());
+    double coory = (double(y1 - y0) / texturegl->getV());
+
+    //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
+    glBegin(GL_QUADS);
+      glTexCoord2d(0.0,       0.0); glVertex3d(x0, y0, 1);
+      glTexCoord2d(0.0,    +coory); glVertex3d(x0, y1, 1);
+      glTexCoord2d(+coorx, +coory); glVertex3d(x1, y1, 1);
+      glTexCoord2d(+coorx,    0.0); glVertex3d(x1, y0, 1);
+    glEnd();
+  }
+  else //need to tile manually, slow!!
+  {
+    int numx = (x1 - x0) / texture->getU();
+    int numy = (y1 - y0) / texture->getV();
+    
+    //TODO: this is just a very lazy implementation because I was doing something else. Fix the TODO's below!!!
+    //TODO: make this more efficient, e.g. quadstrip...
+    //TODO: also add the extra textures at the edge (I mean, now I only have the full tiles, at the sides are possibly also partial tiles)!!!!
+    for(int x = 0; x < numx; x++)
+    {
+      for(int y = 0; y < numy; y++)
+      {
+        int xb0 = x0 + x * texture->getU();
+        int yb0 = y0 + y * texture->getV();
+        int xb1 = xb0 + texture->getU();
+        int yb1 = yb0 + texture->getV();
+        
+        glBegin(GL_QUADS);
+          glTexCoord2d(0.0, 0.0); glVertex3d(xb0, yb0, 1);
+          glTexCoord2d(0.0, 1.0); glVertex3d(xb0, yb1, 1);
+          glTexCoord2d(1.0, 1.0); glVertex3d(xb1, yb1, 1);
+          glTexCoord2d(1.0, 0.0); glVertex3d(xb1, yb0, 1);
+        glEnd();
+      }
+    }
+  }
+}
+
 } //end of namespace lpi
 

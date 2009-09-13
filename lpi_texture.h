@@ -32,6 +32,49 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
+class ITexture
+{
+  public:
+  
+  /*
+  Get and set the size of the texture. The x-coordinate or width is called "u",
+  the y-coordinate or height is called "v".
+  NOTE: after using setSize, the contents of the buffer are in an undefined
+  state. You should then go set the pixel values to something.
+  */
+  virtual void setSize(size_t u, size_t v) = 0;
+  virtual size_t getU() const = 0;
+  virtual size_t getV() const = 0;
+  
+  /*
+  getU32 and getV2 return the size of the buffer that you get with getBuffer,
+  see the comments there for why this has to be used instead of getU and getV
+  */
+  virtual size_t getU2() const = 0;
+  virtual size_t getV2() const = 0;
+  
+  /*
+  getBuffers returns an editable buffer of the texture, consecutive in memory, with 4
+  unsigned chars per pixel (R, G, B, A).
+  The buffer does NOT have size (getU(), getV()), but (getU2(), getV2()). This is
+  because how the texture is put in memory is implementation dependent. For example
+  in the OpenGL texture, the buffer sizes are powers of two.
+  You CAN change the contents of the line! This can be used to change colors,
+  shapes, the image, ... on the texture. BUT: you need to call "update" after
+  done changing, or the effect MAY or MAY NOT be visible depending on the
+  implementation, platform, etc...
+  */
+  virtual unsigned char* getBuffer() = 0;
+  virtual const unsigned char* getBuffer() const = 0;
+  
+  /*
+  lets the implemenation know you changed some pixels of the texture,
+  so that it can make the changes visible if that is needed (e.g. upload
+  the texture again to video card memory). This may be inefficient so don't
+  call it after every pixel you change.
+  */
+  virtual void update() = 0;
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 //ALPHA/////////////////////////////////////////////////////////////////////////
@@ -66,7 +109,7 @@ class AlphaEffect
 void createImageAlpha(unsigned char* image, int w, int h, const AlphaEffect& effect);
 
 
-class Texture
+class TextureGL : public ITexture
 {
   /*
   Important:
@@ -75,63 +118,38 @@ class Texture
   That means that assigning or copying texture objects should not be done, unless the original one will be destroyed and only the new one will be used.
   */
   public:
+  
+    TextureGL();
     
+    virtual void setSize(size_t u, size_t v) { makeBuffer(u, v); }
     //width and height of the texture
-    int getU() const {return u;}
-    int getV() const {return v;}
+    virtual size_t getU() const {return u;}
+    virtual size_t getV() const {return v;}
     //width and height as powers of two (this will be the actual size of the buffer, because OpenGL only supports such textures)
-    int getU2() const {return u2;}
-    int getV2() const {return v2;}
+    virtual size_t getU2() const {return u2;}
+    virtual size_t getV2() const {return v2;}
     //multiply openGL texture coordinates between 0.0 and 1.0 with u3 and v3 to let OpenGL draw them correct even when not power of two
     double getU3() const {return u3;}
     double getV3() const {return v3;}
     
-    void makeBuffer(int u, int v); //creates memory for the buffer
-    void deleteBuffer(); //deletes memory of the buffer
+    virtual void update() { upload(); }
     
-    //load functions will make the buffer if it's still a null pointer
-    void create(const ColorRGB& color, int w, int h); //create texture with plain color of given size
-    void create(unsigned char* buffer, int w, int h, const AlphaEffect& effect = AE_Opaque, int x1=-1, int y1=-1, int x2=-1, int y2=-1);
-    void create(const std::string& filename, const AlphaEffect& effect = AE_Opaque, int x1=-1, int y1=-1, int x2=-1, int y2=-1);
-    void createAlpha(unsigned char* buffer, int w, int h, int x1=-1, int y1=-1, int x2=-1, int y2=-1);
-    void createAlpha(const std::string& filename, int x1=-1, int y1=-1, int x2=-1, int y2=-1);
-    void calculateAlpha(const AlphaEffect& effect); //uses the setAlpha function in api.cpp on the buffer  
-
-    
-    //2D drawing of textures
-    //do not draw the texture before binding it
-    //factors "scale" are allowed to be negative to obtain mirrored texture
-    void draw(int x, int y, const ColorRGB& colorMod = RGB_White, int sizex = -1, int sizey = -1, int skewx = 0, int skewy = 0) const;
-    void draw(int x, int y, double scale, const ColorRGB& colorMod = RGB_White) const;
-    void draw(int x, int y, double scalex, double scaley, const ColorRGB& colorMod = RGB_White) const;
-    void draw(int x1, int y1, int x2, int y2, const ColorRGB& colorMod = RGB_White) const;
-    void drawCentered(int x, int y, const ColorRGB& colorMod = RGB_White, int sizex = -1, int sizey = -1, int skewx = 0, int skewy = 0) const;
-    void drawCentered(int x, int y, double scale, const ColorRGB& colorMod = RGB_White) const;
-    void drawCentered(int x, int y, double scalex, double scaley, const ColorRGB& colorMod = RGB_White) const;
-    void drawRepeated(int x1, int y1, int x2, int y2, double scalex = 1.0, double scaley = 1.0, const ColorRGB& colorMod = RGB_White) const;
-    
-    unsigned char getPixel(int x, int y, int c) const
+    virtual unsigned char* getBuffer()
     {
-      return buffer[4 * u2 * y + 4 * x + c];
+      return &buffer[0];
     }
     
-    ColorRGB getPixel(int x, int y) const
+    virtual const unsigned char* getBuffer() const
     {
-      return ColorRGB(getPixel(x, y, 0), getPixel(x, y, 1), getPixel(x, y, 2), getPixel(x, y, 3));
-    }
-    
-    void setPixel(int x, int y, const ColorRGB& color)
-    {
-      buffer[4 * u2 * y + 4 * x + 0] = color.r;
-      buffer[4 * u2 * y + 4 * x + 1] = color.g;
-      buffer[4 * u2 * y + 4 * x + 2] = color.b;
-      buffer[4 * u2 * y + 4 * x + 3] = color.a;
+      return &buffer[0];
     }
     
     void bind() const; //set this texture for OpenGL
+  private:
     
-    Texture();
-    
+    void makeBuffer(int u, int v); //creates memory for the buffer
+    void deleteBuffer(); //deletes memory of the buffer
+
     void upload(); //sets the texture to openGL with correct datatype and such. Everytime something changes in the data in the buffer, upload it again to let the videocard/API know the changes. Also, use upload AFTER a screen is already set! And when the screen changes resolution, everything has to be uploaded again.
     void reupload(); //call this after you changed the screen (causing the textures to be erased from the video card)
     
@@ -139,14 +157,6 @@ class Texture
     void getAlignedBuffer(std::vector<unsigned char>& out);
     void setAlignedBuffer(const std::vector<unsigned char>& in);
     
-    //get buffer in power of two form (u2 * v2 RGBA pixels)
-    std::vector<unsigned char>& getOpenGLBuffer()
-    {
-      return buffer;
-    }
-    
-    std::vector<unsigned char>& getBuffer() { return buffer; }
-    const std::vector<unsigned char>& getBuffer() const { return buffer; }
     
     void operator*=(double a);
     
@@ -166,13 +176,26 @@ class Texture
     double v3; //should always be v / double(v2)
 };
 
-void loadTextures(std::vector<unsigned char>& buffer, std::vector<Texture>& textures, int widths, int heights, int w, int h, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
-void loadTextures(const std::string& filename, std::vector<Texture>& textures, int widths, int heights, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
-void loadTexturesAlpha(std::vector<unsigned char>& buffer, std::vector<Texture>& textures, int widths, int heights, int w, int h);
-void loadTexturesAlpha(const std::string& filename, std::vector<Texture>& textures, int widths, int heights);
-void loadTexturesFromBase64PNG(std::vector<Texture>& textures, const std::string& base64, int widths, int heights, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
+//create the texture contents from some source (solid color, buffer, file)
+void makeTextureSolid(ITexture* texture, const ColorRGB& color, size_t w, size_t h); //create texture with plain color of given size
+void makeTextureFromBuffer(ITexture* texture, unsigned char* buffer, size_t w, size_t h, const AlphaEffect& effect = AE_Opaque, int x1=-1, int y1=-1, int x2=-1, int y2=-1); //w and h are the size of the buffer
+void makeTextureFromPNGFile(ITexture* texture, const std::string& filename, const AlphaEffect& effect = AE_Opaque, int x1=-1, int y1=-1, int x2=-1, int y2=-1);
+//these affect only the alpha channel of the texture, e.g. use a greyscale PNG as alpha channel
+void makeTextureAlphaFromBuffer(ITexture* texture, unsigned char* buffer, size_t w, size_t h, int x1=-1, int y1=-1, int x2=-1, int y2=-1);
+void makeTextureAlphaFromPNGFile(ITexture* texture, const std::string& filename, int x1=-1, int y1=-1, int x2=-1, int y2=-1);
+//this applies an alpha effect to the texture after it already has some contents
+void applyAlphaEffect(ITexture* texture, const AlphaEffect& effect); //uses the setAlpha function in api.cpp on the buffer  
 
-extern Texture emptyTexture; //default texture for initializing pointers
+
+void loadTextures(std::vector<unsigned char>& buffer, std::vector<TextureGL>& textures, int widths, int heights, int w, int h, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
+void loadTextures(const std::string& filename, std::vector<TextureGL>& textures, int widths, int heights, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
+void loadTexturesAlpha(std::vector<unsigned char>& buffer, std::vector<TextureGL>& textures, int widths, int heights, int w, int h);
+void loadTexturesAlpha(const std::string& filename, std::vector<TextureGL>& textures, int widths, int heights);
+void loadTexturesFromBase64PNG(std::vector<TextureGL>& textures, const std::string& base64, int widths, int heights, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
+
+extern TextureGL emptyTexture; //default texture for initializing pointers
+
+typedef TextureGL Texture; //TODO: remove this again once everything uses ITexture
 
 
 } //namespace lpi

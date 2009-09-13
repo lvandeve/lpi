@@ -37,6 +37,10 @@ lpi_gui: an OpenGL GUI
 #include "lpi_gui_drawer.h"
 #include "lpi_gui_drawer_gl.h" //TODO: make lpi_gui independent of this header inclusion (requires removing all GuiSet references)
 
+/*
+TODO: all "BackPanel", "BackRule", "GuiSet", "Texture(GL)", ... will have to go away here!
+"ITexture" is allowed, but no implementations like "Texture(GL)"
+*/
 
 namespace lpi
 {
@@ -724,14 +728,15 @@ class Checkbox : public Element, public Label
   
   public:
     bool checked; //if true: checked, if false: unchecked
-    const Texture* texture[4]; //texture when off, mouseover&off, and checked, mouseover&checked
+    const Texture* texture[4]; //todo: remove this member, not used anymore
     ColorRGB colorMod[4];
     int toggleOnMouseUp;
     
     //front image
-    bool enableImage2;
+    bool enableImage2; //todo: not used anymore, old, remove this!!!
     const Texture* texture2[4]; //texture when off, mouseover&off, and checked, mouseover&checked
     ColorRGB colorMod2[4];
+    //todo: totally irellevant, old, remove these! No more textures are supposed to be in the Checkbox
     void addFrontImage(const Texture* texture1, const Texture* texture2, const Texture* texture3, const Texture* texture4, 
                        const ColorRGB& imageColor1 = RGB_White, const ColorRGB& imageColor2 = RGB_Grey, const ColorRGB& imageColor3 = RGB_White, const ColorRGB& imageColor4 = RGB_Grey);
     void addFrontImage(const Texture* texture);
@@ -807,13 +812,15 @@ class Text : public Element
 
 class Image : public Element
 {
+  private:
+    ITexture* image;
+    
   public:
-    Texture* image;
     ColorRGB colorMod;
     virtual void drawWidget(IGUIDrawer& drawer) const;
     Image();
-    void make(int x, int y, Texture* image=&builtInTexture[37], const ColorRGB& colorMod = RGB_White);
-    void make(int x, int y, int sizex, int sizey, Texture* image=&builtInTexture[37], const ColorRGB& colorMod = RGB_White);
+    void make(int x, int y, ITexture* image=&builtInTexture[37], const ColorRGB& colorMod = RGB_White);
+    void make(int x, int y, int sizex, int sizey, ITexture* image=&builtInTexture[37], const ColorRGB& colorMod = RGB_White);
 };
 
 class Tabs : public ElementComposite

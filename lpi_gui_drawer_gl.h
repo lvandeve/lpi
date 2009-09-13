@@ -22,11 +22,12 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #pragma once
 
 #include "lpi_gui_drawer.h"
-
+#include "lpi_draw2dgl.h"
 #include "lpi_gui_base.h"
 #include "lpi_color.h"
 #include "lpi_texture.h"
 #include "lpi_text.h"
+#include "lpi_gui_input_sdl.h"
 
 namespace lpi
 {
@@ -80,7 +81,7 @@ class BackPanel
   const Texture* t22; //bottom right corner
 
   //draw the panel at x, y position, with given width and height
-  void draw(int x, int y, int width, int height, const ColorRGB& colorMod=RGB_White) const;
+  void draw(IDrawer2D& drawer, int x, int y, int width, int height, const ColorRGB& colorMod=RGB_White) const;
   
   //constructors
   BackPanel();
@@ -120,7 +121,7 @@ class BackRule
   const Texture* t2; //right or bottom corner
 
   //draw the line at x, y position, with given length
-  void draw(int x, int y, int length) const;
+  void draw(IDrawer2D& drawer, int x, int y, int length) const;
   
   //constructors
   BackRule();
@@ -201,31 +202,27 @@ struct GuiSet
 
 extern GuiSet builtInGuiSet;
 
-class GUIDrawerGL : public IGUIDrawer
+class GUIDrawerGL : public AGUIDrawer
 {
   private:
     GuiSet* guiset;
+    GUIInputSDL input;
+    Drawer2DGL drawer;
+  
+  protected:
+  
+    virtual IDrawer2D& getDrawer() { return drawer; }
     
   public:
     GUIDrawerGL(GuiSet* set);
     
     static void init(); //must be called after screen is created
     
-    virtual void drawLine(int x0, int y0, int x1, int y1, const ColorRGB& color);
-    virtual void drawRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled);
-    virtual void drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled);
-    virtual void drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color, bool filled);
-    
-    virtual void drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3);
     
     virtual void drawText(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W);
     virtual void drawTextCentered(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W);
     
-    virtual void drawTexture(int x, int y, const Texture* texture, const ColorRGB& colorMod = RGB_White);
-    
-    virtual void setScissor(int x0, int y0, int x1, int y1);
-    virtual void setSmallestScissor(int x0, int y0, int x1, int y1);
-    virtual void resetScissor();
+
     
     //not all GUI parts use all input parameters! only x0 and y0 are always used.
     virtual void drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, bool inactive = false);
