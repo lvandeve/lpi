@@ -38,8 +38,8 @@ lpi_gui: an OpenGL GUI
 #include "lpi_gui_drawer_gl.h" //TODO: make lpi_gui independent of this header inclusion (requires removing all GuiSet references)
 
 /*
-TODO: all "BackPanel", "BackRule", "GuiSet", "Texture(GL)", ... will have to go away here!
-"ITexture" is allowed, but no implementations like "Texture(GL)"
+TODO: all "BackPanel", "BackRule", "GuiSet", "ITexture(GL)", ... will have to go away here!
+"ITexture" is allowed, but no implementations like "ITexture(GL)"
 */
 
 namespace lpi
@@ -247,14 +247,14 @@ class Button : public Element
     
     ////part "back image"
     bool enableImage;
-    const Texture* image[3]; //0=normal, 1=mouse over, 2=mouse down
+    const ITexture* image[3]; //0=normal, 1=mouse over, 2=mouse down
     int imageOffsetx;
     int imageOffsety;
     ColorRGB imageColor[3]; //0=normal, 1=mouse over, 2=mouse down
     
     ////part "front image"
     bool enableImage2;
-    const Texture* image2[3]; //0=normal, 1=mouse over, 2=mouse down
+    const ITexture* image2[3]; //0=normal, 1=mouse over, 2=mouse down
     int imageOffsetx2;
     int imageOffsety2;
     ColorRGB imageColor2[3]; //0=normal, 1=mouse over, 2=mouse down
@@ -286,14 +286,14 @@ class Button : public Element
 
     //image only constructor (without offset)
     void makeImage(int x, int y,
-                   const Texture* texture1, const Texture* texture2, const Texture* texture3, const ColorRGB& imageColor1 = RGB_White, const ColorRGB& imageColor2 = RGB_Brightred, const ColorRGB& imageColor3 = RGB_Grey); //image
+                   const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ColorRGB& imageColor1 = RGB_White, const ColorRGB& imageColor2 = RGB_Brightred, const ColorRGB& imageColor3 = RGB_Grey); //image
     
-    void makeImage(int x, int y,  const Texture* texture123, const ColorRGB& imageColor1 = RGB_White, const ColorRGB& imageColor2 = RGB_Brightred, const ColorRGB& imageColor3 = RGB_Grey);
+    void makeImage(int x, int y,  const ITexture* texture123, const ColorRGB& imageColor1 = RGB_White, const ColorRGB& imageColor2 = RGB_Brightred, const ColorRGB& imageColor3 = RGB_Grey);
     
-    void addFrontImage(const Texture* texture1, const Texture* texture2, const Texture* texture3,
+    void addFrontImage(const ITexture* texture1, const ITexture* texture2, const ITexture* texture3,
                        const ColorRGB& imageColor1 = RGB_White, const ColorRGB& imageColor2 = RGB_Brightred, const ColorRGB& imageColor3 = RGB_Grey);
     
-    void addFrontImage(const Texture* texture);
+    void addFrontImage(const ITexture* texture);
     
     //text only constructor (without offset)
     void makeText(int x, int y, //basic properties
@@ -338,13 +338,13 @@ class Scrollbar : public ElementComposite
     
     int speedMode;
     
-    const Texture* txUp; //texture of the "up" button (left button if it's horizontal)
-    const Texture* txUpOver; //on mouseover
-    const Texture* txDown; //texture of the "down" button (right button if horizontal)
-    const Texture* txDownOver; //mouseover
-    const Texture* txScroller; //texture of the center button (the scroller)
-    const Texture* txScrollerOver; //mouseover
-    const Texture* txBack; //texture of the background (the slider)
+    const ITexture* txUp; //texture of the "up" button (left button if it's horizontal)
+    const ITexture* txUpOver; //on mouseover
+    const ITexture* txDown; //texture of the "down" button (right button if horizontal)
+    const ITexture* txDownOver; //mouseover
+    const ITexture* txScroller; //texture of the center button (the scroller)
+    const ITexture* txScrollerOver; //mouseover
+    const ITexture* txBack; //texture of the background (the slider)
         
     //only one shared color modifier and a color modifier on mouseover/down
     ColorRGB colorMod;
@@ -401,7 +401,7 @@ class ScrollbarPair : public ElementComposite
     Scrollbar vbar;
     Scrollbar hbar;
     
-    const Texture* txCorner; //the corner piece between the two scrollbars
+    const ITexture* txCorner; //the corner piece between the two scrollbars
         
     virtual void handleWidget(const IGUIInput& input);
     virtual void drawWidget(IGUIDrawer& drawer) const;
@@ -668,7 +668,7 @@ class Window : public ElementComposite
     
     ////optional part "top"
     Rule top; //not a "back" one, so that you can easily detect mouse on it, for dragging
-    void addTop(Texture * t0 = &builtInTexture[47], int offsetLeft = 0, int offsetRight = 0, int offsetTop = 0, const ColorRGB& colorMod = ColorRGB(96, 96, 255));
+    void addTop(ITexture * t0 = &builtInTexture[47], int offsetLeft = 0, int offsetRight = 0, int offsetTop = 0, const ColorRGB& colorMod = ColorRGB(96, 96, 255));
     bool enableTop; //enable the top bar of the window (then you can drag it with this instead of everywhere on the window)
 
     ////optional part "title"
@@ -695,7 +695,7 @@ class Window : public ElementComposite
               const GuiSet* set = &builtInGuiSet);
     void makeUntextured(int x, int y, int sizex, int sizey, const ColorRGB& fillColor);
     void makeTextured(int x, int y, int sizex, int sizey,
-                      const Texture* t00, const ColorRGB& colorMod = RGB_White);
+                      const ITexture* t00, const ColorRGB& colorMod = RGB_White);
          
     int getRelContainerStart() const { return container.getY0() - y0; }
     
@@ -728,18 +728,18 @@ class Checkbox : public Element, public Label
   
   public:
     bool checked; //if true: checked, if false: unchecked
-    const Texture* texture[4]; //todo: remove this member, not used anymore
+    const ITexture* texture[4]; //todo: remove this member, not used anymore
     ColorRGB colorMod[4];
     int toggleOnMouseUp;
     
     //front image
     bool enableImage2; //todo: not used anymore, old, remove this!!!
-    const Texture* texture2[4]; //texture when off, mouseover&off, and checked, mouseover&checked
+    const ITexture* texture2[4]; //texture when off, mouseover&off, and checked, mouseover&checked
     ColorRGB colorMod2[4];
     //todo: totally irellevant, old, remove these! No more textures are supposed to be in the Checkbox
-    void addFrontImage(const Texture* texture1, const Texture* texture2, const Texture* texture3, const Texture* texture4, 
+    void addFrontImage(const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ITexture* texture4, 
                        const ColorRGB& imageColor1 = RGB_White, const ColorRGB& imageColor2 = RGB_Grey, const ColorRGB& imageColor3 = RGB_White, const ColorRGB& imageColor4 = RGB_Grey);
-    void addFrontImage(const Texture* texture);
+    void addFrontImage(const ITexture* texture);
     
     //text
     bool enableText; //the text is a title drawn next to the checkbox, with automaticly calculated position
@@ -762,10 +762,10 @@ class Checkbox : public Element, public Label
     void setChecked(bool check) { checked = check; }
     
     //give it alternative textures than those in the GuiSet
-    void setTexturesAndColors(const Texture* texture1, const Texture* texture2, const Texture* texture3, const Texture* texture4, 
+    void setTexturesAndColors(const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ITexture* texture4, 
                               const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3, const ColorRGB& color4);
     //without mouseOver effect
-    void setTexturesAndColors(const Texture* texture1, const Texture* texture2, 
+    void setTexturesAndColors(const ITexture* texture1, const ITexture* texture2, 
                               const ColorRGB& color1, const ColorRGB& color2);
 };
 

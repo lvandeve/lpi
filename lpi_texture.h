@@ -108,6 +108,31 @@ class AlphaEffect
 
 void createImageAlpha(unsigned char* image, int w, int h, const AlphaEffect& effect);
 
+/*
+Texture implemented with a simple buffer.
+Maybe the name is confusing, but this is NOT a buffer of textures!
+*/
+class TextureBuffer : public ITexture
+{
+  private:
+    std::vector<unsigned char> buffer;
+    size_t u;
+    size_t v;
+    
+  public:
+  
+  virtual void setSize(size_t u, size_t v);
+  virtual size_t getU() const;
+  virtual size_t getV() const;
+  
+  virtual size_t getU2() const;
+  virtual size_t getV2() const;
+  
+  virtual unsigned char* getBuffer();
+  virtual const unsigned char* getBuffer() const;
+  
+  virtual void update();
+};
 
 class TextureGL : public ITexture
 {

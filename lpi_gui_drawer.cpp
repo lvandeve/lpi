@@ -77,19 +77,19 @@ void AGUIDrawer::drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2
   getDrawer().drawGradientQuad(x0, y0, x1, y1, x2, y2, x3, y3, color0, color1, color2, color3);
 }
 
-void AGUIDrawer::setScissor(int x0, int y0, int x1, int y1)
+void AGUIDrawer::pushScissor(int x0, int y0, int x1, int y1)
 {
-  getDrawer().setScissor(x0, y0, x1, y1);
+  getDrawer().pushScissor(x0, y0, x1, y1);
 }
 
-void AGUIDrawer::setSmallestScissor(int x0, int y0, int x1, int y1)
+void AGUIDrawer::pushSmallestScissor(int x0, int y0, int x1, int y1)
 {
-  getDrawer().setSmallestScissor(x0, y0, x1, y1);
+  getDrawer().pushSmallestScissor(x0, y0, x1, y1);
 }
 
-void AGUIDrawer::resetScissor()
+void AGUIDrawer::popScissor()
 {
-  getDrawer().resetScissor();
+  getDrawer().popScissor();
 }
 
 bool AGUIDrawer::supportsTexture(ITexture* texture)

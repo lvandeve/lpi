@@ -317,9 +317,9 @@ class DynamicColor : public TDymamicPageControl<ColorRGB>
     virtual void drawWidget(IGUIDrawer& drawer) const
     {
       box.draw(drawer);
-      drawer.setScissor(edit.getX0(), edit.getY0(), edit.getX1(), edit.getY1());
+      drawer.pushScissor(edit.getX0(), edit.getY0(), edit.getX1(), edit.getY1());
       edit.draw(drawer);
-      drawer.resetScissor();
+      drawer.popScissor();
     }
 };
 

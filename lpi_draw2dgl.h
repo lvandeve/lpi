@@ -40,9 +40,9 @@ class Drawer2DGL : public ADrawer2D
     virtual size_t getWidth();
     virtual size_t getHeight();
     
-    virtual void setScissor(int x0, int y0, int x1, int y1);
-    virtual void setSmallestScissor(int x0, int y0, int x1, int y1); //the result will be smaller than the given coordinates and the last active scissor
-    virtual void resetScissor(); //pops the last set scissor, bringing the previous one back (it works like a stack, "set" pushes, "reset" pops)
+    virtual void pushScissor(int x0, int y0, int x1, int y1);
+    virtual void pushSmallestScissor(int x0, int y0, int x1, int y1); //the result will be smaller than the given coordinates and the last active scissor
+    virtual void popScissor(); //pops the last set scissor, bringing the previous one back (it works like a stack, "set" pushes, "reset" pops)
     
     virtual void drawPoint(int x, int y, const ColorRGB& color);
     virtual void drawLine(int x0, int y0, int x1, int y1, const ColorRGB& color);

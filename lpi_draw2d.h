@@ -18,8 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef LPI_DRAW2D_H_INCLUDED
-#define LPI_DRAW2D_H_INCLUDED
+#pragma once
 
 #include "lpi_color.h"
 #include "lpi_texture.h"
@@ -50,9 +49,9 @@ class IDrawer2D
     
     ///scissor, limited drawing area
     
-    virtual void setScissor(int x0, int y0, int x1, int y1) = 0;
-    virtual void setSmallestScissor(int x0, int y0, int x1, int y1) = 0; //the result will be smaller than the given coordinates and the last active scissor
-    virtual void resetScissor() = 0; //pops the last set scissor, bringing the previous one back (it works like a stack, "set" pushes, "reset" pops)
+    virtual void pushScissor(int x0, int y0, int x1, int y1) = 0;
+    virtual void pushSmallestScissor(int x0, int y0, int x1, int y1) = 0; //the result will be smaller than the given coordinates and the last active scissor
+    virtual void popScissor() = 0; //pops the last set scissor, bringing the previous one back (it works like a stack)
   
     ///thin shapes
     
@@ -123,22 +122,23 @@ class ADrawer2D : public IDrawer2D //abstract IDrawer2D already implements some 
 };
 
 
-//OLD interface, todo: remove
-void drawLine(unsigned char* buffer, int w, int h, int x1, int y1, int x2, int y2, const ColorRGB& color);
-void drawLine(unsigned char* buffer, int w, int h, int x1, int y1, int x2, int y2, const ColorRGB& color, int clipx1, int clipy1, int clipx2, int clipy2);
-void horLine(unsigned char* buffer, int w, int h, int y, int x1, int x2, const ColorRGB& color);
-void verLine(unsigned char* buffer, int w, int h, int x, int y1, int y2, const ColorRGB& color);
-void drawCircle(unsigned char* buffer, int w, int h, int x, int y, int radius, const ColorRGB& color);
-void drawDisk(unsigned char* buffer, int buffer_w, int buffer_h, int xc, int yc, int radius, const ColorRGB& color);
-void drawEllipse(unsigned char* buffer, int w, int h, int cx, int cy, int radiusx, int radiusy, const ColorRGB& color);
-void drawFilledEllipse(unsigned char* buffer, int w, int h, int cx, int cy, int radiusx, int radiusy, const ColorRGB& color);
-void drawBezier(unsigned char* buffer, int w, int h, int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color);
-//drawPixel checks if the pixel is inside the buffer (it's simply not drawn if outside)
-void drawPixel(unsigned char* buffer, int w, int h, int x, int y, const ColorRGB& color);
-//pset does NOT check if the pixel is actually in the buffer (risk for out of bounds but much faster)
-void pset(unsigned char* buffer, int w, int x, int y, const ColorRGB& color);
+
+
+////OLD interface, todo: remove
+//void drawLine(unsigned char* buffer, int w, int h, int x1, int y1, int x2, int y2, const ColorRGB& color);
+//void drawLine(unsigned char* buffer, int w, int h, int x1, int y1, int x2, int y2, const ColorRGB& color, int clipx1, int clipy1, int clipx2, int clipy2);
+//void horLine(unsigned char* buffer, int w, int h, int y, int x1, int x2, const ColorRGB& color);
+//void verLine(unsigned char* buffer, int w, int h, int x, int y1, int y2, const ColorRGB& color);
+//void drawCircle(unsigned char* buffer, int w, int h, int x, int y, int radius, const ColorRGB& color);
+//void drawDisk(unsigned char* buffer, int buffer_w, int buffer_h, int xc, int yc, int radius, const ColorRGB& color);
+//void drawEllipse(unsigned char* buffer, int w, int h, int cx, int cy, int radiusx, int radiusy, const ColorRGB& color);
+//void drawFilledEllipse(unsigned char* buffer, int w, int h, int cx, int cy, int radiusx, int radiusy, const ColorRGB& color);
+//void drawBezier(unsigned char* buffer, int w, int h, int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color);
+////drawPixel checks if the pixel is inside the buffer (it's simply not drawn if outside)
+//void drawPixel(unsigned char* buffer, int w, int h, int x, int y, const ColorRGB& color);
+
+
 
 
 } //end of namespace lpi
 
-#endif

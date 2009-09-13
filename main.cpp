@@ -142,15 +142,15 @@ struct SpawnTexts
 
 SpawnTexts spawns;
 
-void littletemporarytest()
-{
-  std::vector<unsigned char> buffer(512*512*4, 0);
-  lpi::drawCircle(&buffer[0], 512, 512, 255, 255, 100, lpi::RGB_Lightblue);
-  lpi::drawDisk(&buffer[0], 512, 512, 255, 255, 80, lpi::RGB_Lightred);
-  lpi::drawBezier(&buffer[0],512,512, 60,10, 70,10, 75,20, 55,15, lpi::RGB_Yellow);
-  lpi::drawFilledEllipse(&buffer[0], 512, 512, 255, 255, 150, 50, lpi::RGBA_Lightblue(128));
-  LodePNG::encode("testje.png", buffer, 512, 512);
-}
+//void littletemporarytest()
+//{
+  //std::vector<unsigned char> buffer(512*512*4, 0);
+  //lpi::drawCircle(&buffer[0], 512, 512, 255, 255, 100, lpi::RGB_Lightblue);
+  //lpi::drawDisk(&buffer[0], 512, 512, 255, 255, 80, lpi::RGB_Lightred);
+  //lpi::drawBezier(&buffer[0],512,512, 60,10, 70,10, 75,20, 55,15, lpi::RGB_Yellow);
+  //lpi::drawFilledEllipse(&buffer[0], 512, 512, 255, 255, 150, 50, lpi::RGBA_Lightblue(128));
+  //LodePNG::encode("testje.png", buffer, 512, 512);
+//}
 
 int main(int, char*[]) //the arguments have to be given here, or DevC++ can't link to SDL for some reason
 {//std::cout<<sizeof(lpi::gui::Element)<<std::endl;//littletemporarytest();

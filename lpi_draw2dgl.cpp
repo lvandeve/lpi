@@ -433,17 +433,17 @@ size_t Drawer2DGL::getHeight()
   return lpi::screenHeight();
 }
 
-void Drawer2DGL::setScissor(int x0, int y0, int x1, int y1)
+void Drawer2DGL::pushScissor(int x0, int y0, int x1, int y1)
 {
   lpi::setScissor(x0, y0, x1, y1);
 }
 
-void Drawer2DGL::setSmallestScissor(int x0, int y0, int x1, int y1)
+void Drawer2DGL::pushSmallestScissor(int x0, int y0, int x1, int y1)
 {
   lpi::setSmallestScissor(x0, y0, x1, y1);
 }
 
-void Drawer2DGL::resetScissor()
+void Drawer2DGL::popScissor()
 {
   lpi::resetScissor();
 }

@@ -277,7 +277,7 @@ class Canvas : public Element
     double hardness; //hardness of the brush from 0.0 to 1.0
     double opacity; //opacity of the brush from 0.0 to 1.0
     
-    int border;
+    int border; //TODO: old, remove this
     
     virtual void drawWidget(IGUIDrawer& drawer) const;
     virtual void handleWidget(const IGUIInput& input);
