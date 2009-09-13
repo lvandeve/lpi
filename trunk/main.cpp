@@ -273,12 +273,16 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   lpi::gui::HueCircle_HSV_HS hsv;
   hsv.resize(0,0,120,120);
   hsv.setAdaptiveColor(lpi::RGBA_Lightred(192));
+  hsv.setValueAxial(1.0);
   tabs.getTabContent(2).pushTopAt(&hsv, 20, 50);
   lpi::ColorRGB color;
   lpi::gui::PColorPlane colorplane(&color);
   colorplane.resize(0, 0, 64, 48);
   //colorplane.color = lpi::ColorRGB(128, 255, 255, 192);
   tabs.getTabContent(2).pushTopAt(&colorplane, 144, 50);
+  lpi::gui::Canvas canvas(lpi::gGUIDrawer);
+  canvas.make(0, 0, 128, 128);
+  tabs.getTabContent(2).pushTopAt(&canvas, 144, 100);
   
   lpi::gui::Checkbox wcb;
   wcb.make(0, 0);
@@ -306,7 +310,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     lpi::drawBezier(600,100, 700,100, 750,200, 550,150, lpi::RGB_Lightred);
     lpi::drawCircle(600, 400, 110, lpi::ColorRGB(128, 255, 128, 255));
     
-    lpi::gui::builtInTexture[37].draw(0, 50);
+    lpi::gGUIDrawer.drawTexture(&lpi::gui::builtInTexture[37], 0, 50);
     
     dyn.controlToValue();
     //dyn.valueToControl();
@@ -316,6 +320,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     
     lpi::ColorHSV colorHSV(hsv.getValueAngle() * 255, hsv.getValueAxial() * 255, 255);
     color = lpi::HSVtoRGB(colorHSV);
+    canvas.leftColor = color;
     
     spawns.draw();
     spawns.handle();

@@ -73,7 +73,7 @@ double distancesq(const Vector3& v, const Vector3& w);
 double manhattan(const Vector3& v, const Vector3& w); //manhattan distance
 double dot(const Vector3& v, const Vector3& w);
 Vector3 cross(const Vector3& v, const Vector3& w);
-Vector3 operator-(const Vector3& v, const Vector3& w);
+Vector3 operator-(const Vector3& v, const Vector3& w); //a - b is b----->a
 Vector3 operator-(const Vector3& v);
 Vector3 operator+(const Vector3& v, const Vector3& w);
 Vector3 operator*(const Vector3& v, double a);

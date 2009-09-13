@@ -267,7 +267,8 @@ class Canvas : public Element
     int oldMouseX;
     int oldMouseY;
     bool validOldMousePos;
-  
+    ITexture** canvas; //the OpenGL canvas texture (gets updated with canvasData all the time) (double pointer due to a const-correctness situation)
+    
   public:
     ColorRGB leftColor; //color of the brush for left mouse button
     ColorRGB rightColor; //color of the brush for right mouse button
@@ -276,8 +277,6 @@ class Canvas : public Element
     double hardness; //hardness of the brush from 0.0 to 1.0
     double opacity; //opacity of the brush from 0.0 to 1.0
     
-    Texture canvas; //the OpenGL canvas texture (gets updated with canvasData all the time)
-    
     int border;
     
     virtual void drawWidget(IGUIDrawer& drawer) const;
@@ -285,9 +284,10 @@ class Canvas : public Element
     
     void clear(); //clear the whole texture to backColor, deleting it's previous contents
     
-    Canvas();
-    void make(int x, int y, int sizex, int sizey, const ColorRGB& backColor = RGB_White, int border = 0, const ColorRGB& leftColor = RGB_Black, const ColorRGB& rightColor = RGB_Red, double size = 1.0, double hardness = 1.0, double opacity = 1.0);
-    void setBrush(const ColorRGB& leftColor = RGB_Black, const ColorRGB& rightColor = RGB_Red, double size = 1.0, double hardness = 1.0, double opacity = 1.0);
+    Canvas(IGUIDrawer& drawer);
+    ~Canvas();
+    void make(int x, int y, int sizex, int sizey, const ColorRGB& backColor = RGB_White, int border = 0, const ColorRGB& leftColor = RGB_Black, const ColorRGB& rightColor = RGB_Black, double size = 1.0, double hardness = 1.0, double opacity = 1.0);
+    void setBrush(const ColorRGB& leftColor = RGB_Black, const ColorRGB& rightColor = RGB_Black, double size = 1.0, double hardness = 1.0, double opacity = 1.0);
 };
 
 

@@ -20,7 +20,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #pragma once
 
-#include "lpi_gui.h"
+#include "lpi_gui_base.h" //included because we need GUIMouseButton, todo: make lpi_gui_input.h and put that in there as well as the interface of the class here
 #include "lpi_event.h"
 
 namespace lpi

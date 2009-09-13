@@ -187,12 +187,12 @@ void DropMenu::addOption(const std::string& text, int id)
 
 void DropMenu::drawWidget(IGUIDrawer& drawer) const
 {
-  panel.draw(x0, y0, getSizeX(), getSizeY());
+  panel.draw(drawer, x0, y0, getSizeX(), getSizeY());
 
   for(unsigned long i = 0; i < menuButton.size(); i++)
   {
     if(!separator[i]) menuButton[i].draw(drawer);
-    else hrule.draw(x0 + markup1.getWidth() / 2, y0 + 2 + (markup1.getHeight() + 2) * i + markup1.getHeight() / 2, getSizeX() - markup1.getWidth());
+    else hrule.draw(drawer, x0 + markup1.getWidth() / 2, y0 + 2 + (markup1.getHeight() + 2) * i + markup1.getHeight() / 2, getSizeX() - markup1.getWidth());
   }
 }
 
@@ -408,13 +408,13 @@ void Droplist::addOption(const std::string& text)
 
 void Droplist::drawWidget(IGUIDrawer& drawer) const
 {
-  topPanel.draw(x0, y0, sizexc, sizeyc);
+  topPanel.draw(drawer, x0, y0, sizexc, sizeyc);
   listButton.draw(drawer);
   print(textButton[selected].text, x0, y0 + sizeyc / 2 - markup3.getHeight() / 2, markup3);
 
   if(opened)
   {
-    listPanel.draw(x0, y0 + sizeyc, sizexo, sizeyo - sizeyc);
+    listPanel.draw(drawer, x0, y0 + sizeyc, sizexo, sizeyo - sizeyc);
     for(unsigned long i = 0; i < textButton.size(); i++) textButton[i].draw(drawer);
     bar.draw(drawer);
   }
@@ -676,10 +676,10 @@ void Painter::make(int x, int y, int sizex, int sizey, const ColorRGB& color)
   this->totallyEnable();
 }
 
-void Painter::drawWidget(IGUIDrawer& /*drawer*/) const
+void Painter::drawWidget(IGUIDrawer& drawer) const
 {
   //first draw the rectangle if the alpha channel of color is > 0
-  if(color.a > 0) drawRectangle(x0, y0, x1, y1, color);
+  if(color.a > 0) drawer.drawRectangle(x0, y0, x1, y1, color, true);
   
   //then draw the queued elements, in order
   for(unsigned long i = 0; i < stack.size(); i++)
@@ -687,19 +687,19 @@ void Painter::drawWidget(IGUIDrawer& /*drawer*/) const
     switch(stack[i].type)
     {
       case 0: 
-        drawPoint(stack[i].x0 + x0, stack[i].y0 + y0, stack[i].color);
+        drawer.drawPoint(stack[i].x0 + x0, stack[i].y0 + y0, stack[i].color);
         break;
       case 1: 
-        drawLine(stack[i].x0 + x0, stack[i].y0 + y0, stack[i].x1 + x0, stack[i].y1 + y0, stack[i].color);
+        drawer.drawLine(stack[i].x0 + x0, stack[i].y0 + y0, stack[i].x1 + x0, stack[i].y1 + y0, stack[i].color);
         break;
       case 2: 
-        stack[i].texture->draw(stack[i].x0 + x0, stack[i].y0 + y0, stack[i].color);
+        drawer.drawTexture(stack[i].texture, stack[i].x0 + x0, stack[i].y0 + y0, stack[i].color);
         break;
       case 3: 
-        stack[i].texture->drawCentered(stack[i].x0 + x0, stack[i].y0 + y0, stack[i].color);
+        drawer.drawTextureCentered(stack[i].texture, stack[i].x0 + x0, stack[i].y0 + y0, stack[i].color);
         break;
       case 4: 
-        drawRectangle(stack[i].x0 + x0, stack[i].y0 + y0, stack[i].x1 + x0, stack[i].y1 + y0, stack[i].color);
+        drawer.drawRectangle(stack[i].x0 + x0, stack[i].y0 + y0, stack[i].x1 + x0, stack[i].y1 + y0, stack[i].color, true);
         break;
       case 5:
         print(stack[i].text, stack[i].x0 + x0, stack[i].y0 + y0, stack[i].textMarkup);
@@ -852,10 +852,17 @@ void OkWindow::make(int x, int y, int sizex, int sizey, const std::string& text)
 Canvas: allows you to draw on it with the mouse
 */
 
-Canvas::Canvas()
+Canvas::Canvas(IGUIDrawer& drawer) : canvas(new ITexture*)
 {
+  (*canvas) = drawer.createTexture();
   this->visible = 0;
   this->active = 0;
+}
+
+Canvas::~Canvas()
+{
+  delete *canvas;
+  delete canvas;
 }
 
 void Canvas::make(int x, int y, int sizex, int sizey, const ColorRGB& backColor, int border, const ColorRGB& leftColor, const ColorRGB& rightColor, double size, double hardness, double opacity)
@@ -883,7 +890,7 @@ void Canvas::make(int x, int y, int sizex, int sizey, const ColorRGB& backColor,
 
 void Canvas::init()
 {
-  canvas.create(backColor, getSizeX(), getSizeY());
+  clear();
 }
 
 void Canvas::handleWidget(const IGUIInput& input)
@@ -900,8 +907,8 @@ void Canvas::handleWidget(const IGUIInput& input)
 
     if(validOldMousePos == true)
     {
-      drawLine(&canvas.getOpenGLBuffer()[0], canvas.getU2(), canvas.getV2(), oldMouseX, oldMouseY, drawx, drawy, drawColor, border, border, getSizeX() - border, getSizeY() - border);
-      canvas.upload();
+      drawLine(&(*canvas)->getBuffer()[0], (*canvas)->getU2(), (*canvas)->getV2(), oldMouseX, oldMouseY, drawx, drawy, drawColor, border, border, getSizeX() - border, getSizeY() - border);
+      (*canvas)->update();
     }
     oldMouseX = drawx;
     oldMouseY = drawy;
@@ -910,14 +917,15 @@ void Canvas::handleWidget(const IGUIInput& input)
   else validOldMousePos = false;
 }
 
-void Canvas::drawWidget(IGUIDrawer& /*drawer*/) const
+void Canvas::drawWidget(IGUIDrawer& drawer) const
 {
-  canvas.draw(x0, y0);
+  drawer.convertTextureIfNeeded((*canvas));
+  drawer.drawTexture((*canvas), x0, y0);
 }
 
 void Canvas::clear()
 {
-  canvas.create(backColor, getSizeX(), getSizeY());
+  makeTextureSolid((*canvas), backColor, getSizeX(), getSizeY());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -992,9 +1000,9 @@ void Line::setEndpoints(int x0, int y0, int x1, int y1)
   this->ly1 = y1;
 }
 
-void Line::drawWidget(IGUIDrawer& /*drawer*/) const
+void Line::drawWidget(IGUIDrawer& drawer) const
 {
-  drawLine(lx0, ly0, lx1, ly1, color);
+  drawer.drawLine(lx0, ly0, lx1, ly1, color);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1092,14 +1100,14 @@ void NState::handleWidget(const IGUIInput& input)
 }
 
 //draw the checkbox with a texture depending on it's state
-void NState::drawWidget(IGUIDrawer& /*drawer*/) const
+void NState::drawWidget(IGUIDrawer& drawer) const
 {
   if(states.size() == 0) return;
   
   NStateState s = states[state];
-  s.texture->draw(x0, y0, s.colorMod);
+  drawer.drawTexture(s.texture, x0, y0, s.colorMod);
   
-  if(s.enableText) print(s.text, x0 + s.textOffsetX, y0 + s.textOffsetY, s.markup);
+  if(s.enableText) drawer.drawText(s.text, x0 + s.textOffsetX, y0 + s.textOffsetY, s.markup);
   
   drawLabel(this);
 }

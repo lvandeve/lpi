@@ -205,103 +205,103 @@ void initBuiltInGuiTexturesSmall(const std::vector<unsigned char>& png)
   */
   
   //panel
-  builtInTexture[0].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  0,  0,  4,  4);
-  builtInTexture[1].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  6,  0, 10,  4);
-  builtInTexture[2].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 12,  0, 16,  4);
-  builtInTexture[3].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  0,  6,  4, 10);
-  builtInTexture[4].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  6,  6, 10, 10);
-  builtInTexture[5].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 12,  6, 16, 10);
-  builtInTexture[6].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  0, 12,  4, 16);
-  builtInTexture[7].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  6, 12, 10, 16);
-  builtInTexture[8].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 12, 12, 16, 16);
+  makeTextureFromBuffer(&builtInTexture[ 0], &dataBuffer[0], GDW, GDH, AE_PinkKey,  0,  0,  4,  4);
+  makeTextureFromBuffer(&builtInTexture[ 1], &dataBuffer[0], GDW, GDH, AE_PinkKey,  6,  0, 10,  4);
+  makeTextureFromBuffer(&builtInTexture[ 2], &dataBuffer[0], GDW, GDH, AE_PinkKey, 12,  0, 16,  4);
+  makeTextureFromBuffer(&builtInTexture[ 3], &dataBuffer[0], GDW, GDH, AE_PinkKey,  0,  6,  4, 10);
+  makeTextureFromBuffer(&builtInTexture[ 4], &dataBuffer[0], GDW, GDH, AE_PinkKey,  6,  6, 10, 10);
+  makeTextureFromBuffer(&builtInTexture[ 5], &dataBuffer[0], GDW, GDH, AE_PinkKey, 12,  6, 16, 10);
+  makeTextureFromBuffer(&builtInTexture[ 6], &dataBuffer[0], GDW, GDH, AE_PinkKey,  0, 12,  4, 16);
+  makeTextureFromBuffer(&builtInTexture[ 7], &dataBuffer[0], GDW, GDH, AE_PinkKey,  6, 12, 10, 16);
+  makeTextureFromBuffer(&builtInTexture[ 8], &dataBuffer[0], GDW, GDH, AE_PinkKey, 12, 12, 16, 16);
   for(size_t i = 0; i < 9; i++) builtInGuiSet.windowTextures[i] = &builtInTexture[i];
   
   //button normal
-  builtInTexture[ 9].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  0, 32,  4, 36);
-  builtInTexture[10].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  6, 32, 10, 36);
-  builtInTexture[11].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 12, 32, 16, 36);
-  builtInTexture[12].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  0, 38,  4, 42);
-  builtInTexture[13].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  6, 38, 10, 42);
-  builtInTexture[14].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 12, 38, 16, 42);
-  builtInTexture[15].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  0, 44,  4, 48);
-  builtInTexture[16].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  6, 44, 10, 48);
-  builtInTexture[17].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 12, 44, 16, 48);
+  makeTextureFromBuffer(&builtInTexture[ 9], &dataBuffer[0], GDW, GDH, AE_PinkKey,  0, 32,  4, 36);
+  makeTextureFromBuffer(&builtInTexture[10], &dataBuffer[0], GDW, GDH, AE_PinkKey,  6, 32, 10, 36);
+  makeTextureFromBuffer(&builtInTexture[11], &dataBuffer[0], GDW, GDH, AE_PinkKey, 12, 32, 16, 36);
+  makeTextureFromBuffer(&builtInTexture[12], &dataBuffer[0], GDW, GDH, AE_PinkKey,  0, 38,  4, 42);
+  makeTextureFromBuffer(&builtInTexture[13], &dataBuffer[0], GDW, GDH, AE_PinkKey,  6, 38, 10, 42);
+  makeTextureFromBuffer(&builtInTexture[14], &dataBuffer[0], GDW, GDH, AE_PinkKey, 12, 38, 16, 42);
+  makeTextureFromBuffer(&builtInTexture[15], &dataBuffer[0], GDW, GDH, AE_PinkKey,  0, 44,  4, 48);
+  makeTextureFromBuffer(&builtInTexture[16], &dataBuffer[0], GDW, GDH, AE_PinkKey,  6, 44, 10, 48);
+  makeTextureFromBuffer(&builtInTexture[17], &dataBuffer[0], GDW, GDH, AE_PinkKey, 12, 44, 16, 48);
   for(size_t i = 0; i < 9; i++) builtInGuiSet.buttonTextures[i] = &builtInTexture[i + 9];
   for(size_t i = 0; i < 9; i++) builtInGuiSet.buttonOverTextures[i] = &builtInTexture[i + 9];
   
   //button pressed
-  builtInTexture[18].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 32, 20, 36);
-  builtInTexture[19].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 22, 32, 26, 36);
-  builtInTexture[20].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 28, 32, 32, 36);
-  builtInTexture[21].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 38, 20, 42);
-  builtInTexture[22].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 22, 38, 26, 42);
-  builtInTexture[23].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 28, 38, 32, 42);
-  builtInTexture[24].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 44, 20, 48);
-  builtInTexture[25].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 22, 44, 26, 48);
-  builtInTexture[26].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 28, 44, 32, 48);
+  makeTextureFromBuffer(&builtInTexture[18], &dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 32, 20, 36);
+  makeTextureFromBuffer(&builtInTexture[19], &dataBuffer[0], GDW, GDH, AE_PinkKey, 22, 32, 26, 36);
+  makeTextureFromBuffer(&builtInTexture[20], &dataBuffer[0], GDW, GDH, AE_PinkKey, 28, 32, 32, 36);
+  makeTextureFromBuffer(&builtInTexture[21], &dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 38, 20, 42);
+  makeTextureFromBuffer(&builtInTexture[22], &dataBuffer[0], GDW, GDH, AE_PinkKey, 22, 38, 26, 42);
+  makeTextureFromBuffer(&builtInTexture[23], &dataBuffer[0], GDW, GDH, AE_PinkKey, 28, 38, 32, 42);
+  makeTextureFromBuffer(&builtInTexture[24], &dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 44, 20, 48);
+  makeTextureFromBuffer(&builtInTexture[25], &dataBuffer[0], GDW, GDH, AE_PinkKey, 22, 44, 26, 48);
+  makeTextureFromBuffer(&builtInTexture[26], &dataBuffer[0], GDW, GDH, AE_PinkKey, 28, 44, 32, 48);
   for(size_t i = 0; i < 9; i++) builtInGuiSet.buttonDownTextures[i] = &builtInTexture[i + 18];
   
   //button arrow up
-  builtInTexture[27].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 64, 16, 80);
+  makeTextureFromBuffer(&builtInTexture[27], &dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 64, 16, 80);
   builtInGuiSet.arrowN = &builtInTexture[27];
   //button arrow down
-  builtInTexture[28].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 64, 48, 80);
+  makeTextureFromBuffer(&builtInTexture[28], &dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 64, 48, 80);
   builtInGuiSet.arrowS = &builtInTexture[28];
   //button arrow left
-  builtInTexture[29].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 64, 64, 80, 80);
+  makeTextureFromBuffer(&builtInTexture[29], &dataBuffer[0], GDW, GDH, AE_PinkKey, 64, 64, 80, 80);
   builtInGuiSet.arrowW = &builtInTexture[29];
   //button arrow right
-  builtInTexture[30].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 96, 64, 112, 80);
+  makeTextureFromBuffer(&builtInTexture[30], &dataBuffer[0], GDW, GDH, AE_PinkKey, 96, 64, 112, 80);
   builtInGuiSet.arrowE = &builtInTexture[30];
   
   //scroller
-  builtInTexture[31].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 48, 48, 64);
+  makeTextureFromBuffer(&builtInTexture[31], &dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 48, 48, 64);
   builtInGuiSet.emptyButton = &builtInTexture[31];
   builtInGuiSet.scroller = &builtInTexture[31];
   //scrollbar background
-  builtInTexture[32].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 48, 16, 64);
+  makeTextureFromBuffer(&builtInTexture[32], &dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 48, 16, 64);
   builtInGuiSet.scrollbarBackground = &builtInTexture[32];
   builtInGuiSet.scrollBarPairCorner = &builtInTexture[32];
   
   //check box unchecked
-  builtInTexture[33].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 80, 16, 96);
+  makeTextureFromBuffer(&builtInTexture[33], &dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 80, 16, 96);
   builtInGuiSet.checkBox[0] = &builtInTexture[33];
   //check box checked
-  builtInTexture[34].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 80, 48, 96);
+  makeTextureFromBuffer(&builtInTexture[34], &dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 80, 48, 96);
   builtInGuiSet.checkBox[1] = &builtInTexture[34];
   
   //bullet unchecked
-  builtInTexture[35].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 96, 16, 112);
+  makeTextureFromBuffer(&builtInTexture[35], &dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 96, 16, 112);
   builtInGuiSet.bullet[0] = &builtInTexture[35];
   //bullet checked
-  builtInTexture[36].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 96, 48, 112);
+  makeTextureFromBuffer(&builtInTexture[36], &dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 96, 48, 112);
   builtInGuiSet.bullet[1] = &builtInTexture[36];
   
   //horizontal line
-  builtInTexture[41].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 116, 16, 120, 20);
-  builtInTexture[42].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 116, 20, 120, 24);
-  builtInTexture[43].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 112, 20, 116, 24);
+  makeTextureFromBuffer(&builtInTexture[41], &dataBuffer[0], GDW, GDH, AE_PinkKey, 116, 16, 120, 20);
+  makeTextureFromBuffer(&builtInTexture[42], &dataBuffer[0], GDW, GDH, AE_PinkKey, 116, 20, 120, 24);
+  makeTextureFromBuffer(&builtInTexture[43], &dataBuffer[0], GDW, GDH, AE_PinkKey, 112, 20, 116, 24);
   for(size_t i = 0; i < 3; i++) builtInGuiSet.hline[i] = &builtInTexture[i + 41];
   
   //vertical line
-  builtInTexture[44].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 120, 16, 124, 20);
-  builtInTexture[45].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 120, 24, 124, 28);
-  builtInTexture[46].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 112, 24, 116, 28);
+  makeTextureFromBuffer(&builtInTexture[44], &dataBuffer[0], GDW, GDH, AE_PinkKey, 120, 16, 124, 20);
+  makeTextureFromBuffer(&builtInTexture[45], &dataBuffer[0], GDW, GDH, AE_PinkKey, 120, 24, 124, 28);
+  makeTextureFromBuffer(&builtInTexture[46], &dataBuffer[0], GDW, GDH, AE_PinkKey, 112, 24, 116, 28);
   for(size_t i = 0; i < 3; i++) builtInGuiSet.vline[i] = &builtInTexture[i + 44];
   
   //window top bar (also a horizontal line)
-  builtInTexture[47].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 0, 20, 16);
-  builtInTexture[48].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 22, 0, 26, 16);
-  builtInTexture[49].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 28, 0, 32, 16);
+  makeTextureFromBuffer(&builtInTexture[47], &dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 0, 20, 16);
+  makeTextureFromBuffer(&builtInTexture[48], &dataBuffer[0], GDW, GDH, AE_PinkKey, 22, 0, 26, 16);
+  makeTextureFromBuffer(&builtInTexture[49], &dataBuffer[0], GDW, GDH, AE_PinkKey, 28, 0, 32, 16);
   for(size_t i = 0; i < 3; i++) builtInGuiSet.windowTop[i] = &builtInTexture[i + 47];
   
   //round button
-  builtInTexture[51].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 96, 48, 112, 64);
+  makeTextureFromBuffer(&builtInTexture[51], &dataBuffer[0], GDW, GDH, AE_PinkKey, 96, 48, 112, 64);
   builtInGuiSet.roundButton = &builtInTexture[51];
   builtInGuiSet.slider = &builtInTexture[51];
   
   //close button
-  builtInTexture[54].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 16, 16, 32);
+  makeTextureFromBuffer(&builtInTexture[54], &dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 16, 16, 32);
   builtInGuiSet.closeButton = &builtInTexture[54];
 
   //minimize button
@@ -314,66 +314,66 @@ void initBuiltInGuiTexturesSmall(const std::vector<unsigned char>& png)
   //57
   
   //resizer of window (corner at bottom right)
-  builtInTexture[58].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 112, 0, 128, 16);
+  makeTextureFromBuffer(&builtInTexture[58], &dataBuffer[0], GDW, GDH, AE_PinkKey, 112, 0, 128, 16);
   builtInGuiSet.resizer = &builtInTexture[58];
   
   //tab unselected
-  builtInTexture[60].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  0,  112,  4,  116);
-  builtInTexture[61].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  6,  112, 10,  116);
-  builtInTexture[62].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 12,  112, 16,  116);
-  builtInTexture[63].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  0,  118,  4, 122);
-  builtInTexture[64].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  6,  118, 10, 122);
-  builtInTexture[65].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 12,  118, 16, 122);
-  builtInTexture[66].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  0, 124,  4, 128);
-  builtInTexture[67].create(&dataBuffer[0], GDW, GDH, AE_PinkKey,  6, 124, 10, 128);
-  builtInTexture[68].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 12, 124, 16, 128);
+  makeTextureFromBuffer(&builtInTexture[60], &dataBuffer[0], GDW, GDH, AE_PinkKey,  0,  112,  4,  116);
+  makeTextureFromBuffer(&builtInTexture[61], &dataBuffer[0], GDW, GDH, AE_PinkKey,  6,  112, 10,  116);
+  makeTextureFromBuffer(&builtInTexture[62], &dataBuffer[0], GDW, GDH, AE_PinkKey, 12,  112, 16,  116);
+  makeTextureFromBuffer(&builtInTexture[63], &dataBuffer[0], GDW, GDH, AE_PinkKey,  0,  118,  4, 122);
+  makeTextureFromBuffer(&builtInTexture[64], &dataBuffer[0], GDW, GDH, AE_PinkKey,  6,  118, 10, 122);
+  makeTextureFromBuffer(&builtInTexture[65], &dataBuffer[0], GDW, GDH, AE_PinkKey, 12,  118, 16, 122);
+  makeTextureFromBuffer(&builtInTexture[66], &dataBuffer[0], GDW, GDH, AE_PinkKey,  0, 124,  4, 128);
+  makeTextureFromBuffer(&builtInTexture[67], &dataBuffer[0], GDW, GDH, AE_PinkKey,  6, 124, 10, 128);
+  makeTextureFromBuffer(&builtInTexture[68], &dataBuffer[0], GDW, GDH, AE_PinkKey, 12, 124, 16, 128);
   for(size_t i = 0; i < 9; i++) builtInGuiSet.tabUnSelected[i] = &builtInTexture[i + 60];
   
   //tab selected
-  builtInTexture[69].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 16,  112, 20,  116);
-  builtInTexture[70].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 22,  112, 26,  116);
-  builtInTexture[71].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 28,  112, 32,  116);
-  builtInTexture[72].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 16,  118, 20, 122);
-  builtInTexture[73].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 22,  118, 23, 122);
-  builtInTexture[74].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 28,  118, 32, 122);
-  builtInTexture[75].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 124, 20, 128);
-  builtInTexture[76].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 22, 124, 26, 128);
-  builtInTexture[77].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 28, 124, 32, 128);
+  makeTextureFromBuffer(&builtInTexture[69], &dataBuffer[0], GDW, GDH, AE_PinkKey, 16,  112, 20,  116);
+  makeTextureFromBuffer(&builtInTexture[70], &dataBuffer[0], GDW, GDH, AE_PinkKey, 22,  112, 26,  116);
+  makeTextureFromBuffer(&builtInTexture[71], &dataBuffer[0], GDW, GDH, AE_PinkKey, 28,  112, 32,  116);
+  makeTextureFromBuffer(&builtInTexture[72], &dataBuffer[0], GDW, GDH, AE_PinkKey, 16,  118, 20, 122);
+  makeTextureFromBuffer(&builtInTexture[73], &dataBuffer[0], GDW, GDH, AE_PinkKey, 22,  118, 23, 122);
+  makeTextureFromBuffer(&builtInTexture[74], &dataBuffer[0], GDW, GDH, AE_PinkKey, 28,  118, 32, 122);
+  makeTextureFromBuffer(&builtInTexture[75], &dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 124, 20, 128);
+  makeTextureFromBuffer(&builtInTexture[76], &dataBuffer[0], GDW, GDH, AE_PinkKey, 22, 124, 26, 128);
+  makeTextureFromBuffer(&builtInTexture[77], &dataBuffer[0], GDW, GDH, AE_PinkKey, 28, 124, 32, 128);
   for(size_t i = 0; i < 9; i++) builtInGuiSet.tabSelected[i] = &builtInTexture[i + 69];
   
   //small check box unchecked
-  builtInTexture[78].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 128, 11, 139);
+  makeTextureFromBuffer(&builtInTexture[78], &dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 128, 11, 139);
   builtInGuiSet.smallCheckBox[0] = &builtInTexture[78];
   //small check box checked
-  builtInTexture[79].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 128, 43, 139);
+  makeTextureFromBuffer(&builtInTexture[79], &dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 128, 43, 139);
   builtInGuiSet.smallCheckBox[1] = &builtInTexture[79];
   
   //horizontal small slider button
-  builtInTexture[80].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 96, 112, 101, 123);
+  makeTextureFromBuffer(&builtInTexture[80], &dataBuffer[0], GDW, GDH, AE_PinkKey, 96, 112, 101, 123);
   builtInGuiSet.smallSliderH = &builtInTexture[80];
   
   //border panel
-  builtInTexture[81].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 32, 36, 36);
-  builtInTexture[82].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 38, 32, 42, 36);
-  builtInTexture[83].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 44, 32, 48, 36);
-  builtInTexture[84].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 38, 36, 42);
-  builtInTexture[85].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 38, 38, 42, 42);
-  builtInTexture[86].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 44, 38, 48, 42);
-  builtInTexture[87].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 44, 36, 48);
-  builtInTexture[88].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 38, 44, 42, 48);
-  builtInTexture[89].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 44, 44, 48, 48);
+  makeTextureFromBuffer(&builtInTexture[81], &dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 32, 36, 36);
+  makeTextureFromBuffer(&builtInTexture[82], &dataBuffer[0], GDW, GDH, AE_PinkKey, 38, 32, 42, 36);
+  makeTextureFromBuffer(&builtInTexture[83], &dataBuffer[0], GDW, GDH, AE_PinkKey, 44, 32, 48, 36);
+  makeTextureFromBuffer(&builtInTexture[84], &dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 38, 36, 42);
+  makeTextureFromBuffer(&builtInTexture[85], &dataBuffer[0], GDW, GDH, AE_PinkKey, 38, 38, 42, 42);
+  makeTextureFromBuffer(&builtInTexture[86], &dataBuffer[0], GDW, GDH, AE_PinkKey, 44, 38, 48, 42);
+  makeTextureFromBuffer(&builtInTexture[87], &dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 44, 36, 48);
+  makeTextureFromBuffer(&builtInTexture[88], &dataBuffer[0], GDW, GDH, AE_PinkKey, 38, 44, 42, 48);
+  makeTextureFromBuffer(&builtInTexture[89], &dataBuffer[0], GDW, GDH, AE_PinkKey, 44, 44, 48, 48);
   for(size_t i = 0; i < 9; i++) builtInGuiSet.borderPanelTextures[i] = &builtInTexture[i + 81];
   
   //white panel
-  builtInTexture[90].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 48, 32, 52, 36);
-  builtInTexture[91].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 54, 32, 58, 36);
-  builtInTexture[92].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 32, 64, 36);
-  builtInTexture[93].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 48, 38, 52, 42);
-  builtInTexture[94].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 54, 38, 58, 42);
-  builtInTexture[95].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 38, 64, 42);
-  builtInTexture[96].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 48, 44, 52, 48);
-  builtInTexture[97].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 54, 44, 58, 48);
-  builtInTexture[98].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 44, 64, 48);
+  makeTextureFromBuffer(&builtInTexture[90], &dataBuffer[0], GDW, GDH, AE_PinkKey, 48, 32, 52, 36);
+  makeTextureFromBuffer(&builtInTexture[91], &dataBuffer[0], GDW, GDH, AE_PinkKey, 54, 32, 58, 36);
+  makeTextureFromBuffer(&builtInTexture[92], &dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 32, 64, 36);
+  makeTextureFromBuffer(&builtInTexture[93], &dataBuffer[0], GDW, GDH, AE_PinkKey, 48, 38, 52, 42);
+  makeTextureFromBuffer(&builtInTexture[94], &dataBuffer[0], GDW, GDH, AE_PinkKey, 54, 38, 58, 42);
+  makeTextureFromBuffer(&builtInTexture[95], &dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 38, 64, 42);
+  makeTextureFromBuffer(&builtInTexture[96], &dataBuffer[0], GDW, GDH, AE_PinkKey, 48, 44, 52, 48);
+  makeTextureFromBuffer(&builtInTexture[97], &dataBuffer[0], GDW, GDH, AE_PinkKey, 54, 44, 58, 48);
+  makeTextureFromBuffer(&builtInTexture[98], &dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 44, 64, 48);
   for(size_t i = 0; i < 9; i++) builtInGuiSet.whitePanelTextures[i] = &builtInTexture[i + 90];
   
   //panels
@@ -442,18 +442,18 @@ void initBuiltInGuiIconsSmall(const std::vector<unsigned char>& png)
   const int GDH = pngdec.getHeight(); //height of the gui data
 
   //image (smiley :D)
-  builtInTexture[37].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 32, 32, 48);
+  makeTextureFromBuffer(&builtInTexture[37], &dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 32, 32, 48);
   builtInGuiSet.smiley = &builtInTexture[37];
   
   //crosshair
-  builtInTexture[50].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 16, 16, 32);
+  makeTextureFromBuffer(&builtInTexture[50], &dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 16, 16, 32);
   builtInGuiSet.crossHair = &builtInTexture[50];
   
   //particle 1
-  builtInTexture[52].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 48, 16, 64);
+  makeTextureFromBuffer(&builtInTexture[52], &dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 48, 16, 64);
   
   //particle 2
-  builtInTexture[53].create(&dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 48, 32, 64);
+  makeTextureFromBuffer(&builtInTexture[53], &dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 48, 32, 64);
 
 
 }
@@ -562,35 +562,35 @@ void BackPanel::makeTextured(const Texture* t00)
 /*The draw function of the BackPanel: draws the 9 different textures tiled or
 non-tiled at the positions needed to get a window at the correct position
 with the correct size*/
-void BackPanel::draw(int x, int y, int width, int height, const ColorRGB& colorMod) const
+void BackPanel::draw(IDrawer2D& drawer, int x, int y, int width, int height, const ColorRGB& colorMod) const
 {
   //draw rectangle  
   if(!enableCenter)
   {
-    drawRectangle(x, y, x + width, y + height, colorMod);
+    drawer.drawRectangle(x, y, x + width, y + height, colorMod, true);
   }
   //if center texture enabled, draw center texture instead, as repeated texture. MUST HAVE POWER OF TWO SIDES TO LOOK AS SUPPOSED!
   else
   {
-    if(t11 != 0) t11->drawRepeated(x + t00->getU(), y + t00->getV(), x + width - t02->getU(), y + height - t20->getV(), 1.0, 1.0, colorMod);
+    if(t11 != 0) drawer.drawTextureRepeated(t11, x + t00->getU(), y + t00->getV(), x + width - t02->getU(), y + height - t20->getV(), colorMod);
   }
   
   //draw sides
   if(enableSides)
   {
-    t01->drawRepeated(x + t00->getU(),         y                       , x + width - t02->getU(), y + t00->getV()         , 1.0, 1.0, colorMod);
-    t21->drawRepeated(x + t00->getU(),         y + height - t20->getV(), x + width - t02->getU(), y + height              , 1.0, 1.0, colorMod);
-    t10->drawRepeated(x,                       y + t00->getV()         , x + t00->getU()        , y + height - t20->getV(), 1.0, 1.0, colorMod);
-    t12->drawRepeated(x + width - t02->getU(), y + t00->getV()         , x + width              , y + height - t20->getV(), 1.0, 1.0, colorMod);
+    drawer.drawTextureRepeated(t01, x + t00->getU(),         y                       , x + width - t02->getU(), y + t00->getV()         , colorMod);
+    drawer.drawTextureRepeated(t21, x + t00->getU(),         y + height - t20->getV(), x + width - t02->getU(), y + height              , colorMod);
+    drawer.drawTextureRepeated(t10, x,                       y + t00->getV()         , x + t00->getU()        , y + height - t20->getV(), colorMod);
+    drawer.drawTextureRepeated(t12, x + width - t02->getU(), y + t00->getV()         , x + width              , y + height - t20->getV(), colorMod);
   }
     
   //draw corners
   if(enableSides)
   {
-    t00->draw(x                      , y                       , colorMod); //top left 
-    t02->draw(x + width - t02->getU(), y                       , colorMod); //top right
-    t20->draw(x                      , y + height - t20->getV(), colorMod); //bottom left
-    t22->draw(x + width - t02->getU(), y + height - t20->getV(), colorMod); //bottom right
+    drawer.drawTexture(t00, x                      , y                       , colorMod); //top left 
+    drawer.drawTexture(t02, x + width - t02->getU(), y                       , colorMod); //top right
+    drawer.drawTexture(t20, x                      , y + height - t20->getV(), colorMod); //bottom left
+    drawer.drawTexture(t22, x + width - t02->getU(), y + height - t20->getV(), colorMod); //bottom right
   }
 }
 
@@ -679,32 +679,32 @@ void BackRule::makeVertical1(const Texture* t0, const ColorRGB& colorMod)
   this->t2 = &t0[2];
 }
 
-void BackRule::draw(int x, int y, int length) const
+void BackRule::draw(IDrawer2D& drawer, int x, int y, int length) const
 {
   if(direction == H)
   {
     //draw center texture tiled, as repeated texture. MUST HAVE POWER OF TWO SIDES TO LOOK AS SUPPOSED!
-    t1->drawRepeated(x + t0->getU(), y, x + length - t2->getU(), y + t0->getV(), 1.0, 1.0, colorMod);
+    drawer.drawTextureRepeated(t1, x + t0->getU(), y, x + length - t2->getU(), y + t0->getV(), colorMod);
   
     
     //draw endpoints
     if(enableSides)
     {
-      t0->draw(x, y, colorMod); //left
-      t2->draw(x + length - t2->getU(), y, colorMod); //right
+      drawer.drawTexture(t0, x, y, colorMod); //left
+      drawer.drawTexture(t2, x + length - t2->getU(), y, colorMod); //right
     }
   }
   else
   {
     //draw center texture tiled, as repeated texture. MUST HAVE POWER OF TWO SIDES TO LOOK AS SUPPOSED!
-    t1->drawRepeated(x, y + t0->getV(), x + t0->getU(), y + length - t2->getV(), 1.0, 1.0, colorMod);
+    drawer.drawTextureRepeated(t1, x, y + t0->getV(), x + t0->getU(), y + length - t2->getV(), colorMod);
   
     
     //draw endpoints
     if(enableSides)
     {
-      t0->draw(x, y, colorMod); //left
-      t2->draw(x, y + length - t2->getV(), colorMod); //right
+      drawer.drawTexture(t0, x, y, colorMod); //left
+      drawer.drawTexture(t2, x, y + length - t2->getV(), colorMod); //right
     }
   }
 }
@@ -721,30 +721,6 @@ GUIDrawerGL::GUIDrawerGL(GuiSet* set) : guiset(set)
 }
 
 
-void GUIDrawerGL::drawLine(int x0, int y0, int x1, int y1, const ColorRGB& color)
-{
-  lpi::drawLine(x0, y0, x1, y1, color);
-}
-
-void GUIDrawerGL::drawRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled)
-{
-  lpi::drawRectangle(x0, y0, x1, y1, color, filled);
-}
-
-void GUIDrawerGL::drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled)
-{
-  lpi::drawTriangle(x0, y0, x1, y1, x2, y2, color, filled);
-}
-
-void GUIDrawerGL::drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color, bool filled)
-{
-  lpi::drawQuad(x0, y0, x1, y1, x2, y2, x3, y3, color, filled);
-}
-
-void GUIDrawerGL::drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3)
-{
-  lpi::gradientQuad(x0, y0, x1, y1, x2, y2, x3, y3, color0, color1, color2, color3);
-}
 
 void GUIDrawerGL::drawText(const std::string& text, int x, int y, const Markup& markup)
 {
@@ -756,53 +732,65 @@ void GUIDrawerGL::drawTextCentered(const std::string& text, int x, int y, const 
   lpi::printCentered(text, x, y, markup);
 }
 
-void GUIDrawerGL::drawTexture(int x, int y, const Texture* texture, const ColorRGB& colorMod)
-{
-  texture->draw(x, y, colorMod);
-}
-
 void GUIDrawerGL::drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, bool /*inactive*/)
 {
   switch(part)
   {
     case GP_WINDOW_PANEL:
     {
-      guiset->windowPanel->draw(x0, y0, x1 - x0, y1 - y0);
+      guiset->windowPanel->draw(drawer, x0, y0, x1 - x0, y1 - y0);
       break;
     }
     case GP_BUTTON_PANEL:
     {
-      guiset->buttonPanel->draw(x0, y0, x1 - x0, y1 - y0);
+      guiset->buttonPanel->draw(drawer, x0, y0, x1 - x0, y1 - y0);
       break;
     }
     case GP_BUTTON_OVER_PANEL:
     {
-      guiset->buttonOverPanel->draw(x0, y0, x1 - x0, y1 - y0);
+      guiset->buttonOverPanel->draw(drawer, x0, y0, x1 - x0, y1 - y0);
       break;
     }
     case GP_BUTTON_DOWN_PANEL:
     {
-      guiset->buttonDownPanel->draw(x0, y0, x1 - x0, y1 - y0);
+      guiset->buttonDownPanel->draw(drawer, x0, y0, x1 - x0, y1 - y0);
       break;
     }
     case GP_WHITE_PANEL:
     {
-      guiset->whitePanel->draw(x0, y0, x1 - x0, y1 - y0);
+      guiset->whitePanel->draw(drawer, x0, y0, x1 - x0, y1 - y0);
       break;
     }
     case GP_PANEL_BORDER:
     {
-      guiset->borderPanel->draw(x0, y0, x1 - x0, y1 - y0);
+      guiset->borderPanel->draw(drawer, x0, y0, x1 - x0, y1 - y0);
       break;
     }
     case GP_TAB_UNSELECTED:
     {
-      guiset->tabUnSelectedPanel->draw(x0, y0, x1 - x0, y1 - y0);
+      guiset->tabUnSelectedPanel->draw(drawer, x0, y0, x1 - x0, y1 - y0);
       break;
     }
     case GP_TAB_SELECTED:
     {
-      guiset->tabSelectedPanel->draw(x0, y0, x1 - x0, y1 - y0);
+      guiset->tabSelectedPanel->draw(drawer, x0, y0, x1 - x0, y1 - y0);
+      break;
+    }
+    case GP_CHECKBOX_OFF:
+    {
+      if(x1 - x0 >= 16) drawTexture(guiset->checkBox[0], x0, y0);
+      else drawTexture(guiset->smallCheckBox[0], x0, y0);
+      break;
+    }
+    case GP_CHECKBOX_ON:
+    {
+      if(x1 - x0 >= 16) drawTexture(guiset->checkBox[1], x0, y0);
+      else drawTexture(guiset->smallCheckBox[1], x0, y0);
+      break;
+    }
+    case GP_SCROLLBARPAIR_CORNER:
+    {
+      drawTexture(guiset->scrollBarPairCorner, x1 - guiset->scrollBarPairCorner->getU(), y1 - guiset->scrollBarPairCorner->getV());
       break;
     }
     default:
@@ -818,12 +806,12 @@ void GUIDrawerGL::drawGUIPartColor(GUIPartColor part, const ColorRGB& color, int
   {
     case GPC_WINDOW_PANEL:
     {
-      guiset->windowPanel->draw(x0, y0, x1 - x0, y1 - y0, color);
+      guiset->windowPanel->draw(drawer, x0, y0, x1 - x0, y1 - y0, color);
       break;
     }
     case GPC_WHITE_PANEL:
     {
-      guiset->whitePanel->draw(x0, y0, x1 - x0, y1 - y0, color);
+      guiset->whitePanel->draw(drawer, x0, y0, x1 - x0, y1 - y0, color);
       break;
     }
     default:
@@ -857,25 +845,10 @@ void GUIDrawerGL::drawGUIPartText(GUIPartText part, const std::string& text, int
   }
 }
 
-void GUIDrawerGL::setScissor(int x0, int y0, int x1, int y1)
-{
-  lpi::setScissor(x0, y0, x1, y1);
-}
-
-void GUIDrawerGL::setSmallestScissor(int x0, int y0, int x1, int y1)
-{
-  lpi::setSmallestScissor(x0, y0, x1, y1);
-}
-
-void GUIDrawerGL::resetScissor()
-{
-  lpi::resetScissor();
-}
-
 
 IGUIInput& GUIDrawerGL::getInput()
 {
-  return lpi::gGUIInput;
+  return input;
 }
 
 } //namespace gui

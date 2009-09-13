@@ -21,6 +21,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #pragma once
 
+#include "lpi_draw2d.h"
 #include "lpi_color.h"
 #include "lpi_text.h" //for markup
 #include "lpi_texture.h" //because drawing images requires a texture class
@@ -123,26 +124,14 @@ If a handle/token points to something a Drawer doesn't understand (it's created 
 There are also things the GUI element should be able to get in an abstract way from the style, such as, which standard width or height of the element is associated with this style.
 */
 
-class IGUIDrawer
+class IGUIDrawer : public ADrawer2D //if you use a ADrawer2D implementation for you IGUIDrawer, best is to use composition (not make your subclass inherit from a ADrawer2D subclass)
 {
   public:
     virtual ~IGUIDrawer(){};
-    virtual void drawLine(int x0, int y0, int x1, int y1, const ColorRGB& color) = 0;
-    virtual void drawRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled) = 0;
-    virtual void drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled) = 0;
-    virtual void drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color, bool filled) = 0;
-    
-    virtual void drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3) = 0;
 
+    //todo: these text drawing functions will move to IDrawer2D
     virtual void drawText(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W) = 0;
     virtual void drawTextCentered(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W) = 0;
-    
-    virtual void drawTexture(int x, int y, const Texture* texture, const ColorRGB& colorMod = RGB_White) = 0;
-    
-    //things that need to be done before and after the drawing, e.g. setting the scissor
-    virtual void setScissor(int x0, int y0, int x1, int y1) = 0;
-    virtual void setSmallestScissor(int x0, int y0, int x1, int y1) = 0; //the result will be smaller than the given coordinates and the last active scissor
-    virtual void resetScissor() = 0; //pops the last set scissor, bringing the previous one back (it works like a stack, "set" pushes, "reset" pops)
     
     //not all GUI parts use all input parameters! only x0 and y0 are always used.
     virtual void drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, bool inactive = false) = 0;
@@ -151,6 +140,41 @@ class IGUIDrawer
     
     //input
     virtual IGUIInput& getInput() = 0;
+};
+
+class AGUIDrawer : public IGUIDrawer //abstract GUI drawer which already wraps an ADrawer2D for you (but you need to implement the protected function getDrawer)
+{
+  protected:
+    virtual IDrawer2D& getDrawer() = 0;
+    
+  public:
+  
+    virtual size_t getWidth();
+    virtual size_t getHeight();
+    
+    virtual void drawPoint(int x, int y, const ColorRGB& color);
+    virtual void drawLine(int x0, int y0, int x1, int y1, const ColorRGB& color);
+    virtual void drawBezier(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color);
+    
+    virtual void drawRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled);
+    virtual void drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled);
+    virtual void drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color, bool filled);
+    virtual void drawEllipseCentered(int x, int y, int radiusx, int radiusy, const ColorRGB& color, bool filled);
+    
+    virtual void drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3);
+    
+    virtual bool supportsTexture(ITexture* texture); //if true, you can use it. If false, first use createTexture(texture) and then it'll be drawable by this drawer!
+    virtual ITexture* createTexture(); //creates a new texture of the type this drawer implementation supports best
+    virtual ITexture* createTexture(ITexture* texture); //creates a new texture from the given one, the type this drawer implementation supports best. May ruin/destroy/clear the input texture!!
+    
+    virtual void drawTexture(const ITexture* texture, int x, int y, const ColorRGB& colorMod = RGB_White);
+    virtual void drawTextureSized(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White);
+    virtual void drawTextureRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, const ColorRGB& colorMod = RGB_White);
+    
+    virtual void setScissor(int x0, int y0, int x1, int y1);
+    virtual void setSmallestScissor(int x0, int y0, int x1, int y1);
+    virtual void resetScissor();
+
 };
 
 } //namespace gui
