@@ -538,9 +538,9 @@ void Container::drawElements(IGUIDrawer& drawer) const
 
 void Container::drawWidget(IGUIDrawer& drawer) const
 {
-  drawer.setSmallestScissor(x0, y0, x1, y1);
+  drawer.pushSmallestScissor(x0, y0, x1, y1);
   drawElements(drawer);
-  drawer.resetScissor();
+  drawer.popScissor();
 }
 
 unsigned long Container::size() const
@@ -709,9 +709,9 @@ The position of that element is completely controlled by this ScrollElement or i
 
 void ScrollElement::drawWidget(IGUIDrawer& drawer) const
 {
-  drawer.setSmallestScissor(getVisibleX0(), getVisibleY0(), getVisibleX1(), getVisibleY1()); //currently does same as setScissor (because otherwise there's weird bug, to reproduce: resize the red window and look at smiley in the small grey window), so elements from container in container are still drawn outside container. DEBUG THIS ASAP!!!
+  drawer.pushSmallestScissor(getVisibleX0(), getVisibleY0(), getVisibleX1(), getVisibleY1()); //TODO: currently does same as pushScissor (because otherwise there's weird bug, to reproduce: resize the red window and look at smiley in the small grey window), so elements from container in container are still drawn outside container. DEBUG THIS ASAP!!!
   element->draw(drawer);
-  drawer.resetScissor();
+  drawer.popScissor();
   
   bars.draw(drawer);
 }
@@ -1187,7 +1187,7 @@ void Window::makeUntextured(int x, int y, int sizex, int sizey, const ColorRGB& 
 }
 
 void Window::makeTextured(int x, int y, int sizex, int sizey,
-       const Texture* /*t00*/, const ColorRGB& colorMod)
+       const ITexture* /*t00*/, const ColorRGB& colorMod)
 {
   this->x0 = x;
   this->y0 = y;
@@ -1216,9 +1216,9 @@ void Window::make(int x, int y, int sizex, int sizey,
   initContainer();
 }
 
-void Window::addTop(Texture* t0, int offsetLeft, int offsetRight, int offsetTop, const ColorRGB& colorMod)
+void Window::addTop(ITexture* t0, int offsetLeft, int offsetRight, int offsetTop, const ColorRGB& colorMod)
 {
-  top.makeHorizontal1(x0 + offsetLeft, y0 + offsetTop, getSizeX() - offsetLeft - offsetRight, t0, colorMod);
+  top.makeHorizontal1(x0 + offsetLeft, y0 + offsetTop, getSizeX() - offsetLeft - offsetRight, dynamic_cast<Texture*>(t0), colorMod); //TODO: the dynamic cast must go away since only ITexture is allowed here. In fact drawGUIPart of the drawer should be used to draw the window top, instead of managing texture here
   this->enableTop = 1;
   ic.setSticky(&top, Sticky(0.0, 0, 0.0, 0, 1.0, 0, 0.0, top.getSizeY()), this);
   
@@ -1433,7 +1433,7 @@ Button::Button()
 
 void Button::addFrontImage
 (
-  const Texture* texture1, const Texture* texture2, const Texture* texture3, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3
+  const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3
 )
 {
   this->enableImage2 = 1;
@@ -1448,7 +1448,7 @@ void Button::addFrontImage
   this->imageColor2[2] = imageColor3;
 }
 
-void Button::addFrontImage(const Texture* texture)
+void Button::addFrontImage(const ITexture* texture)
 {
   addFrontImage(texture, texture, texture, imageColor[0], imageColor[1], imageColor[2]);
 }
@@ -1457,7 +1457,7 @@ void Button::addFrontImage(const Texture* texture)
 void Button::makeImage
 (
   int x, int y, //basic properties
-  const Texture* texture1, const Texture* texture2, const Texture* texture3, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3 //image
+  const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3 //image
 )
 {
   this->x0 = x;
@@ -1660,7 +1660,7 @@ void Button::centerText()
   textOffsety = (getSizeY() / 2) - (markup[0].getHeight() / 2);
 }
 
-void Button::makeImage(int x, int y,  const Texture* texture123, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3)
+void Button::makeImage(int x, int y,  const ITexture* texture123, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3)
 {
   makeImage(x, y, texture123, texture123, texture123, imageColor1, imageColor2, imageColor3);
 }
@@ -2360,7 +2360,7 @@ Checkbox::Checkbox()
 
 void Checkbox::addFrontImage
 (
-  const Texture* texture1, const Texture* texture2, const Texture* texture3, const Texture* texture4, 
+  const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ITexture* texture4, 
   const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3, const ColorRGB& imageColor4
 )
 {
@@ -2376,7 +2376,7 @@ void Checkbox::addFrontImage
   this->colorMod2[3] = imageColor4;
 }
 
-void Checkbox::addFrontImage(const Texture* texture)
+void Checkbox::addFrontImage(const ITexture* texture)
 {
   addFrontImage(texture, texture, texture, texture, colorMod[0], colorMod[1], colorMod[2], colorMod[3]);
 }
@@ -2423,7 +2423,7 @@ void Checkbox::makeSmall(int x, int y, bool checked, const GuiSet* set, int togg
   positionText();
 }
 
-void Checkbox::setTexturesAndColors(const Texture* texture1, const Texture* texture2, const Texture* texture3, const Texture* texture4, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3, const ColorRGB& color4)
+void Checkbox::setTexturesAndColors(const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ITexture* texture4, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3, const ColorRGB& color4)
 {
   this->texture[0] = texture1;
   this->texture[1] = texture2;
@@ -2439,7 +2439,7 @@ void Checkbox::setTexturesAndColors(const Texture* texture1, const Texture* text
   positionText();
 }
 
-void Checkbox::setTexturesAndColors(const Texture* texture1, const Texture* texture2, const ColorRGB& color1, const ColorRGB& color2)
+void Checkbox::setTexturesAndColors(const ITexture* texture1, const ITexture* texture2, const ColorRGB& color1, const ColorRGB& color2)
 {
   setTexturesAndColors(texture1, texture1, texture2, texture2, color1, color1, color2, color2);
 }

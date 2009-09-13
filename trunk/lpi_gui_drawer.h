@@ -171,9 +171,9 @@ class AGUIDrawer : public IGUIDrawer //abstract GUI drawer which already wraps a
     virtual void drawTextureSized(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, const ColorRGB& colorMod = RGB_White);
     
-    virtual void setScissor(int x0, int y0, int x1, int y1);
-    virtual void setSmallestScissor(int x0, int y0, int x1, int y1);
-    virtual void resetScissor();
+    virtual void pushScissor(int x0, int y0, int x1, int y1);
+    virtual void pushSmallestScissor(int x0, int y0, int x1, int y1);
+    virtual void popScissor();
 
 };
 
