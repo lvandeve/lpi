@@ -58,7 +58,6 @@ gprof > gprof.txt
 #include "lpi_bignums.h"
 #include "lpi_math.h"
 #include "lpi_tools.h"
-#include "lpi_gl.h"
 #include "lpi_gui_unittest.h"
 #include "lpi_xml.h"
 #include "lodepng.h"
@@ -154,11 +153,11 @@ SpawnTexts spawns;
 
 int main(int, char*[]) //the arguments have to be given here, or DevC++ can't link to SDL for some reason
 {//std::cout<<sizeof(lpi::gui::Element)<<std::endl;//littletemporarytest();
-  lpi::screen(width, height, 0, true, "lpi GUI demo");
+  lpi::ScreenGL screen(width, height, 0, true, "lpi GUI demo");
   lpi::initFont();
-  lpi::gui::GUIDrawerGL::init();
+  lpi::gui::GUIDrawerGL guidrawer(&screen);
   
-  lpi::gui::Container c;
+  lpi::gui::Container c(guidrawer);
   
   lpi::gui::Button tb;
   tb.makeText(20, 530, "Save Built In GUI To PNGs");
@@ -280,7 +279,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   colorplane.resize(0, 0, 64, 48);
   //colorplane.color = lpi::ColorRGB(128, 255, 255, 192);
   tabs.getTabContent(2).pushTopAt(&colorplane, 144, 50);
-  lpi::gui::Canvas canvas(lpi::gGUIDrawer);
+  lpi::gui::Canvas canvas(guidrawer);
   canvas.make(0, 0, 128, 128);
   tabs.getTabContent(2).pushTopAt(&canvas, 144, 100);
   
@@ -306,16 +305,16 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     lpi::print("lpi GUI demo");
     lpi::print(gametime.fps(), 0, 8);
     
-    lpi::drawGradientEllipse(600, 400, 100, 50, lpi::ColorRGB(128, 255, 128, 255), lpi::ColorRGB(255, 128, 128, 128));
-    lpi::gGUIDrawer.drawBezier(600,100, 700,100, 750,200, 550,150, lpi::RGB_Lightred);
-    lpi::gGUIDrawer.drawCircle(600, 400, 110, lpi::ColorRGB(128, 255, 128, 255), false);
+    guidrawer.drawEllipseCentered(600, 400, 100, 50, lpi::ColorRGB(128, 255, 128, 128), true);
+    guidrawer.drawBezier(600,100, 700,100, 750,200, 550,150, lpi::RGB_Lightred);
+    guidrawer.drawCircle(600, 400, 110, lpi::ColorRGB(128, 255, 128, 255), false);
     
-    lpi::gGUIDrawer.drawTexture(&lpi::gui::builtInTexture[37], 0, 50);
+    guidrawer.drawTexture(&lpi::gui::builtInTexture[37], 0, 50);
     
     dyn.controlToValue();
     //dyn.valueToControl();
     
-    c.draw(lpi::gGUIDrawer);
+    c.draw(guidrawer);
     c.handle(lpi::gGUIInput);
     
     lpi::ColorHSV colorHSV(hsv.getValueAngle() * 255, hsv.getValueAxial() * 255, 255);
@@ -378,8 +377,8 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     if(wb.mouseScrollUp(lpi::gGUIInput)) spawns.addSpawn("scrolled up", lpi::globalMouseX, lpi::globalMouseY, lpi::RGB_Black);
     if(wb.mouseScrollDown(lpi::gGUIInput)) spawns.addSpawn("scrolled down", lpi::globalMouseX, lpi::globalMouseY, lpi::RGB_Black);
     
-    lpi::redraw();
-    lpi::cls(lpi::RGB_Darkgreen);
+    screen.redraw();
+    screen.cls(lpi::RGB_Darkgreen);
   }
   
   return 0;

@@ -63,7 +63,8 @@ GUIInputDebug testinput;
 
 void unitTest()
 {
-  lpi::screen(1024, 768, 0, false, "Unit Testing...");
+  lpi::ScreenGL screen(1024, 768, 0, false, "Unit Testing...");
+  lpi::gui::GUIDrawerGL dummydrawer(&screen);
   
   LUT_START_UNIT_TEST
   
@@ -139,7 +140,7 @@ void unitTest()
   LUT_CASE_END
   
   LUT_CASE("mouseJustDownHere on top of window")
-    Container c;
+    Container c(dummydrawer);
     Window w;
     w.make(0, 0, 100, 100);
     c.pushTopAt(&w, 0, 0);
@@ -213,7 +214,7 @@ void unitTest()
   
   //the fact that the container and the window handles the elements, influences the result
   LUT_CASE("mouseGrabbed on top of window")
-    Container c;
+    Container c(dummydrawer);
     Window w;
     w.make(0, 0, 100, 100);
     c.pushTopAt(&w, 0, 0);
@@ -243,7 +244,7 @@ void unitTest()
   LUT_CASE_END
   
   LUT_CASE("dragging a window")
-    Container c;
+    Container c(dummydrawer);
     Window w;
     w.make(0, 0, 100, 100);
     c.pushTopAt(&w, 0, 0);
@@ -345,7 +346,7 @@ void unitTest()
   
   
   LUT_CASE("selfActivate of InputLine in Window")
-    Container c;
+    Container c(dummydrawer);
     Window w;
     w.make(0, 0, 100, 100);
     c.pushTopAt(&w, 0, 0);
@@ -387,7 +388,7 @@ void unitTest()
   
   //two things on a container, both at the same location, first the one is totallyEnabled and the other totallyDisabled, then vica versa, then each time only the enabled one may return true to mouseOver
   LUT_CASE("enabled and disabled on each other")
-    Container c;
+    Container c(dummydrawer);
     Window w;
     w.make(0, 0, 100, 100);
     c.pushTopAt(&w, 0, 0);
@@ -422,7 +423,7 @@ void unitTest()
   //dragging a window that has a top
   LUT_CASE("dragging of a window")
   
-    Container c;
+    Container c(dummydrawer);
     Window w;
     w.make(0, 0, 100, 100);
     w.addTop();
@@ -447,7 +448,7 @@ void unitTest()
   //when there are two windows, A and B, and you're dragging one over the other, but you drag the mouse fast and the mousepointer goes to a location not over the dragged window (the dragged window will be under the mouse again soon), then the other window may not swap to top
   LUT_CASE("fast dragging of one window over another")
   
-    Container c;
+    Container c(dummydrawer);
     Window A;
     A.make(0, 0, 100, 100);
     A.addTop();
@@ -484,7 +485,7 @@ void unitTest()
   //dragging a window that has a top that is shifted: when starting to drag, the window may not "jump" (but I once had)
   LUT_CASE("dragging of a window with shifted top")
   
-    Container c;
+    Container c(dummydrawer);
     Window w;
     w.make(0, 0, 100, 100);
     w.addTop(&lpi::gui::builtInTexture[47], 2, 2, 2); //could cause jump of two pixels when the bug was there
@@ -504,7 +505,7 @@ void unitTest()
   
   //two things on a container, both at the same location, first the one is totallyEnabled and the other totallyDisabled, then vica versa, then each time only the enabled one may return true to mouseOver
   LUT_CASE("mouseOver works in nested containers")
-    Container c;
+    Container c(dummydrawer);
     
     Window w; //window is nested container in c
     w.make(0, 0, 100, 100);
@@ -521,7 +522,7 @@ void unitTest()
   LUT_CASE_END
   
   LUT_CASE("mouseOver on button on window in Tabs, behind other window")
-    Container c;
+    Container c(dummydrawer);
 
     Window w2;
     w2.make(50, 50, 300, 300);
@@ -569,7 +570,7 @@ void unitTest()
   LUT_CASE_END
   
   LUT_CASE("mouseOver on different tabs")
-    Container c;
+    Container c(dummydrawer);
 
     Window w2;
     w2.make(50, 50, 300, 300);

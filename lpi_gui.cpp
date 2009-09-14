@@ -20,7 +20,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 
 #include "lpi_gui.h"
-#include "lpi_gl.h"
+#include "lpi_screen.h" //TODO: remove this dependency
 #include "lpi_draw2dgl.h"
 #include "lpi_math.h"
 
@@ -338,20 +338,6 @@ bool Element::isContainer() const
   return 0;
 }
 
-//I have serious doubts if this function shouldn't be made obsolete: use a container the size of the screen instead and use it's function to keep elements inside...
-//no wait the function is still handy here and there if you want to compare something to the screen, not it's container, or if there is no container at all
-void Element::putInScreen()
-{
-    int newx = x0, newy = y0;
-    
-    if(x0 < 0) newx = 0;
-    if(y0 < 0) newy = 0;
-    if(x1 >= screenWidth()) newx = screenWidth() - getSizeX();
-    if(y1 >= screenHeight()) newy = screenWidth() - getSizeY();
-    
-    moveTo(newx, newy);
-}
-
 void Element::resize(int x0, int y0, int x1, int y1)
 {
   
@@ -446,14 +432,22 @@ sure you can't press the mouse "through" elements on top of other elements.
 
 Container::Container()
 {
-  clear(); //clear the element list
+  totallyEnable();
+  x0 = 0;
+  y0 = 0;
+  x1 = 1;
+  y1 = 1;
+}
+
+Container::Container(IGUIDrawer& drawer)
+{
   totallyEnable();
   
   //the default container is as big as the screen (note: don't forget to resize it if you resize the resolution of the screen!)
   x0 = 0;
   y0 = 0;
-  x1 = screenWidth();
-  y1 = screenHeight();
+  x1 = drawer.getWidth();
+  y1 = drawer.getHeight();
 }
 
 void Container::make(int x, int y, int sizex, int sizey)

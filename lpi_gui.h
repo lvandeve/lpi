@@ -175,7 +175,6 @@ class Element : public ElementRectangular
     void growSizeY1(int sizey) { resize(x0        , y0        , x1        , y0 + sizey); }
     virtual void resizeWidget(const Pos<int>& newPos); //always called after resize, will resize the other elements to the correct size. Override this if you have subelements, unless you use addSubElement in ElementComposite.
     virtual bool isContainer() const; //returns 0 if the type of element isn't a container, 1 if it is (Window, Container, ...); this value is used by for example Container: it brings containers to the top of the screen if you click on them. Actually so far it's only been used for that mouse test. It's something for containers, by containers :p
-    void putInScreen(); //puts element in screen if it's outside
     
     ////optional tooltip. Drawing it must be controlled by a higher layer, e.g. see the Container's implementation. //TODO: make tooltip class and only have pointer to it here, being 0 if no tooltip, to decrease memory footprint of element, OR, store every info of the tooltip in ToolTipManager
     void addToolTip(const std::string& text, ToolTipManager* tooltipmanager = &defaultTooltipManager) { tooltipenabled = true; tooltip = text; this->tooltipmanager = tooltipmanager;}
@@ -470,6 +469,7 @@ class Container : public ElementComposite
   public:
     
     Container();
+    Container(IGUIDrawer& drawer); //drawer is used to initialize the size of the container to the full screen size of the drawer
     virtual void handleWidget(const IGUIInput& input); //you're supposed to handle() before you draw()
     virtual void drawWidget(IGUIDrawer& drawer) const;
     

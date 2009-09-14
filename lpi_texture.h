@@ -27,6 +27,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include <vector>
 
 #include "lpi_color.h"
+#include "lpi_screen.h"
 
 
 namespace lpi
@@ -144,7 +145,7 @@ class TextureGL : public ITexture
   */
   public:
   
-    TextureGL();
+    TextureGL(bool smoothing = false);
     
     virtual void setSize(size_t u, size_t v) { makeBuffer(u, v); }
     //width and height of the texture
@@ -186,6 +187,7 @@ class TextureGL : public ITexture
     void operator*=(double a);
     
   private:
+    bool smoothing;
     std::vector<unsigned char> buffer; //the buffer containing the image data in pc memory, can also be altered: just upload() the texture again to make the new result visible
 
     GLuint texture[1]; //the OpenGL texture datatype

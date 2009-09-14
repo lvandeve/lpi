@@ -26,27 +26,6 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
-void initGL();
-void set2DScreen();
-void set3DScreen(double near, double far);
-
-int screenWidth();
-int screenHeight();
-bool onScreen(int x, int y);
-
-void setScissor(int left, int top, int right, int bottom);
-void setSmallestScissor(int left, int top, int right, int bottom); //same as setScissor, but will new scissor area will be inside the old scissor area, all parts outside are removed
-void setOpenGLScissor();
-void resetScissor();
-
-void enableOneSided();
-void enableTwoSided();
-void enableZBuffer();
-void disableZBuffer();
-void enableSmoothing();
-void disableSmoothing();
-bool enabledSmoothing();
-
 } //namespace lpi
 
 #endif

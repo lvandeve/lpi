@@ -30,13 +30,26 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_color.h"
 #include "lpi_texture.h"
 #include "lpi_draw2d.h"
+#include "lpi_screen.h"
 
 namespace lpi
 {
 
 class Drawer2DGL : public ADrawer2D
 {
+  private:
+    ScreenGL* screen;
+    
+  private:
+    void recursive_bezier(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, const ColorRGB& color, int n);
+    
+    void prepareDrawUntextured();
+    void prepareDrawTextured();
+    void drawLineInternal(int x0, int y0, int x1, int y1, const ColorRGB& color); //doesn't call "prepareDraw", to be used by other things that draw multiple lines
+    
   public:
+    Drawer2DGL(ScreenGL* screen);
+    
     virtual size_t getWidth();
     virtual size_t getHeight();
     
@@ -63,13 +76,19 @@ class Drawer2DGL : public ADrawer2D
     virtual void drawTexture(const ITexture* texture, int x, int y, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureSized(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, const ColorRGB& colorMod = RGB_White);
+    
+  public:
+  
+    //todo: these functions are not in a higher interface yet
+    //todo: move these into IDrawer2D or somewhere else or remove some?
+    void gradientLine(int x0, int y0, int x1, int y1, const ColorRGB& color1, const ColorRGB& color2);
+    void drawGradientDisk(int x, int y, double radius, const ColorRGB& color1, const ColorRGB& color2);
+    void drawGradientEllipse(int x, int y, double radiusx, double radiusy, const ColorRGB& color1, const ColorRGB& color2);
+    void drawGradientRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3);
 };
 
 
-//todo: move these into IDrawer2D or somewhere else or remove some?
-void gradientLine(int x1, int y1, int x2, int y2, const ColorRGB& color1, const ColorRGB& color2);
-void drawGradientDisk(int x, int y, double radius, const ColorRGB& color1, const ColorRGB& color2);
-void drawGradientEllipse(int x, int y, double radiusx, double radiusy, const ColorRGB& color1, const ColorRGB& color2);
+
 
 } //end of namespace lpi
 

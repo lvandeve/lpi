@@ -25,22 +25,49 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include <vector>
 
 #include "lpi_color.h"
-#include "lpi_gl.h"
 
 namespace lpi
 {
 
-////////////////////////////////////////////////////////////////////////////////
-//BASIC SCREEN FUNCTIONS////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+class ScreenGL
+{
+  public:
+    ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, const char* text);
+    
+    void cls(const ColorRGB& color = RGB_Black);
+    void redraw();
+  
+    void set2DScreen();
+    void set3DScreen(double near, double far);
+  
+  private:
+    void lock();
+    void unlock();
 
-extern int screenMode; //0 = 2D screen, 1 = 3D screen, this is used by the set2DScreen and set3DScreen functions to only change when not changed to this mode already
+    void initGL();
+    void set2DScreen(int w, int h);
+    void set3DScreen(double near, double far, int w, int h);
+    
+  public:
 
-void screen(int width, int height, bool fullscreen, bool enable_fsaa, const char* text);
-void lock();
-void unlock();
-void cls(const ColorRGB& color = RGB_Black);
-void redraw();
+    int screenWidth();
+    int screenHeight();
+    bool onScreen(int x, int y);
+
+    void setScissor(int left, int top, int right, int bottom);
+    void setSmallestScissor(int left, int top, int right, int bottom); //same as setScissor, but will new scissor area will be inside the old scissor area, all parts outside are removed
+    void setOpenGLScissor();
+    void resetScissor();
+
+    void enableOneSided();
+    void enableTwoSided();
+    void enableZBuffer();
+    void disableZBuffer();
+    
+  protected:
+    ScreenGL(bool); //TEMPORARY UGLY CONSTRUCTOR ONLY FOR DURING REFACTORING; SEE LPI_TEXT.CPP
+};
+
 
 } //namespace lpi
 

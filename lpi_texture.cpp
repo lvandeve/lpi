@@ -21,7 +21,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_texture.h"
 
 #include "lodepng.h"
-#include "lpi_gl.h"
+#include "lpi_screen.h"
 #include "lpi_base64.h"
 
 #include <algorithm>
@@ -87,7 +87,7 @@ TextureGL emptyTexture;
 //TextureGL Class/////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 //****************************************************************************//
-TextureGL::TextureGL()
+TextureGL::TextureGL(bool smoothing) : smoothing(smoothing)
 {
   deleteBuffer();
   generated = false;
@@ -154,7 +154,7 @@ void TextureGL::reupload()
 void TextureGL::bind() const
 {
   glBindTexture(GL_TEXTURE_2D, texture[0]);
-  if(enabledSmoothing())
+  if(smoothing)
   {
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

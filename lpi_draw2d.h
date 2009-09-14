@@ -105,6 +105,13 @@ class IDrawer2D
     
     //TODO: draw text, draw text centered/aligned, cache rendered text in objects, ...
     
+    
+    //Clear screen COMMENTED OUT because this is actually not a task of the drawer, but of that what controls the screen (and does the updating, redrawing, ...)
+    //Look at it  like this: using clear screen is something you do in OpenGL not only when drawing 2D things, but also when drawing 3D graphics to render the next screen. So it doesn't belong in IDrawer2D
+    /////clear screen
+    
+    //virtual void cls(const ColorRGB& color) = 0; //give everything this color
+    
 };
 
 class ADrawer2D : public IDrawer2D //abstract IDrawer2D already implements some functions in terms of some others
