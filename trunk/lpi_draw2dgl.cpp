@@ -20,16 +20,21 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include "lpi_draw2dgl.h"
 #include "lpi_draw2d.h"
-#include "lpi_gl.h"
+
 #include <vector>
 
 namespace lpi
 {
 
+Drawer2DGL::Drawer2DGL(ScreenGL* screen)
+: screen(screen)
+{
+}
+
 namespace
 {
 
-static int numSegmentsHelper(double radius)
+int numSegmentsHelper(double radius)
 {
   static const int DEFAULT = 64;
   if(radius > DEFAULT / 3)
@@ -38,51 +43,178 @@ static int numSegmentsHelper(double radius)
   else return 3;
 }
 
-//Draw a line from (x1, y1) to (x2, y2) on the OpenGL screen. NOTE: end coordinates should not be included in the line
-void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color, int clipx1, int clipy1, int clipx2, int clipy2)
+}
+
+void Drawer2DGL::prepareDrawUntextured()
 {
-  //don't clip if the user gives no clipping area by making clipx2 smaller than clipx1
-  bool clip = (clipx2 >= clipx1);
-  
-  //clip if some point is outside the clipping area
-  if(clip)
-  if(x1 < clipx1 || x1 >= clipx2 || x2 < clipx1 || x2 >= clipx2 || y1 < clipy1 || y1 >= clipy2 || y2 < clipy1 || y2 >= clipy2)
-  {
-    int x3, y3, x4, y4;
-    if(!clipLine(x1, y1, x2, y2, x3, y3, x4, y4, clipx1, clipy1, clipx2, clipy2)) return;
-    x1 = x3;
-    y1 = y3;
-    x2 = x4;
-    y2 = y4;
-  }
-  
-  //draw the line with OpenGL
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_BLEND);
   glDisable(GL_TEXTURE_2D);
+  screen->setOpenGLScissor(); //everything that draws something must always do this //TODO: investigate this statement
+}
 
+void Drawer2DGL::prepareDrawTextured()
+{
+  glEnable(GL_TEXTURE_2D);
+  screen->setOpenGLScissor(); //everything that draws something must always do this //TODO: investigate that statement
+}
+
+void Drawer2DGL::drawLineInternal(int x0, int y0, int x1, int y1, const ColorRGB& color) //doesn't call "prepareDraw", to be used by other things that draw multiple lines
+{
   glColor4ub(color.r, color.g, color.b, color.a);
-  
-  setOpenGLScissor(); //everything that draws something must always do this
-
     
   glBegin(GL_LINES);
+    glVertex2d(x0 + 0.5, y0 + 0.5);
     glVertex2d(x1 + 0.5, y1 + 0.5);
-    glVertex2d(x2 + 0.5, y2 + 0.5);
   glEnd();
 }
 
-void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color)
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+//Draw a rectangle with 4 different corner colors on screen from (x1, y1) to (x2, y2). The end coordinates should NOT be included
+void Drawer2DGL::drawGradientRectangle(int x1, int y1, int x2, int y2, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3, const ColorRGB& color4)
 {
-  drawLine(x1, y1, x2, y2, color, 0, 0, screenWidth(), screenHeight());
+  prepareDrawUntextured();
+  
+  glBegin(GL_QUADS);
+    glColor4ub(color2.r, color2.g, color2.b, color2.a);
+    glVertex3d(x2, y1, 1);
+    glColor4ub(color1.r, color1.g, color1.b, color1.a);
+    glVertex3d(x1, y1, 1);
+    glColor4ub(color3.r, color3.g, color3.b, color3.a);
+    glVertex3d(x1, y2, 1);
+    glColor4ub(color4.r, color4.g, color4.b, color4.a);
+    glVertex3d(x2, y2, 1);
+  glEnd();
 }
 
-void recursive_bezier(double x0, double y0, //endpoint
-                      double x1, double y1, //handle
-                      double x2, double y2, //handle
-                      double x3, double y3, //endpoint
-                      const ColorRGB& color,
-                      int n = 0) //extra recursion test for safety
+void Drawer2DGL::drawGradientDisk(int x, int y, double radius, const ColorRGB& color1, const ColorRGB& color2)
+{
+  static const double pi = 3.141592653589793238;
+  static const size_t numsegments = numSegmentsHelper(radius);
+  
+  prepareDrawUntextured();
+  
+  glBegin(GL_TRIANGLE_FAN);
+    glColor4ub(color1.r, color1.g, color1.b, color1.a);
+    glVertex3d(x, y, 1);
+    glColor4ub(color2.r, color2.g, color2.b, color2.a);
+    double angle = 0;
+    for(size_t i = 0; i < numsegments; i++)
+    {
+      
+      glVertex3d(x + std::cos(angle) * radius, y + std::sin(angle) * radius, 1);
+      angle += 2 * pi / numsegments;
+    }
+    glVertex3d(x + radius, y, 1);
+  glEnd();
+}
+
+void Drawer2DGL::drawGradientEllipse(int x, int y, double radiusx, double radiusy, const ColorRGB& color1, const ColorRGB& color2)
+{
+  static const double pi = 3.141592653589793238;
+  static const size_t numsegments = 32;
+  
+  prepareDrawUntextured();
+  
+  glBegin(GL_TRIANGLE_FAN);
+    glColor4ub(color1.r, color1.g, color1.b, color1.a);
+    glVertex3d(x, y, 1);
+    glColor4ub(color2.r, color2.g, color2.b, color2.a);
+    double angle = 0;
+    for(size_t i = 0; i < numsegments; i++)
+    {
+      
+      glVertex3d(x + std::cos(angle) * radiusx, y + std::sin(angle) * radiusy, 1);
+      angle += 2 * pi / numsegments;
+    }
+    glVertex3d(x + radiusx, y, 1);
+  glEnd();
+}
+
+//Draw a gradient line from (x1, y1) to (x2, y2)
+void Drawer2DGL::gradientLine(int x1, int y1, int x2, int y2, const ColorRGB& color1, const ColorRGB& color2)
+{
+  prepareDrawUntextured();
+
+  glBegin(GL_LINES);
+    glColor4ub(color1.r, color1.g, color1.b, color1.a);
+    glVertex3d(x1, screen->screenHeight() - y1, 1);
+    glColor4ub(color2.r, color2.g, color2.b, color2.a);
+    glVertex3d(x2, screen->screenHeight() - y2, 1);
+  glEnd();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+size_t Drawer2DGL::getWidth()
+{
+  return screen->screenWidth();
+}
+
+size_t Drawer2DGL::getHeight()
+{
+  return screen->screenHeight();
+}
+
+void Drawer2DGL::pushScissor(int x0, int y0, int x1, int y1)
+{
+  screen->setScissor(x0, y0, x1, y1);
+}
+
+void Drawer2DGL::pushSmallestScissor(int x0, int y0, int x1, int y1)
+{
+  screen->setSmallestScissor(x0, y0, x1, y1);
+}
+
+void Drawer2DGL::popScissor()
+{
+  screen->resetScissor();
+}
+
+void Drawer2DGL::drawPoint(int x, int y, const ColorRGB& color)
+{
+  prepareDrawUntextured();
+
+  glColor4ub(color.r, color.g, color.b, color.a);
+
+  glBegin(GL_POINTS);
+    glVertex2d(x + 0.375, y + 0.375);
+  glEnd();
+}
+
+void Drawer2DGL::drawLine(int x0, int y0, int x1, int y1, const ColorRGB& color)
+{
+  prepareDrawUntextured();
+
+  glColor4ub(color.r, color.g, color.b, color.a);
+    
+  glBegin(GL_LINES);
+    glVertex2d(x0 + 0.5, y0 + 0.5);
+    glVertex2d(x1 + 0.5, y1 + 0.5);
+  glEnd();
+}
+
+void Drawer2DGL::recursive_bezier(double x0, double y0, //endpoint
+                                  double x1, double y1, //handle
+                                  double x2, double y2, //handle
+                                  double x3, double y3, //endpoint
+                                  const ColorRGB& color,
+                                  int n) //extra recursion test for safety
 {
   if(bezier_nearly_flat(x0, y0, x1, y1, x2, y2, x3, y3) || n > 20)
   {
@@ -108,76 +240,45 @@ void recursive_bezier(double x0, double y0, //endpoint
   }
 }
 
-void drawBezier(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color)
+void Drawer2DGL::drawBezier(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color)
 {
-  recursive_bezier(x0, y0, x1, y1, x2, y2, x3, y3, color);
+  recursive_bezier(x0, y0, x1, y1, x2, y2, x3, y3, color, 0);
 }
 
-void pset(int x, int y, const ColorRGB& color)
-{
-  //draw the point with OpenGL
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_BLEND);
-  glDisable(GL_TEXTURE_2D);
-
-  glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
-  
-  setOpenGLScissor(); //everything that draws something must always do this
-
-  glBegin(GL_POINTS);
-    glVertex2d(x + 0.375, y + 0.375);
-  glEnd();
-}
-
-void drawPoint(int x, int y, const ColorRGB& color)
-{
-  pset(x, y, color);
-}
-  
-
-
-//Draw an untextured, filled, rectangle on screen from (x1, y1) to (x2, y2). The end coordinates should NOT be included
-void drawRectangle(int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled)
+    
+void Drawer2DGL::drawRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled)
 {
   if(filled)
   {
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-    glDisable(GL_TEXTURE_2D);
+    prepareDrawUntextured();
   
-    glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
-    
-    setOpenGLScissor(); //everything that draws something must always do this
+    glColor4ub(color.r, color.g, color.b, color.a);
     
     static const double OGLDIFF = 0.0;
   
     glBegin(GL_QUADS);
-      glVertex3d(x2 - OGLDIFF, y1          , 1);
-      glVertex3d(x1          , y1          , 1);
-      glVertex3d(x1          , y2 - OGLDIFF, 1);
-      glVertex3d(x2 - OGLDIFF, y2 - OGLDIFF, 1);
+      glVertex3d(x1 - OGLDIFF, y0          , 1);
+      glVertex3d(x0          , y0          , 1);
+      glVertex3d(x0          , y1 - OGLDIFF, 1);
+      glVertex3d(x1 - OGLDIFF, y1 - OGLDIFF, 1);
     glEnd();
   }
   else
   {
-    drawLine(x1, y1, x2, y1, color);
-    drawLine(x1, y2 - 1, x2, y2 - 1, color);
-    drawLine(x1, y1, x1, y2, color);
-    drawLine(x2 - 1, y1, x2 - 1, y2, color);
+    drawLine(x0, y0, x1, y0, color);
+    drawLine(x0, y1 - 1, x1, y1 - 1, color);
+    drawLine(x0, y0, x0, y1, color);
+    drawLine(x1 - 1, y0, x1 - 1, y1, color);
   }
 }
 
-void drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled)
+void Drawer2DGL::drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled)
 {
   if(filled)
   {
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-    glDisable(GL_TEXTURE_2D);
+    prepareDrawUntextured();
   
-    glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
-    
-    setOpenGLScissor(); //everything that draws something must always do this
+    glColor4ub(color.r, color.g, color.b, color.a);
     
     //static const double OGLDIFFX = 0.0, OGLDIFFY = 0.0;
   
@@ -195,17 +296,13 @@ void drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB
   }
 }
 
-void drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color, bool filled)
+void Drawer2DGL::drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color, bool filled)
 {
   if(filled)
   {
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-    glDisable(GL_TEXTURE_2D);
+    prepareDrawUntextured();
   
-    glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
-    
-    setOpenGLScissor(); //everything that draws something must always do this
+    glColor4ub(color.r, color.g, color.b, color.a);
     
     //static const double OGLDIFFX = 0.0, OGLDIFFY = 0.0;
   
@@ -225,296 +322,60 @@ void drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, co
   }
 }
 
-void gradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3)
-{
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_BLEND);
-  glDisable(GL_TEXTURE_2D);
-  
-  setOpenGLScissor(); //everything that draws something must always do this
-  
-  glBegin(GL_QUADS);
-    glColor4f(color0.r / 255.0, color0.g / 255.0, color0.b / 255.0, color0.a / 255.0);
-    glVertex3d(x0, y0, 1);
-    glColor4f(color1.r / 255.0, color1.g / 255.0, color1.b / 255.0, color1.a / 255.0);
-    glVertex3d(x1, y1, 1);
-    glColor4f(color2.r / 255.0, color2.g / 255.0, color2.b / 255.0, color2.a / 255.0);
-    glVertex3d(x2, y2, 1);
-    glColor4f(color3.r / 255.0, color3.g / 255.0, color3.b / 255.0, color3.a / 255.0);
-    glVertex3d(x3, y3, 1);
-  glEnd();
-}
-
-//Draw a rectangle with 4 different corner colors on screen from (x1, y1) to (x2, y2). The end coordinates should NOT be included
-void gradientRectangle(int x1, int y1, int x2, int y2, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3, const ColorRGB& color4)
-{
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_BLEND);
-  glDisable(GL_TEXTURE_2D);
-  
-  setOpenGLScissor(); //everything that draws something must always do this
-  
-  glBegin(GL_QUADS);
-    glColor4f(color2.r / 255.0, color2.g / 255.0, color2.b / 255.0, color2.a / 255.0);
-    glVertex3d(x2, y1, 1);
-    glColor4f(color1.r / 255.0, color1.g / 255.0, color1.b / 255.0, color1.a / 255.0);
-    glVertex3d(x1, y1, 1);
-    glColor4f(color3.r / 255.0, color3.g / 255.0, color3.b / 255.0, color3.a / 255.0);
-    glVertex3d(x1, y2, 1);
-    glColor4f(color4.r / 255.0, color4.g / 255.0, color4.b / 255.0, color4.a / 255.0);
-    glVertex3d(x2, y2, 1);
-  glEnd();
-}
-
-void drawEllipse(int x, int y, double radiusx, double radiusy, const ColorRGB& color)
-{
-  static const double pi = 3.141592653589793238;
-  static const size_t numsegments = 32;
-  
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_BLEND);
-  glDisable(GL_TEXTURE_2D);
-  glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
-  setOpenGLScissor(); //everything that draws something must always do this
-  
-  glBegin(GL_LINE_STRIP);
-    double angle = 0;
-    for(size_t i = 0; i < numsegments; i++)
-    {
-      glVertex3d(x + std::cos(angle) * radiusx, y + std::sin(angle) * radiusy, 1);
-      angle += 2 * pi / numsegments;
-    }
-    glVertex3d(x + radiusx, y, 1);
-  glEnd();
-}
-
-void drawFilledEllipse(int x, int y, double radiusx, double radiusy, const ColorRGB& color)
-{
-  static const double pi = 3.141592653589793238;
-  static const size_t numsegments = 32;
-  
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_BLEND);
-  glDisable(GL_TEXTURE_2D);
-  glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
-  setOpenGLScissor(); //everything that draws something must always do this
-  
-  glBegin(GL_TRIANGLE_FAN);
-    glVertex3d(x, y, 1);
-    double angle = 0;
-    for(size_t i = 0; i < numsegments; i++)
-    {
-      glVertex3d(x + std::cos(angle) * radiusx, y + std::sin(angle) * radiusy, 1);
-      angle += 2 * pi / numsegments;
-    }
-    glVertex3d(x + radiusx, y, 1);
-  glEnd();
-}
-
-void drawCircle(int x, int y, double radius, const ColorRGB& color)
-{
-  static const double pi = 3.141592653589793238;
-  static const size_t numsegments = numSegmentsHelper(radius);
-  
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_BLEND);
-  glDisable(GL_TEXTURE_2D);
-  glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
-  setOpenGLScissor(); //everything that draws something must always do this
-  
-  glBegin(GL_LINE_STRIP);
-    double angle = 0;
-    for(size_t i = 0; i < numsegments; i++)
-    {
-      glVertex3d(x + std::cos(angle) * radius, y + std::sin(angle) * radius, 1);
-      angle += 2 * pi / numsegments;
-    }
-    glVertex3d(x + radius, y, 1);
-  glEnd();
-}
-
-void drawDisk(int x, int y, double radius, const ColorRGB& color)
-{
-  static const double pi = 3.141592653589793238;
-  static const size_t numsegments = numSegmentsHelper(radius);
-  
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_BLEND);
-  glDisable(GL_TEXTURE_2D);
-  glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
-  setOpenGLScissor(); //everything that draws something must always do this
-  
-  glBegin(GL_TRIANGLE_FAN);
-    glVertex3d(x, y, 1);
-    double angle = 0;
-    for(size_t i = 0; i < numsegments; i++)
-    {
-      glVertex3d(x + std::cos(angle) * radius, y + std::sin(angle) * radius, 1);
-      angle += 2 * pi / numsegments;
-    }
-    glVertex3d(x + radius, y, 1);
-  glEnd();
-}
-
-}
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-
-void drawGradientDisk(int x, int y, double radius, const ColorRGB& color1, const ColorRGB& color2)
-{
-  static const double pi = 3.141592653589793238;
-  static const size_t numsegments = numSegmentsHelper(radius);
-  
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_BLEND);
-  glDisable(GL_TEXTURE_2D);
-  //glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
-  setOpenGLScissor(); //everything that draws something must always do this
-  
-  glBegin(GL_TRIANGLE_FAN);
-    glColor4f(color1.r / 255.0, color1.g / 255.0, color1.b / 255.0, color1.a / 255.0);
-    glVertex3d(x, y, 1);
-    glColor4f(color2.r / 255.0, color2.g / 255.0, color2.b / 255.0, color2.a / 255.0);
-    double angle = 0;
-    for(size_t i = 0; i < numsegments; i++)
-    {
-      
-      glVertex3d(x + std::cos(angle) * radius, y + std::sin(angle) * radius, 1);
-      angle += 2 * pi / numsegments;
-    }
-    glVertex3d(x + radius, y, 1);
-  glEnd();
-}
-
-void drawGradientEllipse(int x, int y, double radiusx, double radiusy, const ColorRGB& color1, const ColorRGB& color2)
-{
-  static const double pi = 3.141592653589793238;
-  static const size_t numsegments = 32;
-  
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_BLEND);
-  glDisable(GL_TEXTURE_2D);
-  //glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
-  setOpenGLScissor(); //everything that draws something must always do this
-  
-  glBegin(GL_TRIANGLE_FAN);
-    glColor4f(color1.r / 255.0, color1.g / 255.0, color1.b / 255.0, color1.a / 255.0);
-    glVertex3d(x, y, 1);
-    glColor4f(color2.r / 255.0, color2.g / 255.0, color2.b / 255.0, color2.a / 255.0);
-    double angle = 0;
-    for(size_t i = 0; i < numsegments; i++)
-    {
-      
-      glVertex3d(x + std::cos(angle) * radiusx, y + std::sin(angle) * radiusy, 1);
-      angle += 2 * pi / numsegments;
-    }
-    glVertex3d(x + radiusx, y, 1);
-  glEnd();
-}
-
-//Draw a gradient line from (x1, y1) to (x2, y2)
-void gradientLine(int x1, int y1, int x2, int y2, const ColorRGB& color1, const ColorRGB& color2)
-{
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_BLEND);
-  glDisable(GL_TEXTURE_2D);
-  
-  setOpenGLScissor(); //everything that draws something must always do this
-
-  glBegin(GL_LINES);
-    glColor4f(color1.r / 255.0, color1.g / 255.0, color1.b / 255.0, color1.a / 255.0);
-    glVertex3d(x1, screenHeight() - y1, 1);
-    glColor4f(color2.r / 255.0, color2.g / 255.0, color2.b / 255.0, color2.a / 255.0);
-    glVertex3d(x2, screenHeight() - y2, 1);
-  glEnd();
-}
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-size_t Drawer2DGL::getWidth()
-{
-  return lpi::screenWidth();
-}
-
-size_t Drawer2DGL::getHeight()
-{
-  return lpi::screenHeight();
-}
-
-void Drawer2DGL::pushScissor(int x0, int y0, int x1, int y1)
-{
-  lpi::setScissor(x0, y0, x1, y1);
-}
-
-void Drawer2DGL::pushSmallestScissor(int x0, int y0, int x1, int y1)
-{
-  lpi::setSmallestScissor(x0, y0, x1, y1);
-}
-
-void Drawer2DGL::popScissor()
-{
-  lpi::resetScissor();
-}
-
-void Drawer2DGL::drawPoint(int x, int y, const ColorRGB& color)
-{
-  lpi::drawPoint(x, y, color);
-}
-
-void Drawer2DGL::drawLine(int x0, int y0, int x1, int y1, const ColorRGB& color)
-{
-  lpi::drawLine(x0, y0, x1, y1, color);
-}
-
-void Drawer2DGL::drawBezier(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color)
-{
-  lpi::drawBezier(x0, y0, x1, y1, x2, y2, x3, y3, color);
-}
-
-    
-void Drawer2DGL::drawRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled)
-{
-  lpi::drawRectangle(x0, y0, x1, y1, color, filled);
-}
-
-void Drawer2DGL::drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled)
-{
-  lpi::drawTriangle(x0, y0, x1, y1, x2, y2, color, filled);
-}
-
-void Drawer2DGL::drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color, bool filled)
-{
-  lpi::drawQuad(x0, y0, x1, y1, x2, y2, x3, y3, color, filled);
-}
-
 void Drawer2DGL::drawCircle(int x, int y, int radius, const ColorRGB& color, bool filled)
 {
-  filled ? lpi::drawDisk(x, y, (double)radius, color) : lpi::drawCircle(x, y, (double)radius, color);
+  drawEllipseCentered(x, y, radius, radius, color, filled);
 }
 
 void Drawer2DGL::drawEllipseCentered(int x, int y, int radiusx, int radiusy, const ColorRGB& color, bool filled)
 {
-  filled ? lpi::drawFilledEllipse(x, y, radiusx, radiusy, color) : lpi::drawEllipse(x, y, radiusx, radiusy, color);
+  static const double pi = 3.141592653589793238;
+  static const size_t numsegments = 32;
+  
+  prepareDrawUntextured();
+  glColor4ub(color.r, color.g, color.b, color.a);
+
+  if(filled)
+  {
+    glBegin(GL_TRIANGLE_FAN);
+      glVertex3d(x, y, 1);
+      double angle = 0;
+      for(size_t i = 0; i < numsegments; i++)
+      {
+        glVertex3d(x + std::cos(angle) * radiusx, y + std::sin(angle) * radiusy, 1);
+        angle += 2 * pi / numsegments;
+      }
+      glVertex3d(x + radiusx, y, 1);
+    glEnd();
+  }
+  else
+  {
+    glBegin(GL_LINE_STRIP);
+      double angle = 0;
+      for(size_t i = 0; i < numsegments; i++)
+      {
+        glVertex3d(x + std::cos(angle) * radiusx, y + std::sin(angle) * radiusy, 1);
+        angle += 2 * pi / numsegments;
+      }
+      glVertex3d(x + radiusx, y, 1);
+    glEnd();
+  }
 }
 
 void Drawer2DGL::drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3)
 {
-  lpi::gradientQuad(x0, y0, x1, y1, x2, y2, x3, y3, color0, color1, color2, color3);
+  prepareDrawUntextured();
+  
+  glBegin(GL_QUADS);
+    glColor4ub(color0.r, color0.g, color0.b, color0.a);
+    glVertex3d(x0, y0, 1);
+    glColor4ub(color1.r, color1.g, color1.b, color1.a);
+    glVertex3d(x1, y1, 1);
+    glColor4ub(color2.r, color2.g, color2.b, color2.a);
+    glVertex3d(x2, y2, 1);
+    glColor4ub(color3.r, color3.g, color3.b, color3.a);
+    glVertex3d(x3, y3, 1);
+  glEnd();
 }
 
 bool Drawer2DGL::supportsTexture(ITexture* texture)
@@ -550,13 +411,11 @@ void Drawer2DGL::drawTextureSized(const ITexture* texture, int x, int y, size_t 
   const TextureGL* texturegl = dynamic_cast<const TextureGL*>(texture);
   if(!texturegl) return;
 
-  glEnable(GL_TEXTURE_2D);
+  prepareDrawTextured();
 
   glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
   texturegl->bind();
 
-  lpi::setOpenGLScissor(); //everything that draws something must always do this //TODO: investigate that statement
-  
   double u3 = (double)texturegl->getU() / (double)texturegl->getU2();
   double v3 = (double)texturegl->getV() / (double)texturegl->getV2();
 
@@ -576,12 +435,10 @@ void Drawer2DGL::drawTextureRepeated(const ITexture* texture, int x0, int y0, in
   const TextureGL* texturegl = dynamic_cast<const TextureGL*>(texture);
   if(!texturegl) return;
   
-  glEnable(GL_TEXTURE_2D);
+  prepareDrawTextured();
 
   glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
   texturegl->bind();
-
-  lpi::setOpenGLScissor(); //everything that draws something must always do this //TODO: investigate that statement
   
   bool simple = true;
   if(x1 - x0 > (int)texture->getU() && texture->getU() != texture->getU2()) simple = false;

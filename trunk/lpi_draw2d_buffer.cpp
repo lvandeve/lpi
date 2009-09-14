@@ -555,4 +555,24 @@ void ADrawer2DBuffer::drawTextureRepeated(const ITexture* texture, int x0, int y
   //TODO
 }
 
+/*void ADrawer2DBuffer::cls(const ColorRGB& color)
+{
+  size_t w = getWidth();
+  size_t h = getHeight();
+  unsigned char r = color.r;
+  unsigned char g = color.g;
+  unsigned char b = color.b;
+  unsigned char a = color.a;
+  
+  for(size_t x = 0; x < w; x++)
+  for(size_t y = 0; y < h; y++)
+  {
+    size_t index = y * w * 4 + x * 4;
+    buffer[index + 0] = r;
+    buffer[index + 1] = g;
+    buffer[index + 2] = b;
+    buffer[index + 3] = a;
+  }
+}*/
+
 } //namespace lpi

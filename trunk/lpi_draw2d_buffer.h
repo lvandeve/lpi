@@ -120,7 +120,6 @@ class ADrawer2DBuffer : public ADrawer2D //draws on a buffer
     virtual void drawTexture(const ITexture* texture, int x, int y, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureSized(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, const ColorRGB& colorMod = RGB_White);
-
 };
 
 class Drawer2DBuffer : public ADrawer2DBuffer

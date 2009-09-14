@@ -22,7 +22,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_gui_ex.h"
 
 #include "lodepng.h"
-#include "lpi_gl.h"
+#include "lpi_screen.h" //TODO: remove this dependency
 #include "lpi_draw2dgl.h"
 #include "lpi_draw2d.h"
 #include "lpi_draw2d_buffer.h"
@@ -82,7 +82,7 @@ void DropMenu::makeColored(int x, int y, const std::string& text,
   this->hrule = hrule;
   
   setOptions(text);
-  putInScreen(); //reposition then does setOptions a second time to fix changed positions
+  //putInScreen(); //reposition then does setOptions a second time to fix changed positions
 }
 
 //Constructor to make the menu
@@ -99,7 +99,7 @@ void DropMenu::make(int x, int y, const std::string& text,
   this->hrule = hrule;
   
   setOptions(text);
-  putInScreen(); //reposition then does setOptions a second time to fix changed positions
+  //putInScreen(); //reposition then does setOptions a second time to fix changed positions
 }
 
 void DropMenu::clearOptions()

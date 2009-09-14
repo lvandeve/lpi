@@ -27,6 +27,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_color.h"
 #include "lpi_texture.h"
 #include "lpi_text.h"
+#include "lpi_screen.h"
 #include "lpi_gui_input_sdl.h"
 
 namespace lpi
@@ -212,11 +213,10 @@ class GUIDrawerGL : public AGUIDrawer
   protected:
   
     virtual IDrawer2D& getDrawer() { return drawer; }
+    static void init(); //must be called after screen is created
     
   public:
-    GUIDrawerGL(GuiSet* set);
-    
-    static void init(); //must be called after screen is created
+    GUIDrawerGL(ScreenGL* screen, GuiSet* set = &builtInGuiSet);
     
     
     virtual void drawText(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W);
@@ -237,8 +237,3 @@ class GUIDrawerGL : public AGUIDrawer
 } //namespace gui
 } //namespace lpi
 
-
-namespace lpi
-{
-extern gui::GUIDrawerGL gGUIDrawer; //global gui drawer usig GL. Outside of namespace gui on purpose (too long name otherwise)
-} //namespace lpi

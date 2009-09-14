@@ -129,7 +129,12 @@ y: y position of top left corner of the letter
 markup: the text style, see in the header near Markup for an explanation
 */
 
-Drawer2DGL TEMPDRAWER; //todo: move font drawing functions to inside IDrawer2D instead of here
+struct ScreenGLGLUNSAFEANDTEMPORARY : public ScreenGL
+{
+  ScreenGLGLUNSAFEANDTEMPORARY() : ScreenGL(false) {}
+} screenGLGLUNSAFEANDTEMPORARY;
+
+Drawer2DGL TEMPDRAWER(&screenGLGLUNSAFEANDTEMPORARY); //todo: move font drawing functions to inside IDrawer2D instead of here
 
 void drawLetter(unsigned char n, int x, int y, const Markup& markup)
 {
