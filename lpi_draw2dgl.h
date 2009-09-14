@@ -66,25 +66,11 @@ class Drawer2DGL : public ADrawer2D
 };
 
 
-
-//NOTE: as much as possible, the "to" pixel itself is not included, e.g. a rectangle from 0-100 is 100 pixels, not 101 pixels in size (0, ..., 99 are filled, 100 not)
-void pset(int x, int y, const ColorRGB& color);
-void drawPoint(int x, int y, const ColorRGB& color); //same as pset but with other name
-void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color, int clipx1, int clipy1, int clipx2, int clipy2);
-void drawLine(int x1, int y1, int x2, int y2, const ColorRGB& color);
-void drawBezier(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color);
-void drawRectangle(int x1, int y1, int x2, int y2, const ColorRGB& color = RGB_White, bool filled = true);
-void drawCircle(int x, int y, double radius, const ColorRGB& color);
-void drawDisk(int x, int y, double radius, const ColorRGB& color);
-void drawEllipse(int x, int y, double radiusx, double radiusy, const ColorRGB& color);
-void drawFilledEllipse(int x, int y, double radiusx, double radiusy, const ColorRGB& color);
+//todo: move these into IDrawer2D or somewhere else or remove some?
 void gradientLine(int x1, int y1, int x2, int y2, const ColorRGB& color1, const ColorRGB& color2);
-void gradientRectangle(int x1, int y1, int x2, int y2, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3, const ColorRGB& color4);
 void drawGradientDisk(int x, int y, double radius, const ColorRGB& color1, const ColorRGB& color2);
 void drawGradientEllipse(int x, int y, double radiusx, double radiusy, const ColorRGB& color1, const ColorRGB& color2);
-void drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled);
-void drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color, bool filled);
-void gradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3);
+
 } //end of namespace lpi
 
 #endif

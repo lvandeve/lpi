@@ -26,6 +26,9 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
+namespace
+{
+
 static int numSegmentsHelper(double radius)
 {
   static const int DEFAULT = 64;
@@ -131,22 +134,7 @@ void drawPoint(int x, int y, const ColorRGB& color)
   pset(x, y, color);
 }
   
-//Draw a gradient line from (x1, y1) to (x2, y2)
-void gradientLine(int x1, int y1, int x2, int y2, const ColorRGB& color1, const ColorRGB& color2)
-{
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_BLEND);
-  glDisable(GL_TEXTURE_2D);
-  
-  setOpenGLScissor(); //everything that draws something must always do this
 
-  glBegin(GL_LINES);
-    glColor4f(color1.r / 255.0, color1.g / 255.0, color1.b / 255.0, color1.a / 255.0);
-    glVertex3d(x1, screenHeight() - y1, 1);
-    glColor4f(color2.r / 255.0, color2.g / 255.0, color2.b / 255.0, color2.a / 255.0);
-    glVertex3d(x2, screenHeight() - y2, 1);
-  glEnd();
-}
 
 //Draw an untextured, filled, rectangle on screen from (x1, y1) to (x2, y2). The end coordinates should NOT be included
 void drawRectangle(int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled)
@@ -368,6 +356,17 @@ void drawDisk(int x, int y, double radius, const ColorRGB& color)
   glEnd();
 }
 
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 
 void drawGradientDisk(int x, int y, double radius, const ColorRGB& color1, const ColorRGB& color2)
 {
@@ -421,6 +420,30 @@ void drawGradientEllipse(int x, int y, double radiusx, double radiusy, const Col
   glEnd();
 }
 
+//Draw a gradient line from (x1, y1) to (x2, y2)
+void gradientLine(int x1, int y1, int x2, int y2, const ColorRGB& color1, const ColorRGB& color2)
+{
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
+  glDisable(GL_TEXTURE_2D);
+  
+  setOpenGLScissor(); //everything that draws something must always do this
+
+  glBegin(GL_LINES);
+    glColor4f(color1.r / 255.0, color1.g / 255.0, color1.b / 255.0, color1.a / 255.0);
+    glVertex3d(x1, screenHeight() - y1, 1);
+    glColor4f(color2.r / 255.0, color2.g / 255.0, color2.b / 255.0, color2.a / 255.0);
+    glVertex3d(x2, screenHeight() - y2, 1);
+  glEnd();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 size_t Drawer2DGL::getWidth()

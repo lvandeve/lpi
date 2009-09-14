@@ -1099,7 +1099,7 @@ void InputBox::drawWidget(IGUIDrawer& drawer) const
     multiText.cursorAtCharPos(cursor, cursorLine, cursorColumn);
     int cursorXDraw = x0 + getLeftText() + cursorColumn * markup.getWidth();
     int cursorYDraw = y0 + getTopText() + (cursorLine - firstVisibleLine) * markup.getHeight();
-    if(cursorYDraw >= y0 + getTopText() && cursorYDraw < y0 + getBottomText() - markup.getHeight()) drawLine(cursorXDraw, cursorYDraw, cursorXDraw, cursorYDraw + markup.getHeight(), cursorColor);
+    if(cursorYDraw >= y0 + getTopText() && cursorYDraw < y0 + getBottomText() - markup.getHeight()) drawer.drawLine(cursorXDraw, cursorYDraw, cursorXDraw, cursorYDraw + markup.getHeight(), cursorColor);
   }
 
   multiText.draw(x0 + getLeftText(), y0 + getTopText(), firstVisibleLine, firstVisibleLine + getLinesVisible());

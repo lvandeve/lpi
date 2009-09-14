@@ -307,8 +307,8 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     lpi::print(gametime.fps(), 0, 8);
     
     lpi::drawGradientEllipse(600, 400, 100, 50, lpi::ColorRGB(128, 255, 128, 255), lpi::ColorRGB(255, 128, 128, 128));
-    lpi::drawBezier(600,100, 700,100, 750,200, 550,150, lpi::RGB_Lightred);
-    lpi::drawCircle(600, 400, 110, lpi::ColorRGB(128, 255, 128, 255));
+    lpi::gGUIDrawer.drawBezier(600,100, 700,100, 750,200, 550,150, lpi::RGB_Lightred);
+    lpi::gGUIDrawer.drawCircle(600, 400, 110, lpi::ColorRGB(128, 255, 128, 255), false);
     
     lpi::gGUIDrawer.drawTexture(&lpi::gui::builtInTexture[37], 0, 50);
     

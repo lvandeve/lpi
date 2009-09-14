@@ -27,46 +27,10 @@ namespace lpi
 {
 
 
-ADrawer2DBuffer::ADrawer2DBuffer()
-: buffer(0)
-, w(0)
-, h(0)
+namespace
 {
-}
 
-void ADrawer2DBuffer::pushScissor(int x0, int y0, int x1, int y1)
-{
-  clipstack.push_back(clip);
-  clip.x0 = x0;
-  clip.y0 = y0;
-  clip.x1 = x1;
-  clip.y1 = y1;
-  clip.fit(w, h);
-}
-
-void ADrawer2DBuffer::pushSmallestScissor(int x0, int y0, int x1, int y1)
-{
-  int sx0 = x0;
-  int sy0 = y0;
-  int sx1 = x1;
-  int sy1 = y1;
-  
-  if(clip.x0 > sx0) sx0 = clip.x0;
-  if(clip.y0 >  sy0)  sy0 = clip.y0; 
-  if(clip.x1 < sx1) sx1 = clip.x1;
-  if(clip.y1 < sy1) sy1 = clip.y1;
-  
-  pushScissor(sx0,  sy0, sx1, sy1);
-}
-
-void ADrawer2DBuffer::popScissor()
-{
-  clip = clipstack.back();
-  clip.fit(w, h);
-  clipstack.pop_back();
-}
-
-void ADrawer2DBuffer::pset(unsigned char* buffer, int buffer_w, int x, int y, const ColorRGB& color)
+void pset(unsigned char* buffer, int buffer_w, int x, int y, const ColorRGB& color)
 {
   size_t bufferPos = 4 * buffer_w * y + 4 * x;
   buffer[bufferPos + 0] = color.r;
@@ -75,13 +39,13 @@ void ADrawer2DBuffer::pset(unsigned char* buffer, int buffer_w, int x, int y, co
   buffer[bufferPos + 3] = color.a;
 }
 
-void ADrawer2DBuffer::psetClipped(unsigned char* buffer, int buffer_w, const Clip& c, int x, int y, const ColorRGB& color)
+void psetClipped(unsigned char* buffer, int buffer_w, const ADrawer2DBuffer::Clip& c, int x, int y, const ColorRGB& color)
 {
   if(x >= c.x0 && x < c.x1 && y >= c.y0 && y < c.y1) pset(buffer, buffer_w, x, y, color);
 }
 
 //Fast horizontal line from (x1,y) to (x2,y), with rgb color
-void ADrawer2DBuffer::horLine(unsigned char* buffer, int buffer_w, int buffer_h, int y, int x1, int x2, const ColorRGB& color)
+void horLine(unsigned char* buffer, int buffer_w, int buffer_h, int y, int x1, int x2, const ColorRGB& color)
 {
   if(x2 < x1) std::swap(x1, x2); //swap x1 and x2 because x1 must be the leftmost endpoint
   if(x2 < 0 || x1 > buffer_w - 1 || y < 0 || y > buffer_h - 1) return; //no single point of the line is on screen
@@ -97,7 +61,7 @@ void ADrawer2DBuffer::horLine(unsigned char* buffer, int buffer_w, int buffer_h,
 }
 
 //Fast vertical line from (x,y1) to (x,y2), with rgb color
-void ADrawer2DBuffer::verLine(unsigned char* buffer, int buffer_w, int buffer_h, int x, int y1, int y2, const ColorRGB& color)
+void verLine(unsigned char* buffer, int buffer_w, int buffer_h, int x, int y1, int y2, const ColorRGB& color)
 {
   if(y2 < y1) std::swap(y1, y2); //swap y1 and y2 because y1 must be the topmost endpoint
   if(x < 0 || x > buffer_w - 1 || y2 < 0 || y1 > buffer_h - 1) return;
@@ -113,7 +77,7 @@ void ADrawer2DBuffer::verLine(unsigned char* buffer, int buffer_w, int buffer_h,
 }
 
 //this one does NOT check if the line is inside the buffer! (hence only width, not height, as parameter)
-void ADrawer2DBuffer::bresenhamLine(unsigned char* buffer, int w, int x0, int y0, int x1, int y1, const ColorRGB& color)
+void bresenhamLine(unsigned char* buffer, int w, int x0, int y0, int x1, int y1, const ColorRGB& color)
 {
   //draw the line with bresenham
   int deltax = std::abs((double)(x1 - x0));    // The difference between the x's
@@ -175,7 +139,23 @@ void ADrawer2DBuffer::bresenhamLine(unsigned char* buffer, int w, int x0, int y0
   }
 }
 
-void ADrawer2DBuffer::recursive_bezier(unsigned char* buffer, int w, Clip& clip,
+void drawLine(unsigned char* buffer, int w, const ADrawer2DBuffer::Clip& clip, int x0, int y0, int x1, int y1, const ColorRGB& color)
+{
+  //clip if some point is outside the clipping area
+  if(x0 < clip.x0 || x0 >= clip.x1 || x1 < clip.x0 || x1 >= clip.x1 || y0 < clip.y0 || y0 >= clip.y1 || y1 < clip.y0 || y1 >= clip.y1)
+  {
+    int x2, y2, x3, y3;
+    if(!clipLine(x0, y0, x1, y1, x2, y2, x3, y3, clip.x0, clip.y0, clip.x1, clip.y1)) return;
+    x0 = x2;
+    y0 = y2;
+    x1 = x3;
+    y1 = y3;
+  }
+  
+  bresenhamLine(buffer, w, x0, y0, x1, y1, color);
+}
+
+void recursive_bezier(unsigned char* buffer, int w, const ADrawer2DBuffer::Clip& clip,
                                        double x0, double y0, //endpoint
                                        double x1, double y1, //handle
                                        double x2, double y2, //handle
@@ -207,85 +187,7 @@ void ADrawer2DBuffer::recursive_bezier(unsigned char* buffer, int w, Clip& clip,
   }
 }
 
-void ADrawer2DBuffer::drawPoint(int x, int y, const ColorRGB& color)
-{
-  psetClipped(buffer, w, clip, x, y, color);
-}
-
-void ADrawer2DBuffer::drawLine(unsigned char* buffer, int w, Clip& clip, int x0, int y0, int x1, int y1, const ColorRGB& color)
-{
-  //clip if some point is outside the clipping area
-  if(x0 < clip.x0 || x0 >= clip.x1 || x1 < clip.x0 || x1 >= clip.x1 || y0 < clip.y0 || y0 >= clip.y1 || y1 < clip.y0 || y1 >= clip.y1)
-  {
-    int x2, y2, x3, y3;
-    if(!clipLine(x0, y0, x1, y1, x2, y2, x3, y3, clip.x0, clip.y0, clip.x1, clip.y1)) return;
-    x0 = x2;
-    y0 = y2;
-    x1 = x3;
-    y1 = y3;
-  }
-  
-  bresenhamLine(buffer, w, x0, y0, x1, y1, color);
-}
-
-void ADrawer2DBuffer::drawLine(int x0, int y0, int x1, int y1, const ColorRGB& color)
-{
-  drawLine(buffer, w, clip, x0, y0, x1, y1, color);
-}
-
-void ADrawer2DBuffer::drawBezier(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color)
-{
-  recursive_bezier(buffer, w, clip, x0, y0, x1, y1, x2, y2, x3, y3, color, 0);
-}
-
-    
-void ADrawer2DBuffer::drawRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled)
-{
-  if(filled)
-  {
-    int sx0 = x0;
-    int sy0 = y0;
-    int sx1 = x1;
-    int sy1 = y1;
-    
-    if(clip.x0 > sx0) sx0 = clip.x0;
-    if(clip.y0 >  sy0)  sy0 = clip.y0; 
-    if(clip.x1 < sx1) sx1 = clip.x1;
-    if(clip.y1 < sy1) sy1 = clip.y1;
-    
-    for(int x = sx0; x < sx1; x++)
-    for(int y = sy0; y < sy1; y++)
-    {
-      pset(buffer, w, x, y, color);
-    }
-  }
-  else
-  {
-    drawLine(x0, y0, x1, y0, color);
-    drawLine(x0, y1 - 1, x1, y1 - 1, color);
-    drawLine(x0, y0, x0, y1, color);
-    drawLine(x1 - 1, y0, x1 - 1, y1, color);
-  }
-}
-
-void ADrawer2DBuffer::drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled)
-{
-  (void)x0; (void)y0; (void)x1; (void)y1; (void)x2; (void)y2; (void)color; (void)filled;
-  //TODO!
-}
-
-void ADrawer2DBuffer::drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color, bool filled)
-{
-  (void)x0; (void)y0; (void)x1; (void)y1; (void)x2; (void)y2; (void)x3; (void)y3; (void)color; (void)filled;
-  //TODO!
-}
-
-void ADrawer2DBuffer::drawCircle(int x, int y, int radius, const ColorRGB& color, bool filled)
-{
-  filled ? drawDisk(buffer, w, h, x, y, radius, color) : drawCircleBorder(buffer, w, clip, x, y, radius, color);
-}
-
-void ADrawer2DBuffer::drawEllipseBorder(unsigned char* buffer, int w, Clip& clip, int cx, int cy, int radiusx, int radiusy, const ColorRGB& color)
+void drawEllipseBorder(unsigned char* buffer, int w, const ADrawer2DBuffer::Clip& clip, int cx, int cy, int radiusx, int radiusy, const ColorRGB& color)
 {
   int twoASquare = 2 * radiusx * radiusx;
   int twoBSquare = 2 * radiusy * radiusy;
@@ -346,7 +248,7 @@ void ADrawer2DBuffer::drawEllipseBorder(unsigned char* buffer, int w, Clip& clip
   }
 }
 
-void ADrawer2DBuffer::drawFilledEllipse(unsigned char* buffer, int w, int h, int cx, int cy, int radiusx, int radiusy, const ColorRGB& color)
+void drawFilledEllipse(unsigned char* buffer, int w, int h, int cx, int cy, int radiusx, int radiusy, const ColorRGB& color)
 {
   int twoASquare = 2 * radiusx * radiusx;
   int twoBSquare = 2 * radiusy * radiusy;
@@ -404,7 +306,7 @@ void ADrawer2DBuffer::drawFilledEllipse(unsigned char* buffer, int w, int h, int
   }
 }
 
-void ADrawer2DBuffer::drawCircleBorder(unsigned char* buffer, int w, Clip& clip, int cx, int cy, int radius, const ColorRGB& color)
+void drawCircleBorder(unsigned char* buffer, int w, const ADrawer2DBuffer::Clip& clip, int cx, int cy, int radius, const ColorRGB& color)
 {
   int x = radius;
   int y = 0;
@@ -434,7 +336,7 @@ void ADrawer2DBuffer::drawCircleBorder(unsigned char* buffer, int w, Clip& clip,
 }
 
 //Filled bresenham circle with center at (xc,yc) with radius and RGB color
-void ADrawer2DBuffer::drawDisk(unsigned char* buffer, int buffer_w, int buffer_h, int xc, int yc, int radius, const ColorRGB& color)
+void drawDisk(unsigned char* buffer, int buffer_w, int buffer_h, int xc, int yc, int radius, const ColorRGB& color)
 {
   if(xc + radius < 0 || xc - radius >= buffer_w || yc + radius < 0 || yc - radius >= buffer_h) return; //every single pixel outside screen, so don't waste time on it
   int x = 0;
@@ -463,6 +365,119 @@ void ADrawer2DBuffer::drawDisk(unsigned char* buffer, int buffer_w, int buffer_h
     if(p < 0) p += (x++ << 2) + 6;
     else p += ((x++ - y--) << 2) + 10;
   }
+}
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+ADrawer2DBuffer::ADrawer2DBuffer()
+: buffer(0)
+, w(0)
+, h(0)
+{
+}
+
+void ADrawer2DBuffer::pushScissor(int x0, int y0, int x1, int y1)
+{
+  clipstack.push_back(clip);
+  clip.x0 = x0;
+  clip.y0 = y0;
+  clip.x1 = x1;
+  clip.y1 = y1;
+  clip.fit(w, h);
+}
+
+void ADrawer2DBuffer::pushSmallestScissor(int x0, int y0, int x1, int y1)
+{
+  int sx0 = x0;
+  int sy0 = y0;
+  int sx1 = x1;
+  int sy1 = y1;
+  
+  if(clip.x0 > sx0) sx0 = clip.x0;
+  if(clip.y0 >  sy0)  sy0 = clip.y0; 
+  if(clip.x1 < sx1) sx1 = clip.x1;
+  if(clip.y1 < sy1) sy1 = clip.y1;
+  
+  pushScissor(sx0,  sy0, sx1, sy1);
+}
+
+void ADrawer2DBuffer::popScissor()
+{
+  clip = clipstack.back();
+  clip.fit(w, h);
+  clipstack.pop_back();
+}
+
+void ADrawer2DBuffer::drawPoint(int x, int y, const ColorRGB& color)
+{
+  psetClipped(buffer, w, clip, x, y, color);
+}
+
+void ADrawer2DBuffer::drawLine(int x0, int y0, int x1, int y1, const ColorRGB& color)
+{
+  lpi::drawLine(buffer, w, clip, x0, y0, x1, y1, color);
+}
+
+void ADrawer2DBuffer::drawBezier(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color)
+{
+  recursive_bezier(buffer, w, clip, x0, y0, x1, y1, x2, y2, x3, y3, color, 0);
+}
+
+    
+void ADrawer2DBuffer::drawRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled)
+{
+  if(filled)
+  {
+    int sx0 = x0;
+    int sy0 = y0;
+    int sx1 = x1;
+    int sy1 = y1;
+    
+    if(clip.x0 > sx0) sx0 = clip.x0;
+    if(clip.y0 >  sy0)  sy0 = clip.y0; 
+    if(clip.x1 < sx1) sx1 = clip.x1;
+    if(clip.y1 < sy1) sy1 = clip.y1;
+    
+    for(int x = sx0; x < sx1; x++)
+    for(int y = sy0; y < sy1; y++)
+    {
+      pset(buffer, w, x, y, color);
+    }
+  }
+  else
+  {
+    drawLine(x0, y0, x1, y0, color);
+    drawLine(x0, y1 - 1, x1, y1 - 1, color);
+    drawLine(x0, y0, x0, y1, color);
+    drawLine(x1 - 1, y0, x1 - 1, y1, color);
+  }
+}
+
+void ADrawer2DBuffer::drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled)
+{
+  (void)x0; (void)y0; (void)x1; (void)y1; (void)x2; (void)y2; (void)color; (void)filled;
+  //TODO!
+}
+
+void ADrawer2DBuffer::drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color, bool filled)
+{
+  (void)x0; (void)y0; (void)x1; (void)y1; (void)x2; (void)y2; (void)x3; (void)y3; (void)color; (void)filled;
+  //TODO!
+}
+
+void ADrawer2DBuffer::drawCircle(int x, int y, int radius, const ColorRGB& color, bool filled)
+{
+  filled ? drawDisk(buffer, w, h, x, y, radius, color) : drawCircleBorder(buffer, w, clip, x, y, radius, color);
 }
 
 void ADrawer2DBuffer::drawEllipseCentered(int x, int y, int radiusx, int radiusy, const ColorRGB& color, bool filled)

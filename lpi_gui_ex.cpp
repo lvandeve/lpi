@@ -635,15 +635,15 @@ int Grid::getScreenY(int tiley) const
 }
 
 
-void Grid::drawWidget(IGUIDrawer& /*drawer*/) const
+void Grid::drawWidget(IGUIDrawer& drawer) const
 {
   if(showGrid)
   {
     for(int y = y0; y < y1; y += tileSizeY)
     for(int x = x0; x < x1; x += tileSizeX)
     {
-      drawLine(x, y0, x, y1, gridColor);
-      drawLine(x0, y, x1, y, gridColor);
+      drawer.drawLine(x, y0, x, y1, gridColor);
+      drawer.drawLine(x0, y, x1, y, gridColor);
     }
   }
 }
@@ -955,9 +955,9 @@ void Rectangle::make(int x, int y, int sizex, int sizey, const ColorRGB& color)
   this->totallyEnable();
 }
 
-void Rectangle::drawWidget(IGUIDrawer& /*drawer*/) const
+void Rectangle::drawWidget(IGUIDrawer& drawer) const
 {
-  drawRectangle(x0, y0, x1, y1, color);
+  drawer.drawRectangle(x0, y0, x1, y1, color, false);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

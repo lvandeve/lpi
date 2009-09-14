@@ -40,6 +40,8 @@ class ADrawer2DBuffer : public ADrawer2D //draws on a buffer
     size_t w;
     size_t h;
     
+  public:
+    
     struct Clip
     {
       int x0;
@@ -68,6 +70,8 @@ class ADrawer2DBuffer : public ADrawer2D //draws on a buffer
       }
     };
     
+  protected:
+    
     //current clip area
     Clip clip;
     //clip stack
@@ -75,18 +79,6 @@ class ADrawer2DBuffer : public ADrawer2D //draws on a buffer
     
   protected:
   
-    static void pset(unsigned char* buffer, int buffer_w, int x, int y, const ColorRGB& color); //pset does NOT check if the pixel is actually in the buffer (risk for out of bounds but much faster)
-    static void psetClipped(unsigned char* buffer, int buffer_w, const Clip& c, int x, int y, const ColorRGB& color);
-    static void horLine(unsigned char* buffer, int buffer_w, int buffer_h, int y, int x1, int x2, const ColorRGB& color); //Fast horizontal line from (x1,y) to (x2,y), with rgb color
-    static void verLine(unsigned char* buffer, int buffer_w, int buffer_h, int x, int y1, int y2, const ColorRGB& color); //Fast vertical line from (x,y1) to (x,y2), with rgb color
-    static void bresenhamLine(unsigned char* buffer, int w, int x1, int y1, int x2, int y2, const ColorRGB& color); //this one does NOT check if the line is inside the buffer! (hence only width, not height, as parameter)
-    static void drawLine(unsigned char* buffer, int w, Clip& clip, int x0, int y0, int x1, int y1, const ColorRGB& color);
-    static void recursive_bezier(unsigned char* buffer, int w, Clip& clip, double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, const ColorRGB& color, int n);
-    static void drawEllipseBorder(unsigned char* buffer, int w, Clip& clip, int cx, int cy, int radiusx, int radiusy, const ColorRGB& color);
-    static void drawFilledEllipse(unsigned char* buffer, int w, int h, int cx, int cy, int radiusx, int radiusy, const ColorRGB& color);
-    static void drawCircleBorder(unsigned char* buffer, int w, Clip& clip, int cx, int cy, int radius, const ColorRGB& color);
-    static void drawDisk(unsigned char* buffer, int buffer_w, int buffer_h, int xc, int yc, int radius, const ColorRGB& color);
-    
     void setBufferInternal(unsigned char* buffer, size_t w, size_t h)
     {
       this->buffer = buffer;
