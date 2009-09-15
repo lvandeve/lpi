@@ -59,10 +59,8 @@ void Drawer2DGL::prepareDrawTextured()
   screen->setOpenGLScissor(); //everything that draws something must always do this //TODO: investigate that statement
 }
 
-void Drawer2DGL::drawLineInternal(int x0, int y0, int x1, int y1, const ColorRGB& color) //doesn't call "prepareDraw", to be used by other things that draw multiple lines
+void Drawer2DGL::drawLineInternal(int x0, int y0, int x1, int y1) //doesn't call "prepareDraw", to be used by other things that draw multiple lines
 {
-  glColor4ub(color.r, color.g, color.b, color.a);
-    
   glBegin(GL_LINES);
     glVertex2d(x0 + 0.5, y0 + 0.5);
     glVertex2d(x1 + 0.5, y1 + 0.5);
@@ -200,25 +198,20 @@ void Drawer2DGL::drawPoint(int x, int y, const ColorRGB& color)
 void Drawer2DGL::drawLine(int x0, int y0, int x1, int y1, const ColorRGB& color)
 {
   prepareDrawUntextured();
-
   glColor4ub(color.r, color.g, color.b, color.a);
-    
-  glBegin(GL_LINES);
-    glVertex2d(x0 + 0.5, y0 + 0.5);
-    glVertex2d(x1 + 0.5, y1 + 0.5);
-  glEnd();
+  
+  drawLineInternal(x0, y0, x1, y1);
 }
 
 void Drawer2DGL::recursive_bezier(double x0, double y0, //endpoint
                                   double x1, double y1, //handle
                                   double x2, double y2, //handle
                                   double x3, double y3, //endpoint
-                                  const ColorRGB& color,
                                   int n) //extra recursion test for safety
 {
   if(bezier_nearly_flat(x0, y0, x1, y1, x2, y2, x3, y3) || n > 20)
   {
-    drawLine((int)x0, (int)y0, (int)x3, (int)y3, color);
+    drawLineInternal((int)x0, (int)y0, (int)x3, (int)y3);
   }
   else
   {
@@ -235,25 +228,27 @@ void Drawer2DGL::recursive_bezier(double x0, double y0, //endpoint
     double x0123 = (x012 + x123) / 2;
     double y0123 = (y012 + y123) / 2;
     
-    recursive_bezier(x0, y0, x01, y01, x012, y012, x0123, y0123, color, n + 1); 
-    recursive_bezier(x0123, y0123, x123, y123, x23, y23, x3, y3, color, n + 1);
+    recursive_bezier(x0, y0, x01, y01, x012, y012, x0123, y0123, n + 1); 
+    recursive_bezier(x0123, y0123, x123, y123, x23, y23, x3, y3, n + 1);
   }
 }
 
 void Drawer2DGL::drawBezier(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color)
 {
-  recursive_bezier(x0, y0, x1, y1, x2, y2, x3, y3, color, 0);
+  prepareDrawUntextured();
+  glColor4ub(color.r, color.g, color.b, color.a);
+  
+  recursive_bezier(x0, y0, x1, y1, x2, y2, x3, y3, 0);
 }
 
     
 void Drawer2DGL::drawRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled)
 {
+  prepareDrawUntextured();
+  glColor4ub(color.r, color.g, color.b, color.a);
+
   if(filled)
   {
-    prepareDrawUntextured();
-  
-    glColor4ub(color.r, color.g, color.b, color.a);
-    
     static const double OGLDIFF = 0.0;
   
     glBegin(GL_QUADS);
@@ -265,10 +260,10 @@ void Drawer2DGL::drawRectangle(int x0, int y0, int x1, int y1, const ColorRGB& c
   }
   else
   {
-    drawLine(x0, y0, x1, y0, color);
-    drawLine(x0, y1 - 1, x1, y1 - 1, color);
-    drawLine(x0, y0, x0, y1, color);
-    drawLine(x1 - 1, y0, x1 - 1, y1, color);
+    drawLineInternal(x0, y0, x1, y0);
+    drawLineInternal(x0, y1 - 1, x1, y1 - 1);
+    drawLineInternal(x0, y0, x0, y1);
+    drawLineInternal(x1 - 1, y0, x1 - 1, y1);
   }
 }
 
@@ -290,9 +285,9 @@ void Drawer2DGL::drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, co
   }
   else
   {
-    drawLine(x0, y0, x1, y1, color);
-    drawLine(x1, y1, x2, y2, color);
-    drawLine(x2, y2, x0, y0, color);
+    drawLineInternal(x0, y0, x1, y1);
+    drawLineInternal(x1, y1, x2, y2);
+    drawLineInternal(x2, y2, x0, y0);
   }
 }
 
@@ -315,10 +310,10 @@ void Drawer2DGL::drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3
   }
   else
   {
-    drawLine(x0, y0, x1, y1, color);
-    drawLine(x1, y1, x2, y2, color);
-    drawLine(x2, y2, x3, y3, color);
-    drawLine(x3, y3, x0, y0, color);
+    drawLineInternal(x0, y0, x1, y1);
+    drawLineInternal(x1, y1, x2, y2);
+    drawLineInternal(x2, y2, x3, y3);
+    drawLineInternal(x3, y3, x0, y0);
   }
 }
 
@@ -414,7 +409,7 @@ void Drawer2DGL::drawTextureSized(const ITexture* texture, int x, int y, size_t 
   prepareDrawTextured();
 
   glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
-  texturegl->bind();
+  texturegl->bind(screen->isSmoothingEnabled());
 
   double u3 = (double)texturegl->getU() / (double)texturegl->getU2();
   double v3 = (double)texturegl->getV() / (double)texturegl->getV2();
@@ -438,7 +433,7 @@ void Drawer2DGL::drawTextureRepeated(const ITexture* texture, int x0, int y0, in
   prepareDrawTextured();
 
   glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
-  texturegl->bind();
+  texturegl->bind(screen->isSmoothingEnabled());
   
   bool simple = true;
   if(x1 - x0 > (int)texture->getU() && texture->getU() != texture->getU2()) simple = false;
