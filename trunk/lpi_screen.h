@@ -48,6 +48,8 @@ class ScreenGL
     void set2DScreen(int w, int h);
     void set3DScreen(double near, double far, int w, int h);
     
+    bool glsmoothing;
+    
   public:
 
     int screenWidth();
@@ -63,6 +65,10 @@ class ScreenGL
     void enableTwoSided();
     void enableZBuffer();
     void disableZBuffer();
+    //smoothing: to draw the pixels of the texture filtered or not
+    void enableSmoothing();
+    void disableSmoothing();
+    bool isSmoothingEnabled();
     
   protected:
     ScreenGL(bool); //TEMPORARY UGLY CONSTRUCTOR ONLY FOR DURING REFACTORING; SEE LPI_TEXT.CPP

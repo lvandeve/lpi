@@ -145,7 +145,7 @@ class TextureGL : public ITexture
   */
   public:
   
-    TextureGL(bool smoothing = false);
+    TextureGL();
     
     virtual void setSize(size_t u, size_t v) { makeBuffer(u, v); }
     //width and height of the texture
@@ -170,7 +170,7 @@ class TextureGL : public ITexture
       return &buffer[0];
     }
     
-    void bind() const; //set this texture for OpenGL
+    void bind(bool smoothing) const; //set this texture for OpenGL
   private:
     
     void makeBuffer(int u, int v); //creates memory for the buffer
@@ -187,7 +187,6 @@ class TextureGL : public ITexture
     void operator*=(double a);
     
   private:
-    bool smoothing;
     std::vector<unsigned char> buffer; //the buffer containing the image data in pc memory, can also be altered: just upload() the texture again to make the new result visible
 
     GLuint texture[1]; //the OpenGL texture datatype

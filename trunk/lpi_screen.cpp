@@ -41,6 +41,7 @@ You can choose the resolution, whether or not it's fullscreen, and a caption for
 This also inits everything else of the lpi application, so lpi::screen currently acts as init function.
 */
 ScreenGL::ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, const char* text)
+: glsmoothing(false)
 {
   int colorDepth = 32;
   w = width;
@@ -94,7 +95,7 @@ ScreenGL::ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, con
   
   initGL();
   
-  SDL_EnableUNICODE(1); //for the text input things
+  SDL_EnableUNICODE(1); //for the text input things //TODO: move this to SDL input class
   
   cls();
   
@@ -184,6 +185,7 @@ void ScreenGL::set2DScreen(int w, int h)
   
   enableTwoSided(); //important, without this, 2D stuff might not be drawn if only one side is enabled
   disableZBuffer();
+  disableSmoothing();
 }
 
 /*
@@ -353,6 +355,21 @@ void ScreenGL::resetScissor()
   }
   
   setOpenGLScissor();
+}
+
+void ScreenGL::enableSmoothing()
+{
+  glsmoothing = true;
+}
+
+void ScreenGL::disableSmoothing()
+{
+  glsmoothing = false;
+}
+
+bool ScreenGL::isSmoothingEnabled()
+{
+  return glsmoothing;
 }
 
 } //end of namespace lpi

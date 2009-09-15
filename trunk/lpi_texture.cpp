@@ -87,7 +87,7 @@ TextureGL emptyTexture;
 //TextureGL Class/////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 //****************************************************************************//
-TextureGL::TextureGL(bool smoothing) : smoothing(smoothing)
+TextureGL::TextureGL()
 {
   deleteBuffer();
   generated = false;
@@ -140,7 +140,7 @@ void TextureGL::upload()
     glGenTextures(1, texture);
     generated = true;
   }
-  bind();
+  bind(false);
   glTexImage2D(GL_TEXTURE_2D, 0, 4, u2, v2, 0, GL_RGBA, GL_UNSIGNED_BYTE, &buffer[0]);
 }
 
@@ -151,7 +151,7 @@ void TextureGL::reupload()
 }
 
 //make this the selected one for drawing
-void TextureGL::bind() const
+void TextureGL::bind(bool smoothing) const
 {
   glBindTexture(GL_TEXTURE_2D, texture[0]);
   if(smoothing)
