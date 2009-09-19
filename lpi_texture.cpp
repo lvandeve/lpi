@@ -285,7 +285,7 @@ void TextureGL::bind(bool smoothing) const
 //  glEnd();
 //}
 
-void TextureGL::getAlignedBuffer(std::vector<unsigned char>& out)
+void TextureGL::getTextAlignedBuffer(std::vector<unsigned char>& out)
 {
   //out = buffer;
   out.clear();
@@ -295,7 +295,7 @@ void TextureGL::getAlignedBuffer(std::vector<unsigned char>& out)
   }
 }
 
-void TextureGL::setAlignedBuffer(const std::vector<unsigned char>& in)
+void TextureGL::setTextAlignedBuffer(const std::vector<unsigned char>& in)
 {
   for(size_t y = 0; y < v; y++)
   {
@@ -303,7 +303,7 @@ void TextureGL::setAlignedBuffer(const std::vector<unsigned char>& in)
   }
 }
 
-void loadTextures(std::vector<unsigned char>& buffer, std::vector<ITexture*>& textures, ITextureFactory* factory, int widths, int heights, int w, int h, const AlphaEffect& effect)
+void loadTextures(std::vector<unsigned char>& buffer, std::vector<ITexture*>& textures, const ITextureFactory* factory, int widths, int heights, int w, int h, const AlphaEffect& effect)
 {
   int numx, numy;
    
@@ -332,7 +332,7 @@ void loadTextures(std::vector<unsigned char>& buffer, std::vector<ITexture*>& te
 
 /*
 */
-void loadTextures(const std::string& filename, std::vector<ITexture*>& textures, ITextureFactory* factory, int widths, int heights, const AlphaEffect& effect)
+void loadTextures(const std::string& filename, std::vector<ITexture*>& textures, const ITextureFactory* factory, int widths, int heights, const AlphaEffect& effect)
 {
   LodePNG::Decoder pngdec;
   
@@ -806,7 +806,7 @@ AlphaEffect::AlphaEffect(int style, unsigned char alpha, const ColorRGB& alphaCo
   this->alphaColor = alphaColor;
 }
 
-void loadTexturesFromBase64PNG(std::vector<ITexture*>& textures, ITextureFactory* factory, const std::string& base64, int widths, int heights, const AlphaEffect& effect)
+void loadTexturesFromBase64PNG(std::vector<ITexture*>& textures, const ITextureFactory* factory, const std::string& base64, int widths, int heights, const AlphaEffect& effect)
 {
   LodePNG::Decoder pngdec;
   std::vector<unsigned char> decoded64, pixels;

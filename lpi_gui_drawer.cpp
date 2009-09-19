@@ -124,28 +124,23 @@ void AGUIDrawer::drawTextureRepeated(const ITexture* texture, int x0, int y0, in
 
 void AGUIDrawer::calcTextRectSize(int& w, int& h, const std::string& text, const Font& font)
 {
-  return getDrawer().calcTextRectSize(w, h, text, font);
+  return getTextDrawer().calcTextRectSize(w, h, text, font);
 }
 
-size_t AGUIDrawer::getFontHeight(const Font& font)
+size_t AGUIDrawer::calcTextPosToChar(int x, int y, const std::string& text, const Font& font, const TextAlign& align)
 {
-  return getDrawer().getFontHeight(font);
+  return getTextDrawer().calcTextPosToChar(x, y, text, font, align);
 }
 
-size_t AGUIDrawer::calcTextPosToChar(int x, int y, const std::string& text, const Font& font, HAlign halign, VAlign valign)
+void AGUIDrawer::calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font, const TextAlign& align)
 {
-  return getDrawer().calcTextPosToChar(x, y, text, font, halign, valign);
-}
-
-void AGUIDrawer::calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font, HAlign halign, VAlign valign)
-{
-  getDrawer().calcTextCharToPos(x, y, index, text, font, halign, valign);
+  getTextDrawer().calcTextCharToPos(x, y, index, text, font, align);
 }
 
 
-void AGUIDrawer::drawText(const std::string& text, int x, int y, const Font& font, HAlign halign, VAlign valign)
+void AGUIDrawer::drawText(const std::string& text, int x, int y, const Font& font, const TextAlign& align)
 {
-  getDrawer().drawText(text, x, y, font, halign, valign);
+  getTextDrawer().drawText(text, x, y, font, align);
 }
 
 } //namespace gui

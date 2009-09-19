@@ -83,9 +83,9 @@ struct SpawnText
   std::string text;
   double prev_time;
   lpi::ColorRGB color;
-  lpi::IDrawer2D* drawer;
+  lpi::gui::IGUIDrawer* drawer;
   
-  SpawnText(const std::string& text, double x, double y, lpi::IDrawer2D* drawer, const lpi::ColorRGB& color = lpi::RGB_White)
+  SpawnText(const std::string& text, double x, double y, lpi::gui::IGUIDrawer* drawer, const lpi::ColorRGB& color = lpi::RGB_White)
   : x(x), y(y), text(text), prev_time(lpi::getSeconds()), color(color), drawer(drawer)
   {
     vx = lpi::getRandom(-1.0, 1.0);
@@ -116,7 +116,7 @@ struct SpawnTexts
 {
   std::vector<SpawnText*> spawns;
   
-  void addSpawn(const std::string& text, int x, int y, lpi::IDrawer2D* drawer, const lpi::ColorRGB& color = lpi::RGB_White)
+  void addSpawn(const std::string& text, int x, int y, lpi::gui::IGUIDrawer* drawer, const lpi::ColorRGB& color = lpi::RGB_White)
   {
     spawns.push_back(new SpawnText(text, (double)x, (double)y, drawer, color));
   }
@@ -343,11 +343,14 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
         public:
         lpi::gui::GUIInputSDL input;
         lpi::Drawer2DBuffer drawer;
+        lpi::InternalTextDrawer textdrawer;
+        GUIDrawerTest() : textdrawer(lpi::TextureFactory<lpi::TextureGL>(), &drawer){}
         virtual void drawGUIPart(lpi::gui::GUIPart, int, int, int, int, bool){}
         virtual void drawGUIPartColor(lpi::gui::GUIPartColor, const lpi::ColorRGB&, int, int, int, int, bool){}
         virtual void drawGUIPartText(lpi::gui::GUIPartText, const std::string&, int, int, int, int, bool){}
         virtual lpi::gui::IGUIInput& getInput() { return input; }
         virtual lpi::IDrawer2D& getDrawer() { return drawer; }
+        virtual lpi::ITextDrawer& getTextDrawer() { return textdrawer; }
       };
       
       GUIDrawerTest d;

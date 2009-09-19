@@ -84,7 +84,7 @@ class ITextureFactory
 {
   public:
     virtual ~ITextureFactory(){};
-    virtual ITexture* createNewTexture() = 0;
+    virtual ITexture* createNewTexture() const = 0;
 };
 
 /*
@@ -94,7 +94,7 @@ template<typename T> //T must be a subclass of ITexture
 class TextureFactory : public ITextureFactory
 {
   public:
-    virtual T* createNewTexture() { return new T; }
+    virtual T* createNewTexture() const { return new T; }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -200,8 +200,8 @@ class TextureGL : public ITexture
     void reupload(); //call this after you changed the screen (causing the textures to be erased from the video card)
     
     //get/set buffer that has the (possible non power of two) size of the wanted image (u * v RGBA pixels)
-    void getAlignedBuffer(std::vector<unsigned char>& out);
-    void setAlignedBuffer(const std::vector<unsigned char>& in);
+    void getTextAlignedBuffer(std::vector<unsigned char>& out);
+    void setTextAlignedBuffer(const std::vector<unsigned char>& in);
     
     
     void operator*=(double a);
@@ -233,11 +233,11 @@ void makeTextureAlphaFromPNGFile(ITexture* texture, const std::string& filename,
 void applyAlphaEffect(ITexture* texture, const AlphaEffect& effect); //uses the setAlpha function in api.cpp on the buffer  
 
 
-void loadTextures(std::vector<unsigned char>& buffer, std::vector<ITexture*>& textures, ITextureFactory* factory, int widths, int heights, int w, int h, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
-void loadTextures(const std::string& filename, std::vector<ITexture*>& textures, ITextureFactory* factory, int widths, int heights, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
+void loadTextures(std::vector<unsigned char>& buffer, std::vector<ITexture*>& textures, const ITextureFactory* factory, int widths, int heights, int w, int h, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
+void loadTextures(const std::string& filename, std::vector<ITexture*>& textures, const ITextureFactory* factory, int widths, int heights, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
 void loadTexturesAlpha(std::vector<unsigned char>& buffer, std::vector<TextureGL>& textures, int widths, int heights, int w, int h);
 void loadTexturesAlpha(const std::string& filename, std::vector<TextureGL>& textures, int widths, int heights);
-void loadTexturesFromBase64PNG(std::vector<ITexture*>& textures, ITextureFactory* factory, const std::string& base64, int widths, int heights, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
+void loadTexturesFromBase64PNG(std::vector<ITexture*>& textures, const ITextureFactory* factory, const std::string& base64, int widths, int heights, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
 
 extern TextureGL emptyTexture; //default texture for initializing pointers
 

@@ -18,26 +18,13 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-/*
-lpi_tools:
-Tools for lpi itself, e.g. functions that act as programs to convert PNG images
-to/from base64 files, to create built-in textures for GUI and font or extract them.
-*/
-
-#pragma once
-
-#include <string>
+#include "lpi_text_drawer.h"
 
 namespace lpi
 {
-  namespace gui { class IGUIDrawer; }
 
-  void binaryFileToBase64File(const std::string& outfilename, const std::string& infilename, bool cppnewlines);
-  void base64FileToBinaryFile(const std::string& outfilename, const std::string& infilename);
-  void base64StringToBinaryFile(const std::string& outfilename, const std::string& in);
-  
-  void graphicalKeyBoardNumberTest(gui::IGUIDrawer& drawer);
+const TextAlign ALIGN_TopLeft(HA_LEFT, VA_TOP);
 
-} //namespace lpi
 
+
+} // namespace lpi

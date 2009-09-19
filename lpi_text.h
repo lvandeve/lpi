@@ -24,6 +24,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_color.h"
 #include "lpi_parse.h"
 #include "lpi_font.h"
+#include "lpi_text_drawer.h"
 
 #include <string>
 #include <vector>
@@ -66,7 +67,7 @@ Needs an ITextureFactory to create the textures of the correct type for that wha
 */
 class InternalGlyphs
 {
-  friend class InternalFontDrawer;
+  friend class InternalTextDrawer;
   
   struct Glyphs
   {
@@ -87,14 +88,14 @@ class InternalGlyphs
     Glyphs glyphs6x6;
     Glyphs glyphs4x5;
     
-    void initBuiltInFontTextures(ITextureFactory* factory);
+    void initBuiltInFontTextures(const ITextureFactory* factory);
   
   public:
-    InternalGlyphs(ITextureFactory* factory);
+    InternalGlyphs(const ITextureFactory* factory);
     ~InternalGlyphs();
 };
 
-class InternalFontDrawer //uses InternalGlyphs
+class InternalTextDrawer : public ITextDrawer //uses InternalGlyphs
 {
   IDrawer2D* drawer;
   InternalGlyphs glyphs;
@@ -105,12 +106,14 @@ class InternalFontDrawer //uses InternalGlyphs
   
   public: //todo: make more things private and remove many old things
   
-  InternalFontDrawer(ITextureFactory* factory, IDrawer2D* drawer);
+  InternalTextDrawer(const ITextureFactory& factory, IDrawer2D* drawer);
   
-  virtual size_t getFontHeight(const Font& font);
+  virtual void drawText(const std::string& text, int x, int y, const Font& font = FONT_Default, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP));
   virtual void calcTextRectSize(int& w, int& h, const std::string& text, const Font& font);
-  virtual size_t calcTextPosToChar(int x, int y, const std::string& text, const Font& font, int halign, int valign);
-  virtual void calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font, int halign, int valign);
+  virtual size_t calcTextPosToChar(int x, int y, const std::string& text, const Font& font, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP));
+  virtual void calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP));
+  
+  private:
   
   //used to print a string without newlines
   int printString(const std::string& text, int x, int y, const Font& font, unsigned long forceLength=0);
