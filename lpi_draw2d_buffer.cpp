@@ -19,6 +19,8 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 */
 
 #include "lpi_draw2d_buffer.h"
+#include "lpi_math2d.h"
+#include "lpi_text.h"
 
 #include <vector>
 #include <cmath>
@@ -145,7 +147,7 @@ void drawLine(unsigned char* buffer, int w, const ADrawer2DBuffer::Clip& clip, i
   if(x0 < clip.x0 || x0 >= clip.x1 || x1 < clip.x0 || x1 >= clip.x1 || y0 < clip.y0 || y0 >= clip.y1 || y1 < clip.y0 || y1 >= clip.y1)
   {
     int x2, y2, x3, y3;
-    if(!clipLine(x0, y0, x1, y1, x2, y2, x3, y3, clip.x0, clip.y0, clip.x1, clip.y1)) return;
+    if(!clipLine(x2, y2, x3, y3, x0, y0, x1, y1, clip.x0, clip.y0, clip.x1, clip.y1)) return;
     x0 = x2;
     y0 = y2;
     x1 = x3;
@@ -384,6 +386,13 @@ ADrawer2DBuffer::ADrawer2DBuffer()
 , w(0)
 , h(0)
 {
+  TextureFactory<TextureBuffer> factory;
+  fontdrawer = new InternalFontDrawer(&factory, this);
+}
+
+ADrawer2DBuffer::~ADrawer2DBuffer()
+{
+  delete fontdrawer;
 }
 
 void ADrawer2DBuffer::pushScissor(int x0, int y0, int x1, int y1)
@@ -467,12 +476,94 @@ void ADrawer2DBuffer::drawTriangle(int x0, int y0, int x1, int y1, int x2, int y
 {
   (void)x0; (void)y0; (void)x1; (void)y1; (void)x2; (void)y2; (void)color; (void)filled;
   //TODO!
+  if(filled)
+  {
+    //not so super great implementation for this plain-colored triangle, but will fit nicely in a drawGradientTriangle function later thanks to the barycentric coordinates
+    Vector2 a(x0, y0);
+    Vector2 b(x1, y1);
+    Vector2 c(x2, y2);
+
+    if(b.y < a.y) std::swap(a, b);
+    if(c.y < a.y) std::swap(a, c);
+    if(c.y < b.y) std::swap(b, c);
+
+    double stepxab = (b.x - a.x) / (b.y - a.y);
+    double stepxac = (c.x - a.x) / (c.y - a.y);
+    double stepxbc = (c.x - b.x) / (c.y - b.y);
+    
+    double ystart = a.y < 0.0 ? 0.0 : a.y;
+    double yend = c.y > h ? h : c.y;
+    
+    for(double y = (int)ystart; y < yend; y++) //it's important that the x and y of every triangle starts at same fractional part (without, there are ugly pixels on the side and seams between touching triangles are visible), hence the (int) conversion.
+    {
+      double x0, x1;
+      if(y < b.y)
+      {
+        x0 = a.x + (y - a.y) * stepxab;
+        x1 = a.x + (y - a.y) * stepxac;
+      }
+      else
+      {
+        x0 = b.x + (y - b.y) * stepxbc;
+        x1 = a.x + (y - a.y) * stepxac;
+      }
+      
+      if(x1 < x0) std::swap(x0, x1);
+      if(x0 < 0.0) x0 = 0.0;
+      if(x1 > w) x1 = w;
+      x0 = (int)x0; //it's important that the x and y of every triangle starts at same fractional part (without, there are ugly pixels on the side and seams between touching triangles are visible), hence the (int) conversion.
+      
+      //instead of doing the barycentric calculation for every x, do it only for begin and end and then step linearly
+      double alpha, beta, gamma;
+      double alpha2, beta2, gamma2;
+      barycentric(alpha, beta, gamma, a, b, c,  Vector2(x0, y));
+      barycentric(alpha2, beta2, gamma2, a, b, c,  Vector2(x1, y));
+      double stepalphax = (alpha2 - alpha) / (x1 - x0);
+      double stepbetax = (beta2 - beta) / (x1 - x0);
+      double stepgammax = (gamma2 - gamma) / (x1 - x0);
+      
+      for(double x = (int)x0; x < x1; x++)
+      {
+        if(alpha >= 0.0 && beta >= 0.0 && gamma >= 0.0) //pixel inside triangle
+        {
+          pset(buffer, w, (int)x, (int)y, color);
+        }
+        
+        alpha += stepalphax;
+        beta += stepbetax;
+        gamma += stepgammax;
+      }
+    }
+  }
+  else
+  {
+    drawLine(x0, y0, x1, y1, color);
+    drawLine(x1, y1, x2, y2, color);
+    drawLine(x2, y2, x0, y0, color);
+  }
 }
 
 void ADrawer2DBuffer::drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color, bool filled)
 {
   (void)x0; (void)y0; (void)x1; (void)y1; (void)x2; (void)y2; (void)x3; (void)y3; (void)color; (void)filled;
   //TODO!
+  if(filled)
+  {
+    //very lame temporary solution: draw it as some triangles (probably not always correct for non convex shapes!!)
+    int cx = (x0 + x1 + x2 + x3) / 4;
+    int cy = (y0 + y1 + y2 + y3) / 4;
+    drawTriangle(x0, y0, x1, y1, cx, cy, color, true);
+    drawTriangle(x1, y1, x2, y2, cx, cy, color, true);
+    drawTriangle(x2, y2, x3, y3, cx, cy, color, true);
+    drawTriangle(x3, y3, x0, y0, cx, cy, color, true);
+  }
+  else
+  {
+    drawLine(x0, y0, x1, y1, color);
+    drawLine(x1, y1, x2, y2, color);
+    drawLine(x2, y2, x3, y3, color);
+    drawLine(x3, y3, x0, y0, color);
+  }
 }
 
 void ADrawer2DBuffer::drawCircle(int x, int y, int radius, const ColorRGB& color, bool filled)
@@ -489,6 +580,7 @@ void ADrawer2DBuffer::drawGradientQuad(int x0, int y0, int x1, int y1, int x2, i
 {
   (void)x0; (void)y0; (void)x1; (void)y1; (void)x2; (void)y2; (void)x3; (void)y3; (void)color0; (void)color1; (void)color2; (void)color3;
   //TODO!
+  drawQuad(x0, y0, x1, y1, x2, y2, x3, y3, color0, true); //very lame temporary implementation - no gradient at all...
 }
 
 bool ADrawer2DBuffer::supportsTexture(ITexture* texture)
@@ -551,8 +643,60 @@ void ADrawer2DBuffer::drawTextureSized(const ITexture* texture, int x, int y, si
 
 void ADrawer2DBuffer::drawTextureRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, const ColorRGB& colorMod)
 {
-  (void)texture; (void)x0; (void)y0; (void)x1; (void)y1; (void)colorMod;
-  //TODO
+  //TODO: use colorMod and alpha channel
+  
+  lpi::clipRect(x0, y0, x1, y1, x0, y0, x1, y1, clip.x0, clip.y0, clip.x1, clip.y1);
+  
+  unsigned char* b = buffer;
+  const unsigned char* tb = texture->getBuffer();
+  
+    
+  for(int y = y0, ty = 0; y < y1; y++)
+  {
+    for(int x = x0, tx = 0; x < x1; x++)
+    {
+      int bufferpos = 4 * (y * w + x);
+      int tbufferpos = 4 * (ty * texture->getU2() + tx);
+      
+      b[bufferpos + 0] = (tb[tbufferpos + 0] * colorMod.r) / 256;
+      b[bufferpos + 1] = (tb[tbufferpos + 1] * colorMod.g) / 256;
+      b[bufferpos + 2] = (tb[tbufferpos + 2] * colorMod.b) / 256;
+      b[bufferpos + 3] = (tb[tbufferpos + 3] * colorMod.a) / 256;
+
+      tx++;
+      if(tx >= (int)texture->getU()) tx = 0;
+    }
+    ty++;
+    if(ty >= (int)texture->getV()) ty = 0;
+  }
+}
+
+void ADrawer2DBuffer::calcTextRectSize(int& w, int& h, const std::string& text, const Font& font)
+{
+  fontdrawer->calcTextRectSize(w, h, text, font);
+}
+
+size_t ADrawer2DBuffer::getFontHeight(const Font& font)
+{
+  return fontdrawer->getFontHeight(font);
+}
+
+size_t ADrawer2DBuffer::calcTextPosToChar(int x, int y, const std::string& text, const Font& font, HAlign halign, VAlign valign)
+{
+  return fontdrawer->calcTextPosToChar(x, y, text, font, (int)halign, (int)valign);
+}
+
+void ADrawer2DBuffer::calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font, HAlign halign, VAlign valign)
+{
+  fontdrawer->calcTextCharToPos(x, y, index, text, font, (int)halign, (int)valign);
+}
+
+void ADrawer2DBuffer::drawText(const std::string& text, int x, int y, const Font& font, HAlign halign, VAlign valign)
+{
+  (void)text; (void)font; (void)x; (void)y; (void)halign; (void)valign;
+  //TODO: valign and right-halign
+  if(halign == HA_LEFT) fontdrawer->print(text, x, y, font);
+  else fontdrawer->printCentered(text, x, y, font);
 }
 
 /*void ADrawer2DBuffer::cls(const ColorRGB& color)

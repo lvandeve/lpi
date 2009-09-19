@@ -38,113 +38,113 @@ namespace lpi
 namespace gui
 {
 
-class DropMenu : public ElementComposite
-{
-  private:
-    std::vector<Button> menuButton;
-    std::vector<bool> separator;
+//class DropMenu : public ElementComposite
+//{
+  //private:
+    //std::vector<Button> menuButton;
+    //std::vector<bool> separator;
     
-    /*
-    identity:
-    unique identifier (number) for each option, which can optionally be used to check options,
-    for example in an rpg game with a drop menu for items in inventory, option "drop item" can
-    always get number 5, option "use" can get number 7 for example, and then no matter at
-    what location in the menu the "use" option is, or no matter what alternative name (e.g.
-    "drink") the use option has, you can still check if it was pressed by using checkIdentity()
+    ///*
+    //identity:
+    //unique identifier (number) for each option, which can optionally be used to check options,
+    //for example in an rpg game with a drop menu for items in inventory, option "drop item" can
+    //always get number 5, option "use" can get number 7 for example, and then no matter at
+    //what location in the menu the "use" option is, or no matter what alternative name (e.g.
+    //"drink") the use option has, you can still check if it was pressed by using checkIdentity()
     
-    identities can only be set to useful values if you use the addOption function to add options
-    one by one, the setOptions function doesn't fill in useful identity values but only 0
+    //identities can only be set to useful values if you use the addOption function to add options
+    //one by one, the setOptions function doesn't fill in useful identity values but only 0
     
-    negative identities are most certainly allowed
-    */
-    std::vector<int> identity;
+    //negative identities are most certainly allowed
+    //*/
+    //std::vector<int> identity;
     
-  public:
-    //std::string text; //the menu texts, sorted, with | chars between them, and closed with a final NULL char
+  //public:
+    ////std::string text; //the menu texts, sorted, with | chars between them, and closed with a final NULL char
     
-    void setOptions(const std::string& text);
-    void clearOptions();
+    //void setOptions(const std::string& text);
+    //void clearOptions();
     
-    //text styles
-    Markup markup1;
-    Markup markup2;
+    ////text styles
+    //Markup markup1;
+    //Markup markup2;
     
-    BackPanel panel;
-    BackRule hrule; //for the separators
+    //BackPanel panel;
+    //BackRule hrule; //for the separators
     
-    DropMenu();
-    void makeColored(int x, int y, const std::string& text,
-                     const Markup& markup1 = TS_White, const Markup& markup2 = TS_White,
-                     const ColorRGB& menuColor = RGB_Grey, BackRule hrule = DEFAULTHRULE); //make with simple color panel
-    void make(int x, int y, const std::string& text,
-              const Markup& markup1 = TS_White, const Markup& markup2 = TS_White,
-              BackPanel panel = DEFAULTPANEL, BackRule hrule = DEFAULTHRULE); //make with given panel    
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-    virtual void handleWidget(const IGUIInput& input);
-    int check(const IGUIInput& input);
-    Button* getButton(int i);
-    Button* getButton(const std::string& name);
-    int getNumButtons() const { return menuButton.size(); }
-    std::string checkText(const IGUIInput& input);
-    /*
-    returns 0 if none, or a button where no identity was set, is pressed, or
-    the identity of the button if one with an identity was pressed
-    */
-    int checkIdentity(const IGUIInput& input);
-    void addOption(const std::string& text, int id = 0); //id is an optional identity
+    //DropMenu();
+    //void makeColored(int x, int y, const std::string& text,
+                     //const Font* font1 = 0hite, const Font& font2 = 0hite,
+                     //const ColorRGB& menuColor = RGB_Grey, BackRule hrule = DEFAULTHRULE); //make with simple color panel
+    //void make(int x, int y, const std::string& text,
+              //const Font* font1 = 0hite, const Font& font2 = 0hite,
+              //BackPanel panel = DEFAULTPANEL, BackRule hrule = DEFAULTHRULE); //make with given panel    
+    //virtual void drawWidget(IGUIDrawer& drawer) const;
+    //virtual void handleWidget(const IGUIInput& input);
+    //int check(const IGUIInput& input);
+    //Button* getButton(int i);
+    //Button* getButton(const std::string& name);
+    //int getNumButtons() const { return menuButton.size(); }
+    //std::string checkText(const IGUIInput& input);
+    ///*
+    //returns 0 if none, or a button where no identity was set, is pressed, or
+    //the identity of the button if one with an identity was pressed
+    //*/
+    //int checkIdentity(const IGUIInput& input);
+    //void addOption(const std::string& text, int id = 0); //id is an optional identity
     
-    bool autoDisable; //if true, the menu will totallyDisable itself if you click anywhere not on the menu
-};
+    //bool autoDisable; //if true, the menu will totallyDisable itself if you click anywhere not on the menu
+//};
 
 
 
-class Droplist : public ElementComposite
-{
-  private:
-    std::vector<Button> textButton;
-    void init(const std::string& text, int numVisibleOptions);
+//class Droplist : public ElementComposite
+//{
+  //private:
+    //std::vector<Button> textButton;
+    //void init(const std::string& text, int numVisibleOptions);
     
-    int sizexc; //width when closed = width to be able to contain widest text in the list
-    int sizexo; //width when open = width of widest text in the list
-    int sizeyc; //height when closed
-    int sizeyo; //height when open
+    //int sizexc; //width when closed = width to be able to contain widest text in the list
+    //int sizexo; //width when open = width of widest text in the list
+    //int sizeyc; //height when closed
+    //int sizeyo; //height when open
     
-    void open();
-    void close();
-  public:
-    //std::string text; //the menu texts, sorted, with | chars between them, and closed with a final NULL char
+    //void open();
+    //void close();
+  //public:
+    ////std::string text; //the menu texts, sorted, with | chars between them, and closed with a final NULL char
     
-    //text styles
-    Markup markup1; //Markup for a textbutton of the selection list
-    Markup markup2; //textbutton mouseOver
-    Markup markup3; //the selected one on top (instead of in the list)
+    ////text styles
+    //Markup markup1; //Markup for a textbutton of the selection list
+    //Markup markup2; //textbutton mouseOver
+    //Markup markup3; //the selected one on top (instead of in the list)
     
-    BackPanel topPanel; //color of the top where the selected text is
-    BackPanel listPanel; //color of the selection list
+    //BackPanel topPanel; //color of the top where the selected text is
+    //BackPanel listPanel; //color of the selection list
     
-    int numVisibleOptions; //in the selectionlist
-    bool opened; //true if the selectionlist is visible
+    //int numVisibleOptions; //in the selectionlist
+    //bool opened; //true if the selectionlist is visible
     
-    Droplist();
-    Scrollbar bar;
-    Button listButton; //the button to open and close the list
+    //Droplist();
+    //Scrollbar bar;
+    //Button listButton; //the button to open and close the list
     
-    void scroll();
+    //void scroll();
     
-    int selected;//the selected option of the list (it's index)
+    //int selected;//the selected option of the list (it's index)
     
-    void make(int x, int y, const std::string& text, int numVisibleOptions = -1,
-              const Markup& markup1 = TS_Black, const Markup& markup2 = TS_Red, const Markup& markup3 = TS_Shadow,
-              //BackPanel topPanel = COLORPANEL(RGB_Grey), BackPanel listPanel = COLORPANEL(RGB_White),
-              Texture* buttonTexture = &builtInTexture[28]);
-    void makeScrollbar(const GuiSet* set = &builtInGuiSet);
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-    int check();
-    std::string checkText();
-    virtual void handleWidget(const IGUIInput& input);
+    //void make(int x, int y, const std::string& text, int numVisibleOptions = -1,
+              //const Font* font1 = TS_Black, const Font& font2 = TS_Red, const Font& font3 = TS_Shadow,
+              ////BackPanel topPanel = COLORPANEL(RGB_Grey), BackPanel listPanel = COLORPANEL(RGB_White),
+              //Texture* buttonTexture = &builtInTexture[28]);
+    //void makeScrollbar(const GuiSet* set = &builtInGuiSet);
+    //virtual void drawWidget(IGUIDrawer& drawer) const;
+    //int check();
+    //std::string checkText();
+    //virtual void handleWidget(const IGUIInput& input);
 
-    void addOption(const std::string& text);
-};
+    //void addOption(const std::string& text);
+//};
 
 /*
 An invisible grid of numx * numy rectangles, it can return over which square the mouse is (top left one has coordinates 0, 0)
@@ -214,7 +214,7 @@ struct PainterStack
   ColorRGB color;
   Texture* texture;
   std::string text;
-  Markup textMarkup;
+  Font textFont;
   int type; //0: point, 1: line, 2: texture (coord = top left), 3: centered texture, 4: text
 };
 
@@ -231,7 +231,7 @@ class Painter : public Element
     void queueRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color = RGB_White);
     void queueTexture(int x, int y, Texture* texture, const ColorRGB& colorMod = RGB_White);
     void queueTextureCentered(int x, int y, Texture* texture, const ColorRGB& colorMod = RGB_White);
-    void queueText(int x, int y, const std::string& text, const Markup& markup);
+    void queueText(int x, int y, const std::string& text, const Font& font);
     
   private:
     mutable std::vector<PainterStack> stack; //mutable because it's emptied everytime after drawing
@@ -259,7 +259,9 @@ class OkWindow : public Window
   void make(int x, int y, int sizex, int sizey, const std::string& text);
 };
 
-//a painting canvas that allows you to paint with the mouse --> TODO: make this more general usable as per-pixel plotting tool
+//a painting canvas that allows you to paint with the mouse
+//TODO: make this more general by removing the mouse-painting and brushes and allowing the user to implement that
+//TODO: with the painting brush, this is more a "demo" or "sample" widget, maybe create a "lpi_gui_demo.h" and put it in there?
 class Canvas : public Element
 {
   private:
@@ -297,26 +299,28 @@ class Variable : public Element //can be anything the typename is: integer, floa
   public:
     T v;
     std::string label;
-    Markup markup;
+    Font font;
     
     virtual void drawWidget(IGUIDrawer& drawer) const
     {
-      print(label, x0, y0, markup);
-      print(v, x0 + label.length() * markup.getWidth(), y0, markup);
+      drawer.drawText(label, x0, y0, font);
+      int labelw, labelh;
+      drawer.calcTextRectSize(labelw, labelh, label, font);
+      drawer.drawText(v, x0 + labelw, y0, font);
     }
     
     Variable() { totallyDisable(); }
     
-    void make(int x, int y, T v, const std::string& label="", const Markup& markup = TS_W)
+    void make(int x, int y, T v, const std::string& label="", const Font& font = FONT_Default)
     {
       this->x0 = x;
       this->y0 = y;
       //for now, only the length of the label + 1 is used
-      this->setSizex((label.length() + 1) * markup.getWidth());
-      this->setSizey(markup.getHeight());
+      this->setSizex((label.length() + 1) * /*markup.getWidth()*/8); //TODO: use a drawer to determine text size
+      this->setSizey(/*markup.getHeight()*/8);
       this->v = v;
       this->label = label;
-      this->markup = markup;
+      this->font = font;
       this->visible = 1;
       this->active = 1;
     }
@@ -332,7 +336,7 @@ template<typename T>
 class PVariable : public Element //A bit similar purpose to Variable, but, uses a pointer and automatically displays the value (no "set" and "get" needed)
 {
   public:
-    Markup markup;
+    Font font;
     
     PVariable()
     : value(0)
@@ -341,20 +345,20 @@ class PVariable : public Element //A bit similar purpose to Variable, but, uses 
       this->active = 0;
     }
 
-    void make(int x, int y, T* value, const Markup& markup = TS_W)
+    void make(int x, int y, T* value, const Font& font = FONT_Default)
     {
       this->x0 = x;
       this->y0 = y;
-      this->setSizeX(16 * markup.getWidth());
-      this->setSizeY(markup.getHeight());
+      this->setSizeX(16 * /*markup.getWidth()*/8); //TODO: use a drawer to determine text size
+      this->setSizeY(/*markup.getHeight()*/8);
       this->value = value;
-      this->markup = markup;
+      this->font = font;
       this->totallyEnable();
     }
 
-    void drawWidget(IGUIDrawer& /*drawer*/) const
+    void drawWidget(IGUIDrawer& drawer) const
     {
-      if(value) print(valtostr(*value), x0, y0, markup);
+      if(value) drawer.drawText(valtostr(*value), x0, y0, font);
     }
     
     void setValue(T* value) { this->value = value; }
@@ -401,9 +405,9 @@ class NStateState
     
     bool enableText; //the text is a title drawn next to the checkbox, with automaticly calculated position
     std::string text;
-    Markup markup;
+    Font font;
     
-    void make(Texture* texture, const ColorRGB& colorMod, const std::string& text = "", const Markup& markup = TS_W);
+    void make(Texture* texture, const ColorRGB& colorMod, const std::string& text = "", const Font& font = FONT_Default);
 };
 
 //circle between N states (you can add states, the make function makes no states). Left mouse click goes to next state, right mouse click goes to previous state.
@@ -417,7 +421,7 @@ class NState : public Element, public Label
         
     NState();
     void make(int x, int y, int toggleOnMouseUp = 0);
-    void addState(Texture* texture, const ColorRGB& colorMod = RGB_White, const std::string& text = "", const Markup& markup = TS_W);
+    void addState(Texture* texture, const ColorRGB& colorMod = RGB_White, const std::string& text = "", const Font& font = FONT_Default);
     virtual void drawWidget(IGUIDrawer& drawer) const; //also handles it by calling handle(): toggles when mouse down or not
     virtual void handleWidget(const IGUIInput& input);
 };

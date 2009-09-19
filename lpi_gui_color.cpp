@@ -350,10 +350,10 @@ ColorSliderEx::ColorSliderEx(ColorSlider* slider, const std::string& label, doub
 , largest(largest)
 {
   static const int EDITBOXSIZEX = 52, EDITBOXSIZEY = 12;
-  this->label.make(0, 3, label, TS_ShadowInv);
+  this->label.make(0, 3, label, FONT_Shadow);
   int LABELSIZEX = this->label.getSizeX();
   resize(0, 0, LABELSIZEX + EDITBOXSIZEX, EDITBOXSIZEY);
-  input.make(0, 0, 5, TS_B);
+  input.make(0, 0, 5, FONT_Black);
   input.resize(LABELSIZEX + 6, 2, LABELSIZEX + EDITBOXSIZEX - 1, EDITBOXSIZEY - 1);
   input.cursorColor = RGB_Black;
   slider->resize(LABELSIZEX, 0, LABELSIZEX, EDITBOXSIZEY);

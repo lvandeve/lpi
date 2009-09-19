@@ -197,8 +197,8 @@ struct GuiSet
   ColorRGB mouseOverColor; //this isn't for panel buttons, but for image buttons like the arrows of a scrollbar, ...
   ColorRGB mouseDownColor; //this isn't for panel buttons, but for image buttons like the arrows of a scrollbar, ...
   
-  Markup panelButtonMarkup[3];
-  Markup textButtonMarkup[3];
+  Font panelButtonFont[3];
+  Font textButtonFont[3];
 };
 
 extern GuiSet builtInGuiSet;
@@ -217,12 +217,6 @@ class GUIDrawerGL : public AGUIDrawer
     
   public:
     GUIDrawerGL(ScreenGL* screen, GuiSet* set = &builtInGuiSet);
-    
-    
-    virtual void drawText(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W);
-    virtual void drawTextCentered(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W);
-    
-
     
     //not all GUI parts use all input parameters! only x0 and y0 are always used.
     virtual void drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, bool inactive = false);

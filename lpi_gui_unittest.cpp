@@ -552,8 +552,8 @@ void unitTest()
     
     Button wb;
     wb.makeTextPanel(0, 0, "window button");
-    wb.autoTextSize(4);
-    wb.centerText();
+    wb.autoTextSize(&dummydrawer, 4);
+    wb.centerText(&dummydrawer);
     tabs.getTabContent(0).pushTopAt(&wb, 20, 50);
     
     testinput.debugSetMousePos(0, 0);
@@ -592,8 +592,8 @@ void unitTest()
     
     Button wb;
     wb.makeTextPanel(0, 0, "window button");
-    wb.autoTextSize(4);
-    wb.centerText();
+    wb.autoTextSize(&dummydrawer, 4);
+    wb.centerText(&dummydrawer);
     tabs.getTabContent(0).pushTopAt(&wb, 20, 50);
     
     testinput.debugSetMousePos(0, 0);

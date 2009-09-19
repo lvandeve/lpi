@@ -129,10 +129,6 @@ class IGUIDrawer : public ADrawer2D //if you use a ADrawer2D implementation for 
   public:
     virtual ~IGUIDrawer(){};
 
-    //todo: these text drawing functions will move to IDrawer2D
-    virtual void drawText(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W) = 0;
-    virtual void drawTextCentered(const std::string& text, int x = 0, int y = 0, const Markup& markup = TS_W) = 0;
-    
     //not all GUI parts use all input parameters! only x0 and y0 are always used.
     virtual void drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, bool inactive = false) = 0;
     virtual void drawGUIPartColor(GUIPartColor part, const ColorRGB& color, int x0, int y0, int x1, int y1, bool inactive = false) = 0;
@@ -174,6 +170,12 @@ class AGUIDrawer : public IGUIDrawer //abstract GUI drawer which already wraps a
     virtual void pushScissor(int x0, int y0, int x1, int y1);
     virtual void pushSmallestScissor(int x0, int y0, int x1, int y1);
     virtual void popScissor();
+    
+    virtual size_t getFontHeight(const Font& font = FONT_Default);
+    virtual void calcTextRectSize(int& w, int& h, const std::string& text, const Font& font = FONT_Default);
+    virtual size_t calcTextPosToChar(int x, int y, const std::string& text, const Font& font = FONT_Default, HAlign halign = HA_LEFT, VAlign valign = VA_TOP);
+    virtual void calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font = FONT_Default, HAlign halign = HA_LEFT, VAlign valign = VA_TOP);
+    virtual void drawText(const std::string& text, int x, int y, const Font& font = FONT_Default, HAlign halign = HA_LEFT, VAlign valign = VA_TOP);
 
 };
 

@@ -406,13 +406,19 @@ void initBuiltInGuiTexturesSmall(const std::vector<unsigned char>& png)
   builtInGuiSet.mouseOverColor = RGB_Brightred;
   builtInGuiSet.mouseDownColor = RGB_Grey;
   
-  //markup
-  builtInGuiSet.panelButtonMarkup[0] = TS_B;
-  builtInGuiSet.panelButtonMarkup[1] = TS_B;
-  builtInGuiSet.panelButtonMarkup[2] = TS_B;
-  builtInGuiSet.textButtonMarkup[0] = TS_Shadow;
-  builtInGuiSet.textButtonMarkup[1] = TS_RShadow;
-  builtInGuiSet.textButtonMarkup[2] = TS_RShadow;
+  //font
+  builtInGuiSet.panelButtonFont[0].color = RGB_Black;
+  builtInGuiSet.panelButtonFont[1].color = RGB_Black;
+  builtInGuiSet.panelButtonFont[2].color = RGB_Black;
+  builtInGuiSet.textButtonFont[0].color = RGB_White;
+  builtInGuiSet.textButtonFont[0].shadow = true;
+  builtInGuiSet.textButtonFont[0].shadowColor = RGB_Black;
+  builtInGuiSet.textButtonFont[1].color = RGB_Red;
+  builtInGuiSet.textButtonFont[1].shadow = true;
+  builtInGuiSet.textButtonFont[1].shadowColor = RGB_Black;
+  builtInGuiSet.textButtonFont[2].color = RGB_Red;
+  builtInGuiSet.textButtonFont[2].shadow = true;
+  builtInGuiSet.textButtonFont[2].shadowColor = RGB_Black;
 }
 
 
@@ -721,18 +727,6 @@ GUIDrawerGL::GUIDrawerGL(ScreenGL* screen, GuiSet* set) : guiset(set), drawer(sc
   init();
 }
 
-
-
-void GUIDrawerGL::drawText(const std::string& text, int x, int y, const Markup& markup)
-{
-  lpi::print(text, x, y, markup);
-}
-
-void GUIDrawerGL::drawTextCentered(const std::string& text, int x, int y, const Markup& markup)
-{
-  lpi::printCentered(text, x, y, markup);
-}
-
 void GUIDrawerGL::drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, bool /*inactive*/)
 {
   switch(part)
@@ -828,17 +822,17 @@ void GUIDrawerGL::drawGUIPartText(GUIPartText part, const std::string& text, int
   {
     case GPT_TEXT_BUTTON:
     {
-      drawTextCentered(text, (x0+x1)/2, (y0+y1)/2, guiset->textButtonMarkup[0]);
+      drawText(text, (x0+x1)/2, (y0+y1)/2, guiset->textButtonFont[0], HA_CENTER);
       break;
     }
     case GPT_TEXT_BUTTON_OVER:
     {
-      drawTextCentered(text, (x0+x1)/2, (y0+y1)/2, guiset->textButtonMarkup[1]);
+      drawText(text, (x0+x1)/2, (y0+y1)/2, guiset->textButtonFont[1], HA_CENTER);
       break;
     }
     case GPT_TEXT_BUTTON_DOWN:
     {
-      drawTextCentered(text, (x0+x1)/2 + 2, (y0+y1)/2 + 2, guiset->textButtonMarkup[2]);
+      drawText(text, (x0+x1)/2 + 2, (y0+y1)/2 + 2, guiset->textButtonFont[2], HA_CENTER);
       break;
     }
     default:
