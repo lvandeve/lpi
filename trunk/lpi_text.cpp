@@ -26,11 +26,6 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
-void initFont()
-{
-  initBuiltInFontTextures();
-}
-
 namespace
 {
   int getScreenHeight()
@@ -41,145 +36,52 @@ namespace
   }
 }
 
-std::vector<Texture> builtInFontTexture8x8;
-std::vector<Texture> builtInFontTexture6x6;
-std::vector<Texture> builtInFontTexture4x5;
-
-int Font::getWidth()
+InternalFontDrawer::InternalFontDrawer(ITextureFactory* factory, IDrawer2D* drawer)
+: drawer(drawer)
+, glyphs(factory)
 {
-  if(texture.size() > 0) return texture[0].getU();
-  else return 0;
 }
 
-int Font::getHeight()
+void InternalFontDrawer::drawLetter(unsigned char n, int x, int y, const InternalGlyphs::Glyphs* glyphs, const Font& font)
 {
-  if(texture.size() > 0) return texture[0].getV();
-  else return 0;
-}
-
-Markup::Markup()
-{
-  font = &builtInFont8x8;
-  color1 = RGB_White;
-  color2 = RGB_Black;
-  style = 0;
-  charSpacing = 0;
-  lineSpacing = 1;
-}
-
-//Markup struct constructor
-Markup::Markup(const ColorRGB& color1, const ColorRGB& color2, int style, Font* font, int charSpacing, int lineSpacing)
-{
-  this->color1 = color1;
-  this->color2 = color2;
-  this->style = style;
-  this->font = font;
-  this->charSpacing = charSpacing;
-  this->lineSpacing = lineSpacing;
-}
-
-Markup operator/(Markup ts, int a)
-{
-  ts.color1 = ts.color1 / a;
-  ts.color2 = ts.color2 / a;
-  
-  return ts;
-}
-
-int Markup::getFontWidth() const
-{
-  return font->getWidth();
-}
-
-int Markup::getFontHeight() const
-{
-  return font->getHeight();
-}
-
-int Markup::getWidth() const
-{
-  return font->getWidth() + charSpacing;
-}
-
-int Markup::getHeight() const
-{
-  return font->getHeight() + lineSpacing;
-}
-
-std::vector<Font> externFont; //loading up textures for the other fonts will be done in the textures.cpp file
-Font builtInFont8x8;
-Font builtInFont6x6;
-Font builtInFont4x5;
-
-//****************************************************************************//
-////////////////////////////////////////////////////////////////////////////////
-//BASIC PRINT FUNCTIONS/////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-//****************************************************************************//
-
-
-/*
-drawLetter draws a single letter at asked position, and is used by most print 
-functions to draw the characters.
-
-Parameters:
-n: extended ascii code of the character to be drawn, for example code 65 is capital A
-x: x position of top left corner of the letter
-y: y position of top left corner of the letter
-markup: the text style, see in the header near Markup for an explanation
-*/
-
-struct ScreenGLGLUNSAFEANDTEMPORARY : public ScreenGL
-{
-  ScreenGLGLUNSAFEANDTEMPORARY() : ScreenGL(false) {}
-} screenGLGLUNSAFEANDTEMPORARY;
-
-Drawer2DGL TEMPDRAWER(&screenGLGLUNSAFEANDTEMPORARY); //todo: move font drawing functions to inside IDrawer2D instead of here
-
-void drawLetter(unsigned char n, int x, int y, const Markup& markup)
-{
-  Font* FONT = markup.font;
-
-  int shadowx = 0, shadowy = 0;
-  if(markup.style & 2) shadowx++;
-  if(markup.style & 4) shadowx--;
-  if(markup.style & 8) shadowy--;
-  if(markup.style & 16) shadowy++;
-  if(markup.style & 32) shadowx += 2;
-  if(markup.style & 64) shadowx -= 2;
-  if(markup.style & 128) shadowy -= 2;
-  if(markup.style & 256) shadowy += 2;
-  
-  int italic = 0; //todo: this doesn't work anymore, no function to draw skewed texture available currently!!
-  if(markup.style & 1024) italic = 1;
+  //int italic = 0; //todo: this doesn't work anymore, no function to draw skewed texture available currently!!
   
   //draw the background, using the "completely filled" letter: ascii char 219
-  if(markup.style & 1)
+  /*if(font->background)
   {
-    TEMPDRAWER.drawTexture(&(FONT->texture)[219], x, y, markup.color2);
-  }
-  if(markup.style > 1)
+    drawer->drawTexture(glyphs->texture[219], x, y, font.backgroundColor);
+  }*/
+  if(font.shadow)
   {
-    TEMPDRAWER.drawTexture(&(FONT->texture)[n], x + shadowx, y + shadowy, markup.color2);
+    drawer->drawTexture(glyphs->texture[n], x + 1, y + 1, font.shadowColor);
   }
   
-  TEMPDRAWER.drawTexture(&(FONT->texture)[n], x, y, markup.color1);
+  drawer->drawTexture(glyphs->texture[n], x, y, font.color);
   
-  if(markup.style & 512) //bold
+  if(font.bold) //bold
   {
-    TEMPDRAWER.drawTexture(&(FONT->texture)[n], x + 1, y, markup.color1);
+    drawer->drawTexture(glyphs->texture[n], x + 1, y, font.color);
   }
+}
+
+InternalGlyphs::Glyphs* InternalFontDrawer::getGlyphsForFont(const Font& font)
+{
+  if(font.typeface == "lpi8") return &glyphs.glyphs8x8;
+  else if(font.typeface == "lpi6") return &glyphs.glyphs6x6;
+  else if(font.typeface == "lpi4") return &glyphs.glyphs4x5;
+  else return &glyphs.glyphs8x8;
 }
 
 //Draws a string of text, null terminated
-int printString(const std::string& text, int x, int y, const Markup& markup, unsigned long forceLength)
+int InternalFontDrawer::printString(const std::string& text, int x, int y, const Font& font, unsigned long forceLength)
 {
+  InternalGlyphs::Glyphs* glyphs = getGlyphsForFont(font);
   unsigned long pos = 0;
   while((pos < text.length() && forceLength == 0 /*&& text[pos] != 0*/) || (pos < forceLength && pos < text.length()  /*&& text[pos] != 0*/ && forceLength > 0))
   {
-     drawLetter(text[pos], x, y, markup);
+     drawLetter(text[pos], x, y, glyphs, font);
      pos++;
-     x += markup.getWidth();
+     x += glyphs->width;
   }
   //return position of a next character, where you may want to start drawing another string
   return getScreenHeight() * x + y;
@@ -187,8 +89,9 @@ int printString(const std::string& text, int x, int y, const Markup& markup, uns
 
 //Draws a string of text, and uses some of the ascii control characters, e.g. newline
 //Other control characters (ascii value < 32) are ignored and have no effect.
-int printText(const std::string& text, int x, int y, const Markup& markup, unsigned long forceLength)
+int InternalFontDrawer::printText(const std::string& text, int x, int y, const Font& font, unsigned long forceLength)
 {
+  InternalGlyphs::Glyphs* glyphs = getGlyphsForFont(font);
   unsigned long pos = 0;
   int drawX = x;
   int drawY = y;
@@ -198,8 +101,8 @@ int printText(const std::string& text, int x, int y, const Markup& markup, unsig
      symbol = text[pos];
      if(symbol > 31 || symbol < 0) //it's a signed char, below 0 are the ones above 128
      {
-       drawLetter(text[pos], drawX, drawY, markup);
-       drawX += markup.getWidth();
+       drawLetter(text[pos], drawX, drawY, glyphs, font);
+       drawX += glyphs->width;
      }
      else
      {
@@ -207,7 +110,7 @@ int printText(const std::string& text, int x, int y, const Markup& markup, unsig
        {
          case 10: //newline
            drawX = x;
-           drawY += markup.getHeight();
+           drawY += glyphs->height;
            break;
          default: break;
        }
@@ -218,257 +121,282 @@ int printText(const std::string& text, int x, int y, const Markup& markup, unsig
   return getScreenHeight() * drawX + drawY;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-//FORMATTED TEXT///////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
 
-int printFormattedM(const std::string& text, int x, int y, Markup& markup, const Markup& originalMarkup)
-{
-  unsigned long pos = 0;
-  int drawX = x;
-  int drawY = y;
-  unsigned char symbol;
-  while(pos < text.length())
-  {
-     symbol = text[pos];
-     if(symbol == '#')
-     {
-       if(pos + 1 >= text.length()) return getScreenHeight() * drawX + drawY;
-       pos++;
+
+//int InternalFontDrawer::printFormattedM(const std::string& text, int x, int y, Font* font, const Markup& originalMarkup)
+//{
+  //unsigned long pos = 0;
+  //int drawX = x;
+  //int drawY = y;
+  //unsigned char symbol;
+  //while(pos < text.length())
+  //{
+     //symbol = text[pos];
+     //if(symbol == '#')
+     //{
+       //if(pos + 1 >= text.length()) return getScreenHeight() * drawX + drawY;
+       //pos++;
        
-       symbol = text[pos];
-       if(symbol == '#')
-       {
-         drawLetter('#', drawX, drawY, markup);
-         drawX += markup.getWidth();
-       }
-       else if(symbol == '\'')
-       {
-         drawLetter('"', drawX, drawY, markup);
-         drawX += markup.getWidth();
-       }
-       else if(symbol == 'n')
-       {
-         drawX = x;
-         drawY += markup.getHeight();
-       }
-       else if(symbol == 'c')
-       {
-         if(pos + 8 >= text.length()) return getScreenHeight() * drawX + drawY;
-         pos++;
-         int r1, r2, g1, g2, b1, b2, a1, a2;
-         r1 = text[pos] - 48; if(r1 > 9) r1 -= 7; pos++;
-         r2 = text[pos] - 48; if(r2 > 9) r2 -= 7; pos++;
-         g1 = text[pos] - 48; if(g1 > 9) g1 -= 7; pos++;
-         g2 = text[pos] - 48; if(g2 > 9) g2 -= 7; pos++;
-         b1 = text[pos] - 48; if(b1 > 9) b1 -= 7; pos++;
-         b2 = text[pos] - 48; if(b2 > 9) b2 -= 7; pos++;
-         a1 = text[pos] - 48; if(a1 > 9) a1 -= 7; pos++;
-         a2 = text[pos] - 48; if(a2 > 9) a2 -= 7; 
-         markup.color1.r = 16 * r1 + r2;
-         markup.color1.g = 16 * g1 + g2;
-         markup.color1.b = 16 * b1 + b2;
-         markup.color1.a = 16 * a1 + a2;
-       }
-       else if(symbol == 'b')
-       {
-         if(pos + 8 >= text.length()) return getScreenHeight() * drawX + drawY;
-         pos++;
-         int r1, r2, g1, g2, b1, b2, a1, a2;
-         r1 = text[pos] - 48; if(r1 > 9) r1 -= 7; pos++;
-         r2 = text[pos] - 48; if(r2 > 9) r2 -= 7; pos++;
-         g1 = text[pos] - 48; if(g1 > 9) g1 -= 7; pos++;
-         g2 = text[pos] - 48; if(g2 > 9) g2 -= 7; pos++;
-         b1 = text[pos] - 48; if(b1 > 9) b1 -= 7; pos++;
-         b2 = text[pos] - 48; if(b2 > 9) b2 -= 7; pos++;
-         a1 = text[pos] - 48; if(a1 > 9) a1 -= 7; pos++;
-         a2 = text[pos] - 48; if(a2 > 9) a2 -= 7; 
-         markup.color2.r = 16 * r1 + r2;
-         markup.color2.g = 16 * g1 + g2;
-         markup.color2.b = 16 * b1 + b2;
-         markup.color2.a = 16 * a1 + a2;
-       }
-       else if(symbol == '!') //reset markup to the given one
-       {
-         markup = originalMarkup;
-       }
-       else if(symbol == '?') //draw any of the 256 glyphs, which one is given by 2 hex digits
-       {
-         if(pos + 8 >= text.length()) return getScreenHeight() * drawX + drawY;
-         pos++;
-         int g1, g2;
-         g1 = text[pos] - 48; if(g1 > 9) g1 -= 7; pos++;
-         g2 = text[pos] - 48; if(g2 > 9) g2 -= 7;
+       //symbol = text[pos];
+       //if(symbol == '#')
+       //{
+         //drawLetter('#', drawX, drawY, markup);
+         //drawX += markup.getWidth();
+       //}
+       //else if(symbol == '\'')
+       //{
+         //drawLetter('"', drawX, drawY, markup);
+         //drawX += markup.getWidth();
+       //}
+       //else if(symbol == 'n')
+       //{
+         //drawX = x;
+         //drawY += markup.getHeight();
+       //}
+       //else if(symbol == 'c')
+       //{
+         //if(pos + 8 >= text.length()) return getScreenHeight() * drawX + drawY;
+         //pos++;
+         //int r1, r2, g1, g2, b1, b2, a1, a2;
+         //r1 = text[pos] - 48; if(r1 > 9) r1 -= 7; pos++;
+         //r2 = text[pos] - 48; if(r2 > 9) r2 -= 7; pos++;
+         //g1 = text[pos] - 48; if(g1 > 9) g1 -= 7; pos++;
+         //g2 = text[pos] - 48; if(g2 > 9) g2 -= 7; pos++;
+         //b1 = text[pos] - 48; if(b1 > 9) b1 -= 7; pos++;
+         //b2 = text[pos] - 48; if(b2 > 9) b2 -= 7; pos++;
+         //a1 = text[pos] - 48; if(a1 > 9) a1 -= 7; pos++;
+         //a2 = text[pos] - 48; if(a2 > 9) a2 -= 7; 
+         //markup.color1.r = 16 * r1 + r2;
+         //markup.color1.g = 16 * g1 + g2;
+         //markup.color1.b = 16 * b1 + b2;
+         //markup.color1.a = 16 * a1 + a2;
+       //}
+       //else if(symbol == 'b')
+       //{
+         //if(pos + 8 >= text.length()) return getScreenHeight() * drawX + drawY;
+         //pos++;
+         //int r1, r2, g1, g2, b1, b2, a1, a2;
+         //r1 = text[pos] - 48; if(r1 > 9) r1 -= 7; pos++;
+         //r2 = text[pos] - 48; if(r2 > 9) r2 -= 7; pos++;
+         //g1 = text[pos] - 48; if(g1 > 9) g1 -= 7; pos++;
+         //g2 = text[pos] - 48; if(g2 > 9) g2 -= 7; pos++;
+         //b1 = text[pos] - 48; if(b1 > 9) b1 -= 7; pos++;
+         //b2 = text[pos] - 48; if(b2 > 9) b2 -= 7; pos++;
+         //a1 = text[pos] - 48; if(a1 > 9) a1 -= 7; pos++;
+         //a2 = text[pos] - 48; if(a2 > 9) a2 -= 7; 
+         //markup.color2.r = 16 * r1 + r2;
+         //markup.color2.g = 16 * g1 + g2;
+         //markup.color2.b = 16 * b1 + b2;
+         //markup.color2.a = 16 * a1 + a2;
+       //}
+       //else if(symbol == '!') //reset markup to the given one
+       //{
+         //markup = originalMarkup;
+       //}
+       //else if(symbol == '?') //draw any of the 256 glyphs, which one is given by 2 hex digits
+       //{
+         //if(pos + 8 >= text.length()) return getScreenHeight() * drawX + drawY;
+         //pos++;
+         //int g1, g2;
+         //g1 = text[pos] - 48; if(g1 > 9) g1 -= 7; pos++;
+         //g2 = text[pos] - 48; if(g2 > 9) g2 -= 7;
          
-         drawLetter(char(16 * g1 + g2), drawX, drawY, markup);
-         drawX += markup.getWidth();
-       }
-     }
-     else
-     {
-       drawLetter(text[pos], drawX, drawY, markup);
-       drawX += markup.getWidth();
-     }
-     pos++;
-  }  
+         //drawLetter(char(16 * g1 + g2), drawX, drawY, markup);
+         //drawX += markup.getWidth();
+       //}
+     //}
+     //else
+     //{
+       //drawLetter(text[pos], drawX, drawY, markup);
+       //drawX += markup.getWidth();
+     //}
+     //pos++;
+  //}  
 
-  return getScreenHeight() * drawX + drawY;
-}
+  //return getScreenHeight() * drawX + drawY;
+//}
 
-int printFormatted(const std::string& text, int x, int y, const Markup& markup)
-{
-  Markup markup_ = markup;
+//int InternalFontDrawer::printFormatted(const std::string& text, int x, int y, const Font& font)
+//{
+  //Markup markup_ = markup;
   
-  return printFormattedM(text, x, y, markup_, markup);
-}
+  //return printFormattedM(text, x, y, markup_, markup);
+//}
 
-int getFormattedTextAttrSize(char c)
-{
-  switch(c)
-  {
-    case '#': return 0; break;
-    case '\'': return 0; break;
-    case 'n': return 0; break;
-    case 'c': return 8; break;
-    case 'b': return 8; break;
-    case '!': return 0; break;
-    case '?': return 2; break;
-    default: return 0; break;
-  }
-}
+//int InternalFontDrawer::getFormattedTextAttrSize(char c)
+//{
+  //switch(c)
+  //{
+    //case '#': return 0; break;
+    //case '\'': return 0; break;
+    //case 'n': return 0; break;
+    //case 'c': return 8; break;
+    //case 'b': return 8; break;
+    //case '!': return 0; break;
+    //case '?': return 2; break;
+    //default: return 0; break;
+  //}
+//}
 
-int getFormattedTextSymbolPrintSize(char c)
-{
-  switch(c)
-  {
-    case '#': return 1; break;
-    case '\'': return 1; break;
-    case 'n': return 0; break;
-    case 'c': return 0; break;
-    case 'b': return 0; break;
-    case '!': return 0; break;
-    case '?': return 1; break;
-    default: return 0; break;
-  }
-}
+//int InternalFontDrawer::getFormattedTextSymbolPrintSize(char c)
+//{
+  //switch(c)
+  //{
+    //case '#': return 1; break;
+    //case '\'': return 1; break;
+    //case 'n': return 0; break;
+    //case 'c': return 0; break;
+    //case 'b': return 0; break;
+    //case '!': return 0; break;
+    //case '?': return 1; break;
+    //default: return 0; break;
+  //}
+//}
 
-void getFormattedTextSize(const std::string& text, int& xsize, int& ysize, const Markup& markup_)
-{
-  xsize = 0;
-  ysize = markup_.getHeight();
-  int currentX = 0, currentY = markup_.getHeight();
-  unsigned long pos = 0;
-  Markup markup = markup_;
-  unsigned char symbol;
-  while(pos < text.length())
-  {
-     symbol = text[pos];
-     if(symbol == '#')
-     {
-       if(pos + 1 >= text.length()) return;
-       pos++;
+//void InternalFontDrawer::getFormattedTextSize(const std::string& text, int& xsize, int& ysize, const Font& font_)
+//{
+  //xsize = 0;
+  //ysize = markup_.getHeight();
+  //int currentX = 0, currentY = markup_.getHeight();
+  //unsigned long pos = 0;
+  //Markup markup = markup_;
+  //unsigned char symbol;
+  //while(pos < text.length())
+  //{
+     //symbol = text[pos];
+     //if(symbol == '#')
+     //{
+       //if(pos + 1 >= text.length()) return;
+       //pos++;
        
-       symbol = text[pos];
-       if(symbol == 'n')
-       {
-         currentX = 0;
-         currentY += markup.getHeight();
-         if(currentY > ysize) ysize = currentY;
-       }
-       else if(symbol == '!') //reset markup to the given one
-       {
-         markup = markup_;
-       }
-       else
-       {
-         pos += getFormattedTextAttrSize(symbol);
+       //symbol = text[pos];
+       //if(symbol == 'n')
+       //{
+         //currentX = 0;
+         //currentY += markup.getHeight();
+         //if(currentY > ysize) ysize = currentY;
+       //}
+       //else if(symbol == '!') //reset markup to the given one
+       //{
+         //markup = markup_;
+       //}
+       //else
+       //{
+         //pos += getFormattedTextAttrSize(symbol);
          
-         currentX += markup.getWidth() * getFormattedTextSymbolPrintSize(symbol);
-         if(currentX > xsize) xsize = currentX;
-       }
-     }
-     else
-     {
-      currentX += markup.getWidth();
-      if(currentX > xsize) xsize = currentX;
-     }
-     pos++;
-  }
-}
+         //currentX += markup.getWidth() * getFormattedTextSymbolPrintSize(symbol);
+         //if(currentX > xsize) xsize = currentX;
+       //}
+     //}
+     //else
+     //{
+      //currentX += markup.getWidth();
+      //if(currentX > xsize) xsize = currentX;
+     //}
+     //pos++;
+  //}
+//}
 
-void getFormattedMarkup(const std::string& text, Markup& markup, const Markup& originalMarkup) //this one calculates which markup you'll get after this text
-{
-  unsigned long pos = 0;
-  unsigned char symbol;
-  while(pos < text.length())
-  {
-     symbol = text[pos];
-     if(symbol == '#')
-     {
-       if(pos + 1 >= text.length()) return;
-       pos++;
+//void InternalFontDrawer::getFormattedMarkup(const std::string& text, Font* font, const Markup& originalMarkup) //this one calculates which markup you'll get after this text
+//{
+  //unsigned long pos = 0;
+  //unsigned char symbol;
+  //while(pos < text.length())
+  //{
+     //symbol = text[pos];
+     //if(symbol == '#')
+     //{
+       //if(pos + 1 >= text.length()) return;
+       //pos++;
        
-       symbol = text[pos];
+       //symbol = text[pos];
 
-       if(symbol == 'c')
-       {
-         if(pos + 8 >= text.length()) return;
-         pos++;
-         int r1, r2, g1, g2, b1, b2, a1, a2;
-         r1 = text[pos] - 48; if(r1 > 9) r1 -= 7; pos++;
-         r2 = text[pos] - 48; if(r2 > 9) r2 -= 7; pos++;
-         g1 = text[pos] - 48; if(g1 > 9) g1 -= 7; pos++;
-         g2 = text[pos] - 48; if(g2 > 9) g2 -= 7; pos++;
-         b1 = text[pos] - 48; if(b1 > 9) b1 -= 7; pos++;
-         b2 = text[pos] - 48; if(b2 > 9) b2 -= 7; pos++;
-         a1 = text[pos] - 48; if(a1 > 9) a1 -= 7; pos++;
-         a2 = text[pos] - 48; if(a2 > 9) a2 -= 7; 
-         markup.color1.r = 16 * r1 + r2;
-         markup.color1.g = 16 * g1 + g2;
-         markup.color1.b = 16 * b1 + b2;
-         markup.color1.a = 16 * a1 + a2;
-       }
-       else if(symbol == 'b')
-       {
-         if(pos + 8 >= text.length()) return;
-         pos++;
-         int r1, r2, g1, g2, b1, b2, a1, a2;
-         r1 = text[pos] - 48; if(r1 > 9) r1 -= 7; pos++;
-         r2 = text[pos] - 48; if(r2 > 9) r2 -= 7; pos++;
-         g1 = text[pos] - 48; if(g1 > 9) g1 -= 7; pos++;
-         g2 = text[pos] - 48; if(g2 > 9) g2 -= 7; pos++;
-         b1 = text[pos] - 48; if(b1 > 9) b1 -= 7; pos++;
-         b2 = text[pos] - 48; if(b2 > 9) b2 -= 7; pos++;
-         a1 = text[pos] - 48; if(a1 > 9) a1 -= 7; pos++;
-         a2 = text[pos] - 48; if(a2 > 9) a2 -= 7; 
-         markup.color2.r = 16 * r1 + r2;
-         markup.color2.g = 16 * g1 + g2;
-         markup.color2.b = 16 * b1 + b2;
-         markup.color2.a = 16 * a1 + a2;
-       }
-       else if(symbol == '!') //reset markup to the given one
-       {
-         markup = originalMarkup;
-       }
+       //if(symbol == 'c')
+       //{
+         //if(pos + 8 >= text.length()) return;
+         //pos++;
+         //int r1, r2, g1, g2, b1, b2, a1, a2;
+         //r1 = text[pos] - 48; if(r1 > 9) r1 -= 7; pos++;
+         //r2 = text[pos] - 48; if(r2 > 9) r2 -= 7; pos++;
+         //g1 = text[pos] - 48; if(g1 > 9) g1 -= 7; pos++;
+         //g2 = text[pos] - 48; if(g2 > 9) g2 -= 7; pos++;
+         //b1 = text[pos] - 48; if(b1 > 9) b1 -= 7; pos++;
+         //b2 = text[pos] - 48; if(b2 > 9) b2 -= 7; pos++;
+         //a1 = text[pos] - 48; if(a1 > 9) a1 -= 7; pos++;
+         //a2 = text[pos] - 48; if(a2 > 9) a2 -= 7; 
+         //markup.color1.r = 16 * r1 + r2;
+         //markup.color1.g = 16 * g1 + g2;
+         //markup.color1.b = 16 * b1 + b2;
+         //markup.color1.a = 16 * a1 + a2;
+       //}
+       //else if(symbol == 'b')
+       //{
+         //if(pos + 8 >= text.length()) return;
+         //pos++;
+         //int r1, r2, g1, g2, b1, b2, a1, a2;
+         //r1 = text[pos] - 48; if(r1 > 9) r1 -= 7; pos++;
+         //r2 = text[pos] - 48; if(r2 > 9) r2 -= 7; pos++;
+         //g1 = text[pos] - 48; if(g1 > 9) g1 -= 7; pos++;
+         //g2 = text[pos] - 48; if(g2 > 9) g2 -= 7; pos++;
+         //b1 = text[pos] - 48; if(b1 > 9) b1 -= 7; pos++;
+         //b2 = text[pos] - 48; if(b2 > 9) b2 -= 7; pos++;
+         //a1 = text[pos] - 48; if(a1 > 9) a1 -= 7; pos++;
+         //a2 = text[pos] - 48; if(a2 > 9) a2 -= 7; 
+         //markup.color2.r = 16 * r1 + r2;
+         //markup.color2.g = 16 * g1 + g2;
+         //markup.color2.b = 16 * b1 + b2;
+         //markup.color2.a = 16 * a1 + a2;
+       //}
+       //else if(symbol == '!') //reset markup to the given one
+       //{
+         //markup = originalMarkup;
+       //}
 
-     }
-     pos++;
-  }
+     //}
+     //pos++;
+  //}
+//}
+
+size_t InternalFontDrawer::getFontHeight(const Font& font)
+{
+  InternalGlyphs::Glyphs* glyphs = getGlyphsForFont(font);
+  return glyphs->height;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//ADVANCED TEXT DRAWING FUNCTIONS///////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-void printCentered(const std::string& text, int x, int y, const Markup& markup, unsigned long forceLength)
+void InternalFontDrawer::calcTextRectSize(int& w, int& h, const std::string& text, const Font& font)
 {
+  //TODO: use the newlines!
+  InternalGlyphs::Glyphs* glyphs = getGlyphsForFont(font);
+  w = glyphs->width * text.size();
+  h = glyphs->height;
+}
+
+
+
+size_t InternalFontDrawer::calcTextPosToChar(int x, int y, const std::string& text, const Font& font, int halign, int valign)
+{
+  (void)x;(void)y;(void)font;(void)text;(void)halign;(void)valign;
+  //TODO!
+  return 0;
+}
+
+void InternalFontDrawer::calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font, int halign, int valign)
+{
+  (void)x;(void)y;(void)font;(void)text;(void)halign;(void)valign;(void)index;
+  //TODO!
+}
+
+void InternalFontDrawer::printCentered(const std::string& text, int x, int y, const Font& font, unsigned long forceLength)
+{
+  InternalGlyphs::Glyphs* glyphs = getGlyphsForFont(font);
+  
   int pos = 0;
   while(text[pos] != 0) pos++;
   
-  x -= pos * markup.getWidth() / 2;
-  y -= markup.getHeight() / 2;
+  x -= pos * glyphs->width / 2;
+  y -= glyphs->height / 2;
   
-  print(text, x, y, markup, forceLength);
+  print(text, x, y, font, forceLength);
 }
 
 namespace //empty namespace
@@ -476,19 +404,37 @@ namespace //empty namespace
   LodePNG::Decoder pngdec;
 }
 
-void initBuiltInFontTextures()
+InternalGlyphs::InternalGlyphs(ITextureFactory* factory)
 {
-  loadTexturesFromBase64PNG(builtInFont8x8.texture, font8x8string, 8, 8, AE_BlackKey);
-  loadTexturesFromBase64PNG(builtInFont6x6.texture, font6x6string, 6, 6, AE_BlackKey);
-  loadTexturesFromBase64PNG(builtInFont4x5.texture, font4x5string, 4, 5, AE_BlackKey);
+  initBuiltInFontTextures(factory);
+}
+
+InternalGlyphs::Glyphs::~Glyphs()
+{
+  for(size_t i = 0; i < texture.size(); i++) delete texture[i];
+}
+
+InternalGlyphs::~InternalGlyphs()
+{
+}
+
+void InternalGlyphs::initBuiltInFontTextures(ITextureFactory* factory)
+{
+  loadTexturesFromBase64PNG(glyphs8x8.texture, factory, font8x8string, 8, 8, AE_BlackKey);
+  glyphs8x8.width = 8;
+  glyphs8x8.height = 8;
+  loadTexturesFromBase64PNG(glyphs6x6.texture, factory, font6x6string, 6, 6, AE_BlackKey);
+  glyphs6x6.width = 6;
+  glyphs6x6.height = 6;
+  loadTexturesFromBase64PNG(glyphs4x5.texture, factory, font4x5string, 4, 5, AE_BlackKey);
+  glyphs4x5.width = 4;
+  glyphs4x5.height = 5;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 //DATA//////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-
-//NOTE: calling this all may be done by lpi_texture.cpp, in the initTextures() function
 
 /*
 A PNG image, encoded in base64, containing the full extended ASCII character
@@ -498,7 +444,7 @@ Then use the function LodePNG::decodePNG32
 And you get the pixels in a buffer
 NOTE: the background color is black, not transparent, so may need conversion
 */
-const std::string font8x8string = "\
+const std::string InternalGlyphs::font8x8string = "\
 iVBORw0KGgoAAAANSUhEUgAAAIAAAACAAQMAAAD58POIAAAABlBMVEUAAAD///+l2Z/dAAAEtklE\n\
 QVRIiY1VP2scRxR/OKA0g6RyQIcFwR/ggcN5i0WCfIc0qQbZjF1Mcbi4PMhm5XQp8gEsMKRKkzpl\n\
 DAOCIcVD7sTBKeaqcyPMQYK8xTCb9/ZOUowS8Nzs7OzvfvP+zXszAG0bdqtd6KHfqQ+PTwB+6EvV\n\
@@ -532,7 +478,7 @@ Then use the function LodePNG::decodePNG32
 And you get the pixels in a buffer
 NOTE: the background color is black, not transparent, so may need conversion
 */
-const std::string font6x6string = "\
+const std::string InternalGlyphs::font6x6string = "\
 iVBORw0KGgoAAAANSUhEUgAAAGAAAABgAQMAAADYVuV7AAAABlBMVEUAAAD///+l2Z/dAAADo0lE\n\
 QVQ4jW1TTWjbZhh+ZCvtl6DZivex+WCKZCs/7XZwxg4uhETOcCzlMBx62Q5l7f5zs7pLGIwpih05\n\
 wympaCGHkEPo2NZLzrsU1zFVCWyjsPu6uKWBHRYGpRtL8N5PbrsF9iHE9+h53+d79b7PBySvax6O\n\
@@ -561,7 +507,7 @@ Then use the function LodePNG::decodePNG32
 And you get the pixels in a buffer
 NOTE: the background color is black, not transparent, so may need conversion
 */
-const std::string font4x5string = "\
+const std::string InternalGlyphs::font4x5string = "\
 iVBORw0KGgoAAAANSUhEUgAAAEAAAABQAQMAAACTceEGAAAABlBMVEUAAAD///+l2Z/dAAAAwklE\n\
 QVQokWNgoBlgWcDJpMLAwARkMLE4LWFgAYkxOPmpsQApTgaVJQ4eCMVO59z0nriouTEsU2txWsXg\n\
 oMSwyOnRkhAXNQcGp3cuLhUsQHPgwKXt3LMlWm0pDKtOrOh4otW9iuHcijWnlqzpXMXw6ti5tiWn\n\

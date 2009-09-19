@@ -25,6 +25,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_base64.h"
 
 #include <algorithm>
+#include <iostream>
 
 namespace lpi
 {
@@ -32,6 +33,8 @@ namespace lpi
 void TextureBuffer::setSize(size_t u, size_t v)
 {
   buffer.resize(u * v * 4);
+  this->u = u;
+  this->v = v;
 }
 
 size_t TextureBuffer::getU() const
@@ -300,7 +303,7 @@ void TextureGL::setAlignedBuffer(const std::vector<unsigned char>& in)
   }
 }
 
-void loadTextures(std::vector<unsigned char>& buffer, std::vector<TextureGL>& textures, int widths, int heights, int w, int h, const AlphaEffect& effect)
+void loadTextures(std::vector<unsigned char>& buffer, std::vector<ITexture*>& textures, ITextureFactory* factory, int widths, int heights, int w, int h, const AlphaEffect& effect)
 {
   int numx, numy;
    
@@ -322,13 +325,14 @@ void loadTextures(std::vector<unsigned char>& buffer, std::vector<TextureGL>& te
   for(int x = 0; x < numx; x++)
   {
     textures.resize(textures.size() + 1);
-    makeTextureFromBuffer(&textures.back(), &buffer[0], w, h, effect, x * widths, y * heights, (x + 1) * widths, (y + 1) * heights);
+    textures.back() = factory->createNewTexture();
+    makeTextureFromBuffer(textures.back(), &buffer[0], w, h, effect, x * widths, y * heights, (x + 1) * widths, (y + 1) * heights);
   }
 } 
 
 /*
 */
-void loadTextures(const std::string& filename, std::vector<TextureGL>& textures, int widths, int heights, const AlphaEffect& effect)
+void loadTextures(const std::string& filename, std::vector<ITexture*>& textures, ITextureFactory* factory, int widths, int heights, const AlphaEffect& effect)
 {
   LodePNG::Decoder pngdec;
   
@@ -345,7 +349,7 @@ void loadTextures(const std::string& filename, std::vector<TextureGL>& textures,
     return;
   }
   
-  loadTextures(image, textures, widths, heights, pngdec.getWidth(), pngdec.getHeight(), effect);
+  loadTextures(image, textures, factory, widths, heights, pngdec.getWidth(), pngdec.getHeight(), effect);
 }
 
 void loadTexturesAlpha(std::vector<unsigned char>& buffer, std::vector<TextureGL>& textures, int widths, int heights, int w, int h)
@@ -802,14 +806,14 @@ AlphaEffect::AlphaEffect(int style, unsigned char alpha, const ColorRGB& alphaCo
   this->alphaColor = alphaColor;
 }
 
-void loadTexturesFromBase64PNG(std::vector<TextureGL>& textures, const std::string& base64, int widths, int heights, const AlphaEffect& effect)
+void loadTexturesFromBase64PNG(std::vector<ITexture*>& textures, ITextureFactory* factory, const std::string& base64, int widths, int heights, const AlphaEffect& effect)
 {
   LodePNG::Decoder pngdec;
   std::vector<unsigned char> decoded64, pixels;
   
   decodeBase64(decoded64, base64);
   pngdec.decode(pixels, decoded64);
-  loadTextures(pixels, textures, widths, heights, pngdec.getWidth(), pngdec.getHeight(), effect);
+  loadTextures(pixels, textures, factory, widths, heights, pngdec.getWidth(), pngdec.getHeight(), effect);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -853,9 +857,7 @@ void makeTextureFromBuffer(ITexture* texture, unsigned char* buffer, size_t w, s
     x2 = w;
     y2 = h;
   }
-  
   texture->setSize(x2 - x1, y2 - y1);
-  
   size_t u2 = texture->getU2();
   unsigned char* tbuffer = texture->getBuffer();
 

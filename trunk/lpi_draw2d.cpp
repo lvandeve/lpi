@@ -22,6 +22,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include <vector>
 #include <cmath>
+#include <iostream>
 
 namespace lpi
 {
@@ -73,49 +74,49 @@ int findRegion(int x, int y, int left, int top, int right, int bottom)
   code |= 8; //left
   return(code);
 }
-bool clipLine(int x1, int y1, int x2, int y2, int & x3, int & y3, int & x4, int & y4, int left, int top, int right, int bottom)
+bool clipLine(int& ox0, int& oy0, int& ox1, int& oy1, int ix0, int iy0, int ix1, int iy1, int left, int top, int right, int bottom)
 {
-  int code1, code2, codeout;
+  int code0, code1, codeout;
   bool accept = 0, done = 0;
-  code1 = findRegion(x1, y1, left, top, right, bottom); //the region outcodes for the endpoints
-  code2 = findRegion(x2, y2, left, top, right, bottom);
+  code0 = findRegion(ix0, iy0, left, top, right, bottom); //the region outcodes for the endpoints
+  code1 = findRegion(ix1, iy1, left, top, right, bottom);
   do  //In theory, this can never end up in an infinite loop, it'll always come in one of the trivial cases eventually
   {
-    if(!(code1 | code2)) accept = done = 1;  //accept because both endpoints are in screen or on the border, trivial accept
-    else if(code1 & code2) done = 1; //the line isn't visible on screen, trivial reject
+    if(!(code0 | code1)) accept = done = 1;  //accept because both endpoints are in screen or on the border, trivial accept
+    else if(code0 & code1) done = 1; //the line isn't visible on screen, trivial reject
     else  //if no trivial reject or accept, continue the loop
     {
       int x, y;
-      codeout = code1 ? code1 : code2;
+      codeout = code0 ? code0 : code1;
       if(codeout & 1) //top
       {
-        x = x1 + (x2 - x1) * (bottom - y1) / (y2 - y1);
+        x = ix0 + (ix1 - ix0) * (bottom - iy0) / (iy1 - iy0);
         y = bottom - 1;
       }
       else if(codeout & 2) //bottom
       {
-        x = x1 + (x2 - x1) * (top - y1) / (y2 - y1);
+        x = ix0 + (ix1 - ix0) * (top - iy0) / (iy1 - iy0);
         y = top;
       }
       else if(codeout & 4) //right
       {
-        y = y1 + (y2 - y1) * (right - x1) / (x2 - x1);
+        y = iy0 + (iy1 - iy0) * (right - ix0) / (ix1 - ix0);
         x = right - 1;
       }
       else //left
       {
-        y = y1 + (y2 - y1) * (left - x1) / (x2 - x1);
+        y = iy0 + (iy1 - iy0) * (left - ix0) / (ix1 - ix0);
         x = left;
       }
-      if(codeout == code1) //first endpoint was clipped
+      if(codeout == code0) //first endpoint was clipped
       {
-        x1 = x; y1 = y;
-        code1 = findRegion(x1, y1, left, top, right, bottom);
+        ix0 = x; iy0 = y;
+        code0 = findRegion(ix0, iy0, left, top, right, bottom);
       }
       else //second endpoint was clipped
       {
-        x2 = x; y2 = y;
-        code2 = findRegion(x2, y2, left, top, right, bottom);
+        ix1 = x; iy1 = y;
+        code1 = findRegion(ix1, iy1, left, top, right, bottom);
       }
     }
   }
@@ -123,18 +124,36 @@ bool clipLine(int x1, int y1, int x2, int y2, int & x3, int & y3, int & x4, int 
 
   if(accept)
   {
-    x3 = x1;
-    x4 = x2;
-    y3 = y1;
-    y4 = y2;
+    ox0 = ix0;
+    ox1 = ix1;
+    oy0 = iy0;
+    oy1 = iy1;
     return 1;
   }
   else
   {
-    x3 = x4 = y3 = y4 = 0;
+    ox0 = ox1 = oy0 = oy1 = 0;
     return 0;
   }
 }
+
+
+void clipRect(int& ox0, int& oy0, int& ox1, int& oy1, int ix0, int iy0, int ix1, int iy1, int left, int top, int right, int bottom)
+{
+  if(ix0 < left) ix0 = left;
+  if(ix0 > right) ix0 = right;
+  if(ix1 < left) ix1 = left;
+  if(ix1 > right) ix1 = right;
+  if(iy0 < top) iy0 = top;
+  if(iy0 > bottom) iy0 = bottom;
+  if(iy1 < top) iy1 = top;
+  if(iy1 > bottom) iy1 = bottom;
+  ox0 = ix0;
+  oy0 = iy0;
+  ox1 = ix1;
+  oy1 = iy1;
+}
+
 
 void ADrawer2D::drawEllipse(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled)
 {

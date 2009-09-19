@@ -22,20 +22,21 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include "lpi_color.h"
 #include "lpi_texture.h"
+#include "lpi_font.h"
 
 #include <vector>
 #include <string>
 
 #include <iostream>
+#include <sstream>
 
 namespace lpi
 {
 
-
 //helper functions for 2D graphics
 bool bezier_nearly_flat(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3);
-bool clipLine(int x1, int y1, int x2, int y2, int& x3, int& y3, int& x4, int& y4, int left, int top, int right, int bottom);
-
+bool clipLine(int& ox0, int& oy0, int& ox1, int& oy1, int ix0, int iy0, int ix1, int iy1, int left, int top, int right, int bottom);
+void clipRect(int& ox0, int& oy0, int& ox1, int& oy1, int ix0, int iy0, int ix1, int iy1, int left, int top, int right, int bottom);
 
 class IDrawer2D
 {
@@ -103,13 +104,88 @@ class IDrawer2D
     
     ///text
     
-    //TODO: draw text, draw text centered/aligned, cache rendered text in objects, ...
+    enum HAlign
+    {
+      HA_LEFT,
+      HA_CENTER,
+      HA_RIGHT
+    };
+    
+    enum VAlign
+    {
+      VA_TOP,
+      VA_CENTER,
+      VA_BOTTOM
+    };
+    
+    
+    /*
+    drawText: the most basic text printing function.
+    x and y are the coordinates of the rectangle in which the text will be. For
+    HA_LEFT, VA_TOP alignment, this is the top left position of the rectangle,
+    for HA_CENTER, VA_CENTER alignment, this is the center of the rectangle, 
+    and so on...
+    */
+    virtual void drawText(const std::string& text, int x, int y, const Font& font = FONT_Default, HAlign halign = HA_LEFT, VAlign valign = VA_TOP) = 0;
+    
+    /*
+    getFontHeight
+    Returns the height of the font. This is the height of a single line of text.
+    Unlike the width of characters, it is guaranteed that the height of a line
+    is always the same. So given the result of this function, you can know exactly
+    how high any amount of lines of text will be (in pixels).
+    */
+    virtual size_t getFontHeight(const Font& font = FONT_Default) = 0;
+    
+    /*
+    calcTextRectSize: get the size of the rectangle that the text drawn with drawText will take.
+    There are no alignment parameters because it has no effect on the rectangle size, but note that
+    alignment will affect the position of the rectangle.
+    */
+    virtual void calcTextRectSize(int& w, int& h, const std::string& text, const Font& font = FONT_Default) = 0;
+    
+    /*
+    calcTextPosToChar: gives the index of the character in the string text, that will be drawn at
+    location x, y, the position relative the the coordinates you will give to the drawText function.
+    This can be used to go from mouse position to the index of the cursor, or for line-breaking
+    strategies of text in a limited area.
+    The index returned is a char in the string which will always be the first char of
+    a glyph (if a glyph exists out of multiple char's, like can happen with UTF-8).
+    */
+    virtual size_t calcTextPosToChar(int x, int y, const std::string& text, const Font& font = FONT_Default, HAlign halign = HA_LEFT, VAlign valign = VA_TOP) = 0;
+    
+    /*
+    calcTextCharToPos: this does the opposite of calcTextPosToChar. Given the index of the character in the text,
+    it returns the relative position to the (x, y) of the drawTextFunction of that character's top left corner.
+    x and y are output parameters.
+    */
+    virtual void calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font = FONT_Default, HAlign halign = HA_LEFT, VAlign valign = VA_TOP) = 0;
+    
+    
+    //templatized version for convenience. Different name than drawText because otherwise overriding drawText hides this function.
+    template<typename T>
+    void print(const T& val, int x, int y, const Font& font = FONT_Default, HAlign halign = HA_LEFT, VAlign valign = VA_TOP)
+    {
+      std::ostringstream sstream;
+      sstream << val;
+      drawText(sstream.str(), x, y, font, halign, valign);
+    }
+    
+    /*
+    TODO: drawing text in a limited rectangular area with word wrapping. To do that, don't add functions
+    to IDrawer2D, but instead make a class which has a line breaking strategy, and which uses the
+    functions like calcTextRectSize and so on to determine where it has to break the text. It can have
+    strategies like breaking between words, between letters, ... It should already itself break
+    the text into multiple strings (one per line) and then do the line breaking per substring (faster
+    than asking these parameters for the complete string all the time)
+    */
+    
+    //TODO: cache rendered text in objects, ...
+    
     
     
     //Clear screen COMMENTED OUT because this is actually not a task of the drawer, but of that what controls the screen (and does the updating, redrawing, ...)
-    //Look at it  like this: using clear screen is something you do in OpenGL not only when drawing 2D things, but also when drawing 3D graphics to render the next screen. So it doesn't belong in IDrawer2D
-    /////clear screen
-    
+    //Using clear screen is something you do in OpenGL not only when drawing 2D things, but also when drawing 3D graphics to render the next screen. So it doesn't belong in IDrawer2D
     //virtual void cls(const ColorRGB& color) = 0; //give everything this color
     
 };
@@ -127,24 +203,6 @@ class ADrawer2D : public IDrawer2D //abstract IDrawer2D already implements some 
     virtual void drawTextureSizedCentered(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod);
     //virtual void drawTextureTransformedCentered(const ITexture* texture, int x, int y, const double* matrix, const ColorRGB& colorMod);
 };
-
-
-
-
-////OLD interface, todo: remove
-//void drawLine(unsigned char* buffer, int w, int h, int x1, int y1, int x2, int y2, const ColorRGB& color);
-//void drawLine(unsigned char* buffer, int w, int h, int x1, int y1, int x2, int y2, const ColorRGB& color, int clipx1, int clipy1, int clipx2, int clipy2);
-//void horLine(unsigned char* buffer, int w, int h, int y, int x1, int x2, const ColorRGB& color);
-//void verLine(unsigned char* buffer, int w, int h, int x, int y1, int y2, const ColorRGB& color);
-//void drawCircle(unsigned char* buffer, int w, int h, int x, int y, int radius, const ColorRGB& color);
-//void drawDisk(unsigned char* buffer, int buffer_w, int buffer_h, int xc, int yc, int radius, const ColorRGB& color);
-//void drawEllipse(unsigned char* buffer, int w, int h, int cx, int cy, int radiusx, int radiusy, const ColorRGB& color);
-//void drawFilledEllipse(unsigned char* buffer, int w, int h, int cx, int cy, int radiusx, int radiusy, const ColorRGB& color);
-//void drawBezier(unsigned char* buffer, int w, int h, int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color);
-////drawPixel checks if the pixel is inside the buffer (it's simply not drawn if outside)
-//void drawPixel(unsigned char* buffer, int w, int h, int x, int y, const ColorRGB& color);
-
-
 
 
 } //end of namespace lpi

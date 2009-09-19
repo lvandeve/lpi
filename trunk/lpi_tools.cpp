@@ -62,13 +62,13 @@ void base64StringToBinaryFile(const std::string& outfilename, const std::string&
   saveFile(file, outfilename);
 }
 
-void graphicalKeyBoardNumberTest(const ColorRGB& color)
+void graphicalKeyBoardNumberTest(IDrawer2D& drawer)
 {
   for(size_t i = 0; i < 1024; i++) if(lpi::keyDown(i))
   {
     int x = (i % 32) * 32;
     int y = (i / 32) * 8;
-    lpi::print(i, x, y, color);
+    drawer.print(i, x, y);
   }
 }
 

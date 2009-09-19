@@ -35,10 +35,13 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
+class InternalFontDrawer;
+
 class Drawer2DGL : public ADrawer2D
 {
   private:
     ScreenGL* screen;
+    InternalFontDrawer* fontdrawer;
     
   private:
     void recursive_bezier(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, int n);
@@ -48,6 +51,7 @@ class Drawer2DGL : public ADrawer2D
     
   public:
     Drawer2DGL(ScreenGL* screen);
+    ~Drawer2DGL();
     
     virtual size_t getWidth();
     virtual size_t getHeight();
@@ -75,6 +79,12 @@ class Drawer2DGL : public ADrawer2D
     virtual void drawTexture(const ITexture* texture, int x, int y, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureSized(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, const ColorRGB& colorMod = RGB_White);
+    
+    virtual size_t getFontHeight(const Font& font = FONT_Default);
+    virtual void calcTextRectSize(int& w, int& h, const std::string& text, const Font& font = FONT_Default);
+    virtual size_t calcTextPosToChar(int x, int y, const std::string& text, const Font& font = FONT_Default, HAlign halign = HA_LEFT, VAlign valign = VA_TOP);
+    virtual void calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font = FONT_Default, HAlign halign = HA_LEFT, VAlign valign = VA_TOP);
+    virtual void drawText(const std::string& text, int x, int y, const Font& font = FONT_Default, HAlign halign = HA_LEFT, VAlign valign = VA_TOP);
     
   public:
   

@@ -122,5 +122,31 @@ void AGUIDrawer::drawTextureRepeated(const ITexture* texture, int x0, int y0, in
   getDrawer().drawTextureRepeated(texture, x0, y0, x1, y1, colorMod);
 }
 
+void AGUIDrawer::calcTextRectSize(int& w, int& h, const std::string& text, const Font& font)
+{
+  return getDrawer().calcTextRectSize(w, h, text, font);
+}
+
+size_t AGUIDrawer::getFontHeight(const Font& font)
+{
+  return getDrawer().getFontHeight(font);
+}
+
+size_t AGUIDrawer::calcTextPosToChar(int x, int y, const std::string& text, const Font& font, HAlign halign, VAlign valign)
+{
+  return getDrawer().calcTextPosToChar(x, y, text, font, halign, valign);
+}
+
+void AGUIDrawer::calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font, HAlign halign, VAlign valign)
+{
+  getDrawer().calcTextCharToPos(x, y, index, text, font, halign, valign);
+}
+
+
+void AGUIDrawer::drawText(const std::string& text, int x, int y, const Font& font, HAlign halign, VAlign valign)
+{
+  getDrawer().drawText(text, x, y, font, halign, valign);
+}
+
 } //namespace gui
 } //namespace lpi

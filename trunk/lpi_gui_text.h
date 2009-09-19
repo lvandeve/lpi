@@ -55,8 +55,8 @@ class InputLine : public Element //input text line
     
   public:
     unsigned long l; //max length
-    Markup markup;
-    Markup titleMarkup;
+    Font font;
+    Font titleFont;
     ColorRGB cursorColor;
     /*
     types:
@@ -70,8 +70,8 @@ class InputLine : public Element //input text line
         
     InputLine();
     void make(int x, int y, unsigned long l,
-              const Markup& markup = TS_W,
-              int type = 0, const std::string& title = "", const Markup& titleMarkup = TS_W, const ColorRGB& cursorColor = RGB_White);
+              const Font& font = FONT_Default,
+              int type = 0, const std::string& title = "", const Font& titleFont = FONT_Default, const ColorRGB& cursorColor = RGB_White);
     
     virtual void drawWidget(IGUIDrawer& drawer) const;
     virtual void handleWidget(const IGUIInput& input);
@@ -97,205 +97,205 @@ class InputLine : public Element //input text line
     void activate(bool i_active = true);
 };
 
-/*
-MultiLineText
-text divided over multiple lines, and functions 
-to let it create the lines in different ways, such as (including, but not limited to)
+///*
+//MultiLineText
+//text divided over multiple lines, and functions 
+//to let it create the lines in different ways, such as (including, but not limited to)
 
--use ascii 10 chars of the string for new lines
--break off between letters in limited rectangle
--break off between words in limited rectangle
+//-use ascii 10 chars of the string for new lines
+//-break off between letters in limited rectangle
+//-break off between words in limited rectangle
 
-the multiple line text is represented by an array of integers (line) containing the positions of the first letter of each new line
+//the multiple line text is represented by an array of integers (line) containing the positions of the first letter of each new line
 
-all functions that need to draw text this way HAVE to use this class from now on
-*/
-class MultiLineText
-{
-  private:
-    std::vector<unsigned long> line; //if the value is -1, it's no new line, it means the end is reached
-    std::vector<Markup> lineMarkup; //only used of useFormatting is true: then it has to remember the start-markup of every line, which will be generated at the start with the function generateLineMarkup
-  public:
-    std::string text;
+//all functions that need to draw text this way HAVE to use this class from now on
+//*/
+//class MultiLineText
+//{
+  //private:
+    //std::vector<unsigned long> line; //if the value is -1, it's no new line, it means the end is reached
+    //std::vector<Markup> lineMarkup; //only used of useFormatting is true: then it has to remember the start-markup of every line, which will be generated at the start with the function generateLineMarkup
+  //public:
+    //std::string text;
     
-    Markup markup; //the markup currently used
+    //Font font; //the markup currently used
     
-    bool char10; //if true, ascii code 10 will act as newline and ascii code 13 will be ignored
-    bool useFormatting; //if true, the # codes of formatted text are used. See the printFormatted function for more about this!
+    //bool char10; //if true, ascii code 10 will act as newline and ascii code 13 will be ignored
+    //bool useFormatting; //if true, the # codes of formatted text are used. See the printFormatted function for more about this!
     
-    void resetLines();
+    //void resetLines();
     
-    void splitWords(int width); //markup must be given to be able to calculate width ==> max amount of letters in one line
-    void splitLetters(int width);
-    void splitChar10(); //only make a new line at ascii code 10 characters
+    //void splitWords(int width); //markup must be given to be able to calculate width ==> max amount of letters in one line
+    //void splitLetters(int width);
+    //void splitChar10(); //only make a new line at ascii code 10 characters
     
-    void generateLineMarkup(); //only used it useFormatting is true
+    //void generateLineMarkup(); //only used it useFormatting is true
     
-    void setText(const std::string& text);
-    void addText(const std::string& text);
+    //void setText(const std::string& text);
+    //void addText(const std::string& text);
     
-    unsigned long getNumLines() const;
+    //unsigned long getNumLines() const;
     
-    std::string getLine(unsigned long i) const; //returns string filled with only that line
+    //std::string getLine(unsigned long i) const; //returns string filled with only that line
     
     
-    void draw(int x, int y, unsigned long startLine, unsigned long endLine) const;
-    void draw(int x, int y) const;
+    //void draw(int x, int y, unsigned long startLine, unsigned long endLine) const;
+    //void draw(int x, int y) const;
     
-    void cursorAtCharPos(unsigned long pos, unsigned long& cline, unsigned long& column) const;
-    int charAtCursorPos(unsigned long cline, unsigned long column) const;
+    //void cursorAtCharPos(unsigned long pos, unsigned long& cline, unsigned long& column) const;
+    //int charAtCursorPos(unsigned long cline, unsigned long column) const;
     
-    MultiLineText();
-};
+    //MultiLineText();
+//};
 
-//The String Stack
-class StringStack
-{
-  public:
-    int num; //max number of strings on your stringstack
+////The String Stack
+//class StringStack
+//{
+  //public:
+    //int num; //max number of strings on your stringstack
     
-    int next; //physical address of next string that'll be written
-    int oldest; //physical address of oldest string that was written
+    //int next; //physical address of next string that'll be written
+    //int oldest; //physical address of oldest string that was written
     
-    std::vector<std::string> text;
+    //std::vector<std::string> text;
     
-    StringStack();
-    StringStack(int num);
+    //StringStack();
+    //StringStack(int num);
     
-    //void makeBuffer(int num);
-    //void deleteBuffer();
-    void make(int num);
-    void push(const std::string& text);
-    int increase(int pointer, int amount = 1);
-    int decrease(int pointer, int amount = 1);
-    int getNumText() const;
-    const std::string& getOldest(int offset = 0);
-    const std::string& getNewest(int offset = 0);
-  private:
-    int numFilled; //how much of the memory places are filled currently
-};
+    ////void makeBuffer(int num);
+    ////void deleteBuffer();
+    //void make(int num);
+    //void push(const std::string& text);
+    //int increase(int pointer, int amount = 1);
+    //int decrease(int pointer, int amount = 1);
+    //int getNumText() const;
+    //const std::string& getOldest(int offset = 0);
+    //const std::string& getNewest(int offset = 0);
+  //private:
+    //int numFilled; //how much of the memory places are filled currently
+//};
 
-//The console (only shows output text, use for example InputLine to input text into the console)
-class Console : public Element
-{
-  private:
-    int numLines; //how much actual lines does it take on screen
-    mutable StringStack stack; //mutable because it changes while drawing this widget
-    void calcNumLines(); //calculates number of lines from the current messages; to be recalculated when sizex changes or messages are pushed/popped
+////The console (only shows output text, use for example InputLine to input text into the console)
+//class Console : public Element
+//{
+  //private:
+    //int numLines; //how much actual lines does it take on screen
+    //mutable StringStack stack; //mutable because it changes while drawing this widget
+    //void calcNumLines(); //calculates number of lines from the current messages; to be recalculated when sizex changes or messages are pushed/popped
 
-  public:
-    int scroll; //how much lines away from the first line (= oldest) are you scrolled, note: line != message, message can be multiple lines big!
-    int num; //max number of messages
+  //public:
+    //int scroll; //how much lines away from the first line (= oldest) are you scrolled, note: line != message, message can be multiple lines big!
+    //int num; //max number of messages
     
-    //for now, no special text markup yet. All text has the same color and format.
-    Markup markup;
+    ////for now, no special text markup yet. All text has the same color and format.
+    //Font font;
     
-    int getNumLines() const;
-    int getNumMessages() const;
-    int getVisibleLines(const Markup& markup);
-    virtual void drawWidget(IGUIDrawer& drawer) const;
+    //int getNumLines() const;
+    //int getNumMessages() const;
+    //int getVisibleLines(const Font* font);
+    //virtual void drawWidget(IGUIDrawer& drawer) const;
     
-    void push(const std::string& text);
-    Console();
-    void make(int x, int y, int sizex, int sizey, int num, const Markup& markup = TS_W);
-};
+    //void push(const std::string& text);
+    //Console();
+    //void make(int x, int y, int sizex, int sizey, int num, const Font& font = FONT_Default);
+//};
 
-//The textarea: can show you a single multilinetext and allows you to scroll (if you use optional or separate scrollbar or something else)
-class TextArea : public Element
-{
-  public:
-    int scroll; //how much lines away from the first line
+////The textarea: can show you a single multilinetext and allows you to scroll (if you use optional or separate scrollbar or something else)
+//class TextArea : public Element
+//{
+  //public:
+    //int scroll; //how much lines away from the first line
     
-    MultiLineText text;
+    //MultiLineText text;
     
-    Markup markup;
+    //Font font;
     
-    int getNumLines() const;
-    int getVisibleLines(const Markup& markup) const;
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-    virtual void handleWidget(const IGUIInput& input);
-    virtual void resizeWidget();
+    //int getNumLines() const;
+    //int getVisibleLines(const Font* font) const;
+    //virtual void drawWidget(IGUIDrawer& drawer) const;
+    //virtual void handleWidget(const IGUIInput& input);
+    //virtual void resizeWidget();
 
-    TextArea();
-    void make(int x, int y, int sizex, int sizey, const std::string& text, const Markup& markup = TS_W);
-    void setText(const std::string& text, const Markup& markup = TS_W);
+    //TextArea();
+    //void make(int x, int y, int sizex, int sizey, const std::string& text, const Font& font = FONT_Default);
+    //void setText(const std::string& text, const Font& font = FONT_Default);
     
-    ///optional scrollbar
-    Scrollbar scrollbar;
-    bool scrollEnabled;
-    void addScrollbar();
-    void setScrollbarSize();
+    /////optional scrollbar
+    //Scrollbar scrollbar;
+    //bool scrollEnabled;
+    //void addScrollbar();
+    //void setScrollbarSize();
     
-  protected:
-    virtual Element* getAutoSubElement(unsigned long i);
-};
+  //protected:
+    //virtual Element* getAutoSubElement(unsigned long i);
+//};
 
-class InputBox : public Element
-{
-  private:
-    unsigned long cursor; //position of cursor in the text, column and line position will be calculated by the MultiLineText
-    int textWidth; //sizex - width of the scrollbar
-    int firstVisibleLine; //depends on the scrollbar position
+//class InputBox : public Element
+//{
+  //private:
+    //unsigned long cursor; //position of cursor in the text, column and line position will be calculated by the MultiLineText
+    //int textWidth; //sizex - width of the scrollbar
+    //int firstVisibleLine; //depends on the scrollbar position
     
-    MultiLineText multiText;
-    std::string text;
+    //MultiLineText multiText;
+    //std::string text;
     
-    double draw_time; //for drawing the blinking cursor
+    //double draw_time; //for drawing the blinking cursor
     
-    void init();
+    //void init();
     
-    MouseState auto_activate_mouse_state;
-    bool control_active;
+    //MouseState auto_activate_mouse_state;
+    //bool control_active;
     
-  public:
-    int maxLines;
+  //public:
+    //int maxLines;
     
-    InputBox();
-    void make(int x, int y, int sizex, int sizey, int maxLines, int border = 2,
-              const Markup& markup = TS_B,
-              //BackPanel panel = COLORPANEL(RGB_White),
-              const ColorRGB& cursorColor = RGB_Black);
-    void makeScrollbar(const GuiSet* set = &builtInGuiSet);
-    const std::string& getText() const { return text; }
+    //InputBox();
+    //void make(int x, int y, int sizex, int sizey, int maxLines, int border = 2,
+              //const Font* font = 0,
+              ////BackPanel panel = COLORPANEL(RGB_White),
+              //const ColorRGB& cursorColor = RGB_Black);
+    //void makeScrollbar(const GuiSet* set = &builtInGuiSet);
+    //const std::string& getText() const { return text; }
     
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-    virtual void handleWidget(const IGUIInput& input);
+    //virtual void drawWidget(IGUIDrawer& drawer) const;
+    //virtual void handleWidget(const IGUIInput& input);
     
-    int border;
+    //int border;
     
-    //get the positions (relative to the area's x and y) of the text area
-    int getLeftText() const;
-    int getRightText() const;
-    int getTopText() const;
-    int getBottomText() const;
-    int getTextAreaHeight() const;
-    int getTextAreaWidth() const;
-    int getLinesVisible() const; //how much lines of text are visible
+    ////get the positions (relative to the area's x and y) of the text area
+    //int getLeftText() const;
+    //int getRightText() const;
+    //int getTopText() const;
+    //int getBottomText() const;
+    //int getTextAreaHeight() const;
+    //int getTextAreaWidth() const;
+    //int getLinesVisible() const; //how much lines of text are visible
     
-    Scrollbar bar;
+    //Scrollbar bar;
     
-    BackPanel panel;
+    //BackPanel panel;
     
-    Markup markup;
-    ColorRGB cursorColor;
+    //Font font;
+    //ColorRGB cursorColor;
     
-  protected:
-    virtual Element* getAutoSubElement(unsigned long i);
-};
+  //protected:
+    //virtual Element* getAutoSubElement(unsigned long i);
+//};
 
 
-class FormattedText : public Element
-{
-  public:
-    Markup markup;
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-    FormattedText();
-    void make(int x = 0, int y = 0, const std::string& text = "", const Markup& markup = TS_W);
-    void setText(const std::string& text);
-    const std::string& getText() const { return text; }
-  private:
-    std::string text;
-};
+//class FormattedText : public Element
+//{
+  //public:
+    //Font font;
+    //virtual void drawWidget(IGUIDrawer& drawer) const;
+    //FormattedText();
+    //void make(int x = 0, int y = 0, const std::string& text = "", const Font& font = FONT_Default);
+    //void setText(const std::string& text);
+    //const std::string& getText() const { return text; }
+  //private:
+    //std::string text;
+//};
 
 } //namespace gui
 } //namespace lpi

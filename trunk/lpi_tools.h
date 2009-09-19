@@ -25,20 +25,19 @@ Tools for lpi itself, e.g. functions that act as programs to convert PNG images
 to/from base64 files, to create built-in textures for GUI and font or extract them.
 */
 
-#ifndef LPI_TOOLS_H_INCLUDED
-#define LPI_TOOLS_H_INCLUDED
+#pragma once
 
-#include "lpi_color.h"
+#include <string>
 
 namespace lpi
 {
+  class IDrawer2D;
 
   void binaryFileToBase64File(const std::string& outfilename, const std::string& infilename, bool cppnewlines);
   void base64FileToBinaryFile(const std::string& outfilename, const std::string& infilename);
   void base64StringToBinaryFile(const std::string& outfilename, const std::string& in);
   
-  void graphicalKeyBoardNumberTest(const ColorRGB& color = RGB_Black);
+  void graphicalKeyBoardNumberTest(IDrawer2D& drawer);
 
 } //namespace lpi
 
-#endif

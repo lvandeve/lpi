@@ -213,16 +213,16 @@ class Label //convenience class: elements that want an optional label (e.g. chec
     std::string label;
     int labelX; //label position is relative to the position of the element
     int labelY;
-    Markup labelMarkup;
+    Font labelFont;
   
   protected:
-    void drawLabel(const Element* element) const;
+    void drawLabel(IGUIDrawer& drawer, const Element* element) const;
     
   public:
     Label();
     virtual ~Label(){}
     
-    void makeLabel(const std::string& label, int labelX, int labelY, const Markup& labelMarkup);
+    void makeLabel(const std::string& label, int labelX, int labelY, const Font& labelFont = FONT_Default);
 };
 
 
@@ -263,9 +263,9 @@ class Button : public Element
     std::string text;
     int textOffsetx;
     int textOffsety;
-    Markup markup[3];
-    void autoTextSize(int extrasize = 0); //will automaticly adjust it's size to fit text size
-    void centerText(); //center the text in the texture if the button has a texture (sizex and sizey used for size)
+    Font font[3];
+    void autoTextSize(IGUIDrawer* drawer, int extrasize = 0); //will automaticly adjust it's size to fit text size
+    void centerText(IGUIDrawer* drawer); //center the text in the texture if the button has a texture (sizex and sizey used for size)
     
     ////part "panel"
     bool enablePanel;
@@ -296,11 +296,12 @@ class Button : public Element
     
     //text only constructor (without offset)
     void makeText(int x, int y, //basic properties
-                  const std::string& text); //text
+                  const std::string& text, //text
+                  IGUIDrawer* drawer = 0); //give drawer if you want auto-text-size
     
     //panel + text constructor (text always in center of panel, no offsets and thinking needed)
     //this is the constructor with default parameters
-    void makeTextPanel(int x, int y, const std::string& text = "", int sizex = 64, int sizey = 24); //basic properties + actual text
+    void makeTextPanel(int x, int y, const std::string& text = "", int sizex = 64, int sizey = 24, IGUIDrawer* drawer = 0); //basic properties + actual text; give drawer if you want the text centered
 
     virtual void drawWidget(IGUIDrawer& drawer) const;
     virtual void handleWidget(const IGUIInput& input);
@@ -365,7 +366,7 @@ class Scrollbar : public ElementComposite
     void makeHorizontal(int x, int y, int length = 80,
                         double scrollSize = 100, double scrollPos = 0, double offset = 0, double scrollSpeed = 1,
                         const GuiSet* set = &builtInGuiSet, int speedMode = 1);
-    void showValue(int x, int y, const Markup& valueMarkup, int type); //type: 0=don't, 1=float, 2=int
+    void showValue(int x, int y, const Font& valueFont, int type); //type: 0=don't, 1=float, 2=int
     
     void scroll(const IGUIInput& input, int dir); //make it scroll from an external command
     
@@ -375,7 +376,7 @@ class Scrollbar : public ElementComposite
     void randomize(); //it will get a random value
     
     int enableValue; //if 1, value is shown everytime you draw as floating point, if 2, as integer (value = offset + scrollPos)
-    Markup valueMarkup; //text style of the value
+    Font valueFont; //text style of the value
     int valueX; //x position of the value (relative)
     int valueY; //y position of the value (relative)
     
@@ -675,8 +676,8 @@ class Window : public ElementComposite
     std::string title;
     int titleX; //position of title, relative to the top bar (NOT relative to the window but to the TOP BAR!)
     int titleY;
-    Markup titleMarkup;
-    void addTitle(const std::string& title, int titleX = 2, int titleY = 4, const Markup& titleMarkup = TS_W);
+    Font titleFont;
+    void addTitle(const std::string& title, int titleX = 2, int titleY = 4, const Font& titleFont = FONT_Default);
     void setTitle(const std::string& title); //only to be used after "addTitle" (or the x, y position will be messed up)
     
     ////optional part "close button"
@@ -744,12 +745,12 @@ class Checkbox : public Element, public Label
     //text
     bool enableText; //the text is a title drawn next to the checkbox, with automaticly calculated position
     std::string text;
-    Markup markup;
+    Font font;
     
     Checkbox();
     void make(int x, int y, bool checked = 0, const GuiSet* set = &builtInGuiSet, int toggleOnMouseUp = 0);
     void makeSmall(int x, int y, bool checked = 0, const GuiSet* set = &builtInGuiSet, int toggleOnMouseUp = 0);
-    void addText(const std::string& text, const Markup& markup = TS_W);
+    void addText(const std::string& text, const Font& font = FONT_Default);
     virtual void drawWidget(IGUIDrawer& drawer) const; //also handles it by calling handle(): toggles when mouse down or not
     virtual void handleWidget(const IGUIInput& input);
 
@@ -800,10 +801,10 @@ class Text : public Element
 {
   public:
     bool useNewLine;
-    Markup markup;
+    Font font;
     virtual void drawWidget(IGUIDrawer& drawer) const;
     Text();
-    void make(int x = 0, int y = 0, const std::string& text = "", const Markup& markup = TS_W);
+    void make(int x = 0, int y = 0, const std::string& text = "", const Font& font = FONT_Default);
     void setText(const std::string& text);
     const std::string& getText() const { return text; }
   private:

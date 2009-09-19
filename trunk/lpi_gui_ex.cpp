@@ -37,473 +37,473 @@ namespace lpi
 namespace gui
 {
 
-////////////////////////////////////////////////////////////////////////////////
-//DropMenu/////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+////DropMenu/////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
 
 
-/*
-The DropMenu class.
-DropMenu is a list of text buttons, each having their own text.
-The DropMenu can have a panel or rectangle behind the text buttons as background.
+///*
+//The DropMenu class.
+//DropMenu is a list of text buttons, each having their own text.
+//The DropMenu can have a panel or rectangle behind the text buttons as background.
 
-How to use the DropMenu class:
-- x and y define the position of the top left corner of the menu
-- text contains the text of all buttons, separated by '|' chars.
-- put two '|' chars in a row to get a separator in the menu
-- draw the menu on screen with it's draw() function
-- It can be used perfectly for both right click menus of in game objects, 
-  as for menus at the top of the program window
-*/
+//How to use the DropMenu class:
+//- x and y define the position of the top left corner of the menu
+//- text contains the text of all buttons, separated by '|' chars.
+//- put two '|' chars in a row to get a separator in the menu
+//- draw the menu on screen with it's draw() function
+//- It can be used perfectly for both right click menus of in game objects, 
+  //as for menus at the top of the program window
+//*/
 
 
-//Constructor to make an empty menu
-DropMenu::DropMenu()
-{
-  this->markup1 = TS_White;
-  this->markup2 = TS_White;
+////Constructor to make an empty menu
+//DropMenu::DropMenu()
+//{
+  //this->markup1 = TS_White;
+  //this->markup2 = TS_White;
   
-  setOptions("");
+  //setOptions("");
   
-  autoDisable = true;
-}
+  //autoDisable = true;
+//}
 
-//Constructor to make the menu
-void DropMenu::makeColored(int x, int y, const std::string& text, 
-           const Markup& markup1, const Markup& markup2,
-           const ColorRGB& /*menuColor*/, BackRule hrule)
-{
-  this->x0 = x;
-  this->y0 = y;
-  this->totallyEnable();
-  this->markup1 = markup1;
-  this->markup2 = markup2;
-  //this->panel.makeUntextured(menuColor);
-  this->hrule = hrule;
+////Constructor to make the menu
+//void DropMenu::makeColored(int x, int y, const std::string& text, 
+           //const Font* font1, const Font& font2,
+           //const ColorRGB& /*menuColor*/, BackRule hrule)
+//{
+  //this->x0 = x;
+  //this->y0 = y;
+  //this->totallyEnable();
+  //this->markup1 = markup1;
+  //this->markup2 = markup2;
+  ////this->panel.makeUntextured(menuColor);
+  //this->hrule = hrule;
   
-  setOptions(text);
-  //putInScreen(); //reposition then does setOptions a second time to fix changed positions
-}
+  //setOptions(text);
+  ////putInScreen(); //reposition then does setOptions a second time to fix changed positions
+//}
 
-//Constructor to make the menu
-void DropMenu::make(int x, int y, const std::string& text, 
-           const Markup& markup1, const Markup& markup2,
-           BackPanel panel, BackRule hrule)
-{
-  this->x0 = x;
-  this->y0 = y;
-  this->totallyEnable();
-  this->markup1 = markup1;
-  this->markup2 = markup2;
-  this->panel = panel;
-  this->hrule = hrule;
+////Constructor to make the menu
+//void DropMenu::make(int x, int y, const std::string& text, 
+           //const Font* font1, const Font& font2,
+           //BackPanel panel, BackRule hrule)
+//{
+  //this->x0 = x;
+  //this->y0 = y;
+  //this->totallyEnable();
+  //this->markup1 = markup1;
+  //this->markup2 = markup2;
+  //this->panel = panel;
+  //this->hrule = hrule;
   
-  setOptions(text);
-  //putInScreen(); //reposition then does setOptions a second time to fix changed positions
-}
+  //setOptions(text);
+  ////putInScreen(); //reposition then does setOptions a second time to fix changed positions
+//}
 
-void DropMenu::clearOptions()
-{
-  menuButton.clear();
-  separator.clear();
-  identity.clear();
-}
+//void DropMenu::clearOptions()
+//{
+  //menuButton.clear();
+  //separator.clear();
+  //identity.clear();
+//}
 
-/*Initialize the menu, calculate all positions, make the buttons, ...
-This function is called automaticly by the constructors*/
-void DropMenu::setOptions(const std::string& text)
-{
-  clearOptions();
+///*Initialize the menu, calculate all positions, make the buttons, ...
+//This function is called automaticly by the constructors*/
+//void DropMenu::setOptions(const std::string& text)
+//{
+  //clearOptions();
   
-  unsigned long maxTextSize = 0; //the size of the largest text
+  //unsigned long maxTextSize = 0; //the size of the largest text
   
-  //calculate n, the number of elements
-  unsigned long pos = 0;
-  unsigned long n = 0;
-  while(pos < text.length())
-  {
-    if(text[pos] == '|') n++;
-    pos++;
-  }
-  n++;
+  ////calculate n, the number of elements
+  //unsigned long pos = 0;
+  //unsigned long n = 0;
+  //while(pos < text.length())
+  //{
+    //if(text[pos] == '|') n++;
+    //pos++;
+  //}
+  //n++;
   
-  unsigned long i = 0;
-  unsigned long t = 0;
+  //unsigned long i = 0;
+  //unsigned long t = 0;
 
-  while(i < n)
-  {
-    std::string buttonText = "";
+  //while(i < n)
+  //{
+    //std::string buttonText = "";
 
-    while(text[t] != '|' && t < text.length())
-    {
-      buttonText += text[t];
-      t++;
-      if(text[t] == 0) break;
-    }
+    //while(text[t] != '|' && t < text.length())
+    //{
+      //buttonText += text[t];
+      //t++;
+      //if(text[t] == 0) break;
+    //}
 
-    separator.push_back(false);
-    if(buttonText.length() == 0) separator[i] = true;
-    t++;
+    //separator.push_back(false);
+    //if(buttonText.length() == 0) separator[i] = true;
+    //t++;
     
-    Button b;
-    b.makeText(x0 + 2, y0 + 2 + (markup1.getHeight() + 2) * i, buttonText);
-    menuButton.push_back(b);
+    //Button b;
+    //b.makeText(x0 + 2, y0 + 2 + (markup1.getHeight() + 2) * i, buttonText);
+    //menuButton.push_back(b);
     
-    identity.push_back(0); //no useful identity added, but it has to be increased in size to match menuButton size
+    //identity.push_back(0); //no useful identity added, but it has to be increased in size to match menuButton size
     
-    if(buttonText.length() > maxTextSize) maxTextSize = buttonText.length();
+    //if(buttonText.length() > maxTextSize) maxTextSize = buttonText.length();
     
-    i++;
-  }
+    //i++;
+  //}
   
    
-  setSizeX(maxTextSize * markup1.getWidth() + markup1.getWidth() / 2);
-  setSizeY(n * (markup1.getHeight() + 2) + markup1.getHeight() / 2);
-}
+  //setSizeX(maxTextSize * markup1.getWidth() + markup1.getWidth() / 2);
+  //setSizeY(n * (markup1.getHeight() + 2) + markup1.getHeight() / 2);
+//}
 
-void DropMenu::addOption(const std::string& text, int id)
-{
-    Button b;
-    b.makeText(x0 + 2, y0 + 2 + (markup1.getHeight() + 2) * menuButton.size(), text);
-    menuButton.push_back(b);
-    separator.push_back(false);
+//void DropMenu::addOption(const std::string& text, int id)
+//{
+    //Button b;
+    //b.makeText(x0 + 2, y0 + 2 + (markup1.getHeight() + 2) * menuButton.size(), text);
+    //menuButton.push_back(b);
+    //separator.push_back(false);
     
-    addSubElement(&b);//TODO: fix this big memory corruption problem and Button copying
+    //addSubElement(&b);//TODO: fix this big memory corruption problem and Button copying
     
-    int separatorsize = 0;
-    for(unsigned long i = 0; i < separator.size(); i++) if(separator[i]) separatorsize++;
+    //int separatorsize = 0;
+    //for(unsigned long i = 0; i < separator.size(); i++) if(separator[i]) separatorsize++;
     
-    setSizeY((menuButton.size() + separatorsize) * (markup1.getHeight() + 2) + markup1.getHeight() / 2);
+    //setSizeY((menuButton.size() + separatorsize) * (markup1.getHeight() + 2) + markup1.getHeight() / 2);
 
-    //int newSizex = text.length() * markup1.getWidth() + markup1.getWidth() / 2;
-    int newSizex;// = text.length();
-    int textheight;
-    getFormattedTextSize(text, newSizex, textheight, markup1);
-    newSizex +=  markup1.getWidth() / 2;
+    ////int newSizex = text.length() * markup1.getWidth() + markup1.getWidth() / 2;
+    //int newSizex;// = text.length();
+    //int textheight;
+    //getFormattedTextSize(text, newSizex, textheight, markup1);
+    //newSizex +=  markup1.getWidth() / 2;
     
-    if(newSizex > getSizeX()) setSizeX(newSizex);
+    //if(newSizex > getSizeX()) setSizeX(newSizex);
     
-    identity.push_back(id);
-}
+    //identity.push_back(id);
+//}
 
-void DropMenu::drawWidget(IGUIDrawer& drawer) const
-{
-  panel.draw(drawer, x0, y0, getSizeX(), getSizeY());
+//void DropMenu::drawWidget(IGUIDrawer& drawer) const
+//{
+  //panel.draw(drawer, x0, y0, getSizeX(), getSizeY());
 
-  for(unsigned long i = 0; i < menuButton.size(); i++)
-  {
-    if(!separator[i]) menuButton[i].draw(drawer);
-    else hrule.draw(drawer, x0 + markup1.getWidth() / 2, y0 + 2 + (markup1.getHeight() + 2) * i + markup1.getHeight() / 2, getSizeX() - markup1.getWidth());
-  }
-}
+  //for(unsigned long i = 0; i < menuButton.size(); i++)
+  //{
+    //if(!separator[i]) menuButton[i].draw(drawer);
+    //else hrule.draw(drawer, x0 + markup1.getWidth() / 2, y0 + 2 + (markup1.getHeight() + 2) * i + markup1.getHeight() / 2, getSizeX() - markup1.getWidth());
+  //}
+//}
 
-void DropMenu::handleWidget(const IGUIInput& input)
-{
-  if(autoDisable && input.mouseButtonDown(GUI_LMB) && !mouseDown(input)) totallyDisable();
-}
+//void DropMenu::handleWidget(const IGUIInput& input)
+//{
+  //if(autoDisable && input.mouseButtonDown(GUI_LMB) && !mouseDown(input)) totallyDisable();
+//}
 
-/*
-Returns which of the options was pressed 
-Note: separaters take up a number spot too
+///*
+//Returns which of the options was pressed 
+//Note: separaters take up a number spot too
 
-It returns:
+//It returns:
 
--1 if nothing clicked
-i (= 0 or a positive integer) if option i was clicked
+//-1 if nothing clicked
+//i (= 0 or a positive integer) if option i was clicked
 
-*/
+//*/
 
-int DropMenu::check(const IGUIInput& input)
-{
-  for(unsigned long i = 0; i < menuButton.size(); i++)
-  {
-    if(!separator[i])
-    {
-      if(menuButton[i].clicked(input)) return i;
-    }
-  }
-  return -1;
-}
+//int DropMenu::check(const IGUIInput& input)
+//{
+  //for(unsigned long i = 0; i < menuButton.size(); i++)
+  //{
+    //if(!separator[i])
+    //{
+      //if(menuButton[i].clicked(input)) return i;
+    //}
+  //}
+  //return -1;
+//}
 
-Button* DropMenu::getButton(int i)
-{
-  return &menuButton[i];
-}
+//Button* DropMenu::getButton(int i)
+//{
+  //return &menuButton[i];
+//}
 
-Button* DropMenu::getButton(const std::string& name)
-{
-  int i = 0;
+//Button* DropMenu::getButton(const std::string& name)
+//{
+  //int i = 0;
   
-  for(int j = 0; j < getNumButtons(); j++) if(menuButton[j].text == name) i = j;
+  //for(int j = 0; j < getNumButtons(); j++) if(menuButton[j].text == name) i = j;
   
-  return &menuButton[i];
-}
+  //return &menuButton[i];
+//}
 
 
-std::string DropMenu::checkText(const IGUIInput& input)
-{
-  for(unsigned long i = 0; i < menuButton.size(); i++)
-  {
-    if(!separator[i])
-    {
-      if(menuButton[i].clicked(input)) return menuButton[i].text;
-    }
-  }
-  return "";
-}
+//std::string DropMenu::checkText(const IGUIInput& input)
+//{
+  //for(unsigned long i = 0; i < menuButton.size(); i++)
+  //{
+    //if(!separator[i])
+    //{
+      //if(menuButton[i].clicked(input)) return menuButton[i].text;
+    //}
+  //}
+  //return "";
+//}
 
-int DropMenu::checkIdentity(const IGUIInput& input)
-{
-  for(unsigned long i = 0; i < menuButton.size(); i++)
-  {
-    if(!separator[i])
-    {
-      if(menuButton[i].clicked(input)) return identity[i];
-    }
-  }
-  return 0;
-}
+//int DropMenu::checkIdentity(const IGUIInput& input)
+//{
+  //for(unsigned long i = 0; i < menuButton.size(); i++)
+  //{
+    //if(!separator[i])
+    //{
+      //if(menuButton[i].clicked(input)) return identity[i];
+    //}
+  //}
+  //return 0;
+//}
 
-////////////////////////////////////////////////////////////////////////////////
-//GUIDROPLIST///////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+////GUIDROPLIST///////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
 
-/*
-The DropList class
+///*
+//The DropList class
 
-this class contains a list of options that can be opened or closed with a button,
-the list will have a scrollbar and allow you to choose an option with the mouse
-*/
+//this class contains a list of options that can be opened or closed with a button,
+//the list will have a scrollbar and allow you to choose an option with the mouse
+//*/
 
-//Constructor to make an empty droplist
-Droplist::Droplist()
-{
-  this->x0 = 0;
-  this->y0 = 0;
-  this->markup1 = TS_White;
-  this->markup2 = TS_White;
+////Constructor to make an empty droplist
+//Droplist::Droplist()
+//{
+  //this->x0 = 0;
+  //this->y0 = 0;
+  //this->markup1 = TS_White;
+  //this->markup2 = TS_White;
   
-  addSubElement(&listButton);
-  addSubElement(&bar);
+  //addSubElement(&listButton);
+  //addSubElement(&bar);
   
-  init("", -1);
-}
+  //init("", -1);
+//}
 
-void Droplist::make(int x, int y, const std::string& text, int numVisibleOptions,
-          const Markup& markup1, const Markup& markup2, const Markup& markup3,
-          //BackPanel topPanel, BackPanel listPanel,
-          Texture* buttonTexture)
-{
-  //this->topPanel = topPanel;
-  //this->listPanel = listPanel;
-  this->markup1 = markup1;
-  this->markup2 = markup2;
-  this->markup3 = markup3;
-  this->opened = 0;
-  this->selected = 0;
-  this->x0 = x;
-  this->y0 = y;
-  this->totallyEnable();
+//void Droplist::make(int x, int y, const std::string& text, int numVisibleOptions,
+          //const Font* font1, const Font& font2, const Font& font3,
+          ////BackPanel topPanel, BackPanel listPanel,
+          //Texture* buttonTexture)
+//{
+  ////this->topPanel = topPanel;
+  ////this->listPanel = listPanel;
+  //this->markup1 = markup1;
+  //this->markup2 = markup2;
+  //this->markup3 = markup3;
+  //this->opened = 0;
+  //this->selected = 0;
+  //this->x0 = x;
+  //this->y0 = y;
+  //this->totallyEnable();
   
-  int buttonWidth = buttonTexture->getU();
-  int buttonHeight = buttonTexture->getV();
+  //int buttonWidth = buttonTexture->getU();
+  //int buttonHeight = buttonTexture->getV();
   
-  sizeyc = buttonHeight;
-  init(text, numVisibleOptions);
-  sizexo += buttonWidth;
-  sizexc = sizexo;
+  //sizeyc = buttonHeight;
+  //init(text, numVisibleOptions);
+  //sizexo += buttonWidth;
+  //sizexc = sizexo;
   
-  this->setSizeX(sizexc);
-  this->setSizeY(sizeyc);
+  //this->setSizeX(sizexc);
+  //this->setSizeY(sizeyc);
   
-  listButton.makeImage(x1 - buttonWidth, y0, buttonTexture, buttonTexture, buttonTexture, RGB_White, RGB_Grey, RGB_Grey);
+  //listButton.makeImage(x1 - buttonWidth, y0, buttonTexture, buttonTexture, buttonTexture, RGB_White, RGB_Grey, RGB_Grey);
 
 
-  bar.makeVertical(x1 - buttonWidth, y0 + sizeyc, sizeyo - sizeyc,
-                   100, 0, 0, 1,
-                   &builtInGuiSet, 1);
+  //bar.makeVertical(x1 - buttonWidth, y0 + sizeyc, sizeyo - sizeyc,
+                   //100, 0, 0, 1,
+                   //&builtInGuiSet, 1);
 
-}
+//}
 
-void Droplist::makeScrollbar(const GuiSet* set)
-{
-  bar.makeVertical(x1 - set->arrowN->getU(), y0 + sizeyc, sizeyo - sizeyc,
-                   100, 0, 0, 1,
-                   set, 1);
-}  
+//void Droplist::makeScrollbar(const GuiSet* set)
+//{
+  //bar.makeVertical(x1 - set->arrowN->getU(), y0 + sizeyc, sizeyo - sizeyc,
+                   //100, 0, 0, 1,
+                   //set, 1);
+//}  
 
-void Droplist::init(const std::string& text, int numVisibleOptions)
-{
-  textButton.clear();
+//void Droplist::init(const std::string& text, int numVisibleOptions)
+//{
+  //textButton.clear();
   
-  unsigned long maxTextSize = 0; //the size of the largest text
+  //unsigned long maxTextSize = 0; //the size of the largest text
   
-  //calculate n, the number of elements
-  unsigned long pos = 0;
-  unsigned long n = 0;
-  while(pos < text.length())
-  {
-    if(text[pos] == '|') n++;
-    pos++;
-  }
-  n++;
+  ////calculate n, the number of elements
+  //unsigned long pos = 0;
+  //unsigned long n = 0;
+  //while(pos < text.length())
+  //{
+    //if(text[pos] == '|') n++;
+    //pos++;
+  //}
+  //n++;
   
-  unsigned long i = 0;
-  unsigned long t = 0;
+  //unsigned long i = 0;
+  //unsigned long t = 0;
 
-  while(i < n)
-  {
-    std::string buttonText = "";
+  //while(i < n)
+  //{
+    //std::string buttonText = "";
 
-    while(text[t] != '|' && t < text.length())
-    {
-      buttonText += text[t];
-      t++;
-    }
-    t++;
+    //while(text[t] != '|' && t < text.length())
+    //{
+      //buttonText += text[t];
+      //t++;
+    //}
+    //t++;
     
-    Button b;
-    b.makeText(x0 + 2, y0 + sizeyc + 2 + (markup1.getHeight() + 2) * i, buttonText);
-    textButton.push_back(b);
+    //Button b;
+    //b.makeText(x0 + 2, y0 + sizeyc + 2 + (markup1.getHeight() + 2) * i, buttonText);
+    //textButton.push_back(b);
     
-    if(buttonText.length() > maxTextSize) maxTextSize = buttonText.length();
+    //if(buttonText.length() > maxTextSize) maxTextSize = buttonText.length();
     
-    i++;
-  }
+    //i++;
+  //}
   
-  if(numVisibleOptions == -1) this->numVisibleOptions = numVisibleOptions = n;
-  else this->numVisibleOptions = numVisibleOptions;
+  //if(numVisibleOptions == -1) this->numVisibleOptions = numVisibleOptions = n;
+  //else this->numVisibleOptions = numVisibleOptions;
    
-  sizexo = maxTextSize * markup1.getWidth() + markup1.getWidth() / 2 + bar.getSizeX();
-  sizeyo = sizeyc + numVisibleOptions * (markup1.getHeight() + 2) + markup1.getHeight() / 2;
+  //sizexo = maxTextSize * markup1.getWidth() + markup1.getWidth() / 2 + bar.getSizeX();
+  //sizeyo = sizeyc + numVisibleOptions * (markup1.getHeight() + 2) + markup1.getHeight() / 2;
   
-  int buttonWidth = maxTextSize * markup1.getWidth();
-  for(unsigned long i = 0; i < textButton.size(); i++)
-  {
-    textButton[i].setSizeX(buttonWidth);
-  }
-}
+  //int buttonWidth = maxTextSize * markup1.getWidth();
+  //for(unsigned long i = 0; i < textButton.size(); i++)
+  //{
+    //textButton[i].setSizeX(buttonWidth);
+  //}
+//}
 
-void Droplist::addOption(const std::string& text)
-{
-  Button b;
-  b.makeText(x0 + 2, y0 + sizeyc + 2 + (markup1.getHeight() + 2) * textButton.size(), text);
-  textButton.push_back(b);
-  addSubElement(&textButton.back()); //TODO: fix this big memory corruption problem and Button copying
+//void Droplist::addOption(const std::string& text)
+//{
+  //Button b;
+  //b.makeText(x0 + 2, y0 + sizeyc + 2 + (markup1.getHeight() + 2) * textButton.size(), text);
+  //textButton.push_back(b);
+  //addSubElement(&textButton.back()); //TODO: fix this big memory corruption problem and Button copying
   
-  unsigned long maxTextSize = b.getSizeX() / markup1.getWidth();
-  if(text.length() > maxTextSize) maxTextSize = text.length();
+  //unsigned long maxTextSize = b.getSizeX() / markup1.getWidth();
+  //if(text.length() > maxTextSize) maxTextSize = text.length();
   
-  int buttonWidth = maxTextSize * markup1.getWidth();
-  for(unsigned long i = 0; i < textButton.size(); i++)
-  {
-    textButton[i].setSizeX(buttonWidth);
-  }
+  //int buttonWidth = maxTextSize * markup1.getWidth();
+  //for(unsigned long i = 0; i < textButton.size(); i++)
+  //{
+    //textButton[i].setSizeX(buttonWidth);
+  //}
   
-  setSizeX(maxTextSize * markup1.getWidth() + markup1.getWidth() / 2 + bar.getSizeX());
-  sizexo = sizexc = getSizeX();
+  //setSizeX(maxTextSize * markup1.getWidth() + markup1.getWidth() / 2 + bar.getSizeX());
+  //sizexo = sizexc = getSizeX();
   
-  bar.moveTo(x0 + sizexo - bar.getSizeX(), bar.getY0());
-  listButton.moveTo(x0 + sizexc - listButton.getSizeX(), listButton.getY0());
-}
+  //bar.moveTo(x0 + sizexo - bar.getSizeX(), bar.getY0());
+  //listButton.moveTo(x0 + sizexc - listButton.getSizeX(), listButton.getY0());
+//}
 
-void Droplist::drawWidget(IGUIDrawer& drawer) const
-{
-  topPanel.draw(drawer, x0, y0, sizexc, sizeyc);
-  listButton.draw(drawer);
-  print(textButton[selected].text, x0, y0 + sizeyc / 2 - markup3.getHeight() / 2, markup3);
+//void Droplist::drawWidget(IGUIDrawer& drawer) const
+//{
+  //topPanel.draw(drawer, x0, y0, sizexc, sizeyc);
+  //listButton.draw(drawer);
+  //print(textButton[selected].text, x0, y0 + sizeyc / 2 - markup3.getHeight() / 2, markup3);
 
-  if(opened)
-  {
-    listPanel.draw(drawer, x0, y0 + sizeyc, sizexo, sizeyo - sizeyc);
-    for(unsigned long i = 0; i < textButton.size(); i++) textButton[i].draw(drawer);
-    bar.draw(drawer);
-  }
-}
+  //if(opened)
+  //{
+    //listPanel.draw(drawer, x0, y0 + sizeyc, sizexo, sizeyo - sizeyc);
+    //for(unsigned long i = 0; i < textButton.size(); i++) textButton[i].draw(drawer);
+    //bar.draw(drawer);
+  //}
+//}
 
-int Droplist::check()
-{
-  return selected;
-}
+//int Droplist::check()
+//{
+  //return selected;
+//}
 
-std::string Droplist::checkText()
-{
-  return textButton[selected].text;
-}
+//std::string Droplist::checkText()
+//{
+  //return textButton[selected].text;
+//}
 
-void Droplist::handleWidget(const IGUIInput& input)
-{
-  if(listButton.clicked(input) || (clicked(input) && mouseGetRelPosY(input) < sizeyc && !listButton.mouseOver(input))) //behind the or is to open it also if you press the thing itself but not the button, the getMouseY() < sizeyc is necessary, without it, the code after this will not work anymore (starting from if(openen)
-  {
-    if(!opened)
-    {
-      open();
-    }
-    else
-    {
-      close();
-    }
-  }
+//void Droplist::handleWidget(const IGUIInput& input)
+//{
+  //if(listButton.clicked(input) || (clicked(input) && mouseGetRelPosY(input) < sizeyc && !listButton.mouseOver(input))) //behind the or is to open it also if you press the thing itself but not the button, the getMouseY() < sizeyc is necessary, without it, the code after this will not work anymore (starting from if(openen)
+  //{
+    //if(!opened)
+    //{
+      //open();
+    //}
+    //else
+    //{
+      //close();
+    //}
+  //}
   
-  if(opened)
-  {
-    for(unsigned long i = 0; i <  textButton.size(); i++)
-    {
-      if(textButton[i].clicked(input))
-      {
-        close();
-        selected = i;
-      }
-    }
+  //if(opened)
+  //{
+    //for(unsigned long i = 0; i <  textButton.size(); i++)
+    //{
+      //if(textButton[i].clicked(input))
+      //{
+        //close();
+        //selected = i;
+      //}
+    //}
     
-    if(mouseScrollUp(input) && !bar.mouseOver(input)) bar.scroll(input, -2);
-    if(mouseScrollDown(input) && !bar.mouseOver(input)) bar.scroll(input, 2);
-    bar.handle(input);
-    scroll();
-  }
-}
+    //if(mouseScrollUp(input) && !bar.mouseOver(input)) bar.scroll(input, -2);
+    //if(mouseScrollDown(input) && !bar.mouseOver(input)) bar.scroll(input, 2);
+    //bar.handle(input);
+    //scroll();
+  //}
+//}
 
-void Droplist::scroll()
-{
-  int v = numVisibleOptions;
-  int n = textButton.size();
+//void Droplist::scroll()
+//{
+  //int v = numVisibleOptions;
+  //int n = textButton.size();
   
-  if(n <= v); //dan moet er ni gescrolld worden
-  else
-  {
-    int s = int(((n - v) * bar.scrollPos) / bar.scrollSize);
+  //if(n <= v); //dan moet er ni gescrolld worden
+  //else
+  //{
+    //int s = int(((n - v) * bar.scrollPos) / bar.scrollSize);
     
-    for(int i = 0; i < n; i++)
-    {
-      textButton[i].moveTo(textButton[i].getX0(), y0 + sizeyc + 2 + (markup1.getHeight() + 2) * (i - s));
+    //for(int i = 0; i < n; i++)
+    //{
+      //textButton[i].moveTo(textButton[i].getX0(), y0 + sizeyc + 2 + (markup1.getHeight() + 2) * (i - s));
       
-      if(i >= s && i < s + v)
-      {
-        textButton[i].setVisible(1);
-        textButton[i].setActive(1);
-      }
-      else
-      {
-        textButton[i].setVisible(0);
-        textButton[i].setActive(0);
-      }
-    }
-  }
-}
+      //if(i >= s && i < s + v)
+      //{
+        //textButton[i].setVisible(1);
+        //textButton[i].setActive(1);
+      //}
+      //else
+      //{
+        //textButton[i].setVisible(0);
+        //textButton[i].setActive(0);
+      //}
+    //}
+  //}
+//}
 
-void Droplist::open()
-{
-  opened = 1;
-  setSizeX(sizexo);
-  setSizeY(sizeyo);
-}
+//void Droplist::open()
+//{
+  //opened = 1;
+  //setSizeX(sizexo);
+  //setSizeY(sizeyo);
+//}
 
-void Droplist::close()
-{
-  opened = 0;
-  setSizeX(sizexc);
-  setSizeY(sizeyc);
-}
+//void Droplist::close()
+//{
+  //opened = 0;
+  //setSizeX(sizexc);
+  //setSizeY(sizeyc);
+//}
 
 ////////////////////////////////////////////////////////////////////////////////
 //GUIMATRIX/////////////////////////////////////////////////////////////////////
@@ -703,7 +703,7 @@ void Painter::drawWidget(IGUIDrawer& drawer) const
         drawer.drawRectangle(stack[i].x0 + x0, stack[i].y0 + y0, stack[i].x1 + x0, stack[i].y1 + y0, stack[i].color, true);
         break;
       case 5:
-        print(stack[i].text, stack[i].x0 + x0, stack[i].y0 + y0, stack[i].textMarkup);
+        drawer.drawText(stack[i].text, stack[i].x0 + x0, stack[i].y0 + y0, stack[i].textFont);
         break;
       default: break;
     }
@@ -772,7 +772,7 @@ void Painter::queueRectangle(int x0, int y0, int x1, int y1, const ColorRGB& col
   stack[i].type = 4;
 }
 
-void Painter::queueText(int x, int y, const std::string& text, const Markup& markup)
+void Painter::queueText(int x, int y, const std::string& text, const Font& font)
 {
   int i = stack.size();
   stack.resize(stack.size() + 1);
@@ -782,7 +782,7 @@ void Painter::queueText(int x, int y, const std::string& text, const Markup& mar
   stack[i].x1 = x;
   stack[i].y1 = y;
   stack[i].text = text;
-  stack[i].textMarkup = markup;
+  stack[i].textFont = font;
   stack[i].type = 5;
 }
 
@@ -1024,12 +1024,12 @@ NStateState::NStateState()
 }
 
 //constructor for checkbox with text title
-void NStateState::make(Texture* texture, const ColorRGB& colorMod, const std::string& text, const Markup& markup)
+void NStateState::make(Texture* texture, const ColorRGB& colorMod, const std::string& text, const Font& font)
 {
   this->texture = texture;
   this->colorMod = colorMod;
   this->text = text;
-  this->markup = markup;
+  this->font = font;
   if(text != "") enableText = 1;
   
   positionText();
@@ -1041,7 +1041,7 @@ void NStateState::make(Texture* texture, const ColorRGB& colorMod, const std::st
 void NStateState::positionText()
 {
   textOffsetX = texture->getU() + 2; //need some number of pixels that text is away from the texture, eg 2
-  textOffsetY = texture->getV() / 2 - markup.getHeight() / 2;
+  textOffsetY = texture->getV() / 2 - /*markup.getHeight()*/8 / 2; //TODo use drawer to determine text size
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1072,12 +1072,12 @@ void NState::make(int x, int y, int toggleOnMouseUp)
   this->setSizeY(0);
 }
 
-void NState::addState(Texture* texture, const ColorRGB& colorMod, const std::string& text, const Markup& markup)
+void NState::addState(Texture* texture, const ColorRGB& colorMod, const std::string& text, const Font& font)
 {
   this->setSizeX(texture->getU()); //set the size of the NState to that of the last added texture
   this->setSizeY(texture->getV());
   NStateState s;
-  s.make(texture, colorMod, text, markup);
+  s.make(texture, colorMod, text, font);
   states.push_back(s);
 }
 
@@ -1109,9 +1109,9 @@ void NState::drawWidget(IGUIDrawer& drawer) const
   NStateState s = states[state];
   drawer.drawTexture(s.texture, x0, y0, s.colorMod);
   
-  if(s.enableText) drawer.drawText(s.text, x0 + s.textOffsetX, y0 + s.textOffsetY, s.markup);
+  if(s.enableText) drawer.drawText(s.text, x0 + s.textOffsetX, y0 + s.textOffsetY, s.font);
   
-  drawLabel(this);
+  drawLabel(drawer, this);
 }
 
 } //namespace gui

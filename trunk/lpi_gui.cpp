@@ -240,12 +240,13 @@ void Element::drawToolTip(IGUIDrawer& drawer) const
       else linelength++;
     }
     if(linelength > longestline) longestline = linelength;
-    int sizex = longestline * TS_Black6.getWidth() + 4;
-    int sizey = 2 +  TS_Black6.getHeight() * numlines;
+    int sizex = longestline * /*TS_Black6.getWidth()*/6 + 4;
+    int sizey = 2 +  /*TS_Black6.getHeight()*/6 * numlines;
     int x = drawer.getInput().mouseX();
     int y = drawer.getInput().mouseY() - sizey;
     drawer.drawRectangle(x, y, x + sizex, y + sizey, RGBA_Lightyellow(224), true);
-    drawer.drawText(tooltip, x + 2, y + 2, TS_Black6);
+    static Font six("lpi6", RGB_Black); //TODO: clean this up...
+    drawer.drawText(tooltip, x + 2, y + 2, six);
   }
 }
 
@@ -407,18 +408,18 @@ Label::Label() : labelX(0), labelY(0)
 {
 }
 
-void Label::makeLabel(const std::string& label, int labelX, int labelY, const Markup& labelMarkup)
+void Label::makeLabel(const std::string& label, int labelX, int labelY, const Font& labelFont)
 {
   this->label = label;
   this->labelX = labelX;
   this->labelY = labelY;
-  this->labelMarkup = labelMarkup;
+  this->labelFont = labelFont;
 }
 
-void Label::drawLabel(const Element* element) const
+void Label::drawLabel(IGUIDrawer& drawer, const Element* element) const
 {
   if(!label.empty())
-    print(label, element->getX0() + labelX, element->getY0() + labelY, labelMarkup);
+    drawer.drawText(label, element->getX0() + labelX, element->getY0() + labelY, labelFont);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1299,7 +1300,7 @@ void Window::drawWidget(IGUIDrawer& drawer) const
   if(enableTop)
   {
     top.draw(drawer); //draw top bar before the elements, or it'll appear above windows relative to the current window
-    print(title, top.getX0() + titleX, top.getY0() + titleY, titleMarkup);
+    drawer.drawText(title, top.getX0() + titleX, top.getY0() + titleY, titleFont);
   }
   
   if(closeEnabled) closeButton.draw(drawer);
@@ -1310,12 +1311,12 @@ void Window::drawWidget(IGUIDrawer& drawer) const
   if(enableResizer) resizer.draw(drawer); //draw this after the container so the resizer is drawn over scrollbars if that is needed
 }
 
-void Window::addTitle(const std::string& title, int titleX, int titleY, const Markup& titleMarkup)
+void Window::addTitle(const std::string& title, int titleX, int titleY, const Font& titleFont)
 {
   this->title = title;
   this->titleX = titleX;
   this->titleY = titleY;
-  this->titleMarkup = titleMarkup;
+  this->titleFont = titleFont;
 }
 
 void Window::setTitle(const std::string& title)
@@ -1415,9 +1416,9 @@ Button::Button()
   this->text = "";
   this->textOffsetx = 0;
   this->textOffsety = 0;
-  this->markup[0] = TS_Black;
-  this->markup[1] = TS_Black;
-  this->markup[2] = TS_Black;
+  this->font[0].color = RGB_Black;
+  this->font[1].color = RGB_Black;
+  this->font[2].color = RGB_Black;
   
   this->active = 0;
   this->visible = 0;
@@ -1475,9 +1476,9 @@ void Button::makeImage
   this->text = "";
   this->textOffsetx = 0;
   this->textOffsety = 0;
-  this->markup[0] = TS_Black;
-  this->markup[1] = TS_Black;
-  this->markup[2] = TS_Black;
+  this->font[0].color = RGB_Black;
+  this->font[1].color = RGB_Black;
+  this->font[2].color = RGB_Black;
   
   /*this->panel1.t00 = &emptyTexture;
   this->panel1.t01 = &emptyTexture;
@@ -1515,7 +1516,8 @@ void Button::makeImage
 void Button::makeText
 (
   int x, int y, //basic properties
-  const std::string& text //text
+  const std::string& text, //text
+  IGUIDrawer* drawer
 )
 {
   this->x0 = x;
@@ -1545,13 +1547,14 @@ void Button::makeText
   
   this->mouseDownVisualStyle = 0;
   
-  autoTextSize();
+  if(drawer) autoTextSize(drawer);
 }
 
 //constructor for button with panel and text, auto generated text offset
 void Button::makeTextPanel
 (
-  int x, int y, const std::string& text, int sizex, int sizey //basic properties + text
+  int x, int y, const std::string& text, int sizex, int sizey, //basic properties + text
+  IGUIDrawer* drawer
 )
 {
   this->x0 = x;
@@ -1586,7 +1589,7 @@ void Button::makeTextPanel
    
   //put text in the center
   
-  centerText();
+  if(drawer) centerText(drawer);
 }
 
 void Button::handleWidget(const IGUIInput& input)
@@ -1625,19 +1628,19 @@ void Button::drawWidget(IGUIDrawer& drawer) const
     else if(style == 1) drawer.drawGUIPartText(GPT_TEXT_BUTTON_OVER, text, x0, y0, x1, y1);
     else if(style == 2) drawer.drawGUIPartText(GPT_TEXT_BUTTON_DOWN, text, x0, y0, x1, y1);
   }
-  else printFormatted(text, x0 + textOffsetx + textDownOffset, y0 + textOffsety + textDownOffset, markup[style]);
+  else drawer.drawText(text, x0 + textOffsetx + textDownOffset, y0 + textOffsety + textDownOffset, font[style]);
   
-  
-  //NOTE: ik heb de print functies nu veranderd naar printFormatted! Zo kan je gekleurde texten enzo printen met # codes
 }
 
 /*This function automaticly changes sizex and sizey of the button so that the
 size of the button matches the size of the text, so that it detects the mouse
 as being in the button when the mouse is over the text*/
-void Button::autoTextSize(int extrasize)
+void Button::autoTextSize(IGUIDrawer* drawer, int extrasize)
 {
-  setSizeX(text.length() * markup[0].getWidth());
-  setSizeY(markup[0].getHeight());
+  int w, h;
+  drawer->calcTextRectSize(w, h, text, font[0]);
+  setSizeX(w);
+  setSizeY(h);
   x1 += 2 * extrasize;
   y1 += 2 * extrasize;
   x0 -= extrasize;
@@ -1648,10 +1651,12 @@ void Button::autoTextSize(int extrasize)
 
 /*Place the text in the center of the button without having to calculate
 these positions by hand*/
-void Button::centerText()
+void Button::centerText(IGUIDrawer* drawer)
 {
-  textOffsetx = (getSizeX() / 2) - text.length() * (markup[0].getWidth() / 2); //4 = fontwidth / 2
-  textOffsety = (getSizeY() / 2) - (markup[0].getHeight() / 2);
+  int w, h;
+  drawer->calcTextRectSize(w, h, text, font[0]);
+  textOffsetx = (getSizeX() / 2) - (w / 2);
+  textOffsety = (getSizeY() / 2) - (h / 2);
 }
 
 void Button::makeImage(int x, int y,  const ITexture* texture123, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3)
@@ -1784,9 +1789,9 @@ void Scrollbar::forwardScroll(int scroll)
   forwardedScroll += scroll;
 }
 
-void Scrollbar::showValue(int x, int y, const Markup& valueMarkup, int type)
+void Scrollbar::showValue(int x, int y, const Font& font, int type)
 {
-  this->valueMarkup = valueMarkup;
+  this->valueFont = font;
   this->valueX = x;
   this->valueY = y;
   this->enableValue = type;
@@ -1956,11 +1961,11 @@ void Scrollbar::drawWidget(IGUIDrawer& drawer) const
   
   if(enableValue == 1)
   {
-    print(getValue(), x0 + valueX, y0 + valueY, valueMarkup);
+    drawer.print(getValue(), x0 + valueX, y0 + valueY, valueFont);
   }
   else if(enableValue == 2)
   {
-    print(int(getValue()), x0 + valueX, y0 + valueY, valueMarkup);
+    drawer.print(int(getValue()), x0 + valueX, y0 + valueY, valueFont);
   }
 }
 
@@ -2438,10 +2443,10 @@ void Checkbox::setTexturesAndColors(const ITexture* texture1, const ITexture* te
   setTexturesAndColors(texture1, texture1, texture2, texture2, color1, color1, color2, color2);
 }
 
-void Checkbox::addText(const std::string& text, const Markup& markup)
+void Checkbox::addText(const std::string& text, const Font& font)
 {
   this->text = text;
-  this->markup = markup;
+  this->font = font;
   this->enableText = 1;
   positionText();
 }
@@ -2450,7 +2455,7 @@ void Checkbox::addText(const std::string& text, const Markup& markup)
 void Checkbox::positionText()
 {
   textOffsetX = getSizeX() + 2; //need some number of pixels that text is away from the texture, eg 2
-  textOffsetY = getSizeY() / 2 - markup.getHeight() / 2;
+  textOffsetY = getSizeY() / 2 - 8 / 2;
 }
 
 //toggle "checked" or "unchecked" state
@@ -2475,9 +2480,9 @@ void Checkbox::drawWidget(IGUIDrawer& drawer) const
   else drawer.drawGUIPart(GP_CHECKBOX_OFF, x0, y0, x1, y1);
   
   if(enableText)
-    print(text, x0 + textOffsetX, y0 + textOffsetY, markup);
+    drawer.drawText(text, x0 + textOffsetX, y0 + textOffsetY, font);
   
-  drawLabel(this);
+  drawLabel(drawer, this);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2667,20 +2672,20 @@ Text::Text()
   this->useNewLine = true;
 }
 
-void Text::make(int x, int y, const std::string& text, const Markup& markup)
+void Text::make(int x, int y, const std::string& text, const Font& font)
 {
   this->x0 = x;
   this->y0 = y;
-  this->setSizeX(text.length() * markup.getWidth());
-  this->setSizeY(markup.getHeight());
+  this->setSizeX(text.length() * /*markup.getWidth()*/8);
+  this->setSizeY(/*markup.getHeight()*/8);
   this->text = text;
-  this->markup = markup;
+  this->font = font;
   this->totallyEnable();
 }
 
-void Text::drawWidget(IGUIDrawer& /*drawer*/) const
+void Text::drawWidget(IGUIDrawer& drawer) const
 {
-  print(text, x0, y0, markup, useNewLine);
+  drawer.drawText(text, x0, y0, font);
 }
 
 void Text::setText(const std::string& text)
@@ -2804,7 +2809,7 @@ void Tabs::drawWidget(IGUIDrawer& drawer) const
       drawer.drawGUIPart(GP_TAB_SELECTED, tabs[i]->getX0(), tabs[i]->getY0(), tabs[i]->getX1(), tabs[i]->getY1());
     else
       drawer.drawGUIPart(GP_TAB_UNSELECTED, tabs[i]->getX0(), tabs[i]->getY0(), tabs[i]->getX1(), tabs[i]->getY1());
-    drawer.drawTextCentered(tabs[i]->name, tabs[i]->getCenterX(), tabs[i]->getCenterY(), TS_B);
+    drawer.drawText(tabs[i]->name, tabs[i]->getCenterX(), tabs[i]->getCenterY(), FONT_Black, IDrawer2D::HA_CENTER);
     
     tabs[i]->container.draw(drawer);
   }
