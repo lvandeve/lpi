@@ -2809,7 +2809,7 @@ void Tabs::drawWidget(IGUIDrawer& drawer) const
       drawer.drawGUIPart(GP_TAB_SELECTED, tabs[i]->getX0(), tabs[i]->getY0(), tabs[i]->getX1(), tabs[i]->getY1());
     else
       drawer.drawGUIPart(GP_TAB_UNSELECTED, tabs[i]->getX0(), tabs[i]->getY0(), tabs[i]->getX1(), tabs[i]->getY1());
-    drawer.drawText(tabs[i]->name, tabs[i]->getCenterX(), tabs[i]->getCenterY(), FONT_Black, IDrawer2D::HA_CENTER);
+    drawer.drawText(tabs[i]->name, tabs[i]->getCenterX(), tabs[i]->getCenterY(), FONT_Black, TextAlign(HA_CENTER, VA_TOP));
     
     tabs[i]->container.draw(drawer);
   }

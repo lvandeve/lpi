@@ -24,6 +24,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_draw2d.h"
 #include "lpi_color.h"
 #include "lpi_text.h" //for markup
+#include "lpi_text_drawer.h"
 #include "lpi_texture.h" //because drawing images requires a texture class
 
 namespace lpi
@@ -124,7 +125,7 @@ If a handle/token points to something a Drawer doesn't understand (it's created 
 There are also things the GUI element should be able to get in an abstract way from the style, such as, which standard width or height of the element is associated with this style.
 */
 
-class IGUIDrawer : public ADrawer2D //if you use a ADrawer2D implementation for you IGUIDrawer, best is to use composition (not make your subclass inherit from a ADrawer2D subclass)
+class IGUIDrawer : public ADrawer2D, public ITextDrawer //if you use a ADrawer2D implementation for you IGUIDrawer, best is to use composition (not make your subclass inherit from a ADrawer2D subclass)
 {
   public:
     virtual ~IGUIDrawer(){};
@@ -142,6 +143,7 @@ class AGUIDrawer : public IGUIDrawer //abstract GUI drawer which already wraps a
 {
   protected:
     virtual IDrawer2D& getDrawer() = 0;
+    virtual ITextDrawer& getTextDrawer() = 0;
     
   public:
   
@@ -171,11 +173,10 @@ class AGUIDrawer : public IGUIDrawer //abstract GUI drawer which already wraps a
     virtual void pushSmallestScissor(int x0, int y0, int x1, int y1);
     virtual void popScissor();
     
-    virtual size_t getFontHeight(const Font& font = FONT_Default);
     virtual void calcTextRectSize(int& w, int& h, const std::string& text, const Font& font = FONT_Default);
-    virtual size_t calcTextPosToChar(int x, int y, const std::string& text, const Font& font = FONT_Default, HAlign halign = HA_LEFT, VAlign valign = VA_TOP);
-    virtual void calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font = FONT_Default, HAlign halign = HA_LEFT, VAlign valign = VA_TOP);
-    virtual void drawText(const std::string& text, int x, int y, const Font& font = FONT_Default, HAlign halign = HA_LEFT, VAlign valign = VA_TOP);
+    virtual size_t calcTextPosToChar(int x, int y, const std::string& text, const Font& font = FONT_Default, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP));
+    virtual void calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font = FONT_Default, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP));
+    virtual void drawText(const std::string& text, int x, int y, const Font& font = FONT_Default, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP));
 
 };
 

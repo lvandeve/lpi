@@ -18,9 +18,8 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
+#include "lpi_gui_drawer.h"
 #include "lpi_gui.h"
-
 #include "lpi_tools.h"
 #include "lodepng.h"
 #include "lpi_screen.h"
@@ -28,6 +27,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_base64.h"
 #include "lpi_parse.h"
 #include "lpi_event.h"
+
 
 #include <SDL/SDL.h>
 
@@ -62,7 +62,7 @@ void base64StringToBinaryFile(const std::string& outfilename, const std::string&
   saveFile(file, outfilename);
 }
 
-void graphicalKeyBoardNumberTest(IDrawer2D& drawer)
+void graphicalKeyBoardNumberTest(gui::IGUIDrawer& drawer)
 {
   for(size_t i = 0; i < 1024; i++) if(lpi::keyDown(i))
   {

@@ -31,12 +31,10 @@ Drawer2DGL::Drawer2DGL(ScreenGL* screen)
 : screen(screen)
 {
   TextureFactory<TextureGL> factory;
-  fontdrawer = new InternalFontDrawer(&factory, this);
 }
 
 Drawer2DGL::~Drawer2DGL()
 {
-  delete fontdrawer;
 }
 
 namespace
@@ -488,34 +486,6 @@ void Drawer2DGL::drawTextureRepeated(const ITexture* texture, int x0, int y0, in
   }
 }
 
-void Drawer2DGL::calcTextRectSize(int& w, int& h, const std::string& text, const Font& font)
-{
-  fontdrawer->calcTextRectSize(w, h, text, font);
-}
-
-size_t Drawer2DGL::getFontHeight(const Font& font)
-{
-  return fontdrawer->getFontHeight(font);
-}
-
-size_t Drawer2DGL::calcTextPosToChar(int x, int y, const std::string& text, const Font& font, HAlign halign, VAlign valign)
-{
-  return fontdrawer->calcTextPosToChar(x, y, text, font, (int)halign, (int)valign);
-}
-
-void Drawer2DGL::calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font, HAlign halign, VAlign valign)
-{
-  fontdrawer->calcTextCharToPos(x, y, index, text, font, (int)halign, (int)valign);
-}
-
-
-void Drawer2DGL::drawText(const std::string& text, int x, int y, const Font& font, HAlign halign, VAlign valign)
-{
-  (void)text; (void)font; (void)x; (void)y; (void)halign; (void)valign;
-  //TODO: valign and right-halign
-  if(halign == HA_LEFT) fontdrawer->print(text, x, y, font);
-  else fontdrawer->printCentered(text, x, y, font);
-}
 
 } //end of namespace lpi
 

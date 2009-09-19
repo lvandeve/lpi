@@ -36,13 +36,20 @@ namespace
   }
 }
 
-InternalFontDrawer::InternalFontDrawer(ITextureFactory* factory, IDrawer2D* drawer)
+InternalTextDrawer::InternalTextDrawer(const ITextureFactory& factory, IDrawer2D* drawer)
 : drawer(drawer)
-, glyphs(factory)
+, glyphs(&factory)
 {
 }
 
-void InternalFontDrawer::drawLetter(unsigned char n, int x, int y, const InternalGlyphs::Glyphs* glyphs, const Font& font)
+void InternalTextDrawer::drawText(const std::string& text, int x, int y, const Font& font, const TextAlign& align)
+{
+  //TODO: valign and right-halign
+  if(align.halign == HA_LEFT) print(text, x, y, font);
+  else printCentered(text, x, y, font);
+}
+
+void InternalTextDrawer::drawLetter(unsigned char n, int x, int y, const InternalGlyphs::Glyphs* glyphs, const Font& font)
 {
   //int italic = 0; //todo: this doesn't work anymore, no function to draw skewed texture available currently!!
   
@@ -64,7 +71,7 @@ void InternalFontDrawer::drawLetter(unsigned char n, int x, int y, const Interna
   }
 }
 
-InternalGlyphs::Glyphs* InternalFontDrawer::getGlyphsForFont(const Font& font)
+InternalGlyphs::Glyphs* InternalTextDrawer::getGlyphsForFont(const Font& font)
 {
   if(font.typeface == "lpi8") return &glyphs.glyphs8x8;
   else if(font.typeface == "lpi6") return &glyphs.glyphs6x6;
@@ -73,7 +80,7 @@ InternalGlyphs::Glyphs* InternalFontDrawer::getGlyphsForFont(const Font& font)
 }
 
 //Draws a string of text, null terminated
-int InternalFontDrawer::printString(const std::string& text, int x, int y, const Font& font, unsigned long forceLength)
+int InternalTextDrawer::printString(const std::string& text, int x, int y, const Font& font, unsigned long forceLength)
 {
   InternalGlyphs::Glyphs* glyphs = getGlyphsForFont(font);
   unsigned long pos = 0;
@@ -89,7 +96,7 @@ int InternalFontDrawer::printString(const std::string& text, int x, int y, const
 
 //Draws a string of text, and uses some of the ascii control characters, e.g. newline
 //Other control characters (ascii value < 32) are ignored and have no effect.
-int InternalFontDrawer::printText(const std::string& text, int x, int y, const Font& font, unsigned long forceLength)
+int InternalTextDrawer::printText(const std::string& text, int x, int y, const Font& font, unsigned long forceLength)
 {
   InternalGlyphs::Glyphs* glyphs = getGlyphsForFont(font);
   unsigned long pos = 0;
@@ -123,7 +130,7 @@ int InternalFontDrawer::printText(const std::string& text, int x, int y, const F
 
 
 
-//int InternalFontDrawer::printFormattedM(const std::string& text, int x, int y, Font* font, const Markup& originalMarkup)
+//int InternalTextDrawer::printFormattedM(const std::string& text, int x, int y, Font* font, const Markup& originalMarkup)
 //{
   //unsigned long pos = 0;
   //int drawX = x;
@@ -216,14 +223,14 @@ int InternalFontDrawer::printText(const std::string& text, int x, int y, const F
   //return getScreenHeight() * drawX + drawY;
 //}
 
-//int InternalFontDrawer::printFormatted(const std::string& text, int x, int y, const Font& font)
+//int InternalTextDrawer::printFormatted(const std::string& text, int x, int y, const Font& font)
 //{
   //Markup markup_ = markup;
   
   //return printFormattedM(text, x, y, markup_, markup);
 //}
 
-//int InternalFontDrawer::getFormattedTextAttrSize(char c)
+//int InternalTextDrawer::getFormattedTextAttrSize(char c)
 //{
   //switch(c)
   //{
@@ -238,7 +245,7 @@ int InternalFontDrawer::printText(const std::string& text, int x, int y, const F
   //}
 //}
 
-//int InternalFontDrawer::getFormattedTextSymbolPrintSize(char c)
+//int InternalTextDrawer::getFormattedTextSymbolPrintSize(char c)
 //{
   //switch(c)
   //{
@@ -253,7 +260,7 @@ int InternalFontDrawer::printText(const std::string& text, int x, int y, const F
   //}
 //}
 
-//void InternalFontDrawer::getFormattedTextSize(const std::string& text, int& xsize, int& ysize, const Font& font_)
+//void InternalTextDrawer::getFormattedTextSize(const std::string& text, int& xsize, int& ysize, const Font& font_)
 //{
   //xsize = 0;
   //ysize = markup_.getHeight();
@@ -297,7 +304,7 @@ int InternalFontDrawer::printText(const std::string& text, int x, int y, const F
   //}
 //}
 
-//void InternalFontDrawer::getFormattedMarkup(const std::string& text, Font* font, const Markup& originalMarkup) //this one calculates which markup you'll get after this text
+//void InternalTextDrawer::getFormattedMarkup(const std::string& text, Font* font, const Markup& originalMarkup) //this one calculates which markup you'll get after this text
 //{
   //unsigned long pos = 0;
   //unsigned char symbol;
@@ -357,13 +364,7 @@ int InternalFontDrawer::printText(const std::string& text, int x, int y, const F
   //}
 //}
 
-size_t InternalFontDrawer::getFontHeight(const Font& font)
-{
-  InternalGlyphs::Glyphs* glyphs = getGlyphsForFont(font);
-  return glyphs->height;
-}
-
-void InternalFontDrawer::calcTextRectSize(int& w, int& h, const std::string& text, const Font& font)
+void InternalTextDrawer::calcTextRectSize(int& w, int& h, const std::string& text, const Font& font)
 {
   //TODO: use the newlines!
   InternalGlyphs::Glyphs* glyphs = getGlyphsForFont(font);
@@ -373,20 +374,20 @@ void InternalFontDrawer::calcTextRectSize(int& w, int& h, const std::string& tex
 
 
 
-size_t InternalFontDrawer::calcTextPosToChar(int x, int y, const std::string& text, const Font& font, int halign, int valign)
+size_t InternalTextDrawer::calcTextPosToChar(int x, int y, const std::string& text, const Font& font, const TextAlign& align)
 {
-  (void)x;(void)y;(void)font;(void)text;(void)halign;(void)valign;
+  (void)x;(void)y;(void)font;(void)text;(void)align;
   //TODO!
   return 0;
 }
 
-void InternalFontDrawer::calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font, int halign, int valign)
+void InternalTextDrawer::calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font, const TextAlign& align)
 {
-  (void)x;(void)y;(void)font;(void)text;(void)halign;(void)valign;(void)index;
+  (void)x;(void)y;(void)font;(void)text;(void)align;(void)index;
   //TODO!
 }
 
-void InternalFontDrawer::printCentered(const std::string& text, int x, int y, const Font& font, unsigned long forceLength)
+void InternalTextDrawer::printCentered(const std::string& text, int x, int y, const Font& font, unsigned long forceLength)
 {
   InternalGlyphs::Glyphs* glyphs = getGlyphsForFont(font);
   
@@ -404,7 +405,7 @@ namespace //empty namespace
   LodePNG::Decoder pngdec;
 }
 
-InternalGlyphs::InternalGlyphs(ITextureFactory* factory)
+InternalGlyphs::InternalGlyphs(const ITextureFactory* factory)
 {
   initBuiltInFontTextures(factory);
 }
@@ -418,7 +419,7 @@ InternalGlyphs::~InternalGlyphs()
 {
 }
 
-void InternalGlyphs::initBuiltInFontTextures(ITextureFactory* factory)
+void InternalGlyphs::initBuiltInFontTextures(const ITextureFactory* factory)
 {
   loadTexturesFromBase64PNG(glyphs8x8.texture, factory, font8x8string, 8, 8, AE_BlackKey);
   glyphs8x8.width = 8;

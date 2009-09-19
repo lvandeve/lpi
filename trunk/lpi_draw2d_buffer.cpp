@@ -387,12 +387,10 @@ ADrawer2DBuffer::ADrawer2DBuffer()
 , h(0)
 {
   TextureFactory<TextureBuffer> factory;
-  fontdrawer = new InternalFontDrawer(&factory, this);
 }
 
 ADrawer2DBuffer::~ADrawer2DBuffer()
 {
-  delete fontdrawer;
 }
 
 void ADrawer2DBuffer::pushScissor(int x0, int y0, int x1, int y1)
@@ -671,33 +669,6 @@ void ADrawer2DBuffer::drawTextureRepeated(const ITexture* texture, int x0, int y
   }
 }
 
-void ADrawer2DBuffer::calcTextRectSize(int& w, int& h, const std::string& text, const Font& font)
-{
-  fontdrawer->calcTextRectSize(w, h, text, font);
-}
-
-size_t ADrawer2DBuffer::getFontHeight(const Font& font)
-{
-  return fontdrawer->getFontHeight(font);
-}
-
-size_t ADrawer2DBuffer::calcTextPosToChar(int x, int y, const std::string& text, const Font& font, HAlign halign, VAlign valign)
-{
-  return fontdrawer->calcTextPosToChar(x, y, text, font, (int)halign, (int)valign);
-}
-
-void ADrawer2DBuffer::calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font, HAlign halign, VAlign valign)
-{
-  fontdrawer->calcTextCharToPos(x, y, index, text, font, (int)halign, (int)valign);
-}
-
-void ADrawer2DBuffer::drawText(const std::string& text, int x, int y, const Font& font, HAlign halign, VAlign valign)
-{
-  (void)text; (void)font; (void)x; (void)y; (void)halign; (void)valign;
-  //TODO: valign and right-halign
-  if(halign == HA_LEFT) fontdrawer->print(text, x, y, font);
-  else fontdrawer->printCentered(text, x, y, font);
-}
 
 /*void ADrawer2DBuffer::cls(const ColorRGB& color)
 {

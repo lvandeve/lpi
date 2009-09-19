@@ -27,7 +27,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
-class InternalFontDrawer;
+class InternalTextDrawer;
 
 /*
 ADrawer2DBuffer: generic, works on any unsigned char* buffer
@@ -41,8 +41,6 @@ class ADrawer2DBuffer : public ADrawer2D //draws on a buffer
     //w and h are width and height of the buffer, not necessarily the same as getWidth and getHeight return
     size_t w;
     size_t h;
-    
-    InternalFontDrawer* fontdrawer;
     
   public:
     
@@ -125,12 +123,6 @@ class ADrawer2DBuffer : public ADrawer2D //draws on a buffer
     virtual void drawTexture(const ITexture* texture, int x, int y, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureSized(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, const ColorRGB& colorMod = RGB_White);
-    
-    virtual size_t getFontHeight(const Font& font = FONT_Default);
-    virtual void calcTextRectSize(int& w, int& h, const std::string& text, const Font& font = FONT_Default);
-    virtual size_t calcTextPosToChar(int x, int y, const std::string& text, const Font& font = FONT_Default, HAlign halign = HA_LEFT, VAlign valign = VA_TOP);
-    virtual void calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font = FONT_Default, HAlign halign = HA_LEFT, VAlign valign = VA_TOP);
-    virtual void drawText(const std::string& text, int x, int y, const Font& font = FONT_Default, HAlign halign = HA_LEFT, VAlign valign = VA_TOP);
 };
 
 class Drawer2DBuffer : public ADrawer2DBuffer

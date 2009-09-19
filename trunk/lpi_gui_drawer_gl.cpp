@@ -722,7 +722,10 @@ void GUIDrawerGL::init()
   initBuiltInGui();
 }
 
-GUIDrawerGL::GUIDrawerGL(ScreenGL* screen, GuiSet* set) : guiset(set), drawer(screen)
+GUIDrawerGL::GUIDrawerGL(ScreenGL* screen, GuiSet* set)
+: guiset(set)
+, drawer(screen)
+, textdrawer(TextureFactory<TextureGL>(), &drawer)
 {
   init();
 }
@@ -822,17 +825,17 @@ void GUIDrawerGL::drawGUIPartText(GUIPartText part, const std::string& text, int
   {
     case GPT_TEXT_BUTTON:
     {
-      drawText(text, (x0+x1)/2, (y0+y1)/2, guiset->textButtonFont[0], HA_CENTER);
+      drawText(text, (x0+x1)/2, (y0+y1)/2, guiset->textButtonFont[0], TextAlign(HA_CENTER, VA_TOP));
       break;
     }
     case GPT_TEXT_BUTTON_OVER:
     {
-      drawText(text, (x0+x1)/2, (y0+y1)/2, guiset->textButtonFont[1], HA_CENTER);
+      drawText(text, (x0+x1)/2, (y0+y1)/2, guiset->textButtonFont[1], TextAlign(HA_CENTER, VA_TOP));
       break;
     }
     case GPT_TEXT_BUTTON_DOWN:
     {
-      drawText(text, (x0+x1)/2 + 2, (y0+y1)/2 + 2, guiset->textButtonFont[2], HA_CENTER);
+      drawText(text, (x0+x1)/2 + 2, (y0+y1)/2 + 2, guiset->textButtonFont[2], TextAlign(HA_CENTER, VA_TOP));
       break;
     }
     default:
