@@ -162,6 +162,9 @@ enum GUIPart
 struct GUIPartMod
 {
   GUIPartMod();
+  GUIPartMod(bool inactive);
+  GUIPartMod(bool mouseover, bool mousedown);
+  GUIPartMod(bool mouseover, bool mousedown, bool inactive);
   bool inactive;
   bool mouseover;
   bool mousedown;
