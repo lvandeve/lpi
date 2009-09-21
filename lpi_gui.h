@@ -137,7 +137,7 @@ class Element : public ElementRectangular
     virtual void drawWidget(IGUIDrawer& drawer) const = 0; //called by draw(), this one can be overloaded for each widget defined below
     virtual void handleWidget(const IGUIInput& input);
     virtual void moveWidget(int x, int y); //Override this if you have subelements, unless you use addSubElement in ElementComposite.
-    virtual void resizeWidget(const Pos<int>& newPos); //always called after resize, will resize the other elements to the correct size. Override this if you have subelements, unless you use addSubElement in ElementComposite.
+    virtual void resizeWidget(const Pos<int>& newPos); //always called after resize, will resize the other elements to the correct size. Override this if you have subelements, unless you use addSubElement in ElementComposite. When resizeWidget is called, you can get the new size from newPos, while the old size is still in x0, y0, x1, y1 from this and will be set after resizeWidget is called.
 
 
   public:
@@ -389,6 +389,7 @@ class ScrollbarPair : public ElementComposite
     
     virtual void handleWidget(const IGUIInput& input);
     virtual void drawWidget(IGUIDrawer& drawer) const;
+    virtual void resizeWidget(const Pos<int>& newPos);
     
     bool venabled;
     bool henabled;
@@ -507,7 +508,6 @@ class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
     ScrollElement();
     virtual void handleWidget(const IGUIInput& input); //you're supposed to handle() before you draw()
     virtual void drawWidget(IGUIDrawer& drawer) const;
-    virtual void resizeWidget(const Pos<int>& newPos);
     virtual void moveWidget(int x, int y);
     virtual void setElementOver(bool state);
 

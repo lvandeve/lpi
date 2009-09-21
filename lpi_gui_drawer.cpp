@@ -34,6 +34,27 @@ GUIPartMod::GUIPartMod()
 {
 }
 
+GUIPartMod::GUIPartMod(bool inactive)
+: inactive(inactive)
+, mouseover(false)
+, mousedown(false)
+{
+}
+
+GUIPartMod::GUIPartMod(bool mouseover, bool mousedown)
+: inactive(false)
+, mouseover(mouseover)
+, mousedown(mousedown)
+{
+}
+
+GUIPartMod::GUIPartMod(bool mouseover, bool mousedown, bool inactive)
+: inactive(inactive)
+, mouseover(mouseover)
+, mousedown(mousedown)
+{
+}
+
 const GUIPartMod GPM_Default;
 
 size_t AGUIDrawer::getWidth()

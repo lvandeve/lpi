@@ -347,7 +347,7 @@ void Element::resize(int x0, int y0, int x1, int y1)
 
   Pos<int> newPos = { x0, y0, x1, y1 };
   
-  resizeWidget(newPos);
+  resizeWidget(newPos); //done BEFORE the this->x0 etc... are set. Use the info from newPos instead.
   
   this->x0 = x0;
   this->y0 = y0;
@@ -715,11 +715,6 @@ void ScrollElement::moveWidget(int x, int y)
 {
   ElementComposite::moveWidget(x, y);
   if(element) element->move(x, y);
-}
-
-void ScrollElement::resizeWidget(const Pos<int>& /*newPos*/)
-{
-  updateBars(); //if this is done at the wrong moment, the bars may appear after resizing the container at times where it isn't desired
 }
 
 void ScrollElement::handleWidget(const IGUIInput& input)
@@ -1143,7 +1138,7 @@ void Window::drawWidget(IGUIDrawer& drawer) const
     drawer.drawGUIPartText(GPT_WINDOW_TITLE, title, top.getX0(), top.getY0(), top.getX1(), top.getY1());
   }
   
-  if(closeEnabled) drawer.drawGUIPart(GP_WINDOW_CLOSE, closeButton.getX0(), closeButton.getY0(), closeButton.getX1(), closeButton.getY1());
+  if(closeEnabled) drawer.drawGUIPart(GP_WINDOW_CLOSE, closeButton.getX0(), closeButton.getY0(), closeButton.getX1(), closeButton.getY1(), GUIPartMod(closeButton.mouseOver(drawer.getInput()), closeButton.mouseDown(drawer.getInput())));
 
   if(scroll.element) scroll.draw(drawer);
   else container.draw(drawer);
@@ -1563,6 +1558,7 @@ void Scrollbar::init(const IGUIPartGeom& geom)
     buttonDown.moveTo(x0, y1 - geom.getGUIPartSizeY(GP_SCROLLBAR_S));
     scroller.resize(0, 0, geom.getGUIPartSizeX(GP_SCROLLBAR_SCROLLER), geom.getGUIPartSizeY(GP_SCROLLBAR_SCROLLER));
     scroller.moveTo(x0, int(y0 + getSliderStart() + (getSliderSize() * scrollPos) / scrollSize));
+    ic.setSticky(&buttonDown, Sticky(0.0, 0, 1.0, -buttonDown.getSizeY(), 1.0, 0, 1.0, 0), this);
   }
   else
   {
@@ -1572,6 +1568,7 @@ void Scrollbar::init(const IGUIPartGeom& geom)
     buttonDown.moveTo(x1 - geom.getGUIPartSizeX(GP_SCROLLBAR_E), y0);
     scroller.resize(0, 0, geom.getGUIPartSizeX(GP_SCROLLBAR_SCROLLER), geom.getGUIPartSizeY(GP_SCROLLBAR_SCROLLER));
     scroller.moveTo(int(x0 + getSliderStart() + (getSliderSize() * scrollPos) / scrollSize), y0);
+    ic.setSticky(&buttonDown, Sticky(1.0, -buttonDown.getSizeX(), 0.0, 0, 1.0, 0, 1.0, 0), this);
   }
 }
 
@@ -1584,7 +1581,6 @@ Scrollbar::Scrollbar()
   this->speedMode = 0;
   this->forwardedScroll = 0;
   
-//TODO: sticky parameters juist zetten
   addSubElement(&scroller);
   addSubElement(&buttonUp);
   addSubElement(&buttonDown);
@@ -1808,34 +1804,46 @@ void ScrollbarPair::make(int x, int y, int sizex, int sizey, double scrollSizeH,
   //TODO: use gui part drawer to draw this
   //this->txCorner = set->scrollBarPairCorner;
   
-   //TODO: get size from IGUIPartDrawer
   vbar.makeVertical(x1 - geom.getGUIPartSizeX(GP_SCROLLBAR_VBACK), y0, sizey - geom.getGUIPartSizeY(GP_SCROLLBARPAIR_CORNER),
-          scrollSizeV, geom, 0, 0, 1,
-          1);
+          scrollSizeV, geom, 0, 0, 1, 1);
   hbar.makeHorizontal(x0, y1 - geom.getGUIPartSizeX(GP_SCROLLBAR_HBACK), sizex - geom.getGUIPartSizeX(GP_SCROLLBARPAIR_CORNER),
-          scrollSizeH, geom, 0, 0, 1,
-          1);
+          scrollSizeH, geom, 0, 0, 1, 1);
 
-  ic.setSticky(&vbar, Sticky(1.0, -vbar.getSizeX(), 0.0, 0, 1.0, 0, 1.0, 0), this);
-  ic.setSticky(&hbar, Sticky(0.0,  0, 1.0, -hbar.getSizeY(), 1.0, 0, 1.0, 0), this);
+  ic.setSticky(&vbar, STICKYOFF/*Sticky(1.0, -vbar.getSizeX(), 0.0, 0, 1.0, 0, 1.0, 0)*/, this);
+  ic.setSticky(&hbar, STICKYOFF/*Sticky(0.0,  0, 1.0, -hbar.getSizeY(), 1.0, 0, 1.0, 0)*/, this);
   this->venabled = true;
   this->henabled = true;
+}
+
+void ScrollbarPair::resizeWidget(const Pos<int>& newPos)
+{
+  if(henabled && venabled)
+  {
+    vbar.resize(newPos.x1 - vbar.getSizeX(), newPos.y0, newPos.x1, newPos.y1 - hbar.getSizeY());
+    hbar.resize(newPos.x0, newPos.y1 - hbar.getSizeY(), newPos.x1 - vbar.getSizeX(), newPos.y1);
+  }
+  else if(venabled)
+  {
+    vbar.resize(newPos.x1 - vbar.getSizeX(), newPos.y0, newPos.x1, newPos.y1 - hbar.getSizeY() * conserveCorner);
+  }
+  else if(henabled)
+  {
+    hbar.resize(newPos.x0, newPos.y1 - hbar.getSizeY(), newPos.x1 - vbar.getSizeX() * conserveCorner, newPos.y1);
+  }
 }
 
 void ScrollbarPair::disableV()
 {
   venabled = false;
   
-  if(henabled)
-  hbar.resize(hbar.getX0(), hbar.getY0(), hbar.getX0() + getSizeX() - vbar.getSizeX() * conserveCorner, hbar.getY1());
+  if(henabled) hbar.resize(hbar.getX0(), hbar.getY0(), hbar.getX0() + getSizeX() - vbar.getSizeX() * conserveCorner, hbar.getY1());
 }
 
 void ScrollbarPair::disableH()
 {
   henabled = false;
   
-  if(venabled)
-  vbar.resize(vbar.getX0(), vbar.getY0(), vbar.getX1(), vbar.getY0() + getSizeY() - hbar.getSizeY() * conserveCorner);
+  if(venabled) vbar.resize(vbar.getX0(), vbar.getY0(), vbar.getX1(), vbar.getY0() + getSizeY() - hbar.getSizeY() * conserveCorner);
 }
 
 void ScrollbarPair::enableV()

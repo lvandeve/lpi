@@ -696,7 +696,8 @@ void GUIPartDrawerInternal::drawGUIPart(GUIPart part, int x0, int y0, int x1, in
     }
     case GP_WINDOW_CLOSE:
     {
-      drawer->drawTexture(guiset->closeButton, x1 - guiset->closeButton->getU(), y0);
+      ColorRGB color = mod.mouseover ? guiset->mouseOverColor : RGB_White;
+      drawer->drawTexture(guiset->closeButton, x1 - guiset->closeButton->getU(), y0, color);
       break;
     }
     case GP_WINDOW_RESIZER:
