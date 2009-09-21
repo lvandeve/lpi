@@ -68,8 +68,8 @@ void encode(std::vector<unsigned char>& out, const std::vector<std::vector<doubl
   }
     
   //calculate parameters for WAV file
-  int blockTextAlign = (info.channels * info.bitsPerSample) / 8;
-  int byteRate = info.samplerate * blockTextAlign;
+  int blockAlign = (info.channels * info.bitsPerSample) / 8;
+  int byteRate = info.samplerate * blockAlign;
   
   int filesize = 44 + data.size();
   out.clear();
@@ -124,8 +124,8 @@ void encode(std::vector<unsigned char>& out, const std::vector<std::vector<doubl
   out.push_back(((byteRate) /    65536) % 256);
   out.push_back(((byteRate) / 16777216) % 256);
   
-  //wBlockTextAlign
-  out.push_back(blockTextAlign);
+  //wblockAlign
+  out.push_back(blockAlign);
   out.push_back(0);
   
   //wBitsPerSample
@@ -194,7 +194,7 @@ int decode(std::vector<std::vector<double> >& out, InfoWAV& info, const std::vec
       pos += 4;
       //unsigned long dwAvgBytesPerSec = in[pos] + 256 * in[pos + 1] + 65536 * in[pos + 2] + 16777216 * in[pos + 3];
       pos += 4;
-      //unsigned short wBlockTextAlign = in[pos] + 256 * in[pos + 1];
+      //unsigned short wblockAlign = in[pos] + 256 * in[pos + 1];
       pos += 2;
       unsigned short wBitsPerSample = in[pos] + 256 * in[pos + 1];
       pos += 2;

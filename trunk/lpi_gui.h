@@ -20,11 +20,10 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 
 /*
-lpi_gui: an OpenGL GUI
+lpi_gui: an OpenGL GUI. Well actually now it is updated to support any lpi::IDrawer2D, so it can use OpenGL or something else.
 */
 
-#ifndef LPI_GUI_H_INCLUDED
-#define LPI_GUI_H_INCLUDED
+#pragma once
 
 #include <map>
 
@@ -135,6 +134,12 @@ class Element : public ElementRectangular
   protected:
     void autoActivate(const IGUIInput& input, MouseState& auto_activate_mouse_state, bool& control_active); //utility function used by text input controls, they need a member variable like "MouseState auto_activate_mouse_state" in them for this and a bool "control_active", and in their handleWidget, put, "autoActivate(input, auto_activate_mouse_state, control_active); if(!control_active) return;"
     
+    virtual void drawWidget(IGUIDrawer& drawer) const = 0; //called by draw(), this one can be overloaded for each widget defined below
+    virtual void handleWidget(const IGUIInput& input);
+    virtual void moveWidget(int x, int y); //Override this if you have subelements, unless you use addSubElement in ElementComposite.
+    virtual void resizeWidget(const Pos<int>& newPos); //always called after resize, will resize the other elements to the correct size. Override this if you have subelements, unless you use addSubElement in ElementComposite.
+
+
   public:
     Element();
     virtual ~Element(){};
@@ -159,10 +164,6 @@ class Element : public ElementRectangular
     virtual void move(int x, int y);
     virtual void resize(int x0, int y0, int x1, int y1); //especially useful for windows and their container; parameters are the new values for x0, y0, x1 and y1 so this function can both move the object to a target and resize
     
-    virtual void drawWidget(IGUIDrawer& drawer) const = 0; //called by draw(), this one can be overloaded for each widget defined below
-    virtual void handleWidget(const IGUIInput& input);
-    virtual void moveWidget(int x, int y); //Override this if you have subelements, unless you use addSubElement in ElementComposite.
-    
     void moveTo(int x, int y);
     void moveCenterTo(int x, int y);
     void growX0(int d) { resize(x0 + d, y0    , x1    , y1    ); } //growing can also be shrinking
@@ -173,7 +174,6 @@ class Element : public ElementRectangular
     void growSizeY0(int sizey) { resize(x0        , y1 - sizey, x1        , y1        ); }
     void growSizeX1(int sizex) { resize(x0        , y0        , x0 + sizex, y1        ); }
     void growSizeY1(int sizey) { resize(x0        , y0        , x1        , y0 + sizey); }
-    virtual void resizeWidget(const Pos<int>& newPos); //always called after resize, will resize the other elements to the correct size. Override this if you have subelements, unless you use addSubElement in ElementComposite.
     virtual bool isContainer() const; //returns 0 if the type of element isn't a container, 1 if it is (Window, Container, ...); this value is used by for example Container: it brings containers to the top of the screen if you click on them. Actually so far it's only been used for that mouse test. It's something for containers, by containers :p
     
     ////optional tooltip. Drawing it must be controlled by a higher layer, e.g. see the Container's implementation. //TODO: make tooltip class and only have pointer to it here, being 0 if no tooltip, to decrease memory footprint of element, OR, store every info of the tooltip in ToolTipManager
@@ -320,7 +320,13 @@ class Scrollbar : public ElementComposite
 {
   private:
     double oldTime; //in seconds
-    void init();
+    void init(const IGUIPartGeom& geom);
+    
+    //buttons of the scrollbar
+    Dummy buttonUp;
+    Dummy buttonDown;
+    Dummy scroller;
+    
   public:
     //get length and begin and end coordinates of the slider part (the part between the up and down buttons) (relative to x, y of the scrollbar)
     int getSliderSize() const;
@@ -338,35 +344,22 @@ class Scrollbar : public ElementComposite
     
     int speedMode;
     
-    const ITexture* txUp; //texture of the "up" button (left button if it's horizontal)
-    const ITexture* txUpOver; //on mouseover
-    const ITexture* txDown; //texture of the "down" button (right button if horizontal)
-    const ITexture* txDownOver; //mouseover
-    const ITexture* txScroller; //texture of the center button (the scroller)
-    const ITexture* txScrollerOver; //mouseover
-    const ITexture* txBack; //texture of the background (the slider)
-        
-    //only one shared color modifier and a color modifier on mouseover/down
-    ColorRGB colorMod;
-    ColorRGB colorModOver;
-    ColorRGB colorModDown;
-    
-    //buttons of the scrollbar
-    Button buttonUp;
-    Button buttonDown;
-    Button scroller;
+
     
     void setRelativeScrollSpeed(); //time = time to scroll from top to bottom (in seconds)
     void setRelativePosition(float position); //position = 0.0-1.0
 
     Scrollbar();
-    void makeVertical(int x, int y, int length = 80,
-                      double scrollSize = 100, double scrollPos = 0, double offset = 0, double scrollSpeed = 1,
-                      const GuiSet* set = &builtInGuiSet, int speedMode = 1);
-    void makeHorizontal(int x, int y, int length = 80,
-                        double scrollSize = 100, double scrollPos = 0, double offset = 0, double scrollSpeed = 1,
-                        const GuiSet* set = &builtInGuiSet, int speedMode = 1);
-    void showValue(int x, int y, const Font& valueFont, int type); //type: 0=don't, 1=float, 2=int
+    void makeVertical(int x, int y, int length,
+                      double scrollSize,
+                      const IGUIPartGeom& geom,
+                      double scrollPos = 0, double offset = 0, double scrollSpeed = 1,
+                      int speedMode = 1);
+    void makeHorizontal(int x, int y, int length,
+                        double scrollSize,
+                        const IGUIPartGeom& geom,
+                        double scrollPos = 0, double offset = 0, double scrollSpeed = 1,
+                        int speedMode = 1);
     
     void scroll(const IGUIInput& input, int dir); //make it scroll from an external command
     
@@ -374,11 +367,6 @@ class Scrollbar : public ElementComposite
     double getValue() const;
     void setValue(double value);
     void randomize(); //it will get a random value
-    
-    int enableValue; //if 1, value is shown everytime you draw as floating point, if 2, as integer (value = offset + scrollPos)
-    Font valueFont; //text style of the value
-    int valueX; //x position of the value (relative)
-    int valueY; //y position of the value (relative)
     
     bool forwardedMouseScrollUp() const; //see int forwardedScroll;
     bool forwardedMouseScrollDown() const; //see int forwardedScroll;
@@ -391,18 +379,14 @@ class Scrollbar : public ElementComposite
 
 class ScrollbarPair : public ElementComposite
 {
-  private:
-    const GuiSet* scrollbarGuiSet; //the guiSet used for the scrollbars has to be remembered for when remaking them
   public:
     ScrollbarPair();
-    void make(int x, int y, int sizex, int sizey, double scrollSizeH = 100, double scrollSizeV = 100,
-              const GuiSet* set = &builtInGuiSet);
+    void make(int x, int y, int sizex, int sizey, double scrollSizeH, double scrollSizeV, const IGUIPartGeom& geom);
         
     Scrollbar vbar;
     Scrollbar hbar;
+    Dummy corner; //the corner piece between the two scrollbars
     
-    const ITexture* txCorner; //the corner piece between the two scrollbars
-        
     virtual void handleWidget(const IGUIInput& input);
     virtual void drawWidget(IGUIDrawer& drawer) const;
     
@@ -424,6 +408,12 @@ class ScrollbarPair : public ElementComposite
 //the Slider is a simplified version of the scrollbar (no up and down buttons) that also looks different
 class Slider : public ElementComposite
 {
+  private:
+    
+    Dummy slider; //(by default round) button
+    GUIPart slidertype;
+    GUIPart rulertype;
+    
   public:
     Slider();
     double getValue() const; //a number between 0.0 and scrollSize
@@ -433,29 +423,20 @@ class Slider : public ElementComposite
         
     Direction direction;
     
-    Button slider; //(by default round) button
-    const BackRule* ruler; //the line behind the button
+    
     
     double scrollSize;
     double scrollPos;
 
-    void makeHorizontal(int x, int y, int length = 100, double scrollSize = 100, const GuiSet* set = &builtInGuiSet);
-    void makeVertical(int x, int y, int length = 100, double scrollSize = 100, const GuiSet* set = &builtInGuiSet);
-    void makeSmallHorizontal(int x, int y, int length = 100, double scrollSize = 100, const GuiSet* set = &builtInGuiSet);
+    void makeHorizontal(int x, int y, int length, double scrollSize, const IGUIPartGeom& geom);
+    void makeVertical(int x, int y, int length, double scrollSize, const IGUIPartGeom& geom);
+    void makeSmallHorizontal(int x, int y, int length, double scrollSize, const IGUIPartGeom& geom);
     
     double screenPosToScrollPos(int screenPos);
     int scrollPosToScreenPos(double scrollPos);
 
     virtual void drawWidget(IGUIDrawer& drawer) const;
     virtual void handleWidget(const IGUIInput& input);
-};
-
-class Invisible : public Element
-{
-  public:
-  void make(int x0, int y0, int x1, int y1);
-
-  virtual void drawWidget(IGUIDrawer& drawer) const;
 };
 
 class Container : public ElementComposite
@@ -530,7 +511,7 @@ class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
     virtual void moveWidget(int x, int y);
     virtual void setElementOver(bool state);
 
-    void make(int x, int y, int sizex, int sizey, Element* element);
+    void make(int x, int y, int sizex, int sizey, Element* element, const IGUIPartGeom& geom);
     
     ////everything concerning the scrollability
     ScrollbarPair bars;
@@ -569,47 +550,6 @@ class Group : public Container
     virtual bool isInside(int x, int y) const; //difference with the isInside from other guielements, is that it checks all sub elements, not itself, for mouseovers
 };
 
-class Panel : public Element
-{
-  private:
-    BackPanel panel;
-
-  public:
-    Panel();
-    void make(int x, int y, int sizex, int sizey,
-              const GuiSet* set = &builtInGuiSet);
-    void makeUntextured(int x, int y, int sizex, int sizey, const ColorRGB& fillColor);
-    //give 1 texture, the other 8 are assumed to have successive memory locations
-    void makeTextured(int x, int y, int sizex, int sizey,
-                      const Texture* t00, const ColorRGB& colorMod = RGB_White);
-    void setSize(int x, int y, int sizex, int sizey);
-
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-};
-
-class Rule : public Element
-{
-  private:
-    BackRule line;
-  
-  public:
-    Rule();
-         
-  //give 3 separate textures
-  void makeHorizontal(int x, int y, int length, const GuiSet* set = &builtInGuiSet);
-  //give 1 texture, the other 2 are assumed to have successive memory locations
-  void makeHorizontal1(int x, int y, int length, Texture* t0=&builtInTexture[41], const ColorRGB& colorMod=RGB_White);
-       
-  //give 3 separate textures
-  void makeVertical(int x, int y, int length, const GuiSet* set = &builtInGuiSet);
-  //give 1 texture, the other 2 are assumed to have successive memory locations
-  void makeVertical1(int x, int y, int length, Texture* t0=&builtInTexture[44], const ColorRGB& colorMod=RGB_White);
-  
-  void setSize(int x, int y, int length);
-
-  virtual void drawWidget(IGUIDrawer& drawer) const;
-};
-
 //Window is a container for other gui elements that'll move and get drawn at the command of the window
 class Window : public ElementComposite
 {
@@ -617,6 +557,8 @@ class Window : public ElementComposite
     Container container;
     ScrollElement scroll;
     ColorRGB colorMod;
+    Dummy closeButton;
+    Dummy resizer;
     
   public:
   
@@ -663,13 +605,13 @@ class Window : public ElementComposite
     void putInside(int i);
     
     //these scrollbars will be part of the container
-    void addScrollbars();
+    void addScrollbars(const IGUIPartGeom& geom);
     void removeScrollbars();
     void updateScroll(); //call this after elements inside window changed size or position. It updates size of container to elements inside it, then updates scroll (updateBars()). I've had this work very well together with a zoomable and movable image inside a window with scrollbars!!
     
     ////optional part "top"
-    Rule top; //not a "back" one, so that you can easily detect mouse on it, for dragging
-    void addTop(ITexture * t0 = &builtInTexture[47], int offsetLeft = 0, int offsetRight = 0, int offsetTop = 0, const ColorRGB& colorMod = ColorRGB(96, 96, 255));
+    Dummy top;
+    void addTop(const IGUIPartGeom& geom);
     bool enableTop; //enable the top bar of the window (then you can drag it with this instead of everywhere on the window)
 
     ////optional part "title"
@@ -682,18 +624,15 @@ class Window : public ElementComposite
     
     ////optional part "close button"
     bool closed;
-    Button closeButton;
-    void addCloseButton(int offsetX = 0, int offsetY = 0, const GuiSet* set = &builtInGuiSet); //ofsset from top *right* corner, choose style of close button by making it, it's the built in texture by default
+    void addCloseButton(const IGUIPartGeom& geom); //ofsset from top *right* corner, choose style of close button by making it, it's the built in texture by default
     bool closeEnabled; //close button is enabled
     
     ////optional part "resizer" = draggable bottom right corner with diagonally striped image
     bool enableResizer;
-    Button resizer;
-    void addResizer(const GuiSet* set = &builtInGuiSet, bool overContainer = false, int offsetX = 0, int offsetY = 0); //ofsset = from bottom right corner
+    void addResizer(const IGUIPartGeom& geom, bool overContainer = false);
     bool resizerOverContainer;
     ////the make functions
-    void make(int x, int y, int sizex, int sizey,
-              const GuiSet* set = &builtInGuiSet);
+    void make(int x, int y, int sizex, int sizey);
     void makeUntextured(int x, int y, int sizex, int sizey, const ColorRGB& fillColor);
     void makeTextured(int x, int y, int sizex, int sizey,
                       const ITexture* t00, const ColorRGB& colorMod = RGB_White);
@@ -701,8 +640,6 @@ class Window : public ElementComposite
     int getRelContainerStart() const { return container.getY0() - y0; }
     
     int getRelContentStart() const;
-    
-    void setSize(int x, int y, int sizex, int sizey);
     
     ////overloaded functions
     virtual void drawWidget(IGUIDrawer& drawer) const;
@@ -748,8 +685,8 @@ class Checkbox : public Element, public Label
     Font font;
     
     Checkbox();
-    void make(int x, int y, bool checked = 0, const GuiSet* set = &builtInGuiSet, int toggleOnMouseUp = 0);
-    void makeSmall(int x, int y, bool checked = 0, const GuiSet* set = &builtInGuiSet, int toggleOnMouseUp = 0);
+    void make(int x, int y, bool checked = 0, int toggleOnMouseUp = 0);
+    void makeSmall(int x, int y, bool checked = 0, int toggleOnMouseUp = 0);
     void addText(const std::string& text, const Font& font = FONT_Default);
     virtual void drawWidget(IGUIDrawer& drawer) const; //also handles it by calling handle(): toggles when mouse down or not
     virtual void handleWidget(const IGUIInput& input);
@@ -762,7 +699,7 @@ class Checkbox : public Element, public Label
     bool isChecked() { return checked; }
     void setChecked(bool check) { checked = check; }
     
-    //give it alternative textures than those in the GuiSet
+    //for giving it alternative textures
     void setTexturesAndColors(const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ITexture* texture4, 
                               const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3, const ColorRGB& color4);
     //without mouseOver effect
@@ -780,8 +717,8 @@ class BulletList : public ElementComposite
     BulletList();
     virtual void drawWidget(IGUIDrawer& drawer) const;
     virtual void handleWidget(const IGUIInput& input);
-    void make(int x, int y, unsigned long amount, int xDiff, int yDiff, const GuiSet* set = &builtInGuiSet); //diff = the location difference between successive checkboxes
-    void make(int x, int y, unsigned long amount, int xDiff, int yDiff, unsigned long amountx, const GuiSet* set = &builtInGuiSet); //make in 2D pattern
+    void make(int x, int y, unsigned long amount, int xDiff, int yDiff); //diff = the location difference between successive checkboxes
+    void make(int x, int y, unsigned long amount, int xDiff, int yDiff, unsigned long amountx); //make in 2D pattern
     void setCorrectSize();
     //set style of the bullets by using prototype.make([checkbox parameters where x and y will be ignored])
     int check(); //returns which one is checked
@@ -820,8 +757,8 @@ class Image : public Element
     ColorRGB colorMod;
     virtual void drawWidget(IGUIDrawer& drawer) const;
     Image();
-    void make(int x, int y, ITexture* image=&builtInTexture[37], const ColorRGB& colorMod = RGB_White);
-    void make(int x, int y, int sizex, int sizey, ITexture* image=&builtInTexture[37], const ColorRGB& colorMod = RGB_White);
+    void make(int x, int y, ITexture* image, const ColorRGB& colorMod = RGB_White);
+    void make(int x, int y, int sizex, int sizey, ITexture* image, const ColorRGB& colorMod = RGB_White);
 };
 
 class Tabs : public ElementComposite
@@ -861,4 +798,3 @@ class Tabs : public ElementComposite
 } //namespace gui
 } //namespace lpi
 
-#endif
