@@ -114,6 +114,7 @@ class ADrawer2DBuffer : public ADrawer2D //draws on a buffer
     virtual void drawCircle(int x, int y, int radius, const ColorRGB& color, bool filled);
     virtual void drawEllipseCentered(int x, int y, int radiusx, int radiusy, const ColorRGB& color, bool filled);
     
+    virtual void drawGradientTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2);
     virtual void drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3);
     
     virtual bool supportsTexture(ITexture* texture);

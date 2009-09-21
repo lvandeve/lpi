@@ -154,6 +154,7 @@ enum GUIPart
   
   //text button (NOT the text on a button with a panel, but a plain text-only button)
   GPT_TEXT_BUTTON,
+  GPT_WINDOW_TITLE,
   
   GP_END_DONT_USE //don't use this, it's placed here to have an element without comma at the end of the enumarator list.
 };

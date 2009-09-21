@@ -416,6 +416,9 @@ void GUIPartDrawerInternal::initBuiltInGuiTexturesSmall(const ITextureFactory& f
   builtInGuiSet.textButtonFont[2].color = RGB_Red;
   builtInGuiSet.textButtonFont[2].shadow = true;
   builtInGuiSet.textButtonFont[2].shadowColor = RGB_Black;
+  builtInGuiSet.windowTopFont.color = RGB_White;
+  builtInGuiSet.windowTopFont.shadow = true;
+  builtInGuiSet.windowTopFont.shadowColor = RGB_Black;
 }
 
 
@@ -865,9 +868,14 @@ void GUIPartDrawerInternal::drawGUIPartText(GUIPart part, const std::string& tex
   {
     case GPT_TEXT_BUTTON:
     {
-      if(mod.mousedown) textdrawer->drawText(text, (x0+x1)/2 + 2, (y0+y1)/2 + 2, guiset->textButtonFont[2], TextAlign(HA_CENTER, VA_TOP));
-      else if(mod.mouseover) textdrawer->drawText(text, (x0+x1)/2, (y0+y1)/2, guiset->textButtonFont[1], TextAlign(HA_CENTER, VA_TOP));
-      else textdrawer->drawText(text, (x0+x1)/2, (y0+y1)/2, guiset->textButtonFont[0], TextAlign(HA_CENTER, VA_TOP));
+      if(mod.mousedown) textdrawer->drawText(text, (x0+x1)/2 + 2, (y0+y1)/2 + 2, guiset->textButtonFont[2], TextAlign(HA_CENTER, VA_CENTER));
+      else if(mod.mouseover) textdrawer->drawText(text, (x0+x1)/2, (y0+y1)/2, guiset->textButtonFont[1], TextAlign(HA_CENTER, VA_CENTER));
+      else textdrawer->drawText(text, (x0+x1)/2, (y0+y1)/2, guiset->textButtonFont[0], TextAlign(HA_CENTER, VA_CENTER));
+      break;
+    }
+    case GPT_WINDOW_TITLE:
+    {
+      textdrawer->drawText(text, (x0+x1)/2, (y0+y1)/2, guiset->windowTopFont, TextAlign(HA_CENTER, VA_CENTER));
       break;
     }
     default:

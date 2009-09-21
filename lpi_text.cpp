@@ -44,9 +44,17 @@ InternalTextDrawer::InternalTextDrawer(const ITextureFactory& factory, IDrawer2D
 
 void InternalTextDrawer::drawText(const std::string& text, int x, int y, const Font& font, const TextAlign& align)
 {
-  //TODO: valign and right-halign
-  if(align.halign == HA_LEFT) print(text, x, y, font);
-  else printCentered(text, x, y, font);
+  if(align.halign != HA_LEFT || align.valign != VA_TOP) 
+  {
+    int w, h;
+    calcTextRectSize(w, h, text, font);
+    if(align.halign == HA_CENTER) x -= w / 2;
+    else if(align.halign == HA_RIGHT) x -= w;
+    if(align.valign == VA_CENTER) y -= h / 2;
+    else if(align.valign == VA_BOTTOM) y -= h;
+  }
+  
+  print(text, x, y, font);
 }
 
 void InternalTextDrawer::drawLetter(unsigned char n, int x, int y, const InternalGlyphs::Glyphs* glyphs, const Font& font)

@@ -52,6 +52,7 @@ gprof > gprof.txt
 #include "lpi_gui_ex.h"
 #include "lpi_gui_input_sdl.h"
 #include "lpi_gui_drawer_gl.h"
+#include "lpi_gui_drawer_buffer.h"
 #include "lpi_draw2d.h"
 #include "lpi_draw2dgl.h"
 #include "lpi_draw2d_buffer.h"
@@ -339,28 +340,12 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     
     if(tb_guitopng.pressed(lpi::gGUIInput))
     {
-      class GUIDrawerTest : public lpi::gui::AGUIDrawer
-      {
-        public:
-        lpi::gui::GUIInputSDL input;
-        lpi::Drawer2DBuffer drawer;
-        lpi::InternalTextDrawer textdrawer;
-        lpi::gui::GUIPartDrawerInternal guidrawer;
-        GUIDrawerTest() : textdrawer(lpi::TextureFactory<lpi::TextureBuffer>(), &drawer), guidrawer(lpi::TextureFactory<lpi::TextureBuffer>(), &drawer, &textdrawer){}
-        virtual lpi::gui::IGUIInput& getInput() { return input; }
-        virtual lpi::IDrawer2D& getDrawer() { return drawer; }
-        virtual const lpi::IDrawer2D& getDrawer() const { return drawer; }
-        virtual lpi::ITextDrawer& getTextDrawer() { return textdrawer; }
-        virtual const lpi::ITextDrawer& getTextDrawer() const { return textdrawer; }
-        virtual lpi::gui::IGUIPartDrawer& getGUIPartDrawer() { return guidrawer; }
-        virtual const lpi::gui::IGUIPartDrawer& getGUIPartDrawer() const { return guidrawer; }
-      };
-      
-      GUIDrawerTest d;
+      lpi::gui::GUIDrawerBuffer d;
       lpi::Drawer2DBuffer& drawer = dynamic_cast<lpi::Drawer2DBuffer&>(d.getDrawer());
       std::vector<unsigned char> buffer(width * height * 4, 128);
       drawer.setBuffer(&buffer[0], width, height);
       c.draw(d);
+      
       LodePNG::encode("alternativerenderer.png", buffer, width, height);
     }
     
