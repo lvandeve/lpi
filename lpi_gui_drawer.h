@@ -27,6 +27,52 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_text_drawer.h"
 #include "lpi_texture.h" //because drawing images requires a texture class
 
+/*
+The IGUIDrawer works as follows:
+It inherits from 3 different drawer interfaces:
+-IDrawer2D: to draw geometric primitives
+-ITextDrawer: to draw text
+-IGUIPartDrawer: to draw GUI specific things, e.g. a window panel
+Furthermore it also has a function to get a IGUIInput.
+So the IGUIDrawer integrates 4 things (3 drawers and an input checker) together.
+When implementing IGUIDrawer, please implement the 3 drawers by composition. The
+convenience class AGUIDrawer already does that while still allowing to choose
+custom drawers.
+
+Class diagram of a typical scenario, where
+-Full arrows (_____) represent inheritance
+-Dotted arrows (.....) represent dependency or usage or composition of some implementation of/with the used interface
+-Everything that starts with "I" is a pure interface
+-Everything that starts with "Some" is some implementation
+
+           ____________________________________________________ 
+          |                  _______________________________   |
+          |                 |      IGUIPartGeom _________   |  |
+          |                 |             ^     |        |  |  |
+          v                 v             |     v        |  |  |
+     IDrawer2D       ITextDrawer     IGUIPartDrawer    IGUIDrawer
+      ^ ^ ^ ^          ^ ^ ^              ^ ^                 ^
+      | : : :          | : :              | :................ |
+      | : : :          | : :..............|................ : |
+      | : : :          | :................|.............. : : |
+      | : : :..........|..............    |             : : : |
+      | : :............|............ :    |             : : : |
+      | :..........    |           : :    |             : : : |
+      |           :    |           : :    |             : : : |
+   SomeDrawer2D  SomeTextDrawer   SomeGUIPartDrawer    SomeGUIDrawer
+
+
+So in the above scenario:
+ITextDrawer-implementations use a IDrawer2D
+IGUIPartDrawer-implementations use both a IDrawer2D and a ITextDrawer
+IGUIDrawer-implementations use all 3 IDrawer2D, ITextDrawer and IGUIPartDrawer
+IGUIDrawer inherits from all 3 drawer interfaces (IDrawer2D, ITextDrawer and IGUIPartDrawer), but its implementations implement them through composition
+
+NOTE: in reality, IGUIDrawer and most GUI drawer implementations inherit from
+ADrawer2D instead of IDrawer2D, for convenience, but that is not shown in the above
+diagram for clarity reasons.
+*/  
+
 namespace lpi
 {
 namespace gui
@@ -44,8 +90,6 @@ enum GUIPart
 {
   //button panel
   GP_BUTTON_PANEL,
-  GP_BUTTON_OVER_PANEL,
-  GP_BUTTON_DOWN_PANEL,
   //scrollbar
   GP_SCROLLBAR_N,
   GP_SCROLLBAR_E,
@@ -56,9 +100,14 @@ enum GUIPart
   GP_SCROLLBAR_VBACK,
   GP_SCROLLBARPAIR_CORNER,
   //slider
-  GP_SLIDER_BUTTON, //omnidirectional slider button with fixed size
+  GP_SLIDER_HBUTTON,
+  GP_SLIDER_VBUTTON,
   GP_SLIDER_HBACK,
   GP_SLIDER_VBACK,
+  GP_SMALL_SLIDER_HBUTTON,
+  GP_SMALL_SLIDER_VBUTTON,
+  GP_SMALL_SLIDER_HBACK,
+  GP_SMALL_SLIDER_VBACK,
   //checkboxes & bullets
   GP_CHECKBOX_OFF,
   GP_CHECKBOX_ON,
@@ -91,25 +140,64 @@ enum GUIPart
   GP_RULER_V,
   //built-in extra's
   GP_SMILEY,
-  GP_CROSSHAIR
-};
-
-//GUI parts that require a custom color
-enum GUIPartColor
-{
+  GP_CROSSHAIR,
+  
+  ///Colored Parts
   GPC_WINDOW_PANEL, //colored windows
   GPC_WHITE_PANEL, //panel which can be given any color
   GPC_WHITE_BUTTON, //button with same size as scrollbar buttons
-  GPC_WHITE_BUTTON_ROUND //button with same size as scrollbar buttons
-};
-
-//GUI parts that require a text string
-enum GUIPartText
-{
+  GPC_WHITE_BUTTON_ROUND, //button with same size as scrollbar buttons
+  
+  
+  
+  ///Text Parts
+  
   //text button (NOT the text on a button with a panel, but a plain text-only button)
   GPT_TEXT_BUTTON,
-  GPT_TEXT_BUTTON_OVER,
-  GPT_TEXT_BUTTON_DOWN
+  
+  GP_END_DONT_USE //don't use this, it's placed here to have an element without comma at the end of the enumarator list.
+};
+
+struct GUIPartMod
+{
+  GUIPartMod();
+  bool inactive;
+  bool mouseover;
+  bool mousedown;
+};
+
+extern const GUIPartMod GPM_Default;
+
+class IGUIPartGeom //returns geometrical info about how the drawer will draw these GUI parts, sometimes needed to build up elements.
+{
+  public:
+    /*
+    Getting the size of GUI parts only returns a usable result for non-variable parts.
+    For example, the size of a window panel is variable, so don't use that here.
+    But, the size of the button of a slider is fixed, and which it is for this drawer,
+    can be returned here.
+    Sometimes only X or only Y makes sense, e.g. the scrollbar backgrounf of a horizontal
+    scroller has a fixed Y size but a variable X size.
+    */
+    virtual size_t getGUIPartSizeX(GUIPart part) const = 0;
+    virtual size_t getGUIPartSizeY(GUIPart part) const = 0;
+};
+
+
+class IGUIPartDrawer : public IGUIPartGeom
+{
+  public:
+    /*
+    Not all GUI parts are drawn by every function, some require a color parameter, others a text parameter,
+    so the color and text function need to be used for those.
+    NOTE: sometimes x0, y0 are not used by x1, y1 instead (or some other combination), for example this is
+    so for the window resizer and the scrollbarpair-corner, which are at the bottom right instead of the top left
+    and have a fixed size there. but that may depend on the drawer, and best is to always give
+    all 4 x0, y0, x1, y1 to represent the exact rectangle in which you want the part to be drawn.
+    */
+    virtual void drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, const GUIPartMod& mod = GPM_Default) = 0;
+    virtual void drawGUIPartColor(GUIPart part, const ColorRGB& color, int x0, int y0, int x1, int y1, const GUIPartMod& mod = GPM_Default) = 0;
+    virtual void drawGUIPartText(GUIPart part, const std::string& text, int x0, int y0, int x1, int y1, const GUIPartMod& mod = GPM_Default) = 0;
 };
 
 class IGUIInput;
@@ -124,16 +212,10 @@ The handle should become a parameter of the drawGUIPart function.
 If a handle/token points to something a Drawer doesn't understand (it's created by a different type of drawer), it should ignore it and use default style.
 There are also things the GUI element should be able to get in an abstract way from the style, such as, which standard width or height of the element is associated with this style.
 */
-
-class IGUIDrawer : public ADrawer2D, public ITextDrawer //if you use a ADrawer2D implementation for you IGUIDrawer, best is to use composition (not make your subclass inherit from a ADrawer2D subclass)
+class IGUIDrawer : public ADrawer2D, public ITextDrawer, public IGUIPartDrawer //if you use a ADrawer2D implementation for you IGUIDrawer, best is to use composition (not make your subclass inherit from a ADrawer2D subclass)
 {
   public:
     virtual ~IGUIDrawer(){};
-
-    //not all GUI parts use all input parameters! only x0 and y0 are always used.
-    virtual void drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, bool inactive = false) = 0;
-    virtual void drawGUIPartColor(GUIPartColor part, const ColorRGB& color, int x0, int y0, int x1, int y1, bool inactive = false) = 0;
-    virtual void drawGUIPartText(GUIPartText part, const std::string& text, int x0, int y0, int x1, int y1, bool inactive = false) = 0;
     
     //input
     virtual IGUIInput& getInput() = 0;
@@ -143,7 +225,11 @@ class AGUIDrawer : public IGUIDrawer //abstract GUI drawer which already wraps a
 {
   protected:
     virtual IDrawer2D& getDrawer() = 0;
+    virtual const IDrawer2D& getDrawer() const = 0;
     virtual ITextDrawer& getTextDrawer() = 0;
+    virtual const ITextDrawer& getTextDrawer() const = 0;
+    virtual IGUIPartDrawer& getGUIPartDrawer() = 0;
+    virtual const IGUIPartDrawer& getGUIPartDrawer() const = 0;
     
   public:
   
@@ -178,6 +264,12 @@ class AGUIDrawer : public IGUIDrawer //abstract GUI drawer which already wraps a
     virtual void calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font = FONT_Default, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP));
     virtual void drawText(const std::string& text, int x, int y, const Font& font = FONT_Default, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP));
 
+    //not all GUI parts use all input parameters! only x0 and y0 are always used.
+    virtual void drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, const GUIPartMod& mod = GPM_Default);
+    virtual void drawGUIPartColor(GUIPart part, const ColorRGB& color, int x0, int y0, int x1, int y1, const GUIPartMod& mod = GPM_Default);
+    virtual void drawGUIPartText(GUIPart part, const std::string& text, int x0, int y0, int x1, int y1, const GUIPartMod& mod = GPM_Default);
+    virtual size_t getGUIPartSizeX(GUIPart part) const;
+    virtual size_t getGUIPartSizeY(GUIPart part) const;
 };
 
 } //namespace gui

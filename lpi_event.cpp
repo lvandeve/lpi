@@ -21,6 +21,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_event.h"
 #include <cstdlib>
 #include <iostream>
+#include <vector>
 
 
 namespace lpi
@@ -72,7 +73,7 @@ bool Inkeys::operator[](int index)
 }
 
 
-SDL_Event event = {0}; //the events such as input, windows events, ...
+std::vector<SDL_Event> events;
 
 /*
 Gives value of pressed key to inkeys.
@@ -253,68 +254,87 @@ int unicodeKey(double time, double warmupTime, double repTime, KeyState* state)
 {
   if(!state) state = &static_state;
   
-  int asciiChar = 0;
-  if((event.key.keysym.unicode & 0xFF80) == 0)
+  SDL_Event event;
+  bool event_found = false;
+  for(size_t i = 0; i < events.size(); i++)
   {
-    static int sym = -1; //TODO: move this into KeyState?
-    if(event.type == SDL_KEYDOWN) sym = event.key.keysym.unicode;
-    if(event.type == SDL_KEYUP) sym = -1;
-    if(sym >= 0)
+    if((events[i].key.keysym.unicode & 0xFF80) == 0 && (events[i].type == SDL_KEYDOWN || events[i].type == SDL_KEYUP))
     {
-      int inputChar = sym & 0x7F;
-      //handle numpad too, because it's not included in SDL's unicode thingie
-      if(asciiChar == 0)
+      event_found = true;
+      event = events[i];
+      events.erase(events.begin() + i);
+      break;
+    }
+  }
+  
+  int asciiChar = 0;
+
+  static int sym = -1; //TODO: move this into KeyState?
+  if(event_found && event.type == SDL_KEYDOWN)
+  {
+    sym = event.key.keysym.unicode;
+  }
+  if(event_found && event.type == SDL_KEYUP)
+  {
+    sym = -1;
+  }
+  
+  if(sym > 0)
+  {
+    int inputChar = sym & 0x7F;
+    //handle numpad too, because it's not included in SDL's unicode thingie
+    if(asciiChar == 0)
+    {
+      int keyPadTest = event.key.keysym.sym;
+      switch(keyPadTest)
       {
-        int keyPadTest = event.key.keysym.sym;
-        switch(keyPadTest)
-        {
-          case SDLK_KP0: inputChar = '0'; break;
-          case SDLK_KP1: inputChar = '1'; break;
-          case SDLK_KP2: inputChar = '2'; break;
-          case SDLK_KP3: inputChar = '3'; break;
-          case SDLK_KP4: inputChar = '4'; break;
-          case SDLK_KP5: inputChar = '5'; break;
-          case SDLK_KP6: inputChar = '6'; break;
-          case SDLK_KP7: inputChar = '7'; break;
-          case SDLK_KP8: inputChar = '8'; break;
-          case SDLK_KP9: inputChar = '9'; break;
-          case SDLK_KP_PLUS: inputChar = '+'; break;
-          case SDLK_KP_MINUS: inputChar = '-'; break;
-          case SDLK_KP_MULTIPLY: inputChar = '*'; break;
-          case SDLK_KP_DIVIDE: inputChar = '/'; break;
-          case SDLK_KP_PERIOD: inputChar = '.'; break;
-        }
+        case SDLK_KP0: inputChar = '0'; break;
+        case SDLK_KP1: inputChar = '1'; break;
+        case SDLK_KP2: inputChar = '2'; break;
+        case SDLK_KP3: inputChar = '3'; break;
+        case SDLK_KP4: inputChar = '4'; break;
+        case SDLK_KP5: inputChar = '5'; break;
+        case SDLK_KP6: inputChar = '6'; break;
+        case SDLK_KP7: inputChar = '7'; break;
+        case SDLK_KP8: inputChar = '8'; break;
+        case SDLK_KP9: inputChar = '9'; break;
+        case SDLK_KP_PLUS: inputChar = '+'; break;
+        case SDLK_KP_MINUS: inputChar = '-'; break;
+        case SDLK_KP_MULTIPLY: inputChar = '*'; break;
+        case SDLK_KP_DIVIDE: inputChar = '/'; break;
+        case SDLK_KP_PERIOD: inputChar = '.'; break;
       }
+    }
+    
+    //below is the system that prevents typing 100s of times the same char when holding down the key. It uses warmup and rate
+    if(inputChar == state->singlePrevious)
+    {
+      asciiChar = 0;
       
-      //below is the system that prevents typing 100s of times the same char when holding down the key. It uses warmup and rate
-      if(inputChar == state->singlePrevious)
+      //if waited long enough, asciiChar can be set to inputChar anyway!
+      if(time - state->singleKeyTime > warmupTime && !state->singleWarmedUp)
       {
-        asciiChar = 0;
-        
-        //if waited long enough, asciiChar can be set to inputChar anyway!
-        if(time - state->singleKeyTime > warmupTime && !state->singleWarmedUp)
-        {
-          state->singleKeyTime = time;
-          state->singleWarmedUp = true;
-        }
-        else if(time - state->singleKeyTime > repTime && state->singleWarmedUp)
-        {
-          state->singlePrevious = inputChar;
-          asciiChar = inputChar;
-          state->singleKeyTime = time;
-        }
+        state->singleKeyTime = time;
+        state->singleWarmedUp = true;
       }
-      else
+      else if(time - state->singleKeyTime > repTime && state->singleWarmedUp)
       {
         state->singlePrevious = inputChar;
         asciiChar = inputChar;
         state->singleKeyTime = time;
-        state->singleWarmedUp = 0;
       }
-      
     }
-    else state->singlePrevious = 0; //so that you CAN press the same key twice in a row if you release it!
+    else
+    {
+      state->singlePrevious = inputChar;
+      asciiChar = inputChar;
+      state->singleKeyTime = time;
+      state->singleWarmedUp = 0;
+    }
+    
   }
+  else state->singlePrevious = 0; //so that you CAN press the same key twice in a row if you release it!
+
   
   //disable unexpected special symbols except enter and backspace
   if(asciiChar < 32 && asciiChar != 13 && asciiChar != 8) asciiChar = 0; //<32 ones, except enter and backspace
@@ -328,6 +348,7 @@ int unicodeKey(double time, double warmupTime, double repTime, KeyState* state)
 void sleep()
 {
   int done = 0;
+  SDL_Event event = {0};
   while(done == 0)
   {
     while(SDL_PollEvent(&event))
@@ -356,15 +377,26 @@ bool frame(bool quit_if_esc, bool delay) //delay makes CPU have some free time, 
   
   if(quit_if_esc && inkeys[SDLK_ESCAPE]) return false;
   
+  SDL_Event event = {0};
+  
   while(SDL_PollEvent(&event))
   {
     if(event.type == SDL_QUIT) return false;
-    
-    if(event.type == SDL_MOUSEBUTTONDOWN)
+    else if(event.type == SDL_MOUSEBUTTONDOWN)
     {
       if(event.button.button == SDL_BUTTON_WHEELUP) globalMouseWheelUp = true;
       if(event.button.button == SDL_BUTTON_WHEELDOWN) globalMouseWheelDown = true;
     }
+    else events.push_back(event);
+  }
+  
+  static const size_t MAX_EVENTS = 16;
+  
+  if(events.size() > MAX_EVENTS)
+  {
+    std::vector<SDL_Event> events2(MAX_EVENTS);
+    std::copy(events.begin() + events.size() - MAX_EVENTS, events.end(), events2.begin());
+    events.swap(events2);
   }
   
   return true; //the program may continue

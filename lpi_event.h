@@ -30,8 +30,6 @@ lpi_event: SDL events, mouse input and keyboard input
 namespace lpi
 {
 
-extern SDL_Event event;
-
 //like it or not, the mouse interface works with global variables. You can even control them yourself for gui unit tests. That is and stays the interface :)
 extern int globalMouseX;
 extern int globalMouseY;

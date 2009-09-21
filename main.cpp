@@ -65,6 +65,7 @@ gprof > gprof.txt
 #include "lodewav.h"
 #include "lpi_gui_dynamic.h"
 #include "lpi_gui_color.h"
+#include "lpi_guipartdraw_int.h"
 #include "lodepng.h"
 
 #include <vector>
@@ -177,20 +178,20 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   
   lpi::gui::Window w1;
   w1.make(100, 100, 500, 500);
-  w1.addTop();
+  w1.addTop(guidrawer);
   w1.addTitle("Window 1");
-  w1.addCloseButton();
-  w1.addResizer();
+  w1.addCloseButton(guidrawer);
+  w1.addResizer(guidrawer);
   w1.setColor(lpi::RGBA_Red(192));
   c.pushTop(&w1);
 
   lpi::gui::Window w2;
   w2.make(50, 50, 300, 300);
-  w2.addTop();
+  w2.addTop(guidrawer);
   w2.addTitle("Window 2");
-  w2.addCloseButton();
+  w2.addCloseButton(guidrawer);
   w2.setColor(lpi::RGBA_White(224));
-  w2.addResizer();
+  w2.addResizer(guidrawer);
   c.pushTop(&w2);
   
   lpi::gui::Tabs tabs;
@@ -207,19 +208,19 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   w1.pushTopAt(&sound_button, 15, 50);
   
   lpi::gui::Scrollbar hbar;
-  hbar.makeHorizontal(716, 220, 200);
+  hbar.makeHorizontal(716, 220, 200, 100, guidrawer);
   w1.pushTopAt(&hbar, 150, 210);
   
   lpi::gui::Scrollbar vbar;
-  vbar.makeVertical(700, 20, 200);
+  vbar.makeVertical(700, 20, 200, 100, guidrawer);
   w1.pushTopAt(&vbar, 350, 10);
   
   lpi::gui::Slider sli;
-  sli.makeVertical(650, 20, 200);
+  sli.makeVertical(650, 20, 200, 100, guidrawer);
   w1.pushTopAt(&sli, 300, 10, lpi::gui::Sticky(0.5, 0, 0.1, 0, 0.5, sli.getSizeX(), 0.5, 0));
   
   lpi::gui::Slider sli2;
-  sli2.makeSmallHorizontal(650, 20, 200);
+  sli2.makeHorizontal(650, 20, 200, 100, guidrawer);
   w1.pushTopAt(&sli2, 150, 240);
   
 
@@ -253,7 +254,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   dyn.addControl("string", new lpi::gui::DynamicValue<std::string>(&dyn_value2));
   dyn.addControl("boolean", new lpi::gui::DynamicCheckbox(&dyn_value3));
   dyn.addControl("double", new lpi::gui::DynamicValue<double>(&dyn_value4));
-  dyn.addControl("slider", new lpi::gui::DynamicSlider<float>(&dyn_value5, 0, 100));
+  dyn.addControl("slider", new lpi::gui::DynamicSlider<float>(&dyn_value5, 0, 100, guidrawer));
   //dyn.resize(0,0,200,100);
   tabs.getTabContent(1).pushTopAt(&dyn, 10, 20);
   tabs.selectTab(1);
@@ -314,7 +315,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     guidrawer.drawBezier(600,100, 700,100, 750,200, 550,150, lpi::RGB_Lightred);
     guidrawer.drawCircle(600, 400, 110, lpi::ColorRGB(128, 255, 128, 255), false);
     
-    guidrawer.drawTexture(&lpi::gui::builtInTexture[37], 0, 50);
+    //guidrawer.drawTexture(&lpi::gui::builtInTexture[37], 0, 50);
     
     dyn.controlToValue();
     //dyn.valueToControl();
@@ -329,7 +330,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     spawns.draw();
     spawns.handle();
     
-    if(wcb.checked) w1.addScrollbars();
+    if(wcb.checked) w1.addScrollbars(guidrawer);
     else w1.removeScrollbars();
     
     if(sound_button.pressed(lpi::gGUIInput)) lpi::audioPlay(sound);
@@ -344,13 +345,15 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
         lpi::gui::GUIInputSDL input;
         lpi::Drawer2DBuffer drawer;
         lpi::InternalTextDrawer textdrawer;
-        GUIDrawerTest() : textdrawer(lpi::TextureFactory<lpi::TextureGL>(), &drawer){}
-        virtual void drawGUIPart(lpi::gui::GUIPart, int, int, int, int, bool){}
-        virtual void drawGUIPartColor(lpi::gui::GUIPartColor, const lpi::ColorRGB&, int, int, int, int, bool){}
-        virtual void drawGUIPartText(lpi::gui::GUIPartText, const std::string&, int, int, int, int, bool){}
+        lpi::gui::GUIPartDrawerInternal guidrawer;
+        GUIDrawerTest() : textdrawer(lpi::TextureFactory<lpi::TextureBuffer>(), &drawer), guidrawer(lpi::TextureFactory<lpi::TextureBuffer>(), &drawer, &textdrawer){}
         virtual lpi::gui::IGUIInput& getInput() { return input; }
         virtual lpi::IDrawer2D& getDrawer() { return drawer; }
+        virtual const lpi::IDrawer2D& getDrawer() const { return drawer; }
         virtual lpi::ITextDrawer& getTextDrawer() { return textdrawer; }
+        virtual const lpi::ITextDrawer& getTextDrawer() const { return textdrawer; }
+        virtual lpi::gui::IGUIPartDrawer& getGUIPartDrawer() { return guidrawer; }
+        virtual const lpi::gui::IGUIPartDrawer& getGUIPartDrawer() const { return guidrawer; }
       };
       
       GUIDrawerTest d;

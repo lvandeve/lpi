@@ -27,6 +27,15 @@ namespace lpi
 namespace gui
 {
 
+GUIPartMod::GUIPartMod()
+: inactive(false)
+, mouseover(false)
+, mousedown(false)
+{
+}
+
+const GUIPartMod GPM_Default;
+
 size_t AGUIDrawer::getWidth()
 {
   return getDrawer().getWidth();
@@ -141,6 +150,32 @@ void AGUIDrawer::calcTextCharToPos(int& x, int& y, size_t index, const std::stri
 void AGUIDrawer::drawText(const std::string& text, int x, int y, const Font& font, const TextAlign& align)
 {
   getTextDrawer().drawText(text, x, y, font, align);
+}
+
+
+void AGUIDrawer::drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, const GUIPartMod& mod)
+{
+  getGUIPartDrawer().drawGUIPart(part, x0, y0, x1, y1, mod);
+}
+
+void AGUIDrawer::drawGUIPartColor(GUIPart part, const ColorRGB& color, int x0, int y0, int x1, int y1, const GUIPartMod& mod)
+{
+  getGUIPartDrawer().drawGUIPartColor(part, color, x0, y0, x1, y1, mod);
+}
+
+void AGUIDrawer::drawGUIPartText(GUIPart part, const std::string& text, int x0, int y0, int x1, int y1, const GUIPartMod& mod)
+{
+  getGUIPartDrawer().drawGUIPartText(part, text, x0, y0, x1, y1, mod);
+}
+
+size_t AGUIDrawer::getGUIPartSizeX(GUIPart part) const
+{
+  return getGUIPartDrawer().getGUIPartSizeX(part);
+}
+
+size_t AGUIDrawer::getGUIPartSizeY(GUIPart part) const
+{
+  return getGUIPartDrawer().getGUIPartSizeY(part);
 }
 
 } //namespace gui

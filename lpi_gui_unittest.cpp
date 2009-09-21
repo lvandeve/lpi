@@ -145,7 +145,7 @@ void unitTest()
     w.make(0, 0, 100, 100);
     c.pushTopAt(&w, 0, 0);
     
-    w.addTop();
+    w.addTop(dummydrawer);
     c.handle(testinput);c.handle(testinput);
     
     int mx = w.top.getCenterX();
@@ -219,7 +219,7 @@ void unitTest()
     w.make(0, 0, 100, 100);
     c.pushTopAt(&w, 0, 0);
     
-    w.addTop();
+    w.addTop(dummydrawer);
     c.handle(testinput);c.handle(testinput);
     
     int mx = w.top.getCenterX();
@@ -249,7 +249,7 @@ void unitTest()
     w.make(0, 0, 100, 100);
     c.pushTopAt(&w, 0, 0);
     
-    w.addTop();
+    w.addTop(dummydrawer);
     c.handle(testinput);c.handle(testinput);
     
     int mx = w.top.getCenterX();
@@ -426,7 +426,7 @@ void unitTest()
     Container c(dummydrawer);
     Window w;
     w.make(0, 0, 100, 100);
-    w.addTop();
+    w.addTop(dummydrawer);
     c.pushTopAt(&w, 0, 0);
     
     int mx = w.top.getCenterX();
@@ -451,12 +451,12 @@ void unitTest()
     Container c(dummydrawer);
     Window A;
     A.make(0, 0, 100, 100);
-    A.addTop();
+    A.addTop(dummydrawer);
     c.pushTopAt(&A, 0, 0);
     
     Window B;
     B.make(0, 0, 100, 100);
-    B.addTop();
+    B.addTop(dummydrawer);
     c.pushTopAt(&B, 200, 0);
     
     int ax = A.top.getCenterX();
@@ -488,7 +488,7 @@ void unitTest()
     Container c(dummydrawer);
     Window w;
     w.make(0, 0, 100, 100);
-    w.addTop(&lpi::gui::builtInTexture[47], 2, 2, 2); //could cause jump of two pixels when the bug was there
+    w.addTop(dummydrawer); //could cause jump of two pixels when the bug was there
     c.pushTopAt(&w, 0, 0);
     
     int mx = w.top.getCenterX();
@@ -526,11 +526,11 @@ void unitTest()
 
     Window w2;
     w2.make(50, 50, 300, 300);
-    w2.addTop();
+    w2.addTop(dummydrawer);
     w2.addTitle("Window 2");
-    w2.addCloseButton();
+    w2.addCloseButton(dummydrawer);
     w2.setColor(lpi::RGBA_White(192));
-    w2.addResizer();
+    w2.addResizer(dummydrawer);
     c.pushTop(&w2);
     
     Tabs tabs;
@@ -543,10 +543,10 @@ void unitTest()
     
     Window w1;
     w1.make(0, 0, 500, 500);
-    w1.addTop();
+    w1.addTop(dummydrawer);
     w1.addTitle("Window 1");
-    w1.addCloseButton();
-    w1.addResizer();
+    w1.addCloseButton(dummydrawer);
+    w1.addResizer(dummydrawer);
     w1.setColor(lpi::RGBA_Red(192));
     c.pushTop(&w1);
     
@@ -574,11 +574,11 @@ void unitTest()
 
     Window w2;
     w2.make(50, 50, 300, 300);
-    w2.addTop();
+    w2.addTop(dummydrawer);
     w2.addTitle("Window 2");
-    w2.addCloseButton();
+    w2.addCloseButton(dummydrawer);
     w2.setColor(lpi::RGBA_White(192));
-    w2.addResizer();
+    w2.addResizer(dummydrawer);
     c.pushTop(&w2);
     
     Tabs tabs;

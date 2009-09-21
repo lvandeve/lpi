@@ -764,7 +764,7 @@ ScrollElement::ScrollElement()
   element = 0;
 }
 
-void ScrollElement::make(int x, int y, int sizex, int sizey, Element* element)
+void ScrollElement::make(int x, int y, int sizex, int sizey, Element* element, const IGUIPartGeom& geom)
 {
   ic.getElements().clear();
   
@@ -773,7 +773,7 @@ void ScrollElement::make(int x, int y, int sizex, int sizey, Element* element)
   this->setSizeX(sizex);
   this->setSizeY(sizey);
   
-  bars.make(x, y, sizex, sizey);
+  bars.make(x, y, sizex, sizey, 100.0, 100.0, geom);
   bars.disableV();
   bars.disableH();
   addSubElement(&bars, Sticky(0.0, 0, 0.0, 0, 1.0, 0, 1.0, 0));
@@ -902,156 +902,6 @@ bool Group::isInside(int x, int y) const
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//GUIPANEL//////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-/*
-The Panel functions.
-Panel is a class containing a backpanel, but it also shares the Element functions
-*/
-
-Panel::Panel()
-{
-  //this->panel.colorMod = RGB_White;
-  //this->panel.fillColor = RGB_White;
-  this->panel.enableSides = 0;
-  this->panel.enableCenter = 0;
-  this->panel.t00 = &emptyTexture;
-  this->panel.t01 = &emptyTexture;
-  this->panel.t02 = &emptyTexture;
-  this->panel.t10 = &emptyTexture;
-  this->panel.t11 = &emptyTexture;
-  this->panel.t12 = &emptyTexture;
-  this->panel.t20 = &emptyTexture;
-  this->panel.t21 = &emptyTexture;
-  this->panel.t22 = &emptyTexture;
-}
-
-void Panel::makeUntextured(int x, int y, int sizex, int sizey, const ColorRGB& /*fillColor*/)
-{
-  this->x0 = x;
-  this->y0 = y;
-  this->setSizeX(sizex);
-  this->setSizeY(sizey);
-  this->totallyEnable();
-  
-  //this->panel.makeUntextured(fillColor);
-}
-
-void Panel::makeTextured(int x, int y, int sizex, int sizey,
-       const Texture* /*t00*/, const ColorRGB& /*colorMod*/)
-{
-  this->x0 = x;
-  this->y0 = y;
-  this->setSizeX(sizex);
-  this->setSizeY(sizey);
-  this->totallyEnable();
-  
-  //this->panel.makeTextured(t00, colorMod);
-}
-
-void Panel::make(int x, int y, int sizex, int sizey,
-       const GuiSet* set)
-{
-  this->x0 = x;
-  this->y0 = y;
-  this->setSizeX(sizex);
-  this->setSizeY(sizey);
-  this->totallyEnable();
-  
-  this->panel = *set->windowPanel;
-}
-
-//this function should become obsolete after there is a general "moveTo, resize" combo function which is planned to be made
-void Panel::setSize(int x, int y, int sizex, int sizey)
-{
-  this->x0 = x;
-  this->y0 = y;
-  this->setSizeX(sizex);
-  this->setSizeY(sizey);
-}
-
-void Panel::drawWidget(IGUIDrawer& drawer) const
-{
-  panel.draw(drawer, x0, y0, getSizeX(), getSizeY());
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//GUILINE//////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-/*
-Rule is a class containing a BackLine, but it also shares the Element functions
-*/
-
-Rule::Rule()
-{
-  this->line.colorMod = RGB_White;
-  this->line.enableSides = 0;
-  this->line.t0 = &emptyTexture;
-  this->line.t1 = &emptyTexture;
-  this->line.t2 = &emptyTexture;
-}
-
-void Rule::makeHorizontal(int x, int y, int length, const GuiSet* set)
-{
-  this->x0 = x;
-  this->y0 = y;
-  this->setSizeX(length);
-  this->setSizeY(set->hline[0]->getV());
-  this->totallyEnable();
-  
-  this->line.makeHorizontal1(set->hline[0], set->mainColor);
-}
-
-void Rule::makeHorizontal1(int x, int y, int length, Texture* t0, const ColorRGB& colorMod)
-{
-  this->x0 = x;
-  this->y0 = y;
-  this->setSizeX(length);
-  this->setSizeY(t0->getV());
-  this->totallyEnable();
-  
-  this->line.makeHorizontal1(t0, colorMod);
-}
-
-void Rule::makeVertical(int x, int y, int length, const GuiSet* set)
-{
-  this->x0 = x;
-  this->y0 = y;
-  this->setSizeY(length);
-  this->setSizeX(set->vline[0]->getU());
-  this->totallyEnable();
-  
-  this->line.makeVertical1(set->vline[0], set->mainColor);
-}
-
-void Rule::makeVertical1(int x, int y, int length, Texture* t0, const ColorRGB& colorMod)
-{
-  this->x0 = x;
-  this->y0 = y;
-  this->setSizeY(length);
-  this->setSizeX(t0->getU());
-  this->totallyEnable();
-  
-  this->line.makeVertical1(t0, colorMod);
-}
-
-void Rule::setSize(int x, int y, int length)
-{
-  this->x0 = x;
-  this->y0 = y;
-  if(line.direction == H) this->setSizeX(length);
-  else this->setSizeY(length);
-}
-
-void Rule::drawWidget(IGUIDrawer& drawer) const
-{
-  if(line.direction == H) line.draw(drawer, x0, y0, getSizeX());
-  else line.draw(drawer, x0, y0, getSizeY());
-}
-
-////////////////////////////////////////////////////////////////////////////////
 //GUIWINDOW/////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -1096,22 +946,23 @@ int Window::getRelContentStart() const
   return result;
 }
 
-void Window::addCloseButton(int offsetX, int offsetY, const GuiSet* set)
+void Window::addCloseButton(const IGUIPartGeom& geom)
 {
-  int closeX = x1 + offsetX - set->closeButton->getU();
-  int closeY = y0 + offsetY;
-  closeButton.makeImage(closeX, closeY, set->closeButton, set->closeButton, set->closeButton, set->mainColor, set->mouseOverColor, set->mouseDownColor);
+  int closeX = x1 - geom.getGUIPartSizeX(GP_WINDOW_CLOSE); //TODO: give IGUIPartDrawer functions to get hte width and height of some GUI components like this one and use that here.
+  int closeY = y0;
+  closeButton.resize(closeX, closeY, closeX + geom.getGUIPartSizeX(GP_WINDOW_CLOSE), closeY + geom.getGUIPartSizeY(GP_WINDOW_CLOSE));
+  
   closed = 0;
   closeEnabled = 1;
   
   ic.setSticky(&closeButton, Sticky(1.0, -closeButton.getSizeX(), 0.0, 0, 1.0, 0, 0.0, closeButton.getSizeY()), this);
 }
 
-void Window::addResizer(const GuiSet* set, bool overContainer, int offsetX, int offsetY)
+void Window::addResizer(const IGUIPartGeom& geom, bool overContainer)
 {
-  int resizerX = x1 - offsetX - set->resizer->getU();
-  int resizerY = y1 - offsetY - set->resizer->getV();
-  resizer.makeImage(resizerX, resizerY, set->resizer, set->resizer, set->resizer, set->mainColor, set->mouseOverColor, set->mouseDownColor);
+  int resizerX = x1 - geom.getGUIPartSizeX(GP_WINDOW_RESIZER);
+  int resizerY = y1 - geom.getGUIPartSizeY(GP_WINDOW_RESIZER);
+  resizer.resize(resizerX, resizerY, resizerX + geom.getGUIPartSizeX(GP_WINDOW_RESIZER), resizerY + geom.getGUIPartSizeY(GP_WINDOW_RESIZER));
   enableResizer = true;
   ic.setSticky(&resizer, Sticky(1.0, -resizer.getSizeX(), 1.0, -resizer.getSizeY(), 1.0, 0, 1.0, 0), this);
   
@@ -1197,8 +1048,7 @@ void Window::makeTextured(int x, int y, int sizex, int sizey,
   initContainer();
 }
 
-void Window::make(int x, int y, int sizex, int sizey,
-       const GuiSet* /*set*/)
+void Window::make(int x, int y, int sizex, int sizey)
 {
   this->x0 = x;
   this->y0 = y;
@@ -1211,9 +1061,9 @@ void Window::make(int x, int y, int sizex, int sizey,
   initContainer();
 }
 
-void Window::addTop(ITexture* t0, int offsetLeft, int offsetRight, int offsetTop, const ColorRGB& colorMod)
+void Window::addTop(const IGUIPartGeom& geom)
 {
-  top.makeHorizontal1(x0 + offsetLeft, y0 + offsetTop, getSizeX() - offsetLeft - offsetRight, dynamic_cast<Texture*>(t0), colorMod); //TODO: the dynamic cast must go away since only ITexture is allowed here. In fact drawGUIPart of the drawer should be used to draw the window top, instead of managing texture here
+  top.resize(x0, y0, x1, y0 + geom.getGUIPartSizeY(GP_WINDOW_TOP));
   this->enableTop = 1;
   ic.setSticky(&top, Sticky(0.0, 0, 0.0, 0, 1.0, 0, 0.0, top.getSizeY()), this);
   
@@ -1229,11 +1079,11 @@ void Window::initContainer()
 }
 
 //to let the scrollbars work properly, call this AFTER using setContainerBorders, addTop, addResizer and such of the window
-void Window::addScrollbars()
+void Window::addScrollbars(const IGUIPartGeom& geom)
 {
   if(scroll.element) return;
   
-  scroll.make(container.getX0(), container.getY0(), container.getSizeX(), container.getSizeY(), &container);
+  scroll.make(container.getX0(), container.getY0(), container.getSizeX(), container.getSizeY(), &container, geom);
   container.setSizeToElements();
   ic.removeElement(&container); //the scrollbars must control the container now
   addSubElement(&scroll);
@@ -1257,20 +1107,10 @@ void Window::updateScroll()
   scroll.updateBars();
 }
 
-//this function could be obsolete once there's the resize function
-void Window::setSize(int x, int y, int sizex, int sizey)
-{
-  x0 = x;
-  y0 = y;
-  setSizeX(sizex);
-  setSizeY(sizey);
-}
-
 void Window::putInside(int i)
 {
   container.putInside(i);
 }
-
 
 void Window::handleWidget(const IGUIInput& input)
 {
@@ -1296,19 +1136,19 @@ void Window::handleWidget(const IGUIInput& input)
 
 void Window::drawWidget(IGUIDrawer& drawer) const
 {
-  drawer.drawGUIPartColor(GPC_WINDOW_PANEL, colorMod, x0, y0, x1, y1, false);
+  drawer.drawGUIPartColor(GPC_WINDOW_PANEL, colorMod, x0, y0, x1, y1);
   if(enableTop)
   {
-    top.draw(drawer); //draw top bar before the elements, or it'll appear above windows relative to the current window
+    drawer.drawGUIPart(GP_WINDOW_TOP, top.getX0(), top.getY0(), top.getX1(), top.getY1()); //draw top bar before the elements, or it'll appear above windows relative to the current window
     drawer.drawText(title, top.getX0() + titleX, top.getY0() + titleY, titleFont);
   }
   
-  if(closeEnabled) closeButton.draw(drawer);
+  if(closeEnabled) drawer.drawGUIPart(GP_WINDOW_CLOSE, closeButton.getX0(), closeButton.getY0(), closeButton.getX1(), closeButton.getY1());
 
   if(scroll.element) scroll.draw(drawer);
   else container.draw(drawer);
 
-  if(enableResizer) resizer.draw(drawer); //draw this after the container so the resizer is drawn over scrollbars if that is needed
+  if(enableResizer) drawer.drawGUIPart(GP_WINDOW_RESIZER, resizer.getX0(), resizer.getY0(), resizer.getX1(), resizer.getY1()); //draw this after the container so the resizer is drawn over scrollbars if that is needed
 }
 
 void Window::addTitle(const std::string& title, int titleX, int titleY, const Font& titleFont)
@@ -1608,26 +1448,21 @@ void Button::drawWidget(IGUIDrawer& drawer) const
 {
   int style = 0; //0 = normal, 1 = mouseOver, 2 = mouseDown
   
-  if(draw_mouse_button_down_style) style = 2;
-  else if(mouseOver(drawer.getInput())) style = 1;
+  GUIPartMod mod;
+  
+  
+  if(mouseOver(drawer.getInput())) { style = 1; mod.mouseover = true; }
+  if(draw_mouse_button_down_style) { style = 2; mod.mousedown = true; }
   
   int textDownOffset = 0;
   if(style == 2) textDownOffset = 1; //on mouseDown, the text goes down a bit too
   
-  if(enablePanel)
-  {
-    if(style == 0) drawer.drawGUIPart(GP_BUTTON_PANEL, x0, y0, x1, y1);
-    else if(style == 1) drawer.drawGUIPart(GP_BUTTON_OVER_PANEL, x0, y0, x1, y1);
-    else if(style == 2) drawer.drawGUIPart(GP_BUTTON_DOWN_PANEL, x0, y0, x1, y1);
-  }
+  
+  if(enablePanel) drawer.drawGUIPart(GP_BUTTON_PANEL, x0, y0, x1, y1, mod);
   if(enableImage) drawer.drawTexture(image[style], x0 + imageOffsetx, y0 + imageOffsety, imageColor[style]);
   if(enableImage2) drawer.drawTexture(image2[style], x0 + imageOffsetx2, y0 + imageOffsety2, imageColor2[style]);
-  if(enableText && !enablePanel)
-  {
-    if(style == 0) drawer.drawGUIPartText(GPT_TEXT_BUTTON, text, x0, y0, x1, y1);
-    else if(style == 1) drawer.drawGUIPartText(GPT_TEXT_BUTTON_OVER, text, x0, y0, x1, y1);
-    else if(style == 2) drawer.drawGUIPartText(GPT_TEXT_BUTTON_DOWN, text, x0, y0, x1, y1);
-  }
+  if(enableText && !enablePanel) drawer.drawGUIPartText(GPT_TEXT_BUTTON, text, x0, y0, x1, y1, mod);
+  //TODO: write all button texts using the guipartdrawer
   else drawer.drawText(text, x0 + textOffsetx + textDownOffset, y0 + textOffsety + textDownOffset, font[style]);
   
 }
@@ -1684,11 +1519,11 @@ int Scrollbar::getSliderSize() const
 {
   if(direction == V)
   {
-    return getSizeY() - txUp->getV() - txDown->getV() - txScroller->getV(); //scroller length also subtracted from it: the scroller can only move over this distance since it's full width must always be inside the slider length
+    return getSizeY() - buttonUp.getSizeY() - buttonDown.getSizeY() - scroller.getSizeY(); //scroller length also subtracted from it: the scroller can only move over this distance since it's full width must always be inside the slider length
   }
   else
   {
-    return getSizeX() - txUp->getU() - txDown->getU() - txScroller->getU();
+    return getSizeX() - buttonUp.getSizeX() - buttonDown.getSizeX() - scroller.getSizeX();
   }
 }
 
@@ -1696,11 +1531,11 @@ int Scrollbar::getSliderStart() const
 {
   if(direction == V)
   {
-    return txUp->getV();
+    return buttonUp.getSizeY();
   }
   else
   {
-    return txUp->getU();
+    return buttonUp.getSizeX();
   }
 }
 
@@ -1708,34 +1543,36 @@ int Scrollbar::getSliderEnd() const
 {
   if(direction == V)
   {
-    return getSizeY() - txDown->getV();
+    return getSizeY() - buttonDown.getSizeY() ;
   }
   else
   {
-    return getSizeX() - txDown->getU();
+    return getSizeX() - buttonDown.getSizeX() ;
   }
 }
 
-void Scrollbar::init()
+void Scrollbar::init(const IGUIPartGeom& geom)
 {
   if(scrollSize == 0) scrollSize = 1;
 
   if(direction == V)
   {
-    buttonUp.makeImage(x0, y0, txUp, txUpOver, txUpOver, colorMod, colorModOver, colorModDown);
-    buttonDown.makeImage(x0, y1 - txDown->getV(), txDown, txDownOver, txDownOver, colorMod, colorModOver, colorModDown);
-    scroller.makeImage(x0, int(y0 + getSliderStart() + (getSliderSize() * scrollPos) / scrollSize), txScroller, txScrollerOver, txScrollerOver, colorMod, colorModOver, colorModDown);
+    buttonUp.resize(0, 0, geom.getGUIPartSizeX(GP_SCROLLBAR_N), geom.getGUIPartSizeY(GP_SCROLLBAR_N));
+    buttonUp.moveTo(x0, y0);
+    buttonDown.resize(0, 0, geom.getGUIPartSizeX(GP_SCROLLBAR_S), geom.getGUIPartSizeY(GP_SCROLLBAR_S));
+    buttonDown.moveTo(x0, y1 - geom.getGUIPartSizeY(GP_SCROLLBAR_S));
+    scroller.resize(0, 0, geom.getGUIPartSizeX(GP_SCROLLBAR_SCROLLER), geom.getGUIPartSizeY(GP_SCROLLBAR_SCROLLER));
+    scroller.moveTo(x0, int(y0 + getSliderStart() + (getSliderSize() * scrollPos) / scrollSize));
   }
   else
   {
-    buttonUp.makeImage(x0, y0, txUp, txUpOver, txUpOver, colorMod, colorModOver, colorModDown);
-    buttonDown.makeImage(x1 - txDown->getU(), y0, txDown, txDownOver, txDownOver, colorMod, colorModOver, colorModDown);
-    scroller.makeImage(int(x0 + getSliderStart() + (getSliderSize() * scrollPos) / scrollSize), y0, txScroller, txScrollerOver, txScrollerOver, colorMod, colorModOver, colorModDown);
+    buttonUp.resize(0, 0, geom.getGUIPartSizeX(GP_SCROLLBAR_W), geom.getGUIPartSizeY(GP_SCROLLBAR_W));
+    buttonUp.moveTo(x0, y0);
+    buttonDown.resize(0, 0, geom.getGUIPartSizeX(GP_SCROLLBAR_E), geom.getGUIPartSizeY(GP_SCROLLBAR_E));
+    buttonDown.moveTo(x1 - geom.getGUIPartSizeX(GP_SCROLLBAR_E), y0);
+    scroller.resize(0, 0, geom.getGUIPartSizeX(GP_SCROLLBAR_SCROLLER), geom.getGUIPartSizeY(GP_SCROLLBAR_SCROLLER));
+    scroller.moveTo(int(x0 + getSliderStart() + (getSliderSize() * scrollPos) / scrollSize), y0);
   }
-  
-  buttonUp.mouseDownVisualStyle = 1;
-  buttonDown.mouseDownVisualStyle = 1;
-  scroller.mouseDownVisualStyle = 2;
 }
 
 Scrollbar::Scrollbar()
@@ -1743,19 +1580,8 @@ Scrollbar::Scrollbar()
   this->scrollSize = 0;
   this->scrollPos = 0;
   this->scrollSpeed = 0;
-  this->txUp = &emptyTexture;
-  this->txDown = &emptyTexture;
-  this->txScroller = &emptyTexture;
-  this->txBack = &emptyTexture;
-  this->txUpOver = &emptyTexture;
-  this->txDownOver = &emptyTexture;
-  this->txScrollerOver = &emptyTexture;
-  this->colorMod = RGB_White;
-  this->colorModOver = RGB_White;
-  this->colorModDown = RGB_White;
   this->absoluteSpeed = 0;
   this->speedMode = 0;
-  this->enableValue = 0;
   this->forwardedScroll = 0;
   
 //TODO: sticky parameters juist zetten
@@ -1789,80 +1615,52 @@ void Scrollbar::forwardScroll(int scroll)
   forwardedScroll += scroll;
 }
 
-void Scrollbar::showValue(int x, int y, const Font& font, int type)
-{
-  this->valueFont = font;
-  this->valueX = x;
-  this->valueY = y;
-  this->enableValue = type;
-}
-
 void Scrollbar::makeVertical(int x, int y, int length,
-                double scrollSize, double scrollPos, double offset, double scrollSpeed,
-                const GuiSet* set, int speedMode)
+                double scrollSize, const IGUIPartGeom& geom,
+                double scrollPos, double offset, double scrollSpeed,
+                int speedMode)
 {
   this->x0 = x;
   this->y0 = y;
   this->direction = V;
-  this->setSizeX(set->scroller->getU());
+  this->setSizeX(geom.getGUIPartSizeX(GP_SCROLLBAR_VBACK));
   this->setSizeY(length);
   this->scrollSize = scrollSize;
   this->scrollPos = scrollPos;
   this->scrollSpeed = scrollSpeed;
   this->offset = offset;
   
-  this->txUp = set->arrowN;
-  this->txDown = set->arrowS;
-  this->txScroller = set->scroller;
-  this->txBack = set->scrollbarBackground;
-  this->txUpOver = set->arrowN;
-  this->txDownOver = set->arrowS;
-  this->txScrollerOver = set->scroller;
-  this->colorMod = set->mainColor;
-  this->colorModOver = set->mouseOverColor;
-  this->colorModDown = set->mouseDownColor;
-  
   this->absoluteSpeed = scrollSpeed;
   this->speedMode = speedMode;
   
   this->totallyEnable();
   
-  init();
+  init(geom);
   
   if(speedMode == 1) setRelativeScrollSpeed();
 }
 
 void Scrollbar::makeHorizontal(int x, int y, int length,
-                  double scrollSize, double scrollPos, double offset, double scrollSpeed,
-                  const GuiSet* set, int speedMode)
+                  double scrollSize, const IGUIPartGeom& geom,
+                  double scrollPos, double offset, double scrollSpeed,
+                  int speedMode)
 {
   this->x0 = x;
   this->y0 = y;
   this->direction = H;
   this->setSizeX(length);
-  this->setSizeY(set->scroller->getV());
+  this->setSizeY(geom.getGUIPartSizeY(GP_SCROLLBAR_HBACK));
   this->scrollSize = scrollSize;
   this->scrollPos = scrollPos;
   this->scrollSpeed = scrollSpeed;
   this->offset = offset;
-  
-  this->txUp = set->arrowW;
-  this->txDown = set->arrowE;
-  this->txScroller = set->scroller;;
-  this->txBack = set->scrollbarBackground;
-  this->txUpOver = set->arrowW;
-  this->txDownOver = set->arrowE;
-  this->txScrollerOver = set->scroller;;
-  this->colorMod = set->mainColor;
-  this->colorModOver = set->mouseOverColor;
-  this->colorModDown = set->mouseDownColor;
   
   this->absoluteSpeed = scrollSpeed;
   this->speedMode = speedMode;
   
   this->totallyEnable();
   
-  init();
+  init(geom);
   
   if(speedMode == 1) setRelativeScrollSpeed();
 }
@@ -1896,10 +1694,10 @@ void Scrollbar::handleWidget(const IGUIInput& input)
     bool buttonUp_grabbed = buttonUp.mouseGrabbed(input);
     bool buttonDown_grabbed = buttonDown.mouseGrabbed(input);
     if(scroller.mouseGrabbed(input))
-      scrollPos = (scrollSize * (input.mouseY() - y0 - getSliderStart() - txScroller->getV() / 2)) / getSliderSize();
+      scrollPos = (scrollSize * (input.mouseY() - y0 - getSliderStart() - scroller.getSizeY() / 2)) / getSliderSize();
     else if(mouseDownHere(input) && !scroller.mouseGrabbed(input) && !buttonUp_grabbed && !buttonDown_grabbed)
     {
-      scrollPos = (scrollSize * (input.mouseY() - y0 - getSliderStart() - txScroller->getV() / 2)) / getSliderSize();
+      scrollPos = (scrollSize * (input.mouseY() - y0 - getSliderStart() - scroller.getSizeY() / 2)) / getSliderSize();
       scroller.mouseGrab(input);
     }
     if(mouseScrollUp(input)) scrollDir = -3;
@@ -1913,10 +1711,10 @@ void Scrollbar::handleWidget(const IGUIInput& input)
     bool buttonUp_grabbed = buttonUp.mouseGrabbed(input);
     bool buttonDown_grabbed = buttonDown.mouseGrabbed(input);
     if(scroller.mouseGrabbed(input))
-      scrollPos = (scrollSize * (input.mouseX() - x0 - getSliderStart() - txScroller->getU() / 2)) / getSliderSize();
+      scrollPos = (scrollSize * (input.mouseX() - x0 - getSliderStart() - scroller.getSizeX() / 2)) / getSliderSize();
     else if(mouseDownHere(input) && !scroller.mouseGrabbed(input) && !buttonUp_grabbed && !buttonDown_grabbed)
     {
-      scrollPos = (scrollSize * (input.mouseX() - x0 - getSliderStart() - txScroller->getU() / 2)) / getSliderSize();
+      scrollPos = (scrollSize * (input.mouseX() - x0 - getSliderStart() - scroller.getSizeX() / 2)) / getSliderSize();
       scroller.mouseGrab(input);
     }
   }
@@ -1947,26 +1745,19 @@ void Scrollbar::drawWidget(IGUIDrawer& drawer) const
   //in the drawRepeated functions, sizeButton is divided through two, so if the arrow buttons have a few transparent pixels, in one half of the button you see the background through, in the other half not
   if(direction == V)
   {
-    //todo: draw this using drawer.drawGUIPart
-    drawer.drawTextureRepeated(txBack, x0, y0 + getSliderStart(), x1, y0 + getSliderEnd(), colorMod);
+    drawer.drawGUIPart(GP_SCROLLBAR_VBACK, x0, y0 + getSliderStart(), x1, y0 + getSliderEnd());
+    drawer.drawGUIPart(GP_SCROLLBAR_N, buttonUp.getX0(), buttonUp.getY0(), buttonUp.getX1(), buttonUp.getY1());
+    drawer.drawGUIPart(GP_SCROLLBAR_S, buttonDown.getX0(), buttonDown.getY0(), buttonDown.getX1(), buttonDown.getY1());
+
   }
   else
   {
-    //todo: draw this using drawer.drawGUIPart
-    drawer.drawTextureRepeated(txBack, x0 + getSliderStart(), y0, x0 + getSliderEnd(), y1, colorMod);
+    drawer.drawGUIPart(GP_SCROLLBAR_HBACK, x0 + getSliderStart(), y0, x0 + getSliderEnd(), y1);
+    drawer.drawGUIPart(GP_SCROLLBAR_W, buttonUp.getX0(), buttonUp.getY0(), buttonUp.getX1(), buttonUp.getY1());
+    drawer.drawGUIPart(GP_SCROLLBAR_E, buttonDown.getX0(), buttonDown.getY0(), buttonDown.getX1(), buttonDown.getY1());
   }
-  buttonUp.draw(drawer);
-  buttonDown.draw(drawer);
-  if(scrollSize > 0) scroller.draw(drawer);
-  
-  if(enableValue == 1)
-  {
-    drawer.print(getValue(), x0 + valueX, y0 + valueY, valueFont);
-  }
-  else if(enableValue == 2)
-  {
-    drawer.print(int(getValue()), x0 + valueX, y0 + valueY, valueFont);
-  }
+
+  if(scrollSize > 0) drawer.drawGUIPart(GP_SCROLLBAR_SCROLLER, scroller.getX0(), scroller.getY0(), scroller.getX1(), scroller.getY1());
 }
 
 void Scrollbar::setRelativePosition(float position)
@@ -1990,9 +1781,9 @@ void Scrollbar::setRelativeScrollSpeed()
 ScrollbarPair::ScrollbarPair() : venabled(false), henabled(false)
 {
   this->conserveCorner = false;
-  scrollbarGuiSet = &builtInGuiSet;
   addSubElement(&vbar);
   addSubElement(&hbar);
+  addSubElement(&corner);
 }
 
 int ScrollbarPair::getVisiblex() const
@@ -2007,23 +1798,23 @@ int ScrollbarPair::getVisibley() const
   else return y1 - y0;
 }
 
-void ScrollbarPair::make(int x, int y, int sizex, int sizey, double scrollSizeH, double scrollSizeV,
-                         const GuiSet* set)
+void ScrollbarPair::make(int x, int y, int sizex, int sizey, double scrollSizeH, double scrollSizeV, const IGUIPartGeom& geom)
 {
-  scrollbarGuiSet = set;
   this->totallyEnable();
   this->x0 = x;
   this->y0 = y;
   this->x1 = x + sizex;
   this->y1 = y + sizey;
-  this->txCorner = set->scrollBarPairCorner;
+  //TODO: use gui part drawer to draw this
+  //this->txCorner = set->scrollBarPairCorner;
   
-  vbar.makeVertical(x1 - set->arrowN->getU(), y0, sizey - set->arrowE->getV(),
-          scrollSizeV, 0, 0, 1,
-          set, 1);
-  hbar.makeHorizontal(x0, y1 - set->arrowW->getU(), sizex - set->arrowS->getU(),
-          scrollSizeH, 0, 0, 1,
-          set, 1);
+   //TODO: get size from IGUIPartDrawer
+  vbar.makeVertical(x1 - geom.getGUIPartSizeX(GP_SCROLLBAR_VBACK), y0, sizey - geom.getGUIPartSizeY(GP_SCROLLBARPAIR_CORNER),
+          scrollSizeV, geom, 0, 0, 1,
+          1);
+  hbar.makeHorizontal(x0, y1 - geom.getGUIPartSizeX(GP_SCROLLBAR_HBACK), sizex - geom.getGUIPartSizeX(GP_SCROLLBARPAIR_CORNER),
+          scrollSizeH, geom, 0, 0, 1,
+          1);
 
   ic.setSticky(&vbar, Sticky(1.0, -vbar.getSizeX(), 0.0, 0, 1.0, 0, 1.0, 0), this);
   ic.setSticky(&hbar, Sticky(0.0,  0, 1.0, -hbar.getSizeY(), 1.0, 0, 1.0, 0), this);
@@ -2036,9 +1827,7 @@ void ScrollbarPair::disableV()
   venabled = false;
   
   if(henabled)
-  hbar.makeHorizontal(hbar.getX0(), hbar.getY0(), getSizeX() - vbar.getSizeX() * conserveCorner,
-          hbar.scrollSize, hbar.scrollPos, hbar.offset, hbar.scrollSpeed,
-          scrollbarGuiSet, hbar.speedMode);
+  hbar.resize(hbar.getX0(), hbar.getY0(), hbar.getX0() + getSizeX() - vbar.getSizeX() * conserveCorner, hbar.getY1());
 }
 
 void ScrollbarPair::disableH()
@@ -2046,9 +1835,7 @@ void ScrollbarPair::disableH()
   henabled = false;
   
   if(venabled)
-  vbar.makeVertical(vbar.getX0(), vbar.getY0(), getSizeY() - hbar.getSizeY() * conserveCorner,
-          vbar.scrollSize, vbar.scrollPos, vbar.offset, vbar.scrollSpeed,
-          scrollbarGuiSet, vbar.speedMode);
+  vbar.resize(vbar.getX0(), vbar.getY0(), vbar.getX1(), vbar.getY0() + getSizeY() - hbar.getSizeY() * conserveCorner);
 }
 
 void ScrollbarPair::enableV()
@@ -2057,18 +1844,12 @@ void ScrollbarPair::enableV()
   
   if(henabled)
   {
-    vbar.makeVertical(vbar.getX0(), vbar.getY0(), getSizeY() - hbar.getSizeY(),
-              vbar.scrollSize, vbar.scrollPos, vbar.offset, vbar.scrollSpeed,
-              scrollbarGuiSet, vbar.speedMode);
-    hbar.makeHorizontal(hbar.getX0(), hbar.getY0(), getSizeX() - vbar.getSizeX(),
-              hbar.scrollSize, hbar.scrollPos, hbar.offset, hbar.scrollSpeed,
-              scrollbarGuiSet, hbar.speedMode);
+    vbar.resize(vbar.getX0(), vbar.getY0(), vbar.getX1(), vbar.getY0() + getSizeY() - hbar.getSizeY());
+    hbar.resize(hbar.getX0(), hbar.getY0(), hbar.getX0() + getSizeX() - vbar.getSizeX(), hbar.getY1());
   }
   else
   {
-    vbar.makeVertical(vbar.getX0(), vbar.getY0(), getSizeY() - hbar.getSizeY() * conserveCorner,
-              vbar.scrollSize, vbar.scrollPos, vbar.offset, vbar.scrollSpeed,
-              scrollbarGuiSet, vbar.speedMode);
+    vbar.resize(vbar.getX0(), vbar.getY0(), vbar.getX1(), vbar.getY0() + getSizeY() - hbar.getSizeY() * conserveCorner);
   }
 }
 
@@ -2078,18 +1859,12 @@ void ScrollbarPair::enableH()
   
   if(venabled)
   {
-    hbar.makeHorizontal(hbar.getX0(), hbar.getY0(), getSizeX() - vbar.getSizeX(),
-              hbar.scrollSize, hbar.scrollPos, hbar.offset, hbar.scrollSpeed,
-              scrollbarGuiSet, hbar.speedMode);
-    vbar.makeVertical(vbar.getX0(), vbar.getY0(), getSizeY() - hbar.getSizeY(),
-              vbar.scrollSize, vbar.scrollPos, vbar.offset, vbar.scrollSpeed,
-              scrollbarGuiSet, vbar.speedMode);
+    hbar.resize(hbar.getX0(), hbar.getY0(), hbar.getX0() + getSizeX() - vbar.getSizeX(), hbar.getY1());
+    vbar.resize(vbar.getX0(), vbar.getY0(), vbar.getX1(), vbar.getY0() + getSizeY() - hbar.getSizeY());
   }
   else
   {
-    hbar.makeHorizontal(hbar.getX0(), hbar.getY0(), getSizeX() - vbar.getSizeX() * conserveCorner,
-              hbar.scrollSize, hbar.scrollPos, hbar.offset, hbar.scrollSpeed,
-              scrollbarGuiSet, hbar.speedMode);
+    hbar.resize(hbar.getX0(), hbar.getY0(), hbar.getX0() + getSizeX() - vbar.getSizeX() * conserveCorner, hbar.getY1());
   }
 }
 
@@ -2115,18 +1890,26 @@ A simplified version of the scrollbar
 */
 
 Slider::Slider()
+: slidertype(GP_SLIDER_HBUTTON)
 {
   this->visible = 0;
   this->active = 0;
   addSubElement(&slider);
 }
 
-void Slider::makeSmallHorizontal(int x, int y, int length, double scrollSize, const GuiSet* set)
+void Slider::makeSmallHorizontal(int x, int y, int length, double scrollSize, const IGUIPartGeom& geom)
 {
   this->totallyEnable();
+  
+  slidertype = GP_SMALL_SLIDER_HBUTTON;
+  rulertype = GP_SMALL_SLIDER_HBACK;
+  
+  size_t sliderw = geom.getGUIPartSizeX(slidertype);
+  size_t sliderh = geom.getGUIPartSizeY(slidertype);
+  slider.resize(0, 0, sliderw, sliderh);
 
-  int sliderCenter = set->smallSliderH->getV() / 2;
-  int rulerCenter = set->smallSliderHRule->t0->getV() / 2;
+  int sliderCenter = sliderh / 2;
+  int rulerCenter = geom.getGUIPartSizeY(rulertype) / 2;
   int centerPos = sliderCenter;
   if(rulerCenter > sliderCenter) centerPos = rulerCenter;
   
@@ -2136,19 +1919,22 @@ void Slider::makeSmallHorizontal(int x, int y, int length, double scrollSize, co
   this->x0 = x;
   this->y0 = y;
   this->setSizeX(length);
-  this->setSizeY(set->smallSliderH->getV());
-  this->ruler = set->smallSliderHRule;
-  this->slider.makeImage(x0, y0 + centerPos - sliderCenter, set->smallSliderH, set->smallSliderH, set->smallSliderH, set->mainColor, set->mouseOverColor, set->mouseDownColor);
-//TODO: sticky parameters goed zetten
-  slider.mouseDownVisualStyle = 2;
+  this->setSizeY(sliderh);
 }
 
-void Slider::makeHorizontal(int x, int y, int length, double scrollSize, const GuiSet* set)
+void Slider::makeHorizontal(int x, int y, int length, double scrollSize, const IGUIPartGeom& geom)
 {
   this->totallyEnable();
+  
+  slidertype = GP_SLIDER_HBUTTON;
+  rulertype = GP_SLIDER_HBACK;
+  
+  size_t sliderw = geom.getGUIPartSizeX(slidertype);
+  size_t sliderh = geom.getGUIPartSizeY(slidertype);
+  slider.resize(0, 0, sliderw, sliderh);
 
-  int sliderCenter = set->slider->getV() / 2;
-  int rulerCenter = set->sliderHRule->t0->getV() / 2;
+  int sliderCenter = sliderh / 2;
+  int rulerCenter = geom.getGUIPartSizeY(rulertype) / 2;
   int centerPos = sliderCenter;
   if(rulerCenter > sliderCenter) centerPos = rulerCenter;
   
@@ -2158,19 +1944,22 @@ void Slider::makeHorizontal(int x, int y, int length, double scrollSize, const G
   this->x0 = x;
   this->y0 = y;
   this->setSizeX(length);
-  this->setSizeY(set->slider->getV());
-  this->ruler = set->sliderHRule;
-  this->slider.makeImage(x0, y0 + centerPos - sliderCenter, set->slider, set->slider, set->slider, set->mainColor, set->mouseOverColor, set->mouseDownColor);
-//TODO: sticky parameters goed zetten
-  slider.mouseDownVisualStyle = 2;
+  this->setSizeY(sliderh);
 }
 
-void Slider::makeVertical(int x, int y, int length, double scrollSize, const GuiSet* set)
+void Slider::makeVertical(int x, int y, int length, double scrollSize, const IGUIPartGeom& geom)
 {
   this->totallyEnable();
   
-  int sliderCenter = set->slider->getU() / 2;
-  int rulerCenter = set->sliderVRule->t0->getU() / 2;
+  slidertype = GP_SLIDER_VBUTTON;
+  rulertype = GP_SLIDER_VBACK;
+  
+  size_t sliderw = geom.getGUIPartSizeX(slidertype);
+  size_t sliderh = geom.getGUIPartSizeY(slidertype);
+  slider.resize(0, 0, sliderw, sliderh);
+  
+  int sliderCenter =  sliderw / 2;
+  int rulerCenter = geom.getGUIPartSizeX(rulertype) / 2;
   int centerPos = sliderCenter;
   if(rulerCenter > sliderCenter) centerPos = rulerCenter;
   
@@ -2180,13 +1969,7 @@ void Slider::makeVertical(int x, int y, int length, double scrollSize, const Gui
   this->x0 = x;
   this->y0 = y;
   this->setSizeY(length);
-  this->setSizeX(set->slider->getU());
-  this->ruler = set->sliderVRule;
-  this->slider.makeImage(x + centerPos - sliderCenter, y, set->slider, set->slider, set->slider, set->mainColor, set->mouseOverColor, set->mouseDownColor);
-  
-//TODO: sticky parameters goed zetten
-
-  slider.mouseDownVisualStyle = 2;
+  this->setSizeX(sliderw);
 }
 
 //screenPos must be relative to the x or y position of the gui element!!!
@@ -2194,12 +1977,12 @@ double Slider::screenPosToScrollPos(int screenPos)
 {
   if(direction == H)
   {
-    int sliderSize = slider.image[0]->getU();
+    int sliderSize = slider.getSizeX();
     return (scrollSize * (screenPos - sliderSize / 2)) / (getSizeX() - sliderSize);
   }
   else //if(direction == V)
   {
-    int sliderSize = slider.image[0]->getV();
+    int sliderSize = slider.getSizeY();
     return (scrollSize * (screenPos - sliderSize / 2)) / (getSizeY() - sliderSize);
   }
 }
@@ -2209,12 +1992,12 @@ int Slider::scrollPosToScreenPos(double scrollPos)
 {
   if(direction == H)
   {
-    int sliderSize = slider.image[0]->getU();
+    int sliderSize = slider.getSizeX();
     return int(((getSizeX() - sliderSize) * scrollPos) / scrollSize);
   }
   else //if(direction == V)
   {
-    int sliderSize = slider.image[0]->getV();
+    int sliderSize = slider.getSizeY();
     return int(((getSizeY() - sliderSize) * scrollPos) / scrollSize);
   }
 }
@@ -2223,21 +2006,13 @@ void Slider::drawWidget(IGUIDrawer& drawer) const
 {
   if(direction == H)
   {
-    int rulerCenter = ruler->t0->getV() / 2;
-    int centerPos = slider.getRelCenterY();
-    if(rulerCenter > centerPos) centerPos = rulerCenter;
-    
-    ruler->draw(drawer, x0, y0 + centerPos - rulerCenter, getSizeX());
-    slider.draw(drawer);
+    drawer.drawGUIPart(rulertype, x0, y0, x1, y1);
+    drawer.drawGUIPart(slidertype, slider.getX0(), slider.getY0(), slider.getX1(), slider.getY1());
   }
   else //if(direction == V)
   {
-    int rulerCenter = ruler->t0->getU() / 2;
-    int centerPos = slider.getRelCenterX();
-    if(rulerCenter > centerPos) centerPos = rulerCenter;
-    
-    ruler->draw(drawer, x0 + centerPos - rulerCenter, y0, getSizeY());
-    slider.draw(drawer);
+    drawer.drawGUIPart(rulertype, x0, y0, x1, y1);
+    drawer.drawGUIPart(slidertype, slider.getX0(), slider.getY0(), slider.getX1(), slider.getY1());
   }
 }
 
@@ -2245,9 +2020,9 @@ void Slider::handleWidget(const IGUIInput& input)
 {
   if(direction == H)
   {
-    int rulerCenter = ruler->t0->getV() / 2;
+    /*int rulerCenter = ruler->t0->getV() / 2;
     int centerPos = slider.getRelCenterY();
-    if(rulerCenter > centerPos) centerPos = rulerCenter;
+    if(rulerCenter > centerPos) centerPos = rulerCenter;*/
     //int sliderSize = slider.texture1->getU();
     
     if(slider.mouseGrabbed(input)) scrollPos = screenPosToScrollPos(mouseGetRelPosX(input));
@@ -2264,9 +2039,9 @@ void Slider::handleWidget(const IGUIInput& input)
   }
   else //if(direction == V)
   {
-    int rulerCenter = ruler->t0->getV() / 2;
+    /*int rulerCenter = ruler->t0->getV() / 2;
     int centerPos = slider.getRelCenterX();
-    if(rulerCenter > centerPos) centerPos = rulerCenter;
+    if(rulerCenter > centerPos) centerPos = rulerCenter;*/
     //int sliderSize = slider.texture1->getV();
     
     if(slider.mouseGrabbed(input)) scrollPos = screenPosToScrollPos(mouseGetRelPosY(input));
@@ -2303,24 +2078,6 @@ void Slider::setRelValue(double value)
   scrollPos = scrollSize * value;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//          ////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-void Invisible::make(int x0, int y0, int x1, int y1)
-{
-  this->x0 = x0;
-  this->y0 = y0;
-  this->x1 = x1;
-  this->y1 = y1;
-  this->active = true;
-  this->visible = true;
-}
-
-void Invisible::drawWidget(IGUIDrawer& /*drawer*/) const
-{
-  //intentionally do nothing, because this is invisible
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 //GUICHECKBOX///////////////////////////////////////////////////////////////////
@@ -2380,28 +2137,28 @@ void Checkbox::addFrontImage(const ITexture* texture)
   addFrontImage(texture, texture, texture, texture, colorMod[0], colorMod[1], colorMod[2], colorMod[3]);
 }
 
-void Checkbox::make(int x, int y, bool checked, const GuiSet* set, int toggleOnMouseUp)
+void Checkbox::make(int x, int y, bool checked, int toggleOnMouseUp)
 {
   this->x0 = x;
   this->y0 = y;
   this->checked = checked;
-  this->texture[0] = set->checkBox[0];
+  /*this->texture[0] = set->checkBox[0];
   this->texture[1] = set->checkBox[0];
   this->texture[2] = set->checkBox[1];
   this->texture[3] = set->checkBox[1];
   this->colorMod[0] = set->mainColor;
   this->colorMod[1] = set->mouseOverColor;
   this->colorMod[2] = set->mainColor;
-  this->colorMod[3] = set->mouseOverColor;
-  this->setSizeX(set->checkBox[0]->getU());
-  this->setSizeY(set->checkBox[0]->getV());
+  this->colorMod[3] = set->mouseOverColor;*/
+  this->setSizeX(/*set->checkBox[0]->getU()*/16); //TODO: get size from IGUIPartDrawer
+  this->setSizeY(/*set->checkBox[0]->getV()*/16); //TODO: get size from IGUIPartDrawer
   this->toggleOnMouseUp = toggleOnMouseUp;
   this->totallyEnable();
   
   positionText();
 }
 
-void Checkbox::makeSmall(int x, int y, bool checked, const GuiSet* set, int toggleOnMouseUp)
+void Checkbox::makeSmall(int x, int y, bool checked, int toggleOnMouseUp)
 {
   this->x0 = x;
   this->y0 = y;
@@ -2410,12 +2167,12 @@ void Checkbox::makeSmall(int x, int y, bool checked, const GuiSet* set, int togg
   this->texture[1] = set->smallCheckBox[0];
   this->texture[2] = set->smallCheckBox[1];
   this->texture[3] = set->smallCheckBox[1];*/
-  this->colorMod[0] = set->mainColor;
+  /*this->colorMod[0] = set->mainColor;
   this->colorMod[1] = set->mouseOverColor;
   this->colorMod[2] = set->mainColor;
-  this->colorMod[3] = set->mouseOverColor;
-  this->setSizeX(set->smallCheckBox[0]->getU());
-  this->setSizeY(set->smallCheckBox[0]->getV());
+  this->colorMod[3] = set->mouseOverColor;*/
+  this->setSizeX(/*set->smallCheckBox[0]->getU()*/12); //TODO: get size from IGUIPartDrawer
+  this->setSizeY(/*set->smallCheckBox[0]->getV()*/12); //TODO: get size from IGUIPartDrawer
   this->toggleOnMouseUp = toggleOnMouseUp;
   this->totallyEnable();
   
@@ -2504,14 +2261,12 @@ BulletList::BulletList()
   this->visible = 0;
   this->lastChecked = -1;
   
-  this->prototype.make(0, 0, 0, &builtInGuiSet, 1);
-  this->prototype.setTexturesAndColors(builtInGuiSet.bullet[0], builtInGuiSet.bullet[1], builtInGuiSet.mainColor, builtInGuiSet.mainColor);
+  this->prototype.make(0, 0, 0, 1);
 }
 
-void BulletList::make(int x, int y, unsigned long amount, int xDiff, int yDiff, const GuiSet* set)
+void BulletList::make(int x, int y, unsigned long amount, int xDiff, int yDiff)
 {
-  this->prototype.make(0, 0, 0, set, 1);
-  this->prototype.setTexturesAndColors(set->bullet[0], set->bullet[1], set->mainColor, set->mainColor);
+  this->prototype.make(0, 0, 0, 1);
   
   this->x0 = x;
   this->y0 = y;
@@ -2534,11 +2289,12 @@ void BulletList::make(int x, int y, unsigned long amount, int xDiff, int yDiff, 
   this->setSizeY(amount * yDiff + prototype.getSizeY());
 }
 
-void BulletList::make(int x, int y, unsigned long amount, int xDiff, int yDiff, unsigned long amountx, const GuiSet* set)
+void BulletList::make(int x, int y, unsigned long amount, int xDiff, int yDiff, unsigned long amountx)
 {
   if(amountx < 1) amountx = 1;
-  this->prototype.make(0, 0, 0, set, 1);
-  this->prototype.setTexturesAndColors(set->bullet[0], set->bullet[1], set->mainColor, set->mainColor);
+  this->prototype.make(0, 0, 0, 1);
+  //todo: use guidarwer to draw this
+  //this->prototype.setTexturesAndColors(set->bullet[0], set->bullet[1], set->mainColor, set->mainColor);
   
   this->x0 = x;
   this->y0 = y;

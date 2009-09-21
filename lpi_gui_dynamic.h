@@ -141,14 +141,14 @@ class DynamicSlider : public TDymamicPageControl<T>
     T valmax;
     T valmin;
     
-    void ctor(T valmin, T valmax)
+    void ctor(T valmin, T valmax, const IGUIPartGeom& geom)
     {
       this->valmin = valmin;
       this->valmax = valmax;
       static const int TEXTSIZE = 64;
       this->resize(0, 0, TEXTSIZE * 2, 20);
       
-      slider.makeSmallHorizontal(0, 0, this->getSizeX() - TEXTSIZE, 1.0);
+      slider.makeSmallHorizontal(0, 0, this->getSizeX() - TEXTSIZE, 1.0, geom);
       slider.move(0, (this->getSizeY() - slider.getSizeY()) / 2);
       this->addSubElement(&slider, Sticky(0.0, 0, 0.5, -slider.getSizeY() / 2, 1.0, -TEXTSIZE, 0.5, slider.getSizeY() / 2));
       
@@ -173,15 +173,15 @@ class DynamicSlider : public TDymamicPageControl<T>
   
   public:
   
-    DynamicSlider()
+    DynamicSlider(const IGUIPartGeom& geom)
     {
-      ctor(0.0, 1.0);
+      ctor(0.0, 1.0, geom);
     }
     
-    DynamicSlider(T* value, T valmin, T valmax)
+    DynamicSlider(T* value, T valmin, T valmax, const IGUIPartGeom& geom)
     {
       TDymamicPageControl<T>::bind = value;
-      ctor(valmin, valmax);
+      ctor(valmin, valmax, geom);
       setValue(value);
     }
   
