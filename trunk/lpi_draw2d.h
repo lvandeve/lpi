@@ -67,6 +67,7 @@ class IDrawer2D
     
     virtual void drawRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled) = 0;
     virtual void drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled) = 0;
+    //drawQuad: the points must be given in counter-clockwise direction
     virtual void drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color, bool filled) = 0;
     virtual void drawEllipse(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled) = 0;
     virtual void drawEllipseCentered(int x, int y, int radiusx, int radiusy, const ColorRGB& color, bool filled) = 0;
@@ -79,6 +80,7 @@ class IDrawer2D
     
     ///gradient shapes
     
+    //drawGradientQuad: the points must be given in counter-clockwise direction
     virtual void drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3) = 0;
     //todo: gradientLine, gradientTriangle, gradientCircle and gradientEllipse
     

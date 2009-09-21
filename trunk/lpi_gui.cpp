@@ -1140,7 +1140,7 @@ void Window::drawWidget(IGUIDrawer& drawer) const
   if(enableTop)
   {
     drawer.drawGUIPart(GP_WINDOW_TOP, top.getX0(), top.getY0(), top.getX1(), top.getY1()); //draw top bar before the elements, or it'll appear above windows relative to the current window
-    drawer.drawText(title, top.getX0() + titleX, top.getY0() + titleY, titleFont);
+    drawer.drawGUIPartText(GPT_WINDOW_TITLE, title, top.getX0(), top.getY0(), top.getX1(), top.getY1());
   }
   
   if(closeEnabled) drawer.drawGUIPart(GP_WINDOW_CLOSE, closeButton.getX0(), closeButton.getY0(), closeButton.getX1(), closeButton.getY1());
@@ -2565,7 +2565,7 @@ void Tabs::drawWidget(IGUIDrawer& drawer) const
       drawer.drawGUIPart(GP_TAB_SELECTED, tabs[i]->getX0(), tabs[i]->getY0(), tabs[i]->getX1(), tabs[i]->getY1());
     else
       drawer.drawGUIPart(GP_TAB_UNSELECTED, tabs[i]->getX0(), tabs[i]->getY0(), tabs[i]->getX1(), tabs[i]->getY1());
-    drawer.drawText(tabs[i]->name, tabs[i]->getCenterX(), tabs[i]->getCenterY(), FONT_Black, TextAlign(HA_CENTER, VA_TOP));
+    drawer.drawText(tabs[i]->name, tabs[i]->getCenterX(), tabs[i]->getCenterY(), FONT_Black, TextAlign(HA_CENTER, VA_CENTER));
     
     tabs[i]->container.draw(drawer);
   }

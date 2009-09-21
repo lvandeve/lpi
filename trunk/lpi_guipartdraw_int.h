@@ -179,6 +179,7 @@ struct GuiSet //GuiSet is a bit of a LEGACY lpi concept. Currently it's just use
   
   Font panelButtonFont[3];
   Font textButtonFont[3];
+  Font windowTopFont;
 };
 
 class GUIPartDrawerInternal : public IGUIPartDrawer

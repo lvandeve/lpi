@@ -32,13 +32,35 @@ namespace lpi
 namespace
 {
 
-void pset(unsigned char* buffer, int buffer_w, int x, int y, const ColorRGB& color)
+void pset(unsigned char* buffer, size_t bufferpos, const ColorRGB& color)
 {
-  size_t bufferPos = 4 * buffer_w * y + 4 * x;
-  buffer[bufferPos + 0] = color.r;
+  ///Opaque
+  /*buffer[bufferPos + 0] = color.r;
   buffer[bufferPos + 1] = color.g;
   buffer[bufferPos + 2] = color.b;
-  buffer[bufferPos + 3] = color.a;
+  buffer[bufferPos + 3] = color.a;*/
+  
+  ///Alpha Channeled
+  const unsigned short ccr = color.r;
+  const unsigned short ccg = color.g;
+  const unsigned short ccb = color.b;
+  const unsigned short cca = color.a;
+  const unsigned short cca1 = 256 - cca;
+    
+  const unsigned short orr = buffer[bufferpos + 0];
+  const unsigned short org = buffer[bufferpos + 1];
+  const unsigned short orb = buffer[bufferpos + 2];
+  const unsigned short ora = buffer[bufferpos + 3];
+  
+  buffer[bufferpos + 0] = ((orr * cca1) + (ccr * cca)) / 256;
+  buffer[bufferpos + 1] = ((org * cca1) + (ccg * cca)) / 256;
+  buffer[bufferpos + 2] = ((orb * cca1) + (ccb * cca)) / 256;
+  buffer[bufferpos + 3] = ora > cca ? ora : cca; //not really correct but good enough for now.
+}
+
+void pset(unsigned char* buffer, int buffer_w, int x, int y, const ColorRGB& color)
+{
+  pset(buffer, 4 * buffer_w * y + 4 * x, color);
 }
 
 void psetClipped(unsigned char* buffer, int buffer_w, const ADrawer2DBuffer::Clip& c, int x, int y, const ColorRGB& color)
@@ -52,13 +74,15 @@ void horLine(unsigned char* buffer, int buffer_w, int buffer_h, int y, int x1, i
   if(x2 < x1) std::swap(x1, x2); //swap x1 and x2 because x1 must be the leftmost endpoint
   if(x2 < 0 || x1 > buffer_w - 1 || y < 0 || y > buffer_h - 1) return; //no single point of the line is on screen
   
+  int bufferpos = 4 * buffer_w * y;
   for(int x = x1; x <= x2; x++)
   {
-    int bufferPos = 4 * buffer_w * y + 4 * x;
-    buffer[bufferPos + 0] = color.r;
-    buffer[bufferPos + 1] = color.g;
-    buffer[bufferPos + 2] = color.b;
-    buffer[bufferPos + 3] = color.a;
+    /*buffer[bufferpos + 0] = color.r;
+    buffer[bufferpos + 1] = color.g;
+    buffer[bufferpos + 2] = color.b;
+    buffer[bufferpos + 3] = color.a;*/
+    pset(buffer, bufferpos, color);
+    bufferpos++;
   }
 }
 
@@ -70,11 +94,13 @@ void verLine(unsigned char* buffer, int buffer_w, int buffer_h, int x, int y1, i
   
   for(int y = y1; y <= y2; y++)
   {
-    int bufferPos = 4 * buffer_w * y + 4 * x;
-    buffer[bufferPos + 0] = color.r;
-    buffer[bufferPos + 1] = color.g;
-    buffer[bufferPos + 2] = color.b;
-    buffer[bufferPos + 3] = color.a;
+    int bufferpos = 4 * buffer_w * y + 4 * x;
+    /*buffer[bufferpos + 0] = color.r;
+    buffer[bufferpos + 1] = color.g;
+    buffer[bufferpos + 2] = color.b;
+    buffer[bufferpos + 3] = color.a;*/
+    pset(buffer, bufferpos, color);
+    bufferpos++;
   }
 }
 
@@ -470,10 +496,71 @@ void ADrawer2DBuffer::drawRectangle(int x0, int y0, int x1, int y1, const ColorR
   }
 }
 
+void ADrawer2DBuffer::drawGradientTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2)
+{
+  Vector2 a(x0, y0);
+  Vector2 b(x1, y1);
+  Vector2 c(x2, y2);
+
+  ColorRGB colora = color0;
+  ColorRGB colorb = color1;
+  ColorRGB colorc = color2;
+  if(b.y < a.y) { std::swap(a, b); std::swap(colora, colorb); }
+  if(c.y < a.y) { std::swap(a, c); std::swap(colora, colorc); }
+  if(c.y < b.y) { std::swap(b, c); std::swap(colorb, colorc); }
+
+  double stepxab = (b.x - a.x) / (b.y - a.y);
+  double stepxac = (c.x - a.x) / (c.y - a.y);
+  double stepxbc = (c.x - b.x) / (c.y - b.y);
+  
+  double ystart = a.y < 0.0 ? 0.0 : a.y;
+  double yend = c.y > h ? h : c.y;
+  
+  for(double y = (int)ystart; y < yend; y++) //it's important that the x and y of every triangle starts at same fractional part (without, there are ugly pixels on the side and seams between touching triangles are visible), hence the (int) conversion.
+  {
+    double x0, x1;
+    if(y < b.y)
+    {
+      x0 = a.x + (y - a.y) * stepxab;
+      x1 = a.x + (y - a.y) * stepxac;
+    }
+    else
+    {
+      x0 = b.x + (y - b.y) * stepxbc;
+      x1 = a.x + (y - a.y) * stepxac;
+    }
+    
+    if(x1 < x0) std::swap(x0, x1);
+    if(x0 < 0.0) x0 = 0.0;
+    if(x1 > w) x1 = w;
+    x0 = (int)x0; //it's important that the x and y of every triangle starts at same fractional part (without, there are ugly pixels on the side and seams between touching triangles are visible), hence the (int) conversion.
+    
+    //instead of doing the barycentric calculation for every x, do it only for begin and end and then step linearly
+    double alpha, beta, gamma;
+    double alpha2, beta2, gamma2;
+    barycentric(alpha, beta, gamma, a, b, c,  Vector2(x0, y));
+    barycentric(alpha2, beta2, gamma2, a, b, c,  Vector2(x1, y));
+    double stepalphax = (alpha2 - alpha) / (x1 - x0);
+    double stepbetax = (beta2 - beta) / (x1 - x0);
+    double stepgammax = (gamma2 - gamma) / (x1 - x0);
+    
+    for(double x = (int)x0; x < x1; x++)
+    {
+      if(alpha >= 0.0 && beta >= 0.0 && gamma >= 0.0) //pixel inside triangle
+      {
+        ColorRGB color = alpha * colora + beta * colorb + gamma * colorc;
+        pset(buffer, w, (int)x, (int)y, color);
+      }
+      
+      alpha += stepalphax;
+      beta += stepbetax;
+      gamma += stepgammax;
+    }
+  }
+}
+
 void ADrawer2DBuffer::drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled)
 {
-  (void)x0; (void)y0; (void)x1; (void)y1; (void)x2; (void)y2; (void)color; (void)filled;
-  //TODO!
   if(filled)
   {
     //not so super great implementation for this plain-colored triangle, but will fit nicely in a drawGradientTriangle function later thanks to the barycentric coordinates
@@ -576,9 +663,12 @@ void ADrawer2DBuffer::drawEllipseCentered(int x, int y, int radiusx, int radiusy
 
 void ADrawer2DBuffer::drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3)
 {
-  (void)x0; (void)y0; (void)x1; (void)y1; (void)x2; (void)y2; (void)x3; (void)y3; (void)color0; (void)color1; (void)color2; (void)color3;
-  //TODO!
-  drawQuad(x0, y0, x1, y1, x2, y2, x3, y3, color0, true); //very lame temporary implementation - no gradient at all...
+  //(void)x0; (void)y0; (void)x1; (void)y1; (void)x2; (void)y2; (void)x3; (void)y3; (void)color0; (void)color1; (void)color2; (void)color3;
+  ////TODO!
+  //drawQuad(x0, y0, x1, y1, x2, y2, x3, y3, color0, true); //very lame temporary implementation - no gradient at all...
+  
+  drawGradientTriangle(x0, y0, x1, y1, x3, y3, color0, color1, color3);
+  drawGradientTriangle(x1, y1, x2, y2, x3, y3, color1, color2, color3);
 }
 
 bool ADrawer2DBuffer::supportsTexture(ITexture* texture)
@@ -604,9 +694,12 @@ ITexture* ADrawer2DBuffer::createTexture(ITexture* texture)
     
 void ADrawer2DBuffer::drawTexture(const ITexture* texture, int x, int y, const ColorRGB& colorMod)
 {
-  (void)colorMod; //TODO: use the colorMod if it's not white
+  const unsigned short cr = colorMod.r;
+  const unsigned short cg = colorMod.g;
+  const unsigned short cb = colorMod.b;
+  const unsigned short ca = colorMod.a;
   
-  const unsigned char* tbuffer = texture->getBuffer();
+  const unsigned char* tb = texture->getBuffer();
   size_t tu = texture->getU();
   size_t tv = texture->getV();
   size_t tu2 = texture->getU2();
@@ -623,13 +716,24 @@ void ADrawer2DBuffer::drawTexture(const ITexture* texture, int x, int y, const C
   for(int tx = x0; tx < x1; tx++)
   for(int ty = y0; ty < y1; ty++)
   {
-    int index = (y + ty) * w * 4 + (x + tx) * 4;
-    int tindex = ty * tu2 * 4 + tx * 4;
-    //TODO: use the alpha channel of the texture for alpha blending the RGB, instead of copying it
-    buffer[index + 0] = tbuffer[tindex + 0];
-    buffer[index + 1] = tbuffer[tindex + 1];
-    buffer[index + 2] = tbuffer[tindex + 2];
-    buffer[index + 3] = tbuffer[tindex + 3];
+    int bufferpos = (y + ty) * w * 4 + (x + tx) * 4;
+    int tbufferpos = ty * tu2 * 4 + tx * 4;
+
+    const unsigned short ccr = (tb[tbufferpos + 0] * cr) / 256;
+    const unsigned short ccg = (tb[tbufferpos + 1] * cg) / 256;
+    const unsigned short ccb = (tb[tbufferpos + 2] * cb) / 256;
+    const unsigned short cca = (tb[tbufferpos + 3] * ca) / 256;
+    const unsigned short cca1 = 256 - cca;
+    
+    const unsigned short orr = buffer[bufferpos + 0];
+    const unsigned short org = buffer[bufferpos + 1];
+    const unsigned short orb = buffer[bufferpos + 2];
+    const unsigned short ora = buffer[bufferpos + 3];
+      
+    buffer[bufferpos + 0] = ((orr * cca1) + (ccr * cca)) / 256;
+    buffer[bufferpos + 1] = ((org * cca1) + (ccg * cca)) / 256;
+    buffer[bufferpos + 2] = ((orb * cca1) + (ccb * cca)) / 256;
+    buffer[bufferpos + 3] = ora > cca ? ora : cca; //not really correct but good enough for now.
   }
 }
 
@@ -641,11 +745,12 @@ void ADrawer2DBuffer::drawTextureSized(const ITexture* texture, int x, int y, si
 
 void ADrawer2DBuffer::drawTextureRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, const ColorRGB& colorMod)
 {
-  //TODO: use colorMod and alpha channel
-  
   lpi::clipRect(x0, y0, x1, y1, x0, y0, x1, y1, clip.x0, clip.y0, clip.x1, clip.y1);
+  const unsigned short cr = colorMod.r;
+  const unsigned short cg = colorMod.g;
+  const unsigned short cb = colorMod.b;
+  const unsigned short ca = colorMod.a;
   
-  unsigned char* b = buffer;
   const unsigned char* tb = texture->getBuffer();
   
     
@@ -656,10 +761,21 @@ void ADrawer2DBuffer::drawTextureRepeated(const ITexture* texture, int x0, int y
       int bufferpos = 4 * (y * w + x);
       int tbufferpos = 4 * (ty * texture->getU2() + tx);
       
-      b[bufferpos + 0] = (tb[tbufferpos + 0] * colorMod.r) / 256;
-      b[bufferpos + 1] = (tb[tbufferpos + 1] * colorMod.g) / 256;
-      b[bufferpos + 2] = (tb[tbufferpos + 2] * colorMod.b) / 256;
-      b[bufferpos + 3] = (tb[tbufferpos + 3] * colorMod.a) / 256;
+      const unsigned short ccr = (tb[tbufferpos + 0] * cr) / 256;
+      const unsigned short ccg = (tb[tbufferpos + 1] * cg) / 256;
+      const unsigned short ccb = (tb[tbufferpos + 2] * cb) / 256;
+      const unsigned short cca = (tb[tbufferpos + 3] * ca) / 256;
+      const unsigned short cca1 = 256 - cca;
+      
+      const unsigned short orr = buffer[bufferpos + 0];
+      const unsigned short org = buffer[bufferpos + 1];
+      const unsigned short orb = buffer[bufferpos + 2];
+      const unsigned short ora = buffer[bufferpos + 3];
+      
+      buffer[bufferpos + 0] = ((orr * cca1) + (ccr * cca)) / 256;
+      buffer[bufferpos + 1] = ((org * cca1) + (ccg * cca)) / 256;
+      buffer[bufferpos + 2] = ((orb * cca1) + (ccb * cca)) / 256;
+      buffer[bufferpos + 3] = ora > cca ? ora : cca; //not really correct but good enough for now.
 
       tx++;
       if(tx >= (int)texture->getU()) tx = 0;
