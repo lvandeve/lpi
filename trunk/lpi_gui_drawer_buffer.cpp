@@ -21,11 +21,21 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include <iostream>
 
 #include "lpi_gui_drawer_buffer.h"
+#include "lpi_texture_buffer.h"
 
 namespace lpi
 {
 namespace gui
 {
+
+GUIDrawerBuffer::GUIDrawerBuffer() : textdrawer(TextureFactory<TextureBuffer>(), &drawer), guidrawer(TextureFactory<TextureBuffer>(), &drawer, &textdrawer){}
+IGUIInput& GUIDrawerBuffer::getInput() { return input; }
+IDrawer2D& GUIDrawerBuffer::getDrawer() { return drawer; }
+const IDrawer2D& GUIDrawerBuffer::getDrawer() const { return drawer; }
+ITextDrawer& GUIDrawerBuffer::getTextDrawer() { return textdrawer; }
+const ITextDrawer& GUIDrawerBuffer::getTextDrawer() const { return textdrawer; }
+IGUIPartDrawer& GUIDrawerBuffer::getGUIPartDrawer() { return guidrawer; }
+const IGUIPartDrawer& GUIDrawerBuffer::getGUIPartDrawer() const { return guidrawer; }
 
 } //namespace gui
 } //namespace lpi

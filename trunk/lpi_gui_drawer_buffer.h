@@ -25,8 +25,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_draw2d_buffer.h"
 #include "lpi_color.h"
 #include "lpi_texture.h"
-#include "lpi_text.h"
-#include "lpi_text_drawer.h"
+#include "lpi_text_drawer_int.h"
 #include "lpi_gui_input_sdl.h"
 #include "lpi_guipartdraw_int.h"
 
@@ -36,21 +35,22 @@ namespace gui
 {
 
   //TODO: implement these functions in the .cpp file instead of here
-  class GUIDrawerBuffer : public lpi::gui::AGUIDrawer
+  class GUIDrawerBuffer : public AGUIDrawer
   {
+    private:
+      GUIInputSDL input;
+      Drawer2DBuffer drawer;
+      InternalTextDrawer textdrawer;
+      GUIPartDrawerInternal guidrawer;
     public:
-    lpi::gui::GUIInputSDL input;
-    lpi::Drawer2DBuffer drawer;
-    lpi::InternalTextDrawer textdrawer;
-    lpi::gui::GUIPartDrawerInternal guidrawer;
-    GUIDrawerBuffer() : textdrawer(lpi::TextureFactory<lpi::TextureBuffer>(), &drawer), guidrawer(lpi::TextureFactory<lpi::TextureBuffer>(), &drawer, &textdrawer){}
-    virtual lpi::gui::IGUIInput& getInput() { return input; }
-    virtual lpi::IDrawer2D& getDrawer() { return drawer; }
-    virtual const lpi::IDrawer2D& getDrawer() const { return drawer; }
-    virtual lpi::ITextDrawer& getTextDrawer() { return textdrawer; }
-    virtual const lpi::ITextDrawer& getTextDrawer() const { return textdrawer; }
-    virtual lpi::gui::IGUIPartDrawer& getGUIPartDrawer() { return guidrawer; }
-    virtual const lpi::gui::IGUIPartDrawer& getGUIPartDrawer() const { return guidrawer; }
+      GUIDrawerBuffer();
+      virtual IGUIInput& getInput();
+      virtual IDrawer2D& getDrawer();
+      virtual const IDrawer2D& getDrawer() const;
+      virtual ITextDrawer& getTextDrawer();
+      virtual const ITextDrawer& getTextDrawer()const ;
+      virtual IGUIPartDrawer& getGUIPartDrawer();
+      virtual const IGUIPartDrawer& getGUIPartDrawer() const;
   };
 
 

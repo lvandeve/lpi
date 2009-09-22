@@ -20,8 +20,6 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 
 #include "lpi_gui.h"
-#include "lpi_screen.h" //TODO: remove this dependency
-#include "lpi_draw2dgl.h"
 #include "lpi_math.h"
 
 #include <iostream>
@@ -2095,10 +2093,10 @@ Checkbox::Checkbox()
   //bad old code, must be fixed!
   this->active = 0;
   this->checked = 0;
-  this->texture[0] = &emptyTexture;
-  this->texture[1] = &emptyTexture;
-  this->texture[2] = &emptyTexture;
-  this->texture[3] = &emptyTexture;
+  this->texture[0] = emptyTexture;
+  this->texture[1] = emptyTexture;
+  this->texture[2] = emptyTexture;
+  this->texture[3] = emptyTexture;
   this->colorMod[0] = RGB_White;
   this->colorMod[1] = RGB_White;
   this->colorMod[2] = RGB_White;

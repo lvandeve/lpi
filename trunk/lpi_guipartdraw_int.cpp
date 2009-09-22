@@ -23,7 +23,6 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_guipartdraw_int.h"
 
 #include "lodepng.h"
-#include "lpi_screen.h"
 #include "lpi_draw2dgl.h"
 #include "lpi_draw2d.h"
 #include "lpi_file.h"
@@ -483,15 +482,15 @@ BackPanel::BackPanel()
 {
   this->enableSides = 0;
   this->enableCenter = 0;
-  this->t00 = &emptyTexture;
-  this->t01 = &emptyTexture;
-  this->t02 = &emptyTexture;
-  this->t10 = &emptyTexture;
-  this->t11 = &emptyTexture;
-  this->t12 = &emptyTexture;
-  this->t20 = &emptyTexture;
-  this->t21 = &emptyTexture;
-  this->t22 = &emptyTexture;
+  this->t00 = emptyTexture;
+  this->t01 = emptyTexture;
+  this->t02 = emptyTexture;
+  this->t10 = emptyTexture;
+  this->t11 = emptyTexture;
+  this->t12 = emptyTexture;
+  this->t20 = emptyTexture;
+  this->t21 = emptyTexture;
+  this->t22 = emptyTexture;
 }
 
 
@@ -499,15 +498,15 @@ void BackPanel::makeUntextured()
 {
   this->enableSides = 0;
   this->enableCenter = 0;
-  this->t00 = &emptyTexture;
-  this->t01 = &emptyTexture;
-  this->t02 = &emptyTexture;
-  this->t10 = &emptyTexture;
-  this->t11 = &emptyTexture;
-  this->t12 = &emptyTexture;
-  this->t20 = &emptyTexture;
-  this->t21 = &emptyTexture;
-  this->t22 = &emptyTexture;
+  this->t00 = emptyTexture;
+  this->t01 = emptyTexture;
+  this->t02 = emptyTexture;
+  this->t10 = emptyTexture;
+  this->t11 = emptyTexture;
+  this->t12 = emptyTexture;
+  this->t20 = emptyTexture;
+  this->t21 = emptyTexture;
+  this->t22 = emptyTexture;
 }
 
 void BackPanel::makeTextured9(const ITexture* t00, const ITexture* t01, const ITexture* t02, const ITexture* t10, const ITexture* t11, const ITexture* t12, const ITexture* t20, const ITexture* t21, const ITexture* t22)
@@ -588,9 +587,9 @@ can form a horizontal or vertical line
 BackRule::BackRule()
 {
   this->enableSides = 0;
-  this->t0 = &emptyTexture;
-  this->t1 = &emptyTexture;
-  this->t2 = &emptyTexture;
+  this->t0 = emptyTexture;
+  this->t1 = emptyTexture;
+  this->t2 = emptyTexture;
 }
 
 

@@ -22,9 +22,9 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include "lpi_texture.h"
 #include "lpi_color.h"
-#include "lpi_parse.h"
 #include "lpi_font.h"
 #include "lpi_text_drawer.h"
+#include "lpi_parse.h"
 
 #include <string>
 #include <vector>

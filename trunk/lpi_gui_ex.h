@@ -212,7 +212,7 @@ struct PainterStack
   int x1;
   int y1;
   ColorRGB color;
-  Texture* texture;
+  ITexture* texture;
   std::string text;
   Font textFont;
   int type; //0: point, 1: line, 2: texture (coord = top left), 3: centered texture, 4: text
@@ -229,8 +229,8 @@ class Painter : public Element
     void queuePoint(int x, int y, const ColorRGB& color = RGB_White);
     void queueLine(int x0, int y0, int x1, int y1, const ColorRGB& color = RGB_White);
     void queueRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color = RGB_White);
-    void queueTexture(int x, int y, Texture* texture, const ColorRGB& colorMod = RGB_White);
-    void queueTextureCentered(int x, int y, Texture* texture, const ColorRGB& colorMod = RGB_White);
+    void queueTexture(int x, int y, ITexture* texture, const ColorRGB& colorMod = RGB_White);
+    void queueTextureCentered(int x, int y, ITexture* texture, const ColorRGB& colorMod = RGB_White);
     void queueText(int x, int y, const std::string& text, const Font& font);
     
   private:
@@ -400,14 +400,14 @@ class NStateState
     //bool downAndTested; //if mouse is down and that is already handled, leave this on so that it'll ignore mouse till it's back up
     void positionText(); //automaticly place the text a few pixels next to the checkbox, in the center
     
-    Texture* texture; //the texture of this state
+    ITexture* texture; //the texture of this state
     ColorRGB colorMod;
     
     bool enableText; //the text is a title drawn next to the checkbox, with automaticly calculated position
     std::string text;
     Font font;
     
-    void make(Texture* texture, const ColorRGB& colorMod, const std::string& text = "", const Font& font = FONT_Default);
+    void make(ITexture* texture, const ColorRGB& colorMod, const std::string& text = "", const Font& font = FONT_Default);
 };
 
 //circle between N states (you can add states, the make function makes no states). Left mouse click goes to next state, right mouse click goes to previous state.
@@ -421,7 +421,7 @@ class NState : public Element, public Label
         
     NState();
     void make(int x, int y, int toggleOnMouseUp = 0);
-    void addState(Texture* texture, const ColorRGB& colorMod = RGB_White, const std::string& text = "", const Font& font = FONT_Default);
+    void addState(ITexture* texture, const ColorRGB& colorMod = RGB_White, const std::string& text = "", const Font& font = FONT_Default);
     virtual void drawImpl(IGUIDrawer& drawer) const; //also handles it by calling handle(): toggles when mouse down or not
     virtual void handleImpl(const IGUIInput& input);
 };

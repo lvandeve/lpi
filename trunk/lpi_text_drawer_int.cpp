@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "lpi_text.h"
+#include "lpi_text_drawer_int.h"
 #include "lpi_draw2dgl.h"
 #include "lodepng.h"
 

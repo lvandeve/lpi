@@ -23,6 +23,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_gui.h"
 #include "lpi_gui_text.h"
 #include "lpi_gui_color.h"
+#include "lpi_parse.h"
 #include <iostream>
 
 #include <vector>
