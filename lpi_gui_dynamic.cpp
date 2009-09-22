@@ -64,7 +64,7 @@ void DynamicPage::addControl(const std::string& name, IDynamicPageControl* contr
   addSubElement(control, Sticky(0.0, x0 + xb + 1, 0.0, TITLEHEIGHT + i * CONTROLHEIGHT + 1, 1.0, 0, 0.0, TITLEHEIGHT + (i + 1) * CONTROLHEIGHT));
 }
 
-void DynamicPage::drawWidget(IGUIDrawer& drawer) const
+void DynamicPage::drawImpl(IGUIDrawer& drawer) const
 {
   drawer.drawRectangle(x0, y0, x1, y0 + TITLEHEIGHT, RGB_White, false);
   drawer.drawText(title, x0 + 4, y0 + 4);
@@ -82,7 +82,7 @@ void DynamicPage::drawWidget(IGUIDrawer& drawer) const
   }
 }
 
-void DynamicPage::handleWidget(const IGUIInput& input)
+void DynamicPage::handleImpl(const IGUIInput& input)
 {
   for(size_t i = 0; i < controls.size(); i++)
     controls[i]->handle(input);

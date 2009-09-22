@@ -115,27 +115,24 @@ class InternalTextDrawer : public ITextDrawer //uses InternalGlyphs
   
   private:
   
-  //used to print a string without newlines
-  int printString(const std::string& text, int x, int y, const Font& font, unsigned long forceLength=0);
+  //TODO: clean this up a bit, these are functions from the old interface.
+
   //used to print a text with newlines
-  int printText(const std::string& text, int x, int y, const Font& font, unsigned long forceLength=0);
+  void printText(const std::string& text, int x, int y, const Font& font, unsigned long forceLength=0);
 
   //print something (string, int, float, ...)
-  template<typename T> int print(const T& val, int x, int y, const Font& font, bool useNewline = false, unsigned long forceLength=0)
+  template<typename T> void print(const T& val, int x, int y, const Font& font, unsigned long forceLength=0)
   {
     std::string text = valtostr(val);
-    if(useNewline) return printText(text, x, y, font, forceLength);
-    else return printString(text, x, y, font, forceLength);
+    printText(text, x, y, font, forceLength);
   }
 
-  template<typename T> int print(const T& val, int x, int y, const ColorRGB& color, bool useNewline = false, unsigned long forceLength=0)
+  template<typename T> void print(const T& val, int x, int y, const ColorRGB& color, unsigned long forceLength=0)
   {
     Font font;
     font.color = color;
-    return print(val, x, y, font, useNewline, forceLength);
+    print(val, x, y, font, forceLength);
   }
-
-  void printCentered(const std::string& text, int x, int y, const Font& font, unsigned long forceLength=0);
 
 
 

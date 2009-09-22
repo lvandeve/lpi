@@ -363,6 +363,21 @@ void Drawer2DGL::drawEllipseCentered(int x, int y, int radiusx, int radiusy, con
   }
 }
 
+void Drawer2DGL::drawGradientTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2)
+{
+  prepareDrawUntextured();
+  
+  glBegin(GL_TRIANGLES);
+    glColor4ub(color0.r, color0.g, color0.b, color0.a);
+    glVertex3d(x0, y0, 1);
+    glColor4ub(color1.r, color1.g, color1.b, color1.a);
+    glVertex3d(x1, y1, 1);
+    glColor4ub(color2.r, color2.g, color2.b, color2.a);
+    glVertex3d(x2, y2, 1);
+  glEnd();
+}
+
+
 void Drawer2DGL::drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3)
 {
   prepareDrawUntextured();

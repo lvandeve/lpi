@@ -86,7 +86,7 @@ ColorSlider::ColorSlider()
 }
 
 
-void ColorSlider::drawWidget(IGUIDrawer& drawer) const
+void ColorSlider::drawImpl(IGUIDrawer& drawer) const
 {
   (void)drawer;
   
@@ -172,7 +172,7 @@ void ColorSlider::drawBackgroundV(IGUIDrawer& drawer) const
   }
 }
 
-void ColorSlider::handleWidget(const IGUIInput& input)
+void ColorSlider::handleImpl(const IGUIInput& input)
 {
   if(mouseGrabbed(input))
   {
@@ -328,9 +328,9 @@ void ColorSliderType::decrementType()
     type = (ColorChannelType)((int)(type) - 1);
 }
 
-void ColorSliderType::handleWidget(const IGUIInput& input)
+void ColorSliderType::handleImpl(const IGUIInput& input)
 {
-  ColorSlider::handleWidget(input);
+  ColorSlider::handleImpl(input);
   if(mouseDoubleClicked(input, GUI_LMB)) incrementType();
   if(mouseDoubleClicked(input, GUI_RMB)) decrementType();
 }
@@ -367,7 +367,7 @@ void ColorSliderEx::fixUpSizes()
 {
 }
 
-void ColorSliderEx::drawWidget(IGUIDrawer& drawer) const
+void ColorSliderEx::drawImpl(IGUIDrawer& drawer) const
 {
   slider->draw(drawer);
   drawer.drawRectangle(input.getX0()-1, input.getY0()-1, input.getX1(), input.getY1(), RGB_White, true);
@@ -376,7 +376,7 @@ void ColorSliderEx::drawWidget(IGUIDrawer& drawer) const
   label.draw(drawer);
 }
 
-void ColorSliderEx::handleWidget(const IGUIInput& input)
+void ColorSliderEx::handleImpl(const IGUIInput& input)
 {
   slider->handle(input);
   this->input.handle(input);
@@ -467,13 +467,13 @@ void ColorSliders::addAlpha(const std::string& label, double smallest, double la
   addSlider(new ColorSliderExType(A, label, smallest, largest));
 }
 
-void ColorSliders::drawWidget(IGUIDrawer& drawer) const
+void ColorSliders::drawImpl(IGUIDrawer& drawer) const
 {
   for(size_t i = 0; i < sliders.size(); i++)
     sliders[i]->draw(drawer);
 }
 
-void ColorSliders::handleWidget(const IGUIInput& input)
+void ColorSliders::handleImpl(const IGUIInput& input)
 {
   for(size_t i = 0; i < sliders.size(); i++)
     sliders[i]->handle(input);
@@ -788,12 +788,12 @@ void ColorEditor2D::drawBackground(IGUIDrawer& drawer) const
   }
 }
 
-void ColorEditor2D::drawWidget(IGUIDrawer& drawer) const
+void ColorEditor2D::drawImpl(IGUIDrawer& drawer) const
 {
   drawBackground(drawer);
 }
 
-void ColorEditor2D::handleWidget(const IGUIInput& input)
+void ColorEditor2D::handleImpl(const IGUIInput& input)
 {
   (void)input;
 }
@@ -819,7 +819,7 @@ HueCircle::HueCircle()
 {
 }
 
-void HueCircle::drawWidget(IGUIDrawer& drawer) const
+void HueCircle::drawImpl(IGUIDrawer& drawer) const
 {
   static const size_t NUMANGLE = 24;
   static const size_t NUMAXIAL = 8;
@@ -857,7 +857,7 @@ void HueCircle::drawWidget(IGUIDrawer& drawer) const
   }
 }
 
-void HueCircle::handleWidget(const IGUIInput& input)
+void HueCircle::handleImpl(const IGUIInput& input)
 {
   if(mouseGrabbed(input))
   {
@@ -918,7 +918,7 @@ PColorPlane::PColorPlane(ColorRGB* color)
 {
 }
 
-void PColorPlane::drawWidget(IGUIDrawer& drawer) const
+void PColorPlane::drawImpl(IGUIDrawer& drawer) const
 {
   int checkersize = 8;
   if(getSizeX() < 16 && getSizeY() < 16) checkersize = getSizeX() / 2;

@@ -121,12 +121,12 @@ class DynamicCheckbox : public TDymamicPageControl<bool>
       box.setChecked(*value);
     }
     
-    virtual void handleWidget(const IGUIInput& input)
+    virtual void handleImpl(const IGUIInput& input)
     {
       box.handle(input);
     }
     
-    virtual void drawWidget(IGUIDrawer& drawer) const
+    virtual void drawImpl(IGUIDrawer& drawer) const
     {
       box.draw(drawer);
     }
@@ -196,7 +196,7 @@ class DynamicSlider : public TDymamicPageControl<T>
       setSliderValue(*value);
     }
     
-    virtual void handleWidget(const IGUIInput& input)
+    virtual void handleImpl(const IGUIInput& input)
     {
       line.handle(input);
       slider.handle(input);
@@ -206,7 +206,7 @@ class DynamicSlider : public TDymamicPageControl<T>
         line.setText(valtostr<T>(getSliderValue()));
     }
     
-    virtual void drawWidget(IGUIDrawer& drawer) const
+    virtual void drawImpl(IGUIDrawer& drawer) const
     {
       line.draw(drawer);
       slider.draw(drawer);
@@ -252,12 +252,12 @@ class DynamicValue : public TDymamicPageControl<T>
       line.setText(valtostr<T>(*value));
     }
     
-    virtual void handleWidget(const IGUIInput& input)
+    virtual void handleImpl(const IGUIInput& input)
     {
       line.handle(input);
     }
     
-    virtual void drawWidget(IGUIDrawer& drawer) const
+    virtual void drawImpl(IGUIDrawer& drawer) const
     {
       line.draw(drawer);
     }
@@ -304,7 +304,7 @@ class DynamicColor : public TDymamicPageControl<ColorRGB>
       (void)value;
     }
     
-    virtual void handleWidget(const IGUIInput& input)
+    virtual void handleImpl(const IGUIInput& input)
     {
       box.handle(input);
       
@@ -314,7 +314,7 @@ class DynamicColor : public TDymamicPageControl<ColorRGB>
       }
     }
     
-    virtual void drawWidget(IGUIDrawer& drawer) const
+    virtual void drawImpl(IGUIDrawer& drawer) const
     {
       box.draw(drawer);
       drawer.pushScissor(edit.getX0(), edit.getY0(), edit.getX1(), edit.getY1());
@@ -327,7 +327,7 @@ class DynamicPageControlDummy : public IDynamicPageControl
 {
     virtual void controlToValue() {}
     virtual void valueToControl() {}
-    virtual void drawWidget(IGUIDrawer& /*drawer*/) const {};
+    virtual void drawImpl(IGUIDrawer& /*drawer*/) const {};
 };
 
 class DynamicPage : public ElementComposite
@@ -359,8 +359,8 @@ class DynamicPage : public ElementComposite
   //DynamicPage takes ownership of destructor of your added control!
   void addControl(const std::string& name, IDynamicPageControl* control);
   
-  virtual void drawWidget(IGUIDrawer& drawer) const;
-  virtual void handleWidget(const IGUIInput& input);
+  virtual void drawImpl(IGUIDrawer& drawer) const;
+  virtual void handleImpl(const IGUIInput& input);
 };
 
 } //namespace gui

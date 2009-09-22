@@ -134,11 +134,19 @@ class Element : public ElementRectangular
   protected:
     void autoActivate(const IGUIInput& input, MouseState& auto_activate_mouse_state, bool& control_active); //utility function used by text input controls, they need a member variable like "MouseState auto_activate_mouse_state" in them for this and a bool "control_active", and in their handleWidget, put, "autoActivate(input, auto_activate_mouse_state, control_active); if(!control_active) return;"
     
-    virtual void drawWidget(IGUIDrawer& drawer) const = 0; //called by draw(), this one can be overloaded for each widget defined below
-    virtual void handleWidget(const IGUIInput& input);
-    virtual void moveWidget(int x, int y); //Override this if you have subelements, unless you use addSubElement in ElementComposite.
-    virtual void resizeWidget(const Pos<int>& newPos); //always called after resize, will resize the other elements to the correct size. Override this if you have subelements, unless you use addSubElement in ElementComposite. When resizeWidget is called, you can get the new size from newPos, while the old size is still in x0, y0, x1, y1 from this and will be set after resizeWidget is called.
+    virtual void drawImpl(IGUIDrawer& drawer) const = 0; //called by draw(), this one can be overloaded for each widget defined below
+    virtual void handleImpl(const IGUIInput& input);
+    virtual void moveImpl(int x, int y); //Override this if you have subelements, unless you use addSubElement in ElementComposite.
+    virtual void resizeImpl(const Pos<int>& newPos); //always called after resize, will resize the other elements to the correct size. Override this if you have subelements, unless you use addSubElement in ElementComposite. When resizeWidget is called, you can get the new size from newPos, while the old size is still in x0, y0, x1, y1 from this and will be set after resizeWidget is called.
 
+    /*
+    drawGUIPart: convenient helper function to draw a sub-element with its size and mouseoverstate etc...,
+    so that you don't always have to write the same code to create GUIPartMod, and give the 4 coordinates,
+    over and over.
+    */
+    static void drawGUIPart(IGUIDrawer& drawer, const Element* element, GUIPart part);
+    static void drawGUIPartColor(IGUIDrawer& drawer, const Element* element, GUIPart part, const ColorRGB& color);
+    static void drawGUIPartText(IGUIDrawer& drawer, const Element* element, GUIPart part, const std::string& text);
 
   public:
     Element();
@@ -229,7 +237,7 @@ class Label //convenience class: elements that want an optional label (e.g. chec
 //Dummy = exactly the same as Element but not abstract, nothing implemented except pure virtuals of Element
 class Dummy : public Element
 {
-  void drawWidget(IGUIDrawer& /*drawer*/) const {}
+  void drawImpl(IGUIDrawer& /*drawer*/) const {}
 };
 
 class Button : public Element
@@ -264,8 +272,7 @@ class Button : public Element
     int textOffsetx;
     int textOffsety;
     Font font[3];
-    void autoTextSize(IGUIDrawer* drawer, int extrasize = 0); //will automaticly adjust it's size to fit text size
-    void centerText(IGUIDrawer* drawer); //center the text in the texture if the button has a texture (sizex and sizey used for size)
+    void autoTextSize(ITextDrawer* drawer, int extrasize = 0); //will automaticly adjust it's size to fit text size
     
     ////part "panel"
     bool enablePanel;
@@ -297,14 +304,14 @@ class Button : public Element
     //text only constructor (without offset)
     void makeText(int x, int y, //basic properties
                   const std::string& text, //text
-                  IGUIDrawer* drawer = 0); //give drawer if you want auto-text-size
+                  ITextDrawer& drawer); //drawer is for auto-text-size
     
     //panel + text constructor (text always in center of panel, no offsets and thinking needed)
     //this is the constructor with default parameters
-    void makeTextPanel(int x, int y, const std::string& text = "", int sizex = 64, int sizey = 24, IGUIDrawer* drawer = 0); //basic properties + actual text; give drawer if you want the text centered
+    void makeTextPanel(int x, int y, const std::string& text, int sizex = 64, int sizey = 24); //basic properties + actual text; give drawer if you want the text centered
 
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-    virtual void handleWidget(const IGUIInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IGUIInput& input);
     
     //mouse functions without having to give the IGUIInput
     /*bool clicked(GUIMouseButton button = GUI_LMB);
@@ -333,8 +340,8 @@ class Scrollbar : public ElementComposite
     int getSliderStart() const;
     int getSliderEnd() const;
     
-    virtual void handleWidget(const IGUIInput& input);
-    virtual void drawWidget(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IGUIInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
 
     Direction direction; //0 = vertical, 1 = horizontal
     double scrollSize; //length of the total scrollbar (in steps)
@@ -387,9 +394,9 @@ class ScrollbarPair : public ElementComposite
     Scrollbar hbar;
     Dummy corner; //the corner piece between the two scrollbars
     
-    virtual void handleWidget(const IGUIInput& input);
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-    virtual void resizeWidget(const Pos<int>& newPos);
+    virtual void handleImpl(const IGUIInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void resizeImpl(const Pos<int>& newPos);
     
     bool venabled;
     bool henabled;
@@ -436,8 +443,8 @@ class Slider : public ElementComposite
     double screenPosToScrollPos(int screenPos);
     int scrollPosToScreenPos(double scrollPos);
 
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-    virtual void handleWidget(const IGUIInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IGUIInput& input);
 };
 
 class Container : public ElementComposite
@@ -453,8 +460,8 @@ class Container : public ElementComposite
     
     Container();
     Container(IGUIDrawer& drawer); //drawer is used to initialize the size of the container to the full screen size of the drawer
-    virtual void handleWidget(const IGUIInput& input); //you're supposed to handle() before you draw()
-    virtual void drawWidget(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IGUIInput& input); //you're supposed to handle() before you draw()
+    virtual void drawImpl(IGUIDrawer& drawer) const;
     
     //push the element without affecting absolute position
     void pushTop(Element* element, const Sticky& sticky = STICKYDEFAULT);
@@ -482,11 +489,11 @@ class Container : public ElementComposite
     virtual bool isContainer() const;
     void clear(); //clears all the elements
     void putInside(unsigned long i);
-    virtual void moveWidget(int x, int y);
+    virtual void moveImpl(int x, int y);
     void make(int x, int y, int sizex, int sizey);
     
     void getRelativeElementPos(Element& element, int& ex, int& ey) const;
-    virtual void resizeWidget(const Pos<int>& newPos);
+    virtual void resizeImpl(const Pos<int>& newPos);
     
     virtual void setElementOver(bool state);
     
@@ -506,9 +513,9 @@ class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
     Element* element;
   
     ScrollElement();
-    virtual void handleWidget(const IGUIInput& input); //you're supposed to handle() before you draw()
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-    virtual void moveWidget(int x, int y);
+    virtual void handleImpl(const IGUIInput& input); //you're supposed to handle() before you draw()
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void moveImpl(int x, int y);
     virtual void setElementOver(bool state);
 
     void make(int x, int y, int sizex, int sizey, Element* element, const IGUIPartGeom& geom);
@@ -642,9 +649,9 @@ class Window : public ElementComposite
     int getRelContentStart() const;
     
     ////overloaded functions
-    virtual void drawWidget(IGUIDrawer& drawer) const;
+    virtual void drawImpl(IGUIDrawer& drawer) const;
     
-    virtual void handleWidget(const IGUIInput& input);
+    virtual void handleImpl(const IGUIInput& input);
     virtual bool isContainer() const;
     
     ////useful for the close button
@@ -688,8 +695,8 @@ class Checkbox : public Element, public Label
     void make(int x, int y, bool checked = 0, int toggleOnMouseUp = 0);
     void makeSmall(int x, int y, bool checked = 0, int toggleOnMouseUp = 0);
     void addText(const std::string& text, const Font& font = FONT_Default);
-    virtual void drawWidget(IGUIDrawer& drawer) const; //also handles it by calling handle(): toggles when mouse down or not
-    virtual void handleWidget(const IGUIInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const; //also handles it by calling handle(): toggles when mouse down or not
+    virtual void handleImpl(const IGUIInput& input);
 
     void setText(const std::string& newText);
     const std::string& getText() const { return text; }
@@ -715,8 +722,8 @@ class BulletList : public ElementComposite
     Checkbox prototype;
     
     BulletList();
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-    virtual void handleWidget(const IGUIInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IGUIInput& input);
     void make(int x, int y, unsigned long amount, int xDiff, int yDiff); //diff = the location difference between successive checkboxes
     void make(int x, int y, unsigned long amount, int xDiff, int yDiff, unsigned long amountx); //make in 2D pattern
     void setCorrectSize();
@@ -739,7 +746,7 @@ class Text : public Element
   public:
     bool useNewLine;
     Font font;
-    virtual void drawWidget(IGUIDrawer& drawer) const;
+    virtual void drawImpl(IGUIDrawer& drawer) const;
     Text();
     void make(int x = 0, int y = 0, const std::string& text = "", const Font& font = FONT_Default);
     void setText(const std::string& text);
@@ -755,7 +762,7 @@ class Image : public Element
     
   public:
     ColorRGB colorMod;
-    virtual void drawWidget(IGUIDrawer& drawer) const;
+    virtual void drawImpl(IGUIDrawer& drawer) const;
     Image();
     void make(int x, int y, ITexture* image, const ColorRGB& colorMod = RGB_White);
     void make(int x, int y, int sizex, int sizey, ITexture* image, const ColorRGB& colorMod = RGB_White);
@@ -770,7 +777,7 @@ class Tabs : public ElementComposite
       Container container; //contains the GUI elements inside this tab
      
       Tab(); 
-      virtual void drawWidget(IGUIDrawer& drawer) const;
+      virtual void drawImpl(IGUIDrawer& drawer) const;
     };
     
     std::vector<Tab*> tabs;
@@ -791,8 +798,8 @@ class Tabs : public ElementComposite
     size_t getSelectedTab() const { return selected_tab; }
     void selectTab(size_t i_index);
     
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-    virtual void handleWidget(const IGUIInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IGUIInput& input);
 };
 
 } //namespace gui

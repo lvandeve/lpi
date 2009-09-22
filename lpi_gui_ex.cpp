@@ -186,7 +186,7 @@ namespace gui
     //identity.push_back(id);
 //}
 
-//void DropMenu::drawWidget(IGUIDrawer& drawer) const
+//void DropMenu::drawImpl(IGUIDrawer& drawer) const
 //{
   //panel.draw(drawer, x0, y0, getSizeX(), getSizeY());
 
@@ -197,7 +197,7 @@ namespace gui
   //}
 //}
 
-//void DropMenu::handleWidget(const IGUIInput& input)
+//void DropMenu::handleImpl(const IGUIInput& input)
 //{
   //if(autoDisable && input.mouseButtonDown(GUI_LMB) && !mouseDown(input)) totallyDisable();
 //}
@@ -407,7 +407,7 @@ namespace gui
   //listButton.moveTo(x0 + sizexc - listButton.getSizeX(), listButton.getY0());
 //}
 
-//void Droplist::drawWidget(IGUIDrawer& drawer) const
+//void Droplist::drawImpl(IGUIDrawer& drawer) const
 //{
   //topPanel.draw(drawer, x0, y0, sizexc, sizeyc);
   //listButton.draw(drawer);
@@ -431,7 +431,7 @@ namespace gui
   //return textButton[selected].text;
 //}
 
-//void Droplist::handleWidget(const IGUIInput& input)
+//void Droplist::handleImpl(const IGUIInput& input)
 //{
   //if(listButton.clicked(input) || (clicked(input) && mouseGetRelPosY(input) < sizeyc && !listButton.mouseOver(input))) //behind the or is to open it also if you press the thing itself but not the button, the getMouseY() < sizeyc is necessary, without it, the code after this will not work anymore (starting from if(openen)
   //{
@@ -635,7 +635,7 @@ int Grid::getScreenY(int tiley) const
 }
 
 
-void Grid::drawWidget(IGUIDrawer& drawer) const
+void Grid::drawImpl(IGUIDrawer& drawer) const
 {
   if(showGrid)
   {
@@ -677,7 +677,7 @@ void Painter::make(int x, int y, int sizex, int sizey, const ColorRGB& color)
   this->totallyEnable();
 }
 
-void Painter::drawWidget(IGUIDrawer& drawer) const
+void Painter::drawImpl(IGUIDrawer& drawer) const
 {
   //first draw the rectangle if the alpha channel of color is > 0
   if(color.a > 0) drawer.drawRectangle(x0, y0, x1, y1, color, true);
@@ -894,7 +894,7 @@ void Canvas::init()
   clear();
 }
 
-void Canvas::handleWidget(const IGUIInput& input)
+void Canvas::handleImpl(const IGUIInput& input)
 {
   if(mouseGrabbed(input, GUI_LMB) || mouseGrabbed(input, GUI_RMB))
   {
@@ -919,7 +919,7 @@ void Canvas::handleWidget(const IGUIInput& input)
   else validOldMousePos = false;
 }
 
-void Canvas::drawWidget(IGUIDrawer& drawer) const
+void Canvas::drawImpl(IGUIDrawer& drawer) const
 {
   drawer.convertTextureIfNeeded((*canvas));
   drawer.drawTexture((*canvas), x0, y0);
@@ -955,7 +955,7 @@ void Rectangle::make(int x, int y, int sizex, int sizey, const ColorRGB& color)
   this->totallyEnable();
 }
 
-void Rectangle::drawWidget(IGUIDrawer& drawer) const
+void Rectangle::drawImpl(IGUIDrawer& drawer) const
 {
   drawer.drawRectangle(x0, y0, x1, y1, color, false);
 }
@@ -1002,7 +1002,7 @@ void Line::setEndpoints(int x0, int y0, int x1, int y1)
   this->ly1 = y1;
 }
 
-void Line::drawWidget(IGUIDrawer& drawer) const
+void Line::drawImpl(IGUIDrawer& drawer) const
 {
   drawer.drawLine(lx0, ly0, lx1, ly1, color);
 }
@@ -1083,7 +1083,7 @@ void NState::addState(Texture* texture, const ColorRGB& colorMod, const std::str
 
 
 //see how you click with the mouse and toggle on click
-void NState::handleWidget(const IGUIInput& input)
+void NState::handleImpl(const IGUIInput& input)
 {
   //make sure never both pressed() and clicked() are checked, because one test screws up the other, hence the order of the tests in the if conditions
   if(states.size() == 0) return;
@@ -1102,7 +1102,7 @@ void NState::handleWidget(const IGUIInput& input)
 }
 
 //draw the checkbox with a texture depending on it's state
-void NState::drawWidget(IGUIDrawer& drawer) const
+void NState::drawImpl(IGUIDrawer& drawer) const
 {
   if(states.size() == 0) return;
   

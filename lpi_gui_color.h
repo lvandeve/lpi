@@ -89,8 +89,8 @@ class ColorSlider : public ColorChannelEditor, public Element
   
     ColorSlider();
   
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-    virtual void handleWidget(const IGUIInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IGUIInput& input);
     
     double getValue() const { return value; }
     void setValue(double value) { this->value = value; }
@@ -150,7 +150,7 @@ class ColorSliderType : public ColorSlider //can dynamically take any color type
     void incrementType();
     void decrementType();
     
-    virtual void handleWidget(const IGUIInput& input); //used for debugging...
+    virtual void handleImpl(const IGUIInput& input); //used for debugging...
 };
 
 class ColorSliderEx : public ColorChannelEditor, public ElementComposite
@@ -178,8 +178,8 @@ class ColorSliderEx : public ColorChannelEditor, public ElementComposite
     ColorSliderEx(ColorSlider* slider, const std::string& label = "", double smallest = 0, double largest = 255); //you must create slider with new, but ColorSliderEx's dtor will delete it!!
     ~ColorSliderEx() { delete slider; }
     
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-    virtual void handleWidget(const IGUIInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IGUIInput& input);
     
     double getValue() const; //this is in range 0.0-1.0, like ColorSlider!
     void setValue(double value);
@@ -222,8 +222,8 @@ class ColorSliders : public ColorEditor, public ElementComposite
     void addSlider(ColorSliderEx* slider); //this class takes ownership of the pointer
     void addAlpha(const std::string& label = "A:", double smallest = 0, double largest = 255); //adds a ColorSliderA, has its own function for convenience, since every color model can have the same alpha channel
 
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-    virtual void handleWidget(const IGUIInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IGUIInput& input);
     
     virtual ColorRGB getColor() const = 0;
     virtual void setColor(const ColorRGB& color) = 0;
@@ -319,8 +319,8 @@ class ColorEditor2D : public ColorChannelEditor, public Element
   
     ColorEditor2D();
   
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-    virtual void handleWidget(const IGUIInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IGUIInput& input);
     
     double getValueX() const { return value_x; }
     void setValueX(double value) { this->value_x = value; }
@@ -364,8 +364,8 @@ class HueCircle : public ColorChannelEditor, public Element
   
     HueCircle();
   
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-    virtual void handleWidget(const IGUIInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IGUIInput& input);
     
     double getValueAngle() const { return value_angle; }
     void setValueAngle(double value) { this->value_angle = value; }
@@ -404,7 +404,7 @@ class PColorPlane : public Element
 
   public:
     PColorPlane(ColorRGB* color);
-    virtual void drawWidget(IGUIDrawer& drawer) const;
+    virtual void drawImpl(IGUIDrawer& drawer) const;
 };
 
 class ColorPlane : public PColorPlane
@@ -436,7 +436,7 @@ class FGBGColor : public ElementComposite
     class Arrows : public Element
     {
       public:
-        virtual void drawWidget(IGUIDrawer& drawer) const;
+        virtual void drawImpl(IGUIDrawer& drawer) const;
     };
     
   private:
@@ -450,8 +450,8 @@ class FGBGColor : public ElementComposite
   
   public:
     
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-    virtual void handleWidget(const IGUIInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IGUIInput& input);
     
     void setFG(const ColorRGB& color);
     void setBG(const ColorRGB& color);

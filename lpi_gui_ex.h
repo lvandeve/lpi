@@ -79,8 +79,8 @@ namespace gui
     //void make(int x, int y, const std::string& text,
               //const Font* font1 = 0hite, const Font& font2 = 0hite,
               //BackPanel panel = DEFAULTPANEL, BackRule hrule = DEFAULTHRULE); //make with given panel    
-    //virtual void drawWidget(IGUIDrawer& drawer) const;
-    //virtual void handleWidget(const IGUIInput& input);
+    //virtual void drawImpl(IGUIDrawer& drawer) const;
+    //virtual void handleImpl(const IGUIInput& input);
     //int check(const IGUIInput& input);
     //Button* getButton(int i);
     //Button* getButton(const std::string& name);
@@ -138,10 +138,10 @@ namespace gui
               ////BackPanel topPanel = COLORPANEL(RGB_Grey), BackPanel listPanel = COLORPANEL(RGB_White),
               //Texture* buttonTexture = &builtInTexture[28]);
     //void makeScrollbar(const GuiSet* set = &builtInGuiSet);
-    //virtual void drawWidget(IGUIDrawer& drawer) const;
+    //virtual void drawImpl(IGUIDrawer& drawer) const;
     //int check();
     //std::string checkText();
-    //virtual void handleWidget(const IGUIInput& input);
+    //virtual void handleImpl(const IGUIInput& input);
 
     //void addOption(const std::string& text);
 //};
@@ -187,7 +187,7 @@ class Grid : public Element
   bool showGrid;
   ColorRGB gridColor;
   
-  virtual void drawWidget(IGUIDrawer& drawer) const;
+  virtual void drawImpl(IGUIDrawer& drawer) const;
   
   int tileSizeX;
   int tileSizeY;
@@ -222,7 +222,7 @@ class Painter : public Element
 {
   public:
     ColorRGB color;
-    virtual void drawWidget(IGUIDrawer& drawer) const;
+    virtual void drawImpl(IGUIDrawer& drawer) const;
     Painter();
     void make(int x, int y, int sizex = 200, int sizey = 150, const ColorRGB& color = RGB_Invisible);
     
@@ -281,8 +281,8 @@ class Canvas : public Element
     
     int border; //TODO: old, remove this
     
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-    virtual void handleWidget(const IGUIInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IGUIInput& input);
     
     void clear(); //clear the whole texture to backColor, deleting it's previous contents
     
@@ -301,7 +301,7 @@ class Variable : public Element //can be anything the typename is: integer, floa
     std::string label;
     Font font;
     
-    virtual void drawWidget(IGUIDrawer& drawer) const
+    virtual void drawImpl(IGUIDrawer& drawer) const
     {
       drawer.drawText(label, x0, y0, font);
       int labelw, labelh;
@@ -356,7 +356,7 @@ class PVariable : public Element //A bit similar purpose to Variable, but, uses 
       this->totallyEnable();
     }
 
-    void drawWidget(IGUIDrawer& drawer) const
+    void drawImpl(IGUIDrawer& drawer) const
     {
       if(value) drawer.drawText(valtostr(*value), x0, y0, font);
     }
@@ -371,7 +371,7 @@ class Rectangle : public Element
 {
   public:
     ColorRGB color;
-    virtual void drawWidget(IGUIDrawer& drawer) const;
+    virtual void drawImpl(IGUIDrawer& drawer) const;
     Rectangle();
     void make(int x, int y, int sizex=64, int sizey=64, const ColorRGB& color = RGB_Grey);
 };
@@ -380,7 +380,7 @@ class Line : public Element
 {
   public:
     ColorRGB color;
-    virtual void drawWidget(IGUIDrawer& drawer) const;
+    virtual void drawImpl(IGUIDrawer& drawer) const;
     Line();
     int lx0;
     int ly0;
@@ -422,8 +422,8 @@ class NState : public Element, public Label
     NState();
     void make(int x, int y, int toggleOnMouseUp = 0);
     void addState(Texture* texture, const ColorRGB& colorMod = RGB_White, const std::string& text = "", const Font& font = FONT_Default);
-    virtual void drawWidget(IGUIDrawer& drawer) const; //also handles it by calling handle(): toggles when mouse down or not
-    virtual void handleWidget(const IGUIInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const; //also handles it by calling handle(): toggles when mouse down or not
+    virtual void handleImpl(const IGUIInput& input);
 };
 
 } //namespace gui

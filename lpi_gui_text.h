@@ -73,8 +73,8 @@ class InputLine : public Element //input text line
               const Font& font = FONT_Default,
               int type = 0, const std::string& title = "", const Font& titleFont = FONT_Default, const ColorRGB& cursorColor = RGB_White);
     
-    virtual void drawWidget(IGUIDrawer& drawer) const;
-    virtual void handleWidget(const IGUIInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IGUIInput& input);
 
     void setText(const std::string& i_text);
     const std::string& getText() const;
@@ -193,7 +193,7 @@ class InputLine : public Element //input text line
     //int getNumLines() const;
     //int getNumMessages() const;
     //int getVisibleLines(const Font* font);
-    //virtual void drawWidget(IGUIDrawer& drawer) const;
+    //virtual void drawImpl(IGUIDrawer& drawer) const;
     
     //void push(const std::string& text);
     //Console();
@@ -212,9 +212,9 @@ class InputLine : public Element //input text line
     
     //int getNumLines() const;
     //int getVisibleLines(const Font* font) const;
-    //virtual void drawWidget(IGUIDrawer& drawer) const;
-    //virtual void handleWidget(const IGUIInput& input);
-    //virtual void resizeWidget();
+    //virtual void drawImpl(IGUIDrawer& drawer) const;
+    //virtual void handleImpl(const IGUIInput& input);
+    //virtual void resizeImpl();
 
     //TextArea();
     //void make(int x, int y, int sizex, int sizey, const std::string& text, const Font& font = FONT_Default);
@@ -258,8 +258,8 @@ class InputLine : public Element //input text line
     //void makeScrollbar(const GuiSet* set = &builtInGuiSet);
     //const std::string& getText() const { return text; }
     
-    //virtual void drawWidget(IGUIDrawer& drawer) const;
-    //virtual void handleWidget(const IGUIInput& input);
+    //virtual void drawImpl(IGUIDrawer& drawer) const;
+    //virtual void handleImpl(const IGUIInput& input);
     
     //int border;
     
@@ -288,7 +288,7 @@ class InputLine : public Element //input text line
 //{
   //public:
     //Font font;
-    //virtual void drawWidget(IGUIDrawer& drawer) const;
+    //virtual void drawImpl(IGUIDrawer& drawer) const;
     //FormattedText();
     //void make(int x = 0, int y = 0, const std::string& text = "", const Font& font = FONT_Default);
     //void setText(const std::string& text);
