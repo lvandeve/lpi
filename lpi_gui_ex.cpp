@@ -22,7 +22,6 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_gui_ex.h"
 
 #include "lodepng.h"
-#include "lpi_screen.h" //TODO: remove this dependency
 #include "lpi_draw2dgl.h"
 #include "lpi_draw2d.h"
 #include "lpi_draw2d_buffer.h"
@@ -735,7 +734,7 @@ void Painter::queueLine(int x0, int y0, int x1, int y1, const ColorRGB& color)
   stack[i].type = 1;
 }
 
-void Painter::queueTexture(int x, int y, Texture* texture, const ColorRGB& colorMod)
+void Painter::queueTexture(int x, int y, ITexture* texture, const ColorRGB& colorMod)
 {
   int i = stack.size();
   stack.resize(stack.size() + 1);
@@ -747,7 +746,7 @@ void Painter::queueTexture(int x, int y, Texture* texture, const ColorRGB& color
   stack[i].type = 2;
 }
 
-void Painter::queueTextureCentered(int x, int y, Texture* texture, const ColorRGB& colorMod)
+void Painter::queueTextureCentered(int x, int y, ITexture* texture, const ColorRGB& colorMod)
 {
   int i = stack.size();
   stack.resize(stack.size() + 1);
@@ -1017,14 +1016,14 @@ This class is used by NState
 
 NStateState::NStateState()
 {
-  this->texture = &emptyTexture;
+  this->texture = emptyTexture;
   this->colorMod = RGB_White;
   this->enableText = 0;
   this->text = "";
 }
 
 //constructor for checkbox with text title
-void NStateState::make(Texture* texture, const ColorRGB& colorMod, const std::string& text, const Font& font)
+void NStateState::make(ITexture* texture, const ColorRGB& colorMod, const std::string& text, const Font& font)
 {
   this->texture = texture;
   this->colorMod = colorMod;
@@ -1072,7 +1071,7 @@ void NState::make(int x, int y, int toggleOnMouseUp)
   this->setSizeY(0);
 }
 
-void NState::addState(Texture* texture, const ColorRGB& colorMod, const std::string& text, const Font& font)
+void NState::addState(ITexture* texture, const ColorRGB& colorMod, const std::string& text, const Font& font)
 {
   this->setSizeX(texture->getU()); //set the size of the NState to that of the last added texture
   this->setSizeY(texture->getV());

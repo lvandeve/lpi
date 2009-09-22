@@ -2,10 +2,11 @@
 #include "lpi_unittest.h"
 #include "lpi_event.h"
 #include "lpi_gui_input_sdl.h"
-#include "lpi_screen.h"
+#include "lpi_screen_gl.h"
 #include "lpi_gui.h"
 #include "lpi_gui_ex.h"
 #include "lpi_gui_text.h"
+#include "lpi_gui_drawer_gl.h"
 
 namespace lpi
 {

@@ -20,9 +20,10 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include "lpi_draw2dgl.h"
 #include "lpi_draw2d.h"
-#include "lpi_text.h"
+#include "lpi_texture_gl.h"
 
 #include <vector>
+#include <GL/gl.h>
 
 namespace lpi
 {

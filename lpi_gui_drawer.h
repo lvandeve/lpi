@@ -23,7 +23,6 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include "lpi_draw2d.h"
 #include "lpi_color.h"
-#include "lpi_text.h" //for markup
 #include "lpi_text_drawer.h"
 #include "lpi_texture.h" //because drawing images requires a texture class
 

@@ -18,8 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef LPI_SCREEN_H_INCLUDED
-#define LPI_SCREEN_H_INCLUDED
+#pragma once
 
 #include <SDL/SDL.h>
 #include <vector>
@@ -76,6 +75,4 @@ class ScreenGL
 
 
 } //namespace lpi
-
-#endif
 

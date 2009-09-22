@@ -30,7 +30,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_color.h"
 #include "lpi_texture.h"
 #include "lpi_draw2d.h"
-#include "lpi_screen.h"
+#include "lpi_screen_gl.h"
 
 namespace lpi
 {

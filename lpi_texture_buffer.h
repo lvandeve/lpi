@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2009 Lode Vandevenne
+Copyright (c) 2005-2008 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -18,40 +18,42 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <iostream>
+#pragma once
 
-#include "lpi_gui_drawer_gl.h"
+#include "lpi_color.h"
+#include "lpi_texture.h"
 
-#include "lpi_draw2dgl.h"
-#include "lpi_draw2d.h"
-#include "lpi_file.h"
-#include "lpi_xml.h"
-#include "lpi_texture_gl.h"
-
-#include "lpi_gui_input_sdl.h"
 
 namespace lpi
 {
-namespace gui
+
+/*
+Texture implemented with a simple buffer.
+Maybe the name is confusing, but this is NOT a buffer of textures!
+*/
+class TextureBuffer : public ITexture
 {
+  private:
+    std::vector<unsigned char> buffer;
+    size_t u;
+    size_t v;
+    
+  public:
+  
+  virtual void setSize(size_t u, size_t v);
+  virtual size_t getU() const;
+  virtual size_t getV() const;
+  
+  virtual size_t getU2() const;
+  virtual size_t getV2() const;
+  
+  virtual unsigned char* getBuffer();
+  virtual const unsigned char* getBuffer() const;
+  
+  virtual void update();
+};
 
-////////////////////////////////////////////////////////////////////////////////
-
-GUIDrawerGL::GUIDrawerGL(ScreenGL* screen)
-: drawer(screen)
-, textdrawer(TextureFactory<TextureGL>(), &drawer)
-, guidrawer(TextureFactory<TextureGL>(), &drawer, &textdrawer)
-{
-}
 
 
-
-IGUIInput& GUIDrawerGL::getInput()
-{
-  return input;
-}
-
-} //namespace gui
 } //namespace lpi
-
 

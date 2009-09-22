@@ -31,10 +31,8 @@ lpi_gui: an OpenGL GUI. Well actually now it is updated to support any lpi::IDra
 
 #include "lpi_color.h"
 #include "lpi_texture.h"
-#include "lpi_text.h"
 
 #include "lpi_gui_drawer.h"
-#include "lpi_gui_drawer_gl.h" //TODO: make lpi_gui independent of this header inclusion (requires removing all GuiSet references)
 
 /*
 TODO: all "BackPanel", "BackRule", "GuiSet", "ITexture(GL)", ... will have to go away here!
