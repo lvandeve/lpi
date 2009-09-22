@@ -163,18 +163,18 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   lpi::gui::Container c(guidrawer);
   
   lpi::gui::Button tb;
-  tb.makeText(20, 530, "Save Built In GUI To PNGs", &guidrawer);
+  tb.makeText(20, 530, "Save Built In GUI To PNGs", guidrawer);
   c.pushTop(&tb);
   lpi::gui::Button tb2;
-  tb2.makeText(20, 540, "GUI PNGs to base 64 TXT", &guidrawer);
+  tb2.makeText(20, 540, "GUI PNGs to base 64 TXT", guidrawer);
   c.pushTop(&tb2);
   
   lpi::gui::Button tb_unittest;
-  tb_unittest.makeText(20, 550, "Unit Test", &guidrawer);
+  tb_unittest.makeText(20, 550, "Unit Test", guidrawer);
   c.pushTop(&tb_unittest);
   
   lpi::gui::Button tb_guitopng;
-  tb_guitopng.makeText(20, 560, "Render gui to 'alternativerenderer.png'", &guidrawer);
+  tb_guitopng.makeText(20, 560, "Render gui to 'alternativerenderer.png'", guidrawer);
   c.pushTop(&tb_guitopng);
   
   lpi::gui::Window w1;
@@ -205,7 +205,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
 
 
   lpi::gui::Button sound_button;
-  sound_button.makeTextPanel(20, 500, "sound", 64, 24, &guidrawer);
+  sound_button.makeTextPanel(20, 500, "sound", 64, 24);
   w1.pushTopAt(&sound_button, 15, 50);
   
   lpi::gui::Scrollbar hbar;
@@ -234,9 +234,8 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   c.pushTop(&bl);*/
   
   lpi::gui::Button wb;
-  wb.makeTextPanel(0, 0, "window button", 64, 24, &guidrawer);
+  wb.makeTextPanel(0, 0, "window button", 64, 24);
   wb.autoTextSize(&guidrawer, 4);
-  wb.centerText(&guidrawer);
   tabs.getTabContent(0).pushTopAt(&wb, 20, 50);
   //w2.pushTopAt(&wb, 20, 50);
   

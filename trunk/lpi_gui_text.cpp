@@ -111,7 +111,7 @@ bool InputLine::enteringDone() const
 }
 
 //this function draws the line, and makes sure it gets handled too
-void InputLine::drawWidget(IGUIDrawer& drawer) const
+void InputLine::drawImpl(IGUIDrawer& drawer) const
 {
   static const int FONTSIZE = 8; //TODO: use drawer to find out cursor position in text and such
   drawer.drawText(title, x0, y0, titleFont);
@@ -178,7 +178,7 @@ void InputLine::activate(bool i_active)
   control_active = i_active;
 }
 
-void InputLine::handleWidget(const IGUIInput& input) //both check if you pressed enter, and also check letter keys pressed, backspace, etc...
+void InputLine::handleImpl(const IGUIInput& input) //both check if you pressed enter, and also check letter keys pressed, backspace, etc...
 {
   if(mouseGrabbed(input))
   {
@@ -840,7 +840,7 @@ int InputLine::getInteger() const
   //return getSizeY() / markup.getHeight();
 //}
 
-//void Console::drawWidget(IGUIDrawer& /*drawer*/) const
+//void Console::drawImpl(IGUIDrawer& /*drawer*/) const
 //{
   //int line = 0;
   //int message = 0;
@@ -948,7 +948,7 @@ int InputLine::getInteger() const
   //return text.getNumLines();
 //}
 
-//void TextArea::resizeWidget()
+//void TextArea::resizeImpl()
 //{
   //this->text.splitWords(getSizeX());
 //}
@@ -959,7 +959,7 @@ int InputLine::getInteger() const
   //else return 0;
 //}
 
-//void TextArea::handleWidget(const IGUIInput& input)
+//void TextArea::handleImpl(const IGUIInput& input)
 //{
   //if(scrollEnabled)
   //{
@@ -973,7 +973,7 @@ int InputLine::getInteger() const
   //return getSizeY() / markup.getHeight();
 //}
 
-//void TextArea::drawWidget(IGUIDrawer& drawer) const
+//void TextArea::drawImpl(IGUIDrawer& drawer) const
 //{
   //int visible = getVisibleLines(markup);
   ////scroll is the startline, scroll + visible is the end line
@@ -1091,7 +1091,7 @@ int InputLine::getInteger() const
   //return getTextAreaHeight() / markup.getHeight();
 //}
 
-//void InputBox::drawWidget(IGUIDrawer& drawer) const
+//void InputBox::drawImpl(IGUIDrawer& drawer) const
 //{
   //panel.draw(drawer, x0, y0, getSizeX(), getSizeY());
   //bar.draw(drawer);
@@ -1110,7 +1110,7 @@ int InputLine::getInteger() const
   //multiText.draw(x0 + getLeftText(), y0 + getTopText(), firstVisibleLine, firstVisibleLine + getLinesVisible());
 //}
 
-//void InputBox::handleWidget(const IGUIInput& input)
+//void InputBox::handleImpl(const IGUIInput& input)
 //{
   //autoActivate(input, auto_activate_mouse_state, control_active);
   //if(!control_active) return;
@@ -1279,7 +1279,7 @@ int InputLine::getInteger() const
   //this->totallyEnable();
 //}
 
-//void FormattedText::drawWidget(IGUIDrawer& /*drawer*/) const
+//void FormattedText::drawImpl(IGUIDrawer& /*drawer*/) const
 //{
   //printFormatted(text, x0, y0, markup);
 //}

@@ -35,6 +35,7 @@ namespace lpi
 namespace gui
 {
 
+  //TODO: implement these functions in the .cpp file instead of here
   class GUIDrawerBuffer : public lpi::gui::AGUIDrawer
   {
     public:

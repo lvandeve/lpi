@@ -26,16 +26,6 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
-namespace
-{
-  int getScreenHeight()
-  {
-    GLint array[4];
-    glGetIntegerv(GL_VIEWPORT, array); //array[3] contains the height in pixels of the viewport
-    return array[3];
-  }
-}
-
 InternalTextDrawer::InternalTextDrawer(const ITextureFactory& factory, IDrawer2D* drawer)
 : drawer(drawer)
 , glyphs(&factory)
@@ -87,24 +77,9 @@ InternalGlyphs::Glyphs* InternalTextDrawer::getGlyphsForFont(const Font& font)
   else return &glyphs.glyphs8x8;
 }
 
-//Draws a string of text, null terminated
-int InternalTextDrawer::printString(const std::string& text, int x, int y, const Font& font, unsigned long forceLength)
-{
-  InternalGlyphs::Glyphs* glyphs = getGlyphsForFont(font);
-  unsigned long pos = 0;
-  while((pos < text.length() && forceLength == 0 /*&& text[pos] != 0*/) || (pos < forceLength && pos < text.length()  /*&& text[pos] != 0*/ && forceLength > 0))
-  {
-     drawLetter(text[pos], x, y, glyphs, font);
-     pos++;
-     x += glyphs->width;
-  }
-  //return position of a next character, where you may want to start drawing another string
-  return getScreenHeight() * x + y;
-}
-
 //Draws a string of text, and uses some of the ascii control characters, e.g. newline
 //Other control characters (ascii value < 32) are ignored and have no effect.
-int InternalTextDrawer::printText(const std::string& text, int x, int y, const Font& font, unsigned long forceLength)
+void InternalTextDrawer::printText(const std::string& text, int x, int y, const Font& font, unsigned long forceLength)
 {
   InternalGlyphs::Glyphs* glyphs = getGlyphsForFont(font);
   unsigned long pos = 0;
@@ -131,9 +106,7 @@ int InternalTextDrawer::printText(const std::string& text, int x, int y, const F
        }
      }
      pos++;
-  }  
-  //return pos;
-  return getScreenHeight() * drawX + drawY;
+  }
 }
 
 
@@ -393,24 +366,6 @@ void InternalTextDrawer::calcTextCharToPos(int& x, int& y, size_t index, const s
 {
   (void)x;(void)y;(void)font;(void)text;(void)align;(void)index;
   //TODO!
-}
-
-void InternalTextDrawer::printCentered(const std::string& text, int x, int y, const Font& font, unsigned long forceLength)
-{
-  InternalGlyphs::Glyphs* glyphs = getGlyphsForFont(font);
-  
-  int pos = 0;
-  while(text[pos] != 0) pos++;
-  
-  x -= pos * glyphs->width / 2;
-  y -= glyphs->height / 2;
-  
-  print(text, x, y, font, forceLength);
-}
-
-namespace //empty namespace
-{
-  LodePNG::Decoder pngdec;
 }
 
 InternalGlyphs::InternalGlyphs(const ITextureFactory* factory)

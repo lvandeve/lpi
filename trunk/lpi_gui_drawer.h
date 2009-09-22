@@ -153,7 +153,8 @@ enum GUIPart
   ///Text Parts
   
   //text button (NOT the text on a button with a panel, but a plain text-only button)
-  GPT_TEXT_BUTTON,
+  GPT_TEXT_BUTTON_TEXT,
+  GPT_PANEL_BUTTON_TEXT,
   GPT_WINDOW_TITLE,
   
   GP_END_DONT_USE //don't use this, it's placed here to have an element without comma at the end of the enumarator list.
@@ -249,6 +250,7 @@ class AGUIDrawer : public IGUIDrawer //abstract GUI drawer which already wraps a
     virtual void drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color, bool filled);
     virtual void drawEllipseCentered(int x, int y, int radiusx, int radiusy, const ColorRGB& color, bool filled);
     
+    virtual void drawGradientTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2);
     virtual void drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3);
     
     virtual bool supportsTexture(ITexture* texture); //if true, you can use it. If false, first use createTexture(texture) and then it'll be drawable by this drawer!

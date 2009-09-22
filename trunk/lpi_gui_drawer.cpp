@@ -102,6 +102,12 @@ void AGUIDrawer::drawEllipseCentered(int x, int y, int radiusx, int radiusy, con
   getDrawer().drawEllipseCentered(x, y, radiusx, radiusy, color, filled);
 }
 
+
+void AGUIDrawer::drawGradientTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2)
+{
+  getDrawer().drawGradientTriangle(x0, y0, x1, y1, x2, y2, color0, color1, color2);
+}
+
 void AGUIDrawer::drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3)
 {
   getDrawer().drawGradientQuad(x0, y0, x1, y1, x2, y2, x3, y3, color0, color1, color2, color3);
