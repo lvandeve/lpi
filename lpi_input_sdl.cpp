@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "lpi_gui_input_sdl.h"
+#include "lpi_input_sdl.h"
 
 #include "lpi_time.h"
 
@@ -27,81 +27,73 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 namespace lpi
 {
-namespace gui
-{
-
-double GUIInputSDL::getSeconds() const
+double InputSDL::getSeconds() const
 {
   return lpi::getSeconds();
 }
 
-int GUIInputSDL::mouseX() const
+int InputSDL::mouseX() const
 {
   return globalMouseX;
 }
 
-int GUIInputSDL::mouseY() const
+int InputSDL::mouseY() const
 {
   return globalMouseY;
 }
 
-bool GUIInputSDL::mouseButtonDown(GUIMouseButton button) const
+bool InputSDL::mouseButtonDown(MouseButton button) const
 {
-  if(button == GUI_LMB)
+  if(button == LMB)
     return globalLMB;
-  else if(button == GUI_MMB)
+  else if(button == MMB)
     return globalMMB;
-  else if(button == GUI_RMB)
+  else if(button == RMB)
     return globalRMB;
   else return false;
 }
 
-bool GUIInputSDL::mouseWheelUp() const
+bool InputSDL::mouseWheelUp() const
 {
   return globalMouseWheelUp;
 }
 
-bool GUIInputSDL::mouseWheelDown() const
+bool InputSDL::mouseWheelDown() const
 {
   return globalMouseWheelDown;
 }
 
-void GUIInputSDL::setMousePos(int x, int y) const
+void InputSDL::setMousePos(int x, int y) const
 {
   lpi::setMousePos(x, y);
 }
 
-void GUIInputSDL::changeMousePos(int x, int y) const
+void InputSDL::changeMousePos(int x, int y) const
 {
   lpi::changeMousePos(x, y);
 }
 
-bool GUIInputSDL::keyDown(int key) const
+bool InputSDL::keyDown(int key) const
 {
   return lpi::keyDown(key);
 }
 
-bool GUIInputSDL::keyPressed(int key) const
+bool InputSDL::keyPressed(int key) const
 {
   return lpi::keyPressed(key, &keystate);
 }
 
-bool GUIInputSDL::keyPressedTime(int key, double warmupTime, double repTime) const
+bool InputSDL::keyPressedTime(int key, double warmupTime, double repTime) const
 {
   return lpi::keyPressedTime(key, getSeconds(), warmupTime, repTime, &keystate);
 }
 
-int GUIInputSDL::unicodeKey(double warmupTime, double repTime) const
+int InputSDL::unicodeKey(double warmupTime, double repTime) const
 {
   return lpi::unicodeKey(getSeconds(), warmupTime, repTime, &keystate);
 }
 
-} //namespace gui
-} //namespace lpi
 
-namespace lpi
-{
-
-gui::GUIInputSDL gGUIInput;
+InputSDL gSDLInput;
 
 } //namespace lpi

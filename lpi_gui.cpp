@@ -265,7 +265,7 @@ void Element::drawToolTip(IGUIDrawer& drawer) const
   }
 }
 
-bool Element::mouseOver(const IGUIInput& input) const
+bool Element::mouseOver(const IInput& input) const
 {
   if(!present) return false;
   if(elementOver) return false; //there is another element over this element, so says the container containing this element
@@ -313,9 +313,9 @@ void Element::moveCenterTo(int x, int y)
   this->moveTo(x - this->getSizeX() / 2, y - this->getSizeY() / 2);
 }
 
-void Element::autoActivate(const IGUIInput& input, MouseState& auto_activate_mouse_state, bool& control_active)
+void Element::autoActivate(const IInput& input, MouseState& auto_activate_mouse_state, bool& control_active)
 {
-  bool over = mouseOver(input), down = input.mouseButtonDown(GUI_LMB); //for shorter notation
+  bool over = mouseOver(input), down = input.mouseButtonDown(LMB); //for shorter notation
   
   if(auto_activate_mouse_state.mouseDownHere(over, down)) control_active = 1;
   else
@@ -326,14 +326,14 @@ void Element::autoActivate(const IGUIInput& input, MouseState& auto_activate_mou
   }
 }
 
-void Element::handle(const IGUIInput& input)
+void Element::handle(const IInput& input)
 {
   if(!active) return;
   
   handleImpl(input);
 }
 
-void Element::handleImpl(const IGUIInput& input)
+void Element::handleImpl(const IInput& input)
 {
   (void)input;
   //no stuff needed for most elements
@@ -375,7 +375,7 @@ void Element::resizeImpl(const Pos<int>& /*newPos*/)
   //nothing to do. Overload this for guielements that need to do something to sub elements if they resize.
 }
 
-void Element::drag(const IGUIInput& input, GUIMouseButton button)
+void Element::drag(const IInput& input, MouseButton button)
 {
   if(mouseGrabbed(input, button))
   {
@@ -482,7 +482,7 @@ void Container::setElementOver(bool state)
   elements.setElementOver(state);
 }
 
-void Container::handleImpl(const IGUIInput& input)
+void Container::handleImpl(const IInput& input)
 {
   //if(mouseOver(input))
   if(!elementOver && mouseOver(input))
@@ -494,7 +494,7 @@ void Container::handleImpl(const IGUIInput& input)
     {
       elements.getElement(i)->setElementOver(0);
       bool grabbed = elements.getElement(i)->getMouseStateForContainer().mouseGrabbed(elements.getElement(i)->mouseOver(input)
-                                                                                    , input.mouseButtonDown(GUI_LMB)
+                                                                                    , input.mouseButtonDown(LMB)
                                                                                     , input.mouseX()
                                                                                     , input.mouseY()
                                                                                     , elements.getElement(i)->mouseGetRelPosX(input)
@@ -526,7 +526,7 @@ void Container::handleImpl(const IGUIInput& input)
     {
       elements.getElement(topElement)->setElementOver(0);
       if(elements.getElement(topElement)->isContainer()
-      && elements.getElement(topElement)->getMouseStateForContainer().mouseDownHere(elements.getElement(topElement)->mouseOver(input), input.mouseButtonDown(GUI_LMB)))
+      && elements.getElement(topElement)->getMouseStateForContainer().mouseDownHere(elements.getElement(topElement)->mouseOver(input), input.mouseButtonDown(LMB)))
         bringToTop(elements.getElement(topElement));
     }
   }
@@ -732,7 +732,7 @@ void ScrollElement::moveImpl(int x, int y)
   if(element) element->move(x, y);
 }
 
-void ScrollElement::handleImpl(const IGUIInput& input)
+void ScrollElement::handleImpl(const IInput& input)
 {
   if(element) element->handle(input);
   
@@ -861,7 +861,7 @@ int ScrollElement::getVisibleSizeY() const
   return getVisibleY1() - getVisibleY0();
 }
 
-bool ScrollElement::mouseInVisibleZone(const IGUIInput& input) const
+bool ScrollElement::mouseInVisibleZone(const IInput& input) const
 {
   if(!mouseOver(input)) return false;
   return input.mouseX() >= getVisibleX0()
@@ -1122,7 +1122,7 @@ void Window::putInside(int i)
   container.putInside(i);
 }
 
-void Window::handleImpl(const IGUIInput& input)
+void Window::handleImpl(const IInput& input)
 {
   //the close button
   if(closeEnabled && closeButton.clicked(input)) closed = 1;
@@ -1428,11 +1428,11 @@ void Button::makeTextPanel
   this->mouseDownVisualStyle = 1;
 }
 
-void Button::handleImpl(const IGUIInput& input)
+void Button::handleImpl(const IInput& input)
 {
-  if((mouseDownVisualStyle == 0 && mouseDown(input, GUI_LMB))
-  || (mouseDownVisualStyle == 1 && button_drawing_mouse_test.mouseDownHere(mouseOver(input), input.mouseButtonDown(GUI_LMB)))
-  || (mouseDownVisualStyle == 2 && button_drawing_mouse_test.mouseGrabbed(mouseOver(input), input.mouseButtonDown(GUI_LMB), input.mouseX(), input.mouseY(), mouseGetRelPosX(input), mouseGetRelPosY(input))))
+  if((mouseDownVisualStyle == 0 && mouseDown(input, LMB))
+  || (mouseDownVisualStyle == 1 && button_drawing_mouse_test.mouseDownHere(mouseOver(input), input.mouseButtonDown(LMB)))
+  || (mouseDownVisualStyle == 2 && button_drawing_mouse_test.mouseGrabbed(mouseOver(input), input.mouseButtonDown(LMB), input.mouseX(), input.mouseY(), mouseGetRelPosX(input), mouseGetRelPosY(input))))
   {
     draw_mouse_button_down_style = true;
   }
@@ -1660,7 +1660,7 @@ void Scrollbar::randomize()
   scrollPos = r * scrollSize;
 }
 
-void Scrollbar::handleImpl(const IGUIInput& input)
+void Scrollbar::handleImpl(const IInput& input)
 {
   int scrollDir = 0;
 
@@ -1714,7 +1714,7 @@ void Scrollbar::handleImpl(const IGUIInput& input)
 }
 
 //from an external source, use this function only BEFORE using the handle() function or getTicks() - oldTime will be zero
-void Scrollbar::scroll(const IGUIInput& input, int dir)
+void Scrollbar::scroll(const IInput& input, int dir)
 {
   scrollPos += dir * absoluteSpeed * (input.getSeconds() - oldTime);
 }
@@ -1859,7 +1859,7 @@ void ScrollbarPair::enableH()
   }
 }
 
-void ScrollbarPair::handleImpl(const IGUIInput& input)
+void ScrollbarPair::handleImpl(const IInput& input)
 {
   if(venabled) vbar.handle(input);
   if(henabled) hbar.handle(input);
@@ -2007,7 +2007,7 @@ void Slider::drawImpl(IGUIDrawer& drawer) const
   }
 }
 
-void Slider::handleImpl(const IGUIInput& input)
+void Slider::handleImpl(const IInput& input)
 {
   if(direction == H)
   {
@@ -2214,7 +2214,7 @@ void Checkbox::toggle()
 }
 
 //see how you click with the mouse and toggle on click
-void Checkbox::handleImpl(const IGUIInput& input)
+void Checkbox::handleImpl(const IInput& input)
 {
   //make sure never both pressed() and clicked() are checked, because one test screws up the other, hence the order of the tests in the if conditions
   if(toggleOnMouseUp == 0 && pressed(input)) toggle();
@@ -2332,7 +2332,7 @@ void BulletList::setCorrectSize()
   this->setSizeY(maxy - miny);
 }
 
-void BulletList::handleImpl(const IGUIInput& input)
+void BulletList::handleImpl(const IInput& input)
 {
   if(!mouseOver(input)) return; //some speed gain, don't do all those loops if the mouse isn't over this widget
   
@@ -2583,7 +2583,7 @@ void Tabs::selectTab(size_t i_index)
   updateActiveContainer();
 }
 
-void Tabs::handleImpl(const IGUIInput& input)
+void Tabs::handleImpl(const IInput& input)
 {
   for(size_t i = 0; i < tabs.size(); i++)
   {

@@ -82,7 +82,7 @@ void DynamicPage::drawImpl(IGUIDrawer& drawer) const
   }
 }
 
-void DynamicPage::handleImpl(const IGUIInput& input)
+void DynamicPage::handleImpl(const IInput& input)
 {
   for(size_t i = 0; i < controls.size(); i++)
     controls[i]->handle(input);

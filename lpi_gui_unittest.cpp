@@ -1,7 +1,7 @@
 #include "lpi_gui_unittest.h"
 #include "lpi_unittest.h"
 #include "lpi_event.h"
-#include "lpi_gui_input_sdl.h"
+#include "lpi_input_sdl.h"
 #include "lpi_screen_gl.h"
 #include "lpi_gui.h"
 #include "lpi_gui_ex.h"
@@ -13,7 +13,7 @@ namespace lpi
 namespace gui
 {
 
-class GUIInputDebug : public GUIInputSDL
+class GUIInputDebug : public InputSDL
 {
   private:
     int x;
@@ -45,9 +45,9 @@ class GUIInputDebug : public GUIInputSDL
       return y;
     }
     //check the state of the 3 buttons of mouse
-    virtual bool mouseButtonDown(GUIMouseButton button) const
+    virtual bool mouseButtonDown(MouseButton button) const
     {
-      if(button == GUI_LMB)
+      if(button == LMB)
         return lmb;
       else return rmb;
     }

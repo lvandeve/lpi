@@ -80,17 +80,17 @@ namespace gui
               //const Font* font1 = 0hite, const Font& font2 = 0hite,
               //BackPanel panel = DEFAULTPANEL, BackRule hrule = DEFAULTHRULE); //make with given panel    
     //virtual void drawImpl(IGUIDrawer& drawer) const;
-    //virtual void handleImpl(const IGUIInput& input);
-    //int check(const IGUIInput& input);
+    //virtual void handleImpl(const IInput& input);
+    //int check(const IInput& input);
     //Button* getButton(int i);
     //Button* getButton(const std::string& name);
     //int getNumButtons() const { return menuButton.size(); }
-    //std::string checkText(const IGUIInput& input);
+    //std::string checkText(const IInput& input);
     ///*
     //returns 0 if none, or a button where no identity was set, is pressed, or
     //the identity of the button if one with an identity was pressed
     //*/
-    //int checkIdentity(const IGUIInput& input);
+    //int checkIdentity(const IInput& input);
     //void addOption(const std::string& text, int id = 0); //id is an optional identity
     
     //bool autoDisable; //if true, the menu will totallyDisable itself if you click anywhere not on the menu
@@ -141,7 +141,7 @@ namespace gui
     //virtual void drawImpl(IGUIDrawer& drawer) const;
     //int check();
     //std::string checkText();
-    //virtual void handleImpl(const IGUIInput& input);
+    //virtual void handleImpl(const IInput& input);
 
     //void addOption(const std::string& text);
 //};
@@ -158,8 +158,8 @@ class Matrix : public Element
   unsigned long numx;
   unsigned long numy;
   
-  unsigned long getTileX(const IGUIInput& input) const;
-  unsigned long getTileY(const IGUIInput& input) const;
+  unsigned long getTileX(const IInput& input) const;
+  unsigned long getTileY(const IInput& input) const;
   
   int getScreenX(int tilex) const;
   int getScreenY(int tiley) const;
@@ -197,9 +197,9 @@ class Grid : public Element
   
   unsigned long getNumElements() const;
   
-  int getTileX(const IGUIInput& input) const;
-  int getTileY(const IGUIInput& input) const;
-  int getTile(const IGUIInput& input) const; //returns index of the tile
+  int getTileX(const IInput& input) const;
+  int getTileY(const IInput& input) const;
+  int getTile(const IInput& input) const; //returns index of the tile
   
   int getScreenX(int tilex) const;
   int getScreenY(int tiley) const;
@@ -282,7 +282,7 @@ class Canvas : public Element
     int border; //TODO: old, remove this
     
     virtual void drawImpl(IGUIDrawer& drawer) const;
-    virtual void handleImpl(const IGUIInput& input);
+    virtual void handleImpl(const IInput& input);
     
     void clear(); //clear the whole texture to backColor, deleting it's previous contents
     
@@ -423,7 +423,7 @@ class NState : public Element, public Label
     void make(int x, int y, int toggleOnMouseUp = 0);
     void addState(ITexture* texture, const ColorRGB& colorMod = RGB_White, const std::string& text = "", const Font& font = FONT_Default);
     virtual void drawImpl(IGUIDrawer& drawer) const; //also handles it by calling handle(): toggles when mouse down or not
-    virtual void handleImpl(const IGUIInput& input);
+    virtual void handleImpl(const IInput& input);
 };
 
 } //namespace gui

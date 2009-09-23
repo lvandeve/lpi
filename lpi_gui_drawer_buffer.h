@@ -26,7 +26,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_color.h"
 #include "lpi_texture.h"
 #include "lpi_text_drawer_int.h"
-#include "lpi_gui_input_sdl.h"
+#include "lpi_input_sdl.h"
 #include "lpi_guipartdraw_int.h"
 
 namespace lpi
@@ -38,13 +38,13 @@ namespace gui
   class GUIDrawerBuffer : public AGUIDrawer
   {
     private:
-      GUIInputSDL input;
+      InputSDL input;
       Drawer2DBuffer drawer;
       InternalTextDrawer textdrawer;
       GUIPartDrawerInternal guidrawer;
     public:
       GUIDrawerBuffer();
-      virtual IGUIInput& getInput();
+      virtual IInput& getInput();
       virtual IDrawer2D& getDrawer();
       virtual const IDrawer2D& getDrawer() const;
       virtual ITextDrawer& getTextDrawer();

@@ -74,7 +74,7 @@ class InputLine : public Element //input text line
               int type = 0, const std::string& title = "", const Font& titleFont = FONT_Default, const ColorRGB& cursorColor = RGB_White);
     
     virtual void drawImpl(IGUIDrawer& drawer) const;
-    virtual void handleImpl(const IGUIInput& input);
+    virtual void handleImpl(const IInput& input);
 
     void setText(const std::string& i_text);
     const std::string& getText() const;
@@ -213,7 +213,7 @@ class InputLine : public Element //input text line
     //int getNumLines() const;
     //int getVisibleLines(const Font* font) const;
     //virtual void drawImpl(IGUIDrawer& drawer) const;
-    //virtual void handleImpl(const IGUIInput& input);
+    //virtual void handleImpl(const IInput& input);
     //virtual void resizeImpl();
 
     //TextArea();
@@ -259,7 +259,7 @@ class InputLine : public Element //input text line
     //const std::string& getText() const { return text; }
     
     //virtual void drawImpl(IGUIDrawer& drawer) const;
-    //virtual void handleImpl(const IGUIInput& input);
+    //virtual void handleImpl(const IInput& input);
     
     //int border;
     

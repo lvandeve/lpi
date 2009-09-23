@@ -176,7 +176,7 @@ void InputLine::activate(bool i_active)
   control_active = i_active;
 }
 
-void InputLine::handleImpl(const IGUIInput& input) //both check if you pressed enter, and also check letter keys pressed, backspace, etc...
+void InputLine::handleImpl(const IInput& input) //both check if you pressed enter, and also check letter keys pressed, backspace, etc...
 {
   if(mouseGrabbed(input))
   {
@@ -957,7 +957,7 @@ int InputLine::getInteger() const
   //else return 0;
 //}
 
-//void TextArea::handleImpl(const IGUIInput& input)
+//void TextArea::handleImpl(const IInput& input)
 //{
   //if(scrollEnabled)
   //{
@@ -1108,7 +1108,7 @@ int InputLine::getInteger() const
   //multiText.draw(x0 + getLeftText(), y0 + getTopText(), firstVisibleLine, firstVisibleLine + getLinesVisible());
 //}
 
-//void InputBox::handleImpl(const IGUIInput& input)
+//void InputBox::handleImpl(const IInput& input)
 //{
   //autoActivate(input, auto_activate_mouse_state, control_active);
   //if(!control_active) return;
