@@ -172,7 +172,7 @@ void ColorSlider::drawBackgroundV(IGUIDrawer& drawer) const
   }
 }
 
-void ColorSlider::handleImpl(const IGUIInput& input)
+void ColorSlider::handleImpl(const IInput& input)
 {
   if(mouseGrabbed(input))
   {
@@ -328,11 +328,11 @@ void ColorSliderType::decrementType()
     type = (ColorChannelType)((int)(type) - 1);
 }
 
-void ColorSliderType::handleImpl(const IGUIInput& input)
+void ColorSliderType::handleImpl(const IInput& input)
 {
   ColorSlider::handleImpl(input);
-  if(mouseDoubleClicked(input, GUI_LMB)) incrementType();
-  if(mouseDoubleClicked(input, GUI_RMB)) decrementType();
+  if(mouseDoubleClicked(input, LMB)) incrementType();
+  if(mouseDoubleClicked(input, RMB)) decrementType();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -376,7 +376,7 @@ void ColorSliderEx::drawImpl(IGUIDrawer& drawer) const
   label.draw(drawer);
 }
 
-void ColorSliderEx::handleImpl(const IGUIInput& input)
+void ColorSliderEx::handleImpl(const IInput& input)
 {
   slider->handle(input);
   this->input.handle(input);
@@ -473,7 +473,7 @@ void ColorSliders::drawImpl(IGUIDrawer& drawer) const
     sliders[i]->draw(drawer);
 }
 
-void ColorSliders::handleImpl(const IGUIInput& input)
+void ColorSliders::handleImpl(const IInput& input)
 {
   for(size_t i = 0; i < sliders.size(); i++)
     sliders[i]->handle(input);
@@ -793,7 +793,7 @@ void ColorEditor2D::drawImpl(IGUIDrawer& drawer) const
   drawBackground(drawer);
 }
 
-void ColorEditor2D::handleImpl(const IGUIInput& input)
+void ColorEditor2D::handleImpl(const IInput& input)
 {
   (void)input;
 }
@@ -857,7 +857,7 @@ void HueCircle::drawImpl(IGUIDrawer& drawer) const
   }
 }
 
-void HueCircle::handleImpl(const IGUIInput& input)
+void HueCircle::handleImpl(const IInput& input)
 {
   if(mouseGrabbed(input))
   {

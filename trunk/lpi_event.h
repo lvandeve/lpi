@@ -22,10 +22,11 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 lpi_event: SDL events, mouse input and keyboard input
 */
 
-#ifndef LPI_EVENT_H_INCLUDED
-#define LPI_EVENT_H_INCLUDED
+#pragma once
 
 #include <SDL/SDL.h>
+
+#include "lpi_input.h"
 
 namespace lpi
 {
@@ -38,14 +39,6 @@ extern bool globalRMB; //right mouse button
 extern bool globalMMB; //middle mouse button
 extern bool globalMouseWheelUp; //mouse wheel up
 extern bool globalMouseWheelDown; //mouse wheel down
-
-//left or right mouse button
-enum MouseButton
-{
-  LMB,
-  RMB,
-  MMB
-};
 
 inline bool getGlobalMouseButton(MouseButton button)
 {
@@ -107,4 +100,3 @@ void end();
 
 } //namespace lpi
 
-#endif

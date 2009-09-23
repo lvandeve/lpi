@@ -196,9 +196,9 @@ namespace gui
   //}
 //}
 
-//void DropMenu::handleImpl(const IGUIInput& input)
+//void DropMenu::handleImpl(const IInput& input)
 //{
-  //if(autoDisable && input.mouseButtonDown(GUI_LMB) && !mouseDown(input)) totallyDisable();
+  //if(autoDisable && input.mouseButtonDown(LMB) && !mouseDown(input)) totallyDisable();
 //}
 
 ///*
@@ -212,7 +212,7 @@ namespace gui
 
 //*/
 
-//int DropMenu::check(const IGUIInput& input)
+//int DropMenu::check(const IInput& input)
 //{
   //for(unsigned long i = 0; i < menuButton.size(); i++)
   //{
@@ -239,7 +239,7 @@ namespace gui
 //}
 
 
-//std::string DropMenu::checkText(const IGUIInput& input)
+//std::string DropMenu::checkText(const IInput& input)
 //{
   //for(unsigned long i = 0; i < menuButton.size(); i++)
   //{
@@ -251,7 +251,7 @@ namespace gui
   //return "";
 //}
 
-//int DropMenu::checkIdentity(const IGUIInput& input)
+//int DropMenu::checkIdentity(const IInput& input)
 //{
   //for(unsigned long i = 0; i < menuButton.size(); i++)
   //{
@@ -430,7 +430,7 @@ namespace gui
   //return textButton[selected].text;
 //}
 
-//void Droplist::handleImpl(const IGUIInput& input)
+//void Droplist::handleImpl(const IInput& input)
 //{
   //if(listButton.clicked(input) || (clicked(input) && mouseGetRelPosY(input) < sizeyc && !listButton.mouseOver(input))) //behind the or is to open it also if you press the thing itself but not the button, the getMouseY() < sizeyc is necessary, without it, the code after this will not work anymore (starting from if(openen)
   //{
@@ -520,12 +520,12 @@ void Matrix::make(int x0, int y0, int x1, int y1, int numx, int numy)
   this->numy = numy;
 }
 
-unsigned long Matrix::getTileX(const IGUIInput& input) const
+unsigned long Matrix::getTileX(const IInput& input) const
 {
   return mouseGetRelPosX(input) / (getSizeX() / numx);
 }
 
-unsigned long Matrix::getTileY(const IGUIInput& input) const
+unsigned long Matrix::getTileY(const IInput& input) const
 {
   return mouseGetRelPosY(input) / (getSizeY() / numy);
 }
@@ -608,17 +608,17 @@ unsigned long Grid::getNumElements() const
   return getNumx() * getNumy();
 }
 
-int Grid::getTileX(const IGUIInput& input) const
+int Grid::getTileX(const IInput& input) const
 {
   return mouseGetRelPosX(input) / tileSizeX;
 }
 
-int Grid::getTileY(const IGUIInput& input) const
+int Grid::getTileY(const IInput& input) const
 {
   return mouseGetRelPosY(input) / tileSizeY;
 }
 
-int Grid::getTile(const IGUIInput& input) const //returns index of the tile
+int Grid::getTile(const IInput& input) const //returns index of the tile
 {
   return getTileX(input) + getNumx() * getTileY(input);
 }
@@ -893,13 +893,13 @@ void Canvas::init()
   clear();
 }
 
-void Canvas::handleImpl(const IGUIInput& input)
+void Canvas::handleImpl(const IInput& input)
 {
-  if(mouseGrabbed(input, GUI_LMB) || mouseGrabbed(input, GUI_RMB))
+  if(mouseGrabbed(input, LMB) || mouseGrabbed(input, RMB))
   {
     ColorRGB drawColor;
     
-    if(input.mouseButtonDown(GUI_LMB)) drawColor = leftColor;
+    if(input.mouseButtonDown(LMB)) drawColor = leftColor;
     else drawColor = rightColor;
     
     int drawx = mouseGetRelPosX(input);
@@ -1082,17 +1082,17 @@ void NState::addState(ITexture* texture, const ColorRGB& colorMod, const std::st
 
 
 //see how you click with the mouse and toggle on click
-void NState::handleImpl(const IGUIInput& input)
+void NState::handleImpl(const IInput& input)
 {
   //make sure never both pressed() and clicked() are checked, because one test screws up the other, hence the order of the tests in the if conditions
   if(states.size() == 0) return;
   
-  if((toggleOnMouseUp == 0 && pressed(input, GUI_LMB)) || (toggleOnMouseUp == 1 && clicked(input, GUI_LMB)))
+  if((toggleOnMouseUp == 0 && pressed(input, LMB)) || (toggleOnMouseUp == 1 && clicked(input, LMB)))
   {
     if(state >= states.size() - 1) state = 0;
     else state++;
   }
-  if((toggleOnMouseUp == 0 && pressed(input, GUI_RMB)) || (toggleOnMouseUp == 1 && clicked(input, GUI_RMB)))
+  if((toggleOnMouseUp == 0 && pressed(input, RMB)) || (toggleOnMouseUp == 1 && clicked(input, RMB)))
   {
     if(state == 0) state = states.size() - 1;
     else state--;

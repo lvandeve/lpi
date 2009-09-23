@@ -90,7 +90,7 @@ class ColorSlider : public ColorChannelEditor, public Element
     ColorSlider();
   
     virtual void drawImpl(IGUIDrawer& drawer) const;
-    virtual void handleImpl(const IGUIInput& input);
+    virtual void handleImpl(const IInput& input);
     
     double getValue() const { return value; }
     void setValue(double value) { this->value = value; }
@@ -150,7 +150,7 @@ class ColorSliderType : public ColorSlider //can dynamically take any color type
     void incrementType();
     void decrementType();
     
-    virtual void handleImpl(const IGUIInput& input); //used for debugging...
+    virtual void handleImpl(const IInput& input); //used for debugging...
 };
 
 class ColorSliderEx : public ColorChannelEditor, public ElementComposite
@@ -179,7 +179,7 @@ class ColorSliderEx : public ColorChannelEditor, public ElementComposite
     ~ColorSliderEx() { delete slider; }
     
     virtual void drawImpl(IGUIDrawer& drawer) const;
-    virtual void handleImpl(const IGUIInput& input);
+    virtual void handleImpl(const IInput& input);
     
     double getValue() const; //this is in range 0.0-1.0, like ColorSlider!
     void setValue(double value);
@@ -223,7 +223,7 @@ class ColorSliders : public ColorEditor, public ElementComposite
     void addAlpha(const std::string& label = "A:", double smallest = 0, double largest = 255); //adds a ColorSliderA, has its own function for convenience, since every color model can have the same alpha channel
 
     virtual void drawImpl(IGUIDrawer& drawer) const;
-    virtual void handleImpl(const IGUIInput& input);
+    virtual void handleImpl(const IInput& input);
     
     virtual ColorRGB getColor() const = 0;
     virtual void setColor(const ColorRGB& color) = 0;
@@ -320,7 +320,7 @@ class ColorEditor2D : public ColorChannelEditor, public Element
     ColorEditor2D();
   
     virtual void drawImpl(IGUIDrawer& drawer) const;
-    virtual void handleImpl(const IGUIInput& input);
+    virtual void handleImpl(const IInput& input);
     
     double getValueX() const { return value_x; }
     void setValueX(double value) { this->value_x = value; }
@@ -365,7 +365,7 @@ class HueCircle : public ColorChannelEditor, public Element
     HueCircle();
   
     virtual void drawImpl(IGUIDrawer& drawer) const;
-    virtual void handleImpl(const IGUIInput& input);
+    virtual void handleImpl(const IInput& input);
     
     double getValueAngle() const { return value_angle; }
     void setValueAngle(double value) { this->value_angle = value; }
@@ -451,14 +451,14 @@ class FGBGColor : public ElementComposite
   public:
     
     virtual void drawImpl(IGUIDrawer& drawer) const;
-    virtual void handleImpl(const IGUIInput& input);
+    virtual void handleImpl(const IInput& input);
     
     void setFG(const ColorRGB& color);
     void setBG(const ColorRGB& color);
     
-    bool selectedFG(const IGUIInput& input) const; //returns true only if FG is just selected
-    bool selectedBG(const IGUIInput& input) const; //returns true only if BG is just selected
-    bool clickedArrows(const IGUIInput& input) const; //returns true if the arrows button is just clicked, indicating that you have to switch the FG and BG color (NOTE: FGBGColor takes no action itself, it doesn't even swap its own colors, you have to do that when this returns true (to allow updating everything on your side))
+    bool selectedFG(const IInput& input) const; //returns true only if FG is just selected
+    bool selectedBG(const IInput& input) const; //returns true only if BG is just selected
+    bool clickedArrows(const IInput& input) const; //returns true if the arrows button is just clicked, indicating that you have to switch the FG and BG color (NOTE: FGBGColor takes no action itself, it doesn't even swap its own colors, you have to do that when this returns true (to allow updating everything on your side))
 };
 
 } //namespace gui

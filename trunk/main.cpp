@@ -49,7 +49,7 @@ gprof > gprof.txt
 #include "lpi_gui.h"
 #include "lpi_gui_text.h"
 #include "lpi_gui_ex.h"
-#include "lpi_gui_input_sdl.h"
+#include "lpi_input_sdl.h"
 #include "lpi_gui_drawer_gl.h"
 #include "lpi_gui_drawer_buffer.h"
 #include "lpi_draw2d.h"
@@ -320,7 +320,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     //dyn.valueToControl();
     
     c.draw(guidrawer);
-    c.handle(lpi::gGUIInput);
+    c.handle(lpi::gSDLInput);
     
     lpi::ColorHSV colorHSV(hsv.getValueAngle() * 255, hsv.getValueAxial() * 255, 255);
     color = lpi::HSVtoRGB(colorHSV);
@@ -332,11 +332,11 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     if(wcb.checked) w1.addScrollbars(guidrawer);
     else w1.removeScrollbars();
     
-    if(sound_button.pressed(lpi::gGUIInput)) lpi::audioPlay(sound);
+    if(sound_button.pressed(lpi::gSDLInput)) lpi::audioPlay(sound);
     
-    if(tb_unittest.pressed(lpi::gGUIInput)) lpi::gui::unitTest();
+    if(tb_unittest.pressed(lpi::gSDLInput)) lpi::gui::unitTest();
     
-    if(tb_guitopng.pressed(lpi::gGUIInput))
+    if(tb_guitopng.pressed(lpi::gSDLInput))
     {
       lpi::gui::GUIDrawerBuffer d;
       lpi::Drawer2DBuffer& drawer = dynamic_cast<lpi::Drawer2DBuffer&>(d.getDrawer());
@@ -347,7 +347,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
       LodePNG::encode("alternativerenderer.png", buffer, width, height);
     }
     
-    if(tb.clicked(lpi::gGUIInput))
+    if(tb.clicked(lpi::gSDLInput))
     {
       lpi::xml::XMLTree tree;
       tree.parse(lpi::gui::builtInGuiData);
@@ -365,7 +365,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
       }
     }
     
-    if(tb2.clicked(lpi::gGUIInput))
+    if(tb2.clicked(lpi::gSDLInput))
     {
       lpi::binaryFileToBase64File("textures_small_new.txt", "textures_small_new.png", true);
       lpi::binaryFileToBase64File("icons_small_new.txt", "icons_small_new.png", true);
@@ -373,25 +373,25 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
       lpi::binaryFileToBase64File("icons_small.txt", "icons_small.png", true);
     }
     
-    if(wb.mouseJustOver(lpi::gGUIInput)) spawns.addSpawn("just over", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::RGB_Gray);
-    if(wb.mouseJustLeft(lpi::gGUIInput)) spawns.addSpawn("just left", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::RGB_White);
-    if(wb.pressed(lpi::gGUIInput)) spawns.addSpawn("pressed", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(255, 0, 0));
-    if(wb.clicked(lpi::gGUIInput)) spawns.addSpawn("clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(255, 64, 64));
-    if(wb.mouseDoubleClicked(lpi::gGUIInput)) spawns.addSpawn("double clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(255, 128, 128));
-    if(wb.mouseTripleClicked(lpi::gGUIInput)) spawns.addSpawn("triple clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(255, 192, 192));
-    if(wb.mouseQuadrupleClicked(lpi::gGUIInput)) spawns.addSpawn("quadruple clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(255, 224, 224));
-    if(wb.pressed(lpi::gGUIInput, lpi::gui::GUI_MMB)) spawns.addSpawn("middle pressed", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(0, 255, 0));
-    if(wb.clicked(lpi::gGUIInput, lpi::gui::GUI_MMB)) spawns.addSpawn("middle clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(64, 255, 64));
-    if(wb.mouseDoubleClicked(lpi::gGUIInput, lpi::gui::GUI_MMB)) spawns.addSpawn("middle double clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(128, 255, 128));
-    if(wb.mouseTripleClicked(lpi::gGUIInput, lpi::gui::GUI_MMB)) spawns.addSpawn("middle triple clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(192, 255, 192));
-    if(wb.mouseQuadrupleClicked(lpi::gGUIInput, lpi::gui::GUI_MMB)) spawns.addSpawn("middle quadruple clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(224, 255, 224));
-    if(wb.pressed(lpi::gGUIInput, lpi::gui::GUI_RMB)) spawns.addSpawn("right pressed", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(0, 0, 255));
-    if(wb.clicked(lpi::gGUIInput, lpi::gui::GUI_RMB)) spawns.addSpawn("right clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(64, 64, 255));
-    if(wb.mouseDoubleClicked(lpi::gGUIInput, lpi::gui::GUI_RMB)) spawns.addSpawn("right double clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(128, 128, 255));
-    if(wb.mouseTripleClicked(lpi::gGUIInput, lpi::gui::GUI_RMB)) spawns.addSpawn("right triple clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(192, 192, 255));
-    if(wb.mouseQuadrupleClicked(lpi::gGUIInput, lpi::gui::GUI_RMB)) spawns.addSpawn("right quadruple clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(224, 224, 255));
-    if(wb.mouseScrollUp(lpi::gGUIInput)) spawns.addSpawn("scrolled up", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::RGB_Black);
-    if(wb.mouseScrollDown(lpi::gGUIInput)) spawns.addSpawn("scrolled down", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::RGB_Black);
+    if(wb.mouseJustOver(lpi::gSDLInput)) spawns.addSpawn("just over", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::RGB_Gray);
+    if(wb.mouseJustLeft(lpi::gSDLInput)) spawns.addSpawn("just left", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::RGB_White);
+    if(wb.pressed(lpi::gSDLInput)) spawns.addSpawn("pressed", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(255, 0, 0));
+    if(wb.clicked(lpi::gSDLInput)) spawns.addSpawn("clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(255, 64, 64));
+    if(wb.mouseDoubleClicked(lpi::gSDLInput)) spawns.addSpawn("double clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(255, 128, 128));
+    if(wb.mouseTripleClicked(lpi::gSDLInput)) spawns.addSpawn("triple clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(255, 192, 192));
+    if(wb.mouseQuadrupleClicked(lpi::gSDLInput)) spawns.addSpawn("quadruple clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(255, 224, 224));
+    if(wb.pressed(lpi::gSDLInput, lpi::MMB)) spawns.addSpawn("middle pressed", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(0, 255, 0));
+    if(wb.clicked(lpi::gSDLInput, lpi::MMB)) spawns.addSpawn("middle clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(64, 255, 64));
+    if(wb.mouseDoubleClicked(lpi::gSDLInput, lpi::MMB)) spawns.addSpawn("middle double clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(128, 255, 128));
+    if(wb.mouseTripleClicked(lpi::gSDLInput, lpi::MMB)) spawns.addSpawn("middle triple clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(192, 255, 192));
+    if(wb.mouseQuadrupleClicked(lpi::gSDLInput, lpi::MMB)) spawns.addSpawn("middle quadruple clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(224, 255, 224));
+    if(wb.pressed(lpi::gSDLInput, lpi::RMB)) spawns.addSpawn("right pressed", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(0, 0, 255));
+    if(wb.clicked(lpi::gSDLInput, lpi::RMB)) spawns.addSpawn("right clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(64, 64, 255));
+    if(wb.mouseDoubleClicked(lpi::gSDLInput, lpi::RMB)) spawns.addSpawn("right double clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(128, 128, 255));
+    if(wb.mouseTripleClicked(lpi::gSDLInput, lpi::RMB)) spawns.addSpawn("right triple clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(192, 192, 255));
+    if(wb.mouseQuadrupleClicked(lpi::gSDLInput, lpi::RMB)) spawns.addSpawn("right quadruple clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(224, 224, 255));
+    if(wb.mouseScrollUp(lpi::gSDLInput)) spawns.addSpawn("scrolled up", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::RGB_Black);
+    if(wb.mouseScrollDown(lpi::gSDLInput)) spawns.addSpawn("scrolled down", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::RGB_Black);
     
     screen.redraw();
     screen.cls(lpi::RGB_Darkgreen);

@@ -122,7 +122,7 @@ class DynamicCheckbox : public TDymamicPageControl<bool>
       box.setChecked(*value);
     }
     
-    virtual void handleImpl(const IGUIInput& input)
+    virtual void handleImpl(const IInput& input)
     {
       box.handle(input);
     }
@@ -197,7 +197,7 @@ class DynamicSlider : public TDymamicPageControl<T>
       setSliderValue(*value);
     }
     
-    virtual void handleImpl(const IGUIInput& input)
+    virtual void handleImpl(const IInput& input)
     {
       line.handle(input);
       slider.handle(input);
@@ -253,7 +253,7 @@ class DynamicValue : public TDymamicPageControl<T>
       line.setText(valtostr<T>(*value));
     }
     
-    virtual void handleImpl(const IGUIInput& input)
+    virtual void handleImpl(const IInput& input)
     {
       line.handle(input);
     }
@@ -305,7 +305,7 @@ class DynamicColor : public TDymamicPageControl<ColorRGB>
       (void)value;
     }
     
-    virtual void handleImpl(const IGUIInput& input)
+    virtual void handleImpl(const IInput& input)
     {
       box.handle(input);
       
@@ -361,7 +361,7 @@ class DynamicPage : public ElementComposite
   void addControl(const std::string& name, IDynamicPageControl* control);
   
   virtual void drawImpl(IGUIDrawer& drawer) const;
-  virtual void handleImpl(const IGUIInput& input);
+  virtual void handleImpl(const IInput& input);
 };
 
 } //namespace gui

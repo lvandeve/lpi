@@ -28,7 +28,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_xml.h"
 #include "lpi_texture_gl.h"
 
-#include "lpi_gui_input_sdl.h"
+#include "lpi_input_sdl.h"
 
 namespace lpi
 {
@@ -46,7 +46,7 @@ GUIDrawerGL::GUIDrawerGL(ScreenGL* screen)
 
 
 
-IGUIInput& GUIDrawerGL::getInput()
+IInput& GUIDrawerGL::getInput()
 {
   return input;
 }

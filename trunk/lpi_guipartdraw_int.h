@@ -26,7 +26,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_gui_base.h"
 #include "lpi_color.h"
 #include "lpi_text_drawer.h"
-#include "lpi_gui_input_sdl.h"
+#include "lpi_input_sdl.h"
 
 namespace lpi
 {

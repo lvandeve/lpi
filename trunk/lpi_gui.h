@@ -61,7 +61,7 @@ class InternalContainer //container inside elements, for elements that contain s
     void resize(const Pos<int>& oldPos, const Pos<int>& newPos); //this resizes the 2D size of elements, not the amount of elements
     void move(int x, int  y);
     void setElementOver(bool state); //this says to all elements whether or not another element is in front of it in Z order, causing mouse to not work
-    void setBasicMouseInfo(const IGUIInput& input);
+    void setBasicMouseInfo(const IInput& input);
 
     void addSubElement(Element* element, const Sticky& sticky, Element* parent);
     void insertSubElement(size_t index, Element* element, const Sticky& sticky, Element* parent);
@@ -130,10 +130,10 @@ class Element : public ElementRectangular
     int minSizeY; //TODO: make this virtual private functions instead of member variables, or even better, remove this completely and make the resize function of elements determine this
     
   protected:
-    void autoActivate(const IGUIInput& input, MouseState& auto_activate_mouse_state, bool& control_active); //utility function used by text input controls, they need a member variable like "MouseState auto_activate_mouse_state" in them for this and a bool "control_active", and in their handleWidget, put, "autoActivate(input, auto_activate_mouse_state, control_active); if(!control_active) return;"
+    void autoActivate(const IInput& input, MouseState& auto_activate_mouse_state, bool& control_active); //utility function used by text input controls, they need a member variable like "MouseState auto_activate_mouse_state" in them for this and a bool "control_active", and in their handleWidget, put, "autoActivate(input, auto_activate_mouse_state, control_active); if(!control_active) return;"
     
     virtual void drawImpl(IGUIDrawer& drawer) const = 0; //called by draw(), this one can be overloaded for each widget defined below
-    virtual void handleImpl(const IGUIInput& input);
+    virtual void handleImpl(const IInput& input);
     virtual void moveImpl(int x, int y); //Override this if you have subelements, unless you use addSubElement in ElementComposite.
     virtual void resizeImpl(const Pos<int>& newPos); //always called after resize, will resize the other elements to the correct size. Override this if you have subelements, unless you use addSubElement in ElementComposite. When resizeWidget is called, you can get the new size from newPos, while the old size is still in x0, y0, x1, y1 from this and will be set after resizeWidget is called.
 
@@ -160,13 +160,13 @@ class Element : public ElementRectangular
     void totallyEnable();
     
     ////mouse overrides
-    virtual bool mouseOver(const IGUIInput& input) const;
+    virtual bool mouseOver(const IInput& input) const;
     virtual bool mouseGrabbable() const;
     virtual bool mouseActive() const { return active; }
     
     ////core functions of gui::Elements
     void draw(IGUIDrawer& drawer) const; //will draw the actual widget and do some other always-to-do stuff, do NOT override this function
-    void handle(const IGUIInput& input);
+    void handle(const IInput& input);
     virtual void move(int x, int y);
     virtual void resize(int x0, int y0, int x1, int y1); //especially useful for windows and their container; parameters are the new values for x0, y0, x1 and y1 so this function can both move the object to a target and resize
     
@@ -196,7 +196,7 @@ class Element : public ElementRectangular
     void drawDebugBorder(IGUIDrawer& drawer, const ColorRGB& color = RGB_Red) const;
     void drawDebugCross(IGUIDrawer& drawer, const ColorRGB& color = RGB_Red) const;
     
-    void drag(const IGUIInput& input, GUIMouseButton button = GUI_LMB);
+    void drag(const IInput& input, MouseButton button = LMB);
 };
 
 class ElementComposite : public Element //element with "internal container" to automatically handle child elements for you
@@ -309,11 +309,11 @@ class Button : public Element
     void makeTextPanel(int x, int y, const std::string& text, int sizex = 64, int sizey = 24); //basic properties + actual text; give drawer if you want the text centered
 
     virtual void drawImpl(IGUIDrawer& drawer) const;
-    virtual void handleImpl(const IGUIInput& input);
+    virtual void handleImpl(const IInput& input);
     
-    //mouse functions without having to give the IGUIInput
-    /*bool clicked(GUIMouseButton button = GUI_LMB);
-    bool pressed(GUIMouseButton button = GUI_LMB);*/
+    //mouse functions without having to give the IInput
+    /*bool clicked(MouseButton button = LMB);
+    bool pressed(MouseButton button = LMB);*/
     
   private:
     MouseState button_drawing_mouse_test;
@@ -338,7 +338,7 @@ class Scrollbar : public ElementComposite
     int getSliderStart() const;
     int getSliderEnd() const;
     
-    virtual void handleImpl(const IGUIInput& input);
+    virtual void handleImpl(const IInput& input);
     virtual void drawImpl(IGUIDrawer& drawer) const;
 
     Direction direction; //0 = vertical, 1 = horizontal
@@ -366,7 +366,7 @@ class Scrollbar : public ElementComposite
                         double scrollPos = 0, double offset = 0, double scrollSpeed = 1,
                         int speedMode = 1);
     
-    void scroll(const IGUIInput& input, int dir); //make it scroll from an external command
+    void scroll(const IInput& input, int dir); //make it scroll from an external command
     
     double offset; //used as an offset of ScrollPos to get/set the scroll value with offset added with the functions below
     double getValue() const;
@@ -392,7 +392,7 @@ class ScrollbarPair : public ElementComposite
     Scrollbar hbar;
     Dummy corner; //the corner piece between the two scrollbars
     
-    virtual void handleImpl(const IGUIInput& input);
+    virtual void handleImpl(const IInput& input);
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void resizeImpl(const Pos<int>& newPos);
     
@@ -442,7 +442,7 @@ class Slider : public ElementComposite
     int scrollPosToScreenPos(double scrollPos);
 
     virtual void drawImpl(IGUIDrawer& drawer) const;
-    virtual void handleImpl(const IGUIInput& input);
+    virtual void handleImpl(const IInput& input);
 };
 
 class Container : public ElementComposite
@@ -458,7 +458,7 @@ class Container : public ElementComposite
     
     Container();
     Container(IGUIDrawer& drawer); //drawer is used to initialize the size of the container to the full screen size of the drawer
-    virtual void handleImpl(const IGUIInput& input); //you're supposed to handle() before you draw()
+    virtual void handleImpl(const IInput& input); //you're supposed to handle() before you draw()
     virtual void drawImpl(IGUIDrawer& drawer) const;
     
     //push the element without affecting absolute position
@@ -511,7 +511,7 @@ class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
     Element* element;
   
     ScrollElement();
-    virtual void handleImpl(const IGUIInput& input); //you're supposed to handle() before you draw()
+    virtual void handleImpl(const IInput& input); //you're supposed to handle() before you draw()
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void moveImpl(int x, int y);
     virtual void setElementOver(bool state);
@@ -543,7 +543,7 @@ class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
   
   protected:
   
-    virtual bool mouseInVisibleZone(const IGUIInput& input) const; //is the mouse in the zone where elements are drawn
+    virtual bool mouseInVisibleZone(const IInput& input) const; //is the mouse in the zone where elements are drawn
     
     void initBars();
     void toggleBars(); //turns the bars on or of depending on if they're needed or not
@@ -649,7 +649,7 @@ class Window : public ElementComposite
     ////overloaded functions
     virtual void drawImpl(IGUIDrawer& drawer) const;
     
-    virtual void handleImpl(const IGUIInput& input);
+    virtual void handleImpl(const IInput& input);
     virtual bool isContainer() const;
     
     ////useful for the close button
@@ -694,7 +694,7 @@ class Checkbox : public Element, public Label
     void makeSmall(int x, int y, bool checked = 0, int toggleOnMouseUp = 0);
     void addText(const std::string& text, const Font& font = FONT_Default);
     virtual void drawImpl(IGUIDrawer& drawer) const; //also handles it by calling handle(): toggles when mouse down or not
-    virtual void handleImpl(const IGUIInput& input);
+    virtual void handleImpl(const IInput& input);
 
     void setText(const std::string& newText);
     const std::string& getText() const { return text; }
@@ -721,7 +721,7 @@ class BulletList : public ElementComposite
     
     BulletList();
     virtual void drawImpl(IGUIDrawer& drawer) const;
-    virtual void handleImpl(const IGUIInput& input);
+    virtual void handleImpl(const IInput& input);
     void make(int x, int y, unsigned long amount, int xDiff, int yDiff); //diff = the location difference between successive checkboxes
     void make(int x, int y, unsigned long amount, int xDiff, int yDiff, unsigned long amountx); //make in 2D pattern
     void setCorrectSize();
@@ -797,7 +797,7 @@ class Tabs : public ElementComposite
     void selectTab(size_t i_index);
     
     virtual void drawImpl(IGUIDrawer& drawer) const;
-    virtual void handleImpl(const IGUIInput& input);
+    virtual void handleImpl(const IInput& input);
 };
 
 } //namespace gui

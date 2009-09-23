@@ -29,7 +29,7 @@ namespace gui
 {
 
 GUIDrawerBuffer::GUIDrawerBuffer() : textdrawer(TextureFactory<TextureBuffer>(), &drawer), guidrawer(TextureFactory<TextureBuffer>(), &drawer, &textdrawer){}
-IGUIInput& GUIDrawerBuffer::getInput() { return input; }
+IInput& GUIDrawerBuffer::getInput() { return input; }
 IDrawer2D& GUIDrawerBuffer::getDrawer() { return drawer; }
 const IDrawer2D& GUIDrawerBuffer::getDrawer() const { return drawer; }
 ITextDrawer& GUIDrawerBuffer::getTextDrawer() { return textdrawer; }

@@ -20,16 +20,14 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #pragma once
 
-#include "lpi_gui_base.h" //included because we need GUIMouseButton, todo: make lpi_gui_input.h and put that in there as well as the interface of the class here
 #include "lpi_event.h"
+#include "lpi_input.h"
 
 namespace lpi
 {
-namespace gui
-{
 
 //this uses the global variables for mouse states that lpi gets from SDL
-class GUIInputSDL : public IGUIInputClick
+class InputSDL : public IInputClick
 {
   private:
     mutable KeyState keystate;
@@ -37,12 +35,12 @@ class GUIInputSDL : public IGUIInputClick
   public:
     virtual double getSeconds() const; //ticks in seconds
   
-    virtual ~GUIInputSDL(){}
+    virtual ~InputSDL(){}
     //check position of mouse
     virtual int mouseX() const;
     virtual int mouseY() const;
     //check the state of the 3 buttons of mouse
-    virtual bool mouseButtonDown(GUIMouseButton button) const;
+    virtual bool mouseButtonDown(MouseButton button) const;
     //check if scroll wheel of mouse was moved up or down
     virtual bool mouseWheelUp() const;
     virtual bool mouseWheelDown() const;
@@ -57,12 +55,6 @@ class GUIInputSDL : public IGUIInputClick
     virtual int unicodeKey(double warmupTime = 0.5, double repTime = 0.025) const;
 };
 
-} //namespace gui
-} //namespace lpi
-
-namespace lpi
-{
-
-extern gui::GUIInputSDL gGUIInput; //global gui input usig SDL. Outside of namespace gui on purpose (too long name otherwise)
+extern InputSDL gSDLInput; //TODO: remove this
 
 } //namespace lpi

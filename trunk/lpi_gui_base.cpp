@@ -27,195 +27,6 @@ namespace lpi
 namespace gui
 {
 
-bool IGUIInputClick::doubleClicked(GUIMouseButton button) const
-{
-  double timeBetween = 0.5;
-  bool dclick = 0;
-  
-  bool down = mouseButtonDown(button); //is the button down
-
-  switch(doubleClickState[button])
-  {
-    case 0:
-      if(down)
-      {
-        doubleClickTime[button] = getSeconds();
-        doubleClickState[button] = 1;
-        doubleClickX[button] = mouseX();
-        doubleClickY[button] = mouseY();
-      }
-      break;
-    case 1:
-      if(!down)
-        doubleClickState[button] = 2;
-      break;
-    case 2:
-      if(down)
-        doubleClickState[button] = 3;
-      break;
-    case 3:
-      if(!down)
-      {
-        doubleClickState[button] = 0;
-        if(getSeconds() - doubleClickTime[button] < timeBetween) dclick = 1;
-      }
-      break;
-  }
-  
-  if
-  (
-     (doubleClickState[button] > 0 && (getSeconds() - doubleClickTime[button])  > timeBetween)
-  || std::abs(mouseX() - doubleClickX[button]) > 1 || std::abs(mouseY() - doubleClickY[button]) > 1 //movement of 1 pixel allowed
-  )
-  {
-    doubleClickState[button] = 0;
-    doubleClickTime[button] = 0;
-  }
-  
-  return dclick;
-}
-
-bool IGUIInputClick::tripleClicked(GUIMouseButton button) const
-{
-  double timeBetween = 0.75;
-  bool tclick = 0;
-  
-  bool down = mouseButtonDown(button); //is the button down
-
-  switch(tripleClickState[button])
-  {
-    case 0:
-      if(down)
-      {
-        tripleClickTime[button] = getSeconds();
-        tripleClickState[button] = 1;
-        tripleClickX[button] = mouseX();
-        tripleClickY[button] = mouseY();
-      }
-      break;
-    case 1:
-    case 3:
-      if(!down)
-        tripleClickState[button]++;
-      break;
-    case 2:
-    case 4:
-      if(down)
-        tripleClickState[button]++;
-      break;
-    case 5:
-      if(!down)
-      {
-        tripleClickState[button] = 0;
-        if(getSeconds() - tripleClickTime[button] < timeBetween) tclick = 1;
-      }
-      break;
-  }
-  
-  if
-  (
-     (tripleClickState[button] > 0 && (getSeconds() - tripleClickTime[button])  > timeBetween)
-  || std::abs(mouseX() - tripleClickX[button]) > 1 || std::abs(mouseY() - tripleClickY[button]) > 1 //movement of 1 pixel allowed
-  )
-  {
-    tripleClickState[button] = 0;
-    tripleClickTime[button] = 0;
-  }
-  
-  return tclick;
-}
-
-bool IGUIInputClick::quadrupleClicked(GUIMouseButton button) const
-{
-  double timeBetween = 1.0;
-  bool tclick = 0;
-  
-  bool down = mouseButtonDown(button); //is the button down
-
-  switch(quadrupleClickState[button])
-  {
-    case 0:
-      if(down)
-      {
-        quadrupleClickTime[button] = getSeconds();
-        quadrupleClickState[button] = 1;
-        quadrupleClickX[button] = mouseX();
-        quadrupleClickY[button] = mouseY();
-      }
-      break;
-    case 1:
-    case 3:
-    case 5:
-      if(!down)
-        quadrupleClickState[button]++;
-      break;
-    case 2:
-    case 4:
-    case 6:
-      if(down)
-        quadrupleClickState[button]++;
-      break;
-    case 7:
-      if(!down)
-      {
-        quadrupleClickState[button] = 0;
-        if(getSeconds() - quadrupleClickTime[button] < timeBetween) tclick = 1;
-      }
-      break;
-  }
-  
-  if
-  (
-     (quadrupleClickState[button] > 0 && (getSeconds() - quadrupleClickTime[button])  > timeBetween)
-  || std::abs(mouseX() - quadrupleClickX[button]) > 1 || std::abs(mouseY() - quadrupleClickY[button]) > 1 //movement of 1 pixel allowed
-  )
-  {
-    quadrupleClickState[button] = 0;
-    quadrupleClickTime[button] = 0;
-  }
-  
-  return tclick;
-}
-
-double IGUIInputClick::mouseSpeedImp(int pos, std::vector<int>& mousePosHistory, std::vector<double>& mousePosTimeHistory) const
-{
-  static const size_t MIN_VALUES = 3;
-  static const size_t MAX_VALUES = 4;
-  //static const double TRACK_TIME = 0.1; //how a long mouse history we want to track
-  
-  mousePosHistory.push_back(pos);
-  mousePosTimeHistory.push_back(getSeconds());
-  
-  double dt = mousePosTimeHistory.back() - mousePosTimeHistory[0];
-  size_t size = mousePosHistory.size();
-  
-  
-  double result = dt == 0 ? 0 : (double)(mousePosHistory.back() - mousePosHistory[0]) / dt;
-
-  bool remove = false;
-  if(size > MAX_VALUES) remove = true;
-  //if(dt > TRACK_TIME) remove = true;
-  if(size < MIN_VALUES) remove = false;
-
-  if(remove)
-  {
-    mousePosHistory.erase(mousePosHistory.begin());
-    mousePosTimeHistory.erase(mousePosTimeHistory.begin());
-  }
-  
-  return result;
-}
-
-double IGUIInputClick::mouseSpeedX() const
-{
-  return mouseSpeedImp(mouseX(), mousePosXHistory, mousePosXTimeHistory);
-}
-
-double IGUIInputClick::mouseSpeedY() const
-{
-  return mouseSpeedImp(mouseY(), mousePosYHistory, mousePosYTimeHistory);
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 
 MouseOverState::MouseOverState()
@@ -386,27 +197,27 @@ void MouseState::mouseGrab(int x, int y, int relx, int rely)
 //ELEMENTSHAPE
 ////////////////////////////////////////////////////////////////////////////////
 
-bool ElementShape::mouseJustOver(const IGUIInput& input)
+bool ElementShape::mouseJustOver(const IInput& input)
 {
   return mouse_over_state.mouseJustOver(mouseOver(input));
 }
 
-bool ElementShape::mouseJustLeft(const IGUIInput& input)
+bool ElementShape::mouseJustLeft(const IInput& input)
 {
   return mouse_over_state.mouseJustLeft(mouseOver(input));
 }
 
-bool ElementShape::mouseDown(const IGUIInput& input, GUIMouseButton button) const
+bool ElementShape::mouseDown(const IInput& input, MouseButton button) const
 {
   return mouseOver(input) && input.mouseButtonDown(button);
 }
 
-bool ElementShape::mouseDownHere(const IGUIInput& input, GUIMouseButton button)
+bool ElementShape::mouseDownHere(const IInput& input, MouseButton button)
 {
   return _mouseState[button].mouseDownHere(mouseOver(input), input.mouseButtonDown(button));
 }
 
-bool ElementShape::mouseGrabbed(const IGUIInput& input, GUIMouseButton button)
+bool ElementShape::mouseGrabbed(const IInput& input, MouseButton button)
 {
   if(!mouseGrabbable()) return false;
   
@@ -418,7 +229,7 @@ bool ElementShape::mouseGrabbed(const IGUIInput& input, GUIMouseButton button)
                                         , mouseGetRelPosY(input));
 }
 
-void ElementShape::mouseGrab(const IGUIInput& input, GUIMouseButton button)
+void ElementShape::mouseGrab(const IInput& input, MouseButton button)
 {
   return _mouseState[button].mouseGrab(input.mouseX()
                                      , input.mouseY()
@@ -427,67 +238,67 @@ void ElementShape::mouseGrab(const IGUIInput& input, GUIMouseButton button)
 }
 
 
-void ElementShape::mouseUngrab(GUIMouseButton button)
+void ElementShape::mouseUngrab(MouseButton button)
 {
   _mouseState[button].mouseUngrab();
 }
 
-int ElementShape::mouseGetGrabDiffX(const IGUIInput& input, GUIMouseButton button) const
+int ElementShape::mouseGetGrabDiffX(const IInput& input, MouseButton button) const
 {
   return mouseGetRelGrabX(button) - mouseGetRelPosX(input);
 }
 
-int ElementShape::mouseGetGrabDiffY(const IGUIInput& input, GUIMouseButton button) const
+int ElementShape::mouseGetGrabDiffY(const IInput& input, MouseButton button) const
 {
   return mouseGetRelGrabY(button) - mouseGetRelPosY(input);
 }
 
-bool ElementShape::mouseJustDown(const IGUIInput& input, GUIMouseButton button)
+bool ElementShape::mouseJustDown(const IInput& input, MouseButton button)
 {
   return _mouseState[button].mouseJustDown(mouseOver(input), input.mouseButtonDown(button));
 }
 
-bool ElementShape::mouseJustDownHere(const IGUIInput& input, GUIMouseButton button)
+bool ElementShape::mouseJustDownHere(const IInput& input, MouseButton button)
 {
   return _mouseState[button].mouseJustDownHere(mouseOver(input), input.mouseButtonDown(button));
 }
 
-bool ElementShape::mouseJustUpHere(const IGUIInput& input, GUIMouseButton button)
+bool ElementShape::mouseJustUpHere(const IInput& input, MouseButton button)
 {
   return _mouseState[button].mouseJustUpHere(mouseOver(input), input.mouseButtonDown(button));
 }
 
-bool ElementShape::pressed(const IGUIInput& input, GUIMouseButton button)
+bool ElementShape::pressed(const IInput& input, MouseButton button)
 {
   return mouseActive() && mouseJustDownHere(input, button);
 }
 
-bool ElementShape::clicked(const IGUIInput& input, GUIMouseButton button)
+bool ElementShape::clicked(const IInput& input, MouseButton button)
 {
   return mouseActive() &&  mouseJustUpHere(input, button);
 }
 
-bool ElementShape::mouseScrollUp(const IGUIInput& input) const
+bool ElementShape::mouseScrollUp(const IInput& input) const
 {
   return mouseActive() && mouseOver(input) && input.mouseWheelUp();
 }
 
-bool ElementShape::mouseScrollDown(const IGUIInput& input) const
+bool ElementShape::mouseScrollDown(const IInput& input) const
 {
   return mouseActive() && mouseOver(input) && input.mouseWheelDown();
 }
 
-bool ElementShape::mouseDoubleClicked(const IGUIInput& input, GUIMouseButton button) const
+bool ElementShape::mouseDoubleClicked(const IInput& input, MouseButton button) const
 {
   return mouseOver(input) && input.doubleClicked(button);
 }
 
-bool ElementShape::mouseTripleClicked(const IGUIInput& input, GUIMouseButton button) const
+bool ElementShape::mouseTripleClicked(const IInput& input, MouseButton button) const
 {
   return mouseOver(input) && input.tripleClicked(button);
 }
 
-bool ElementShape::mouseQuadrupleClicked(const IGUIInput& input, GUIMouseButton button) const
+bool ElementShape::mouseQuadrupleClicked(const IInput& input, MouseButton button) const
 {
   return mouseOver(input) && input.quadrupleClicked(button);
 }
@@ -496,7 +307,7 @@ ElementShape::ElementShape()
 {
 }
 
-bool ElementShape::mouseOver(const IGUIInput& input) const
+bool ElementShape::mouseOver(const IInput& input) const
 {
   return isInside(input.mouseX(), input.mouseY());
 }
@@ -523,12 +334,12 @@ void ElementRectangular::initPosition(int x0, int y0, int x1, int y1)
   this->y1 = y1;
 }
 
-int ElementRectangular::mouseGetRelPosX(const IGUIInput& input) const
+int ElementRectangular::mouseGetRelPosX(const IInput& input) const
 {
   return input.mouseX() - x0;
 }
 
-int ElementRectangular::mouseGetRelPosY(const IGUIInput& input) const
+int ElementRectangular::mouseGetRelPosY(const IInput& input) const
 {
   return input.mouseY() - y0;
 }

@@ -24,7 +24,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_draw2d.h"
 #include "lpi_color.h"
 #include "lpi_text_drawer.h"
-#include "lpi_texture.h" //because drawing images requires a texture class
+#include "lpi_input.h"
 
 /*
 The IGUIDrawer works as follows:
@@ -32,7 +32,7 @@ It inherits from 3 different drawer interfaces:
 -IDrawer2D: to draw geometric primitives
 -ITextDrawer: to draw text
 -IGUIPartDrawer: to draw GUI specific things, e.g. a window panel
-Furthermore it also has a function to get a IGUIInput.
+Furthermore it also has a function to get a IInput.
 So the IGUIDrawer integrates 4 things (3 drawers and an input checker) together.
 When implementing IGUIDrawer, please implement the 3 drawers by composition. The
 convenience class AGUIDrawer already does that while still allowing to choose
@@ -204,8 +204,6 @@ class IGUIPartDrawer : public IGUIPartGeom
     virtual void drawGUIPartText(GUIPart part, const std::string& text, int x0, int y0, int x1, int y1, const GUIPartMod& mod = GPM_Default) = 0;
 };
 
-class IGUIInput;
-
 /*
 TODO:
 lpi_gui shouldn't keep any textures internally (except things like Image).
@@ -222,7 +220,7 @@ class IGUIDrawer : public ADrawer2D, public ITextDrawer, public IGUIPartDrawer /
     virtual ~IGUIDrawer(){};
     
     //input
-    virtual IGUIInput& getInput() = 0;
+    virtual IInput& getInput() = 0;
 };
 
 class AGUIDrawer : public IGUIDrawer //abstract GUI drawer which already wraps an ADrawer2D for you (but you need to implement the protected function getDrawer)
