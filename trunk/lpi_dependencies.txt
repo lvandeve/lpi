@@ -30,30 +30,35 @@ lpi_base64: base64 encode/decode
 lpi_bignums: contains currently a 128-bit fixed point number class
 lpi_color: different color types and conversions
 lpi_crypto: xtea implementation (not guaranteed to be safe, use at own risk)
-lpi_draw2d: draw 2D shapes in 2D RGBA buffers, and general 2D drawing algorithms such as line clipping
-lpi_draw2dgl: draw 2D shapes in OpenGL (circles and rectangles and such, but not textures since lpi_texture does that)
+lpi_draw2d: interface for 2D geometric primitive drawers, and general 2D drawing algorithms such as line clipping
+lpi_draw2d_buffer: implementation of the 2D drawer using a unsigned char pixel buffer
+lpi_draw2dgl: implementation of the 2D drawer using OpenGL
 lpi_draw3dgl: draw 3D primitives that aren't standard in OpenGL, e.g. a 3D linesegment-circle, and some GL related 3D math
 lpi_event: events, keyboard and mouse input with SDL
 lpi_file: load and save files through simpler interface
-lpi_gl: a few simple OpenGL wrapper functions
 lpi_gui: an OpenGL based gui with buttons, windows, scrollbars, ...
 lpi_gui_base: very general base classes for lpi GUI, it especially handles the mouse. No dependencies on anything in it.
 lpi_gui_color: GUI controls for selecting and viewing colors, like a HSV circle, RGB sliders, etc...
-lpi_gui_drawer: interface for GUI drawers (currently only lpi_gui_drawer_gl uses it)
-lpi_gui_drawer_gl: used by lpi_gui to draw everything (using OpenGL)
+lpi_gui_drawer: interface for drawer used by the GUI, which combines primitive drawer, text drawer, gui part drawer and input in one
+lpi_gui_drawer_buffer: implementation of GUI drawer using the buffer drawer
+lpi_gui-drawer_gl: implementation of the GUI drawer using OpenGL
 lpi_gui_dynamic: a dynamic GUI page with controls that can be bound to values of specific or generic types.
 lpi_gui_ex: extra/extended GUI widgets for lpi_gui, such as drawing canvas, grid, ...
-lpi_gui_input_sdl: key, mouse and time input implemenation for lpi_gui_base
 lpi_gui_text: text-input related GUI widgets for lpi_gui, such as input line, input box, console, ...
+lpi_input: interface for user input, currently only used by gui
+lpi_input_sdl: implementation of input interface using SDL, very similar functionality to lpi_event.h but with interface around it
 lpi_math: some mathematics useful for games (random, quadratic solve, ...) but not in <cmath> (and also a sort function because where else to put it...)
 lpi_math2d: 2D vector math
 lpi_math3d: 3D vector, matrix, transformation and camera math
 lpi_math4d: 4D vector and matrix
 lpi_parse: parsing utilities
 lpi_pathfind: A* path finding, useful for some games
-lpi_screen: set up the SDL + OpenGL screen
-lpi_text: font and text drawing --> TODO: should split this up in the non-screen dependent stuff and the screen dependent stuff
-lpi_texture: class for textures for use in OpenGL or SDL screen. They can be drawn in 2D on screen, or used in 3D to map on OpenGL vertices.
+lpi_screen_gl: set up the SDL + OpenGL screen
+lpi_text_drawer: interface for text drawers
+lpi_text_drawer_int: implementation of the text drawer that allows using any 2D drawer and supports 3 built in bitmap fonts
+lpi_texture: interface for 2D textures
+lpi_texture_buffer: implementation of lpi_texture using unsigned char buffer in main memory
+lpi_texture_gl: implementation of textures interface for use in OpenGL or SDL screen. They can be drawn in 2D on screen, or used in 3D to map on OpenGL vertices.
 lpi_time: SDL_GetTicks and a class for handling time for physics and FPS counter in game
 lpi_tools: tools for developing lpi itself more easily
 lpi_unittest: unit testing ability
@@ -81,7 +86,6 @@ These can be used as independent libraries or tools whenever needed individually
 *) lpi_color
 *) lpi_crypto
 *) lpi_file
-*) lpi_gui_base
 *) lpi_math
 *) lpi_math2d
 *) lpi_parse
@@ -100,6 +104,8 @@ Still useful as independent library in combination with only a few other lpi uni
 *) lpi_math3d: lpi_math2d
 
 *) lpi_math4d: lpi_math3d
+
+*) lpi_gui_base: lpi_input
 
 
 lpi units that depend on SDL and/or OpenGL, but not on other lpi units
@@ -140,6 +146,8 @@ then it isn't always mentioned that A indirectly depends on C.
 *) lpi_gui_input_sdl: SDL, lpi_event, lpi_time
 
 *) lpi_gui_text: SDL, OpenGL, lpi_gui
+
+*) lpi_input_sdl: SDL, lpi_input
 
 *) lpi_screen: SDL, OpenGL, lpi_color
 

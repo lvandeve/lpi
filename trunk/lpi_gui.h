@@ -62,6 +62,7 @@ class InternalContainer //container inside elements, for elements that contain s
     void move(int x, int  y);
     void setElementOver(bool state); //this says to all elements whether or not another element is in front of it in Z order, causing mouse to not work
     void setBasicMouseInfo(const IInput& input);
+    Element* hitTest(const IInput& input);
 
     void addSubElement(Element* element, const Sticky& sticky, Element* parent);
     void insertSubElement(size_t index, Element* element, const Sticky& sticky, Element* parent);
@@ -84,25 +85,16 @@ class InternalContainer //container inside elements, for elements that contain s
 class ToolTipManager //this is made to draw the tooltip at the very end to avoid other gui items to be drawn over it
 {
   private:
-    const Element* element;
-    bool enabled;
+    std::map<Element*, std::string> elements;
+    
+  private:
+    void drawToolTip(const std::string& tip, IGUIDrawer& drawer) const; //TODO: move this function to ToolTipManager
     
   public:
-    void registerMe(const Element* element); //can register only one per frame (last one to register will get drawn); guiElements should do this in the draw function.
-    void draw(IGUIDrawer& drawer) const; //this will call the drawTooltip function of the one registered element, call this after drawing all gui elements
-    void enableToolTips(bool set) { enabled = set; }
-    ToolTipManager() : element(0), enabled(true) {}
+    void registerElement(Element* element, const std::string& tip);
+    void draw(Element* root, IGUIDrawer& drawer) const;
 };
 
-extern ToolTipManager defaultTooltipManager;
-
-/*
-Possible things to check if your gui::Elements aren't behaving as they should:
-
--Check sizex and sizey
--The gui element constructors and make functions must be called AFTER the textures are loaded, otherwise the textures have size 0 and thus the gui element will have size 0
--mouse functions like pressed() work only once per time, pressed will return "true" only once per guielement, until the mouse button is up again and then down again
-*/
 class Element : public ElementRectangular
 {
   private:
@@ -117,11 +109,6 @@ class Element : public ElementRectangular
     bool visible; //if false, the draw() function doesn't draw anything
     bool active; //if false, handle() does nothing, and mouse tests return always false
     bool present; //if true, it reacts to the mouse. if false, it ignores the mouse, even if forceActive is true, if a gui element isn't present, it really isn't present
-
-    ////data for tooltip, TODO: move this to somewhere else
-    std::string tooltip;
-    bool tooltipenabled;
-    ToolTipManager* tooltipmanager;
 
   public: //TODO: make these not-public
     
@@ -169,6 +156,12 @@ class Element : public ElementRectangular
     void handle(const IInput& input);
     virtual void move(int x, int y);
     virtual void resize(int x0, int y0, int x1, int y1); //especially useful for windows and their container; parameters are the new values for x0, y0, x1 and y1 so this function can both move the object to a target and resize
+    /*
+    hitTest: if you override this, only return publically accessible elements, not internal parts of the element. For example, it's ok for a window to return elements you placed inside of it or itself, but not to return its top bar or close button.
+    It's for example not ok for a scrollbar to return its arrow buttons or the scroller button
+    In fact, only elements that have isContainer() == true, may return something else than themselves, and only those elements added externally through public function.
+    */
+    virtual Element* hitTest(const IInput& input);
     
     void moveTo(int x, int y);
     void moveCenterTo(int x, int y);
@@ -182,10 +175,8 @@ class Element : public ElementRectangular
     void growSizeY1(int sizey) { resize(x0        , y0        , x1        , y0 + sizey); }
     virtual bool isContainer() const; //returns 0 if the type of element isn't a container, 1 if it is (Window, Container, ...); this value is used by for example Container: it brings containers to the top of the screen if you click on them. Actually so far it's only been used for that mouse test. It's something for containers, by containers :p
     
-    ////optional tooltip. Drawing it must be controlled by a higher layer, e.g. see the Container's implementation. //TODO: make tooltip class and only have pointer to it here, being 0 if no tooltip, to decrease memory footprint of element, OR, store every info of the tooltip in ToolTipManager
-    void addToolTip(const std::string& text, ToolTipManager* tooltipmanager = &defaultTooltipManager) { tooltipenabled = true; tooltip = text; this->tooltipmanager = tooltipmanager;}
-    void removeToolTip() { tooltipenabled = false; }
-    void drawToolTip(IGUIDrawer& drawer) const; //TODO: move this function to ToolTipManager
+    ////custom tooltip
+    virtual void drawToolTip(IGUIDrawer& drawer) const; //override if you can invent a fallback tooltip to draw for the element, but it's not required, the TooltipManager only uses this if no other tooltip was specified by the user
     
     virtual void setElementOver(bool state); //ALL gui types that have gui elements inside of them, must set elementOver of all gui elements inside of them too! ==> override this virtual function for those. Override this if you have subelements, unless you use addSubElement in ElementComposite.
     bool hasElementOver() const;
@@ -206,11 +197,12 @@ class ElementComposite : public Element //element with "internal container" to a
     
   protected:
     void addSubElement(Element* element, const Sticky& sticky = STICKYDEFAULT); //only used for INTERNAL parts of the gui element, such as the buttons in a scrollbar, hence this function is protected
-  
+    
   public:
     virtual void move(int x, int y);
     virtual void setElementOver(bool state);
     virtual void resize(int x0, int y0, int x1, int y1);
+    //virtual Element* hitTest(const IInput& input);
 };
 
 class Label //convenience class: elements that want an optional label (e.g. checkboxes) can inherit from this and use drawLabel(this) in their drawWidget function
@@ -445,7 +437,7 @@ class Slider : public ElementComposite
     virtual void handleImpl(const IInput& input);
 };
 
-class Container : public ElementComposite
+class Container : public Element
 {
   protected:
     InternalContainer elements;
@@ -494,6 +486,7 @@ class Container : public ElementComposite
     virtual void resizeImpl(const Pos<int>& newPos);
     
     virtual void setElementOver(bool state);
+    virtual Element* hitTest(const IInput& input);
     
     void setSizeToElements(); //makes the size of the container as big as the elements. This resizes the container in a non-sticky way: no element is affected
 };
@@ -646,11 +639,12 @@ class Window : public ElementComposite
     
     int getRelContentStart() const;
     
-    ////overloaded functions
+
     virtual void drawImpl(IGUIDrawer& drawer) const;
     
     virtual void handleImpl(const IInput& input);
     virtual bool isContainer() const;
+    virtual Element* hitTest(const IInput& input);
     
     ////useful for the close button
     void close() { closed = 1; totallyDisable(); } //use this if closed == 1

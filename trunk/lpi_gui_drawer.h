@@ -140,6 +140,8 @@ enum GUIPart
   //built-in extra's
   GP_SMILEY,
   GP_CROSSHAIR,
+  //tooltip background
+  GP_TOOLTIP_BACKGROUND, //background of tooltip, as big as you want. No need to use this if you use GPT_TOOLTIP
   
   ///Colored Parts
   GPC_WINDOW_PANEL, //colored windows
@@ -151,10 +153,12 @@ enum GUIPart
   
   ///Text Parts
   
-  //text button (NOT the text on a button with a panel, but a plain text-only button)
-  GPT_TEXT_BUTTON_TEXT,
+  
+  GPT_TEXT_BUTTON_TEXT, //text button (NOT the text on a button with a panel, but a plain text-only button)
   GPT_PANEL_BUTTON_TEXT,
   GPT_WINDOW_TITLE,
+  GPT_TOOLTIP, //both the background and the text of the tooltip, fit to the text size
+  
   
   GP_END_DONT_USE //don't use this, it's placed here to have an element without comma at the end of the enumarator list.
 };

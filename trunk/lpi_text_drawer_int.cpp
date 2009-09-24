@@ -347,10 +347,26 @@ void InternalTextDrawer::printText(const std::string& text, int x, int y, const 
 
 void InternalTextDrawer::calcTextRectSize(int& w, int& h, const std::string& text, const Font& font)
 {
-  //TODO: use the newlines!
   InternalGlyphs::Glyphs* glyphs = getGlyphsForFont(font);
-  w = glyphs->width * text.size();
-  h = glyphs->height;
+  //w = glyphs->width * text.size();
+  //h = glyphs->height;
+  
+  int numlines = 1;
+  int linelength = 0;
+  int longestline = 0;
+  for(size_t i = 0; i < text.size(); i++)
+  {
+    if(text[i] == 10 || (text[i] == 13 && (i == 0 || text[i - 1] != 10)))
+    {
+      numlines++;
+      if(linelength > longestline) longestline = linelength;
+      linelength = 0;
+    }
+    else linelength++;
+  }
+  if(linelength > longestline) longestline = linelength;
+  w = glyphs->width * longestline;
+  h = glyphs->height * numlines;
 }
 
 

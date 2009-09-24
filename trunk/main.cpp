@@ -144,22 +144,14 @@ struct SpawnTexts
 
 SpawnTexts spawns;
 
-//void littletemporarytest()
-//{
-  //std::vector<unsigned char> buffer(512*512*4, 0);
-  //lpi::drawCircle(&buffer[0], 512, 512, 255, 255, 100, lpi::RGB_Lightblue);
-  //lpi::drawDisk(&buffer[0], 512, 512, 255, 255, 80, lpi::RGB_Lightred);
-  //lpi::drawBezier(&buffer[0],512,512, 60,10, 70,10, 75,20, 55,15, lpi::RGB_Yellow);
-  //lpi::drawFilledEllipse(&buffer[0], 512, 512, 255, 255, 150, 50, lpi::RGBA_Lightblue(128));
-  //LodePNG::encode("testje.png", buffer, 512, 512);
-//}
 
 int main(int, char*[]) //the arguments have to be given here, or DevC++ can't link to SDL for some reason
-{//std::cout<<sizeof(lpi::gui::Element)<<std::endl;//littletemporarytest();
+{//std::cout<<sizeof(lpi::gui::Element)<<std::endl;
   lpi::ScreenGL screen(width, height, 0, true, "lpi GUI demo");
   lpi::gui::GUIDrawerGL guidrawer(&screen);
   
   lpi::gui::Container c(guidrawer);
+  
   
   lpi::gui::Button tb;
   tb.makeText(20, 530, "Save Built In GUI To PNGs", guidrawer);
@@ -303,6 +295,10 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   lpi::GameTime gametime;
   gametime.init_fps();
   
+  lpi::gui::ToolTipManager tooltips;
+  tooltips.registerElement(&sound_button, "beware...\nthis button makes sound");
+  tooltips.registerElement(&tb_guitopng, "Unlike the main GUI, which is rendered\nusing 2D triangles with OpenGL,\nthe alternative renderer is entirely in software.");
+  
   while(lpi::frame(true, true))
   {
     gametime.update();
@@ -321,6 +317,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     
     c.draw(guidrawer);
     c.handle(lpi::gSDLInput);
+    tooltips.draw(&c, guidrawer);
     
     lpi::ColorHSV colorHSV(hsv.getValueAngle() * 255, hsv.getValueAxial() * 255, 255);
     color = lpi::HSVtoRGB(colorHSV);
