@@ -418,6 +418,7 @@ void GUIPartDrawerInternal::initBuiltInGuiTexturesSmall(const ITextureFactory& f
   builtInGuiSet.windowTopFont.color = RGB_White;
   builtInGuiSet.windowTopFont.shadow = true;
   builtInGuiSet.windowTopFont.shadowColor = RGB_Black;
+  builtInGuiSet.tooltipFont = Font("lpi6", RGB_Black);
 }
 
 
@@ -833,6 +834,12 @@ void GUIPartDrawerInternal::drawGUIPart(GUIPart part, int x0, int y0, int x1, in
       drawer->drawTexture(t, x1 - t->getU(), y1 - t->getV());
       break;
     }
+    case GP_TOOLTIP_BACKGROUND:
+    {
+      drawer->drawRectangle(x0, y0, x1, y1, RGBA_Lightyellow(224), true);
+      drawer->drawRectangle(x0, y0, x1, y1, RGB_Black, false);
+      break;
+    }
     
     default:
       return;
@@ -885,6 +892,14 @@ void GUIPartDrawerInternal::drawGUIPartText(GUIPart part, const std::string& tex
       textdrawer->drawText(text, (x0+x1)/2, (y0+y1)/2, guiset->windowTopFont, TextAlign(HA_CENTER, VA_CENTER));
       break;
     }
+    case GPT_TOOLTIP:
+    {
+      x0 += 10; //shift a bit to right to avoid having mouse cursor in front of the tip
+      int w, h;
+      textdrawer->calcTextRectSize(w, h, text, guiset->tooltipFont);
+      drawGUIPart(GP_TOOLTIP_BACKGROUND, x0 - 2, y0 - 2, x0 + w + 2, y0 + h + 2, mod);
+      textdrawer->drawText(text, x0, y0, guiset->tooltipFont);
+    };
     default:
       return;
   }

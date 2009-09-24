@@ -161,22 +161,44 @@ void InternalContainer::removeElement(Element* element)
   sticky.erase(sticky.find(element));
 }
 
+Element* InternalContainer::hitTest(const IInput& input)
+{
+  for(size_t j = 0; j < elements.size(); j++)
+  {
+    size_t i = elements.size() - j - 1; //invert order, the last elements are on top
+    if(elements[i]->mouseOver(input)) return elements[i]->hitTest(input);
+  }
+  return 0;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //TOOLTIPMANAGER                                                              //
 ////////////////////////////////////////////////////////////////////////////////
 
-void ToolTipManager::registerMe(const Element* element)
+void ToolTipManager::registerElement(Element* element, const std::string& tip)
 {
-  this->element = element;
+  elements[element] = tip;
 }
 
-void ToolTipManager::draw(IGUIDrawer& drawer) const
+void ToolTipManager::draw(Element* root, IGUIDrawer& drawer) const
 {
-  if(enabled && element)
-    element->drawToolTip(drawer);
+  Element* element = root->hitTest(drawer.getInput());
+  if(!element) return;
+  std::map<Element*, std::string>::const_iterator it = elements.find(element);
+  if(it != elements.end())
+  {
+    drawer.drawGUIPartText(GPT_TOOLTIP, it->second, drawer.getInput().mouseX(), drawer.getInput().mouseY(), drawer.getInput().mouseX(), drawer.getInput().mouseY());
+  }
+  else element->drawToolTip(drawer);
+  
+  /*
+  TODO! think whether hitTest should only return container elements, or also
+  internal-container elements from ElementComposite, and whether or not these
+  may be publically available like that.
+  */
 }
 
-ToolTipManager defaultTooltipManager;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //GUIELEMENT////////////////////////////////////////////////////////////////////
@@ -199,7 +221,6 @@ void Element::totallyEnable()
 }
 
 Element::Element() : elementOver(false)
-                   , tooltipenabled(false)
                    , minSizeX(0)
                    , minSizeY(0)
 {
@@ -239,30 +260,7 @@ void Element::drawDebugCross(IGUIDrawer& drawer, const ColorRGB& color) const
 
 void Element::drawToolTip(IGUIDrawer& drawer) const
 {
-  if(tooltipenabled && mouseOver(drawer.getInput()))
-  {
-    int numlines = 1;
-    int linelength = 0;
-    int longestline = 0;
-    for(size_t i = 0; i < tooltip.size(); i++)
-    {
-      if(tooltip[i] == 10 || (tooltip[i] == 13 && (i == 0 || tooltip[i - 1] != 10)))
-      {
-        numlines++;
-        if(linelength > longestline) longestline = linelength;
-        linelength = 0;
-      }
-      else linelength++;
-    }
-    if(linelength > longestline) longestline = linelength;
-    int sizex = longestline * /*TS_Black6.getWidth()*/6 + 4;
-    int sizey = 2 +  /*TS_Black6.getHeight()*/6 * numlines;
-    int x = drawer.getInput().mouseX();
-    int y = drawer.getInput().mouseY() - sizey;
-    drawer.drawRectangle(x, y, x + sizex, y + sizey, RGBA_Lightyellow(224), true);
-    static Font six("lpi6", RGB_Black); //TODO: clean this up...
-    drawer.drawText(tooltip, x + 2, y + 2, six);
-  }
+  (void)drawer;
 }
 
 bool Element::mouseOver(const IInput& input) const
@@ -284,8 +282,6 @@ void Element::draw(IGUIDrawer& drawer) const
   if(!visible) return;
   
   drawImpl(drawer);
-  
-  if(tooltipenabled && mouseOver(drawer.getInput())) tooltipmanager->registerMe(this);
 }
 
 void Element::move(int x, int y)
@@ -349,9 +345,15 @@ bool Element::hasElementOver() const
   return elementOver;
 }
 
+Element* Element::hitTest(const IInput& input)
+{
+  if(mouseOver(input)) return this;
+  else return 0;
+}
+
 bool Element::isContainer() const
 {
-  return 0;
+  return false;
 }
 
 void Element::resize(int x0, int y0, int x1, int y1)
@@ -468,7 +470,7 @@ Container::Container(IGUIDrawer& drawer)
 
 void Container::make(int x, int y, int sizex, int sizey)
 {
-  ic.getElements().clear();
+  //ic.getElements().clear();
   
   this->x0 = x;
   this->y0 = y;
@@ -480,6 +482,17 @@ void Container::setElementOver(bool state)
 {
   Element::setElementOver(state);
   elements.setElementOver(state);
+}
+
+Element* Container::hitTest(const IInput& input)
+{
+  if(mouseOver(input))
+  {
+    Element* result = elements.hitTest(input);
+    if(result) return result;
+    return this;
+  }
+  else return 0;
 }
 
 void Container::handleImpl(const IInput& input)
@@ -946,6 +959,18 @@ Window::Window()
   
   minSizeX = 64;
   minSizeY = 64;
+}
+
+
+Element* Window::hitTest(const IInput& input)
+{
+  if(mouseOver(input))
+  {
+    Element* result = container.hitTest(input);
+    if(result && result != &container) return result;
+    return this;
+  }
+  else return 0;
 }
 
 int Window::getRelContentStart() const
