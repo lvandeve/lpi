@@ -35,7 +35,7 @@ namespace gui
 {
 
 
-class IDynamicPageControl : public ElementComposite
+class IDynamicControl : public ElementComposite
 {
   public:
     virtual void controlToValue() = 0;
@@ -43,7 +43,7 @@ class IDynamicPageControl : public ElementComposite
 };
 
 template<typename T>
-class TDymamicPageControl : public IDynamicPageControl
+class TDymamicPageControl : public IDynamicControl
 {
   protected:
   
@@ -275,56 +275,19 @@ class DynamicColor : public TDymamicPageControl<ColorRGB>
     
     Edit edit;
     
-    void ctor()
-    {
-      this->resize(0, 0, 20, 20);
-      box.resize(0, 0, 12, 12);
-      box.move(1, 1);
-      this->addSubElement(&box, Sticky(0.0, 0, 0.5, -box.getSizeY() / 2, 0.0, box.getSizeX(), 0.5, box.getSizeY() / 2));
-      edit.resize(0, 20, 256, 128);
-      edit.totallyDisable();
-      this->addSubElement(&edit);
-    }
+    void ctor();
     
   public:
   
-    DynamicColor(ColorRGB* value)
-    : box(value)
-    {
-      this->bind = value;
-      ctor();
-    }
-  
-    virtual void getValue(ColorRGB* value)
-    {
-      (void)value;
-    }
-    
-    virtual void setValue(ColorRGB* value)
-    {
-      (void)value;
-    }
-    
-    virtual void handleImpl(const IInput& input)
-    {
-      box.handle(input);
-      
-      if(this->clicked(input))
-      {
-        edit.totallyEnable();
-      }
-    }
-    
-    virtual void drawImpl(IGUIDrawer& drawer) const
-    {
-      box.draw(drawer);
-      drawer.pushScissor(edit.getX0(), edit.getY0(), edit.getX1(), edit.getY1());
-      edit.draw(drawer);
-      drawer.popScissor();
-    }
+    DynamicColor(ColorRGB* value);
+    virtual void getValue(ColorRGB* value);
+    virtual void setValue(ColorRGB* value);
+    virtual void handleImpl(const IInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void manageHover(IHoverManager& hover);
 };
 
-class DynamicPageControlDummy : public IDynamicPageControl
+class DynamicControlDummy : public IDynamicControl
 {
     virtual void controlToValue() {}
     virtual void valueToControl() {}
@@ -334,7 +297,7 @@ class DynamicPageControlDummy : public IDynamicPageControl
 class DynamicPage : public ElementComposite
 {
   private:
-    std::vector<IDynamicPageControl*> controls;
+    std::vector<IDynamicControl*> controls;
     std::vector<std::string> control_names;
     
     double title_width; //title of controls; number from 0.0 to 1.0
@@ -358,9 +321,10 @@ class DynamicPage : public ElementComposite
   virtual void valueToControlCustom() {};
   
   //DynamicPage takes ownership of destructor of your added control!
-  void addControl(const std::string& name, IDynamicPageControl* control);
+  void addControl(const std::string& name, IDynamicControl* control);
   
   virtual void drawImpl(IGUIDrawer& drawer) const;
+  virtual void manageHover(IHoverManager& hover);
   virtual void handleImpl(const IInput& input);
 };
 

@@ -1,3 +1,23 @@
+/*
+Copyright (c) 2005-2009 Lode Vandevenne
+All rights reserved.
+
+This file is part of Lode's Programming Interface.
+
+Lode's Programming Interface is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Lode's Programming Interface is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "lpi_gui_unittest.h"
 #include "lpi_unittest.h"
 #include "lpi_event.h"
@@ -7,6 +27,8 @@
 #include "lpi_gui_ex.h"
 #include "lpi_gui_text.h"
 #include "lpi_gui_drawer_gl.h"
+
+#include <iostream>
 
 namespace lpi
 {
@@ -611,6 +633,98 @@ void unitTest()
     LUT_SUB_ASSERT_TRUE(wb.mouseOver(testinput));
 
   LUT_CASE_END
+  
+  LUT_CASE("handling element outside of scrollzone")
+    Container c(dummydrawer);
+    Container c2;
+    c2.make(200, 200, 400, 400);
+    Checkbox cb;
+    cb.make(200, 200);
+    c2.pushTopAt(&cb, 100, 100);
+    ScrollElement s;
+    s.make(200, 200, 200, 200, &c2, dummydrawer);
+    c.pushTopAt(&s, 200, 200);
+    s.bars.vbar.setRelativePosition(0.0);
+    LUT_SUB_ASSERT_TRUE(!cb.isChecked());
+    testinput.debugSetMousePos(cb.getCenterX(), cb.getCenterY());
+    c.handle(testinput);
+    c.handle(testinput);
+    LUT_SUB_ASSERT_TRUE(s.mouseOver(testinput));
+    LUT_SUB_ASSERT_TRUE(cb.mouseOver(testinput));
+    testinput.debugSetLMB(true);
+    c.handle(testinput);
+    testinput.debugSetLMB(false);
+    c.handle(testinput);
+    LUT_SUB_ASSERT_TRUE(cb.isChecked());
+    int yold = cb.getCenterY();
+    s.bars.vbar.setRelativePosition(1.0);
+    c.handle(testinput);
+    LUT_SUB_ASSERT_TRUE(yold != cb.getCenterY());
+    testinput.debugSetMousePos(cb.getCenterX(), cb.getCenterY());
+    c.handle(testinput);
+    LUT_SUB_ASSERT_TRUE(!s.mouseOver(testinput));
+    LUT_SUB_ASSERT_TRUE(!cb.mouseOver(testinput));
+    testinput.debugSetLMB(true);
+    c.handle(testinput);
+    testinput.debugSetLMB(false);
+    c.handle(testinput);
+    LUT_SUB_ASSERT_TRUE(cb.isChecked());
+    s.bars.vbar.setRelativePosition(0.0);
+    c.handle(testinput);
+    testinput.debugSetMousePos(cb.getCenterX(), cb.getCenterY());
+    c.handle(testinput);
+    testinput.debugSetLMB(true);
+    c.handle(testinput);
+    testinput.debugSetLMB(false);
+    c.handle(testinput);
+    LUT_SUB_ASSERT_TRUE(!cb.isChecked());
+  LUT_CASE_END
+  
+  LUT_CASE("handling element outside of scrollzone II")
+    Container c2;
+    c2.make(200, 200, 400, 400);
+    Checkbox cb;
+    cb.make(200, 200);
+    c2.pushTopAt(&cb, 100, 100);
+    ScrollElement s;
+    s.make(200, 200, 200, 200, &c2, dummydrawer);
+    s.bars.vbar.setRelativePosition(0.0);
+    LUT_SUB_ASSERT_TRUE(!cb.isChecked());
+    testinput.debugSetMousePos(cb.getCenterX(), cb.getCenterY());
+    s.handle(testinput);
+    s.handle(testinput);
+    LUT_SUB_ASSERT_TRUE(s.mouseOver(testinput));
+    LUT_SUB_ASSERT_TRUE(cb.mouseOver(testinput));
+    testinput.debugSetLMB(true);
+    s.handle(testinput);
+    testinput.debugSetLMB(false);
+    s.handle(testinput);
+    LUT_SUB_ASSERT_TRUE(cb.isChecked());
+    int yold = cb.getCenterY();
+    s.bars.vbar.setRelativePosition(1.0);
+    s.handle(testinput);
+    LUT_SUB_ASSERT_TRUE(yold != cb.getCenterY());
+    testinput.debugSetMousePos(cb.getCenterX(), cb.getCenterY());
+    s.handle(testinput);
+    LUT_SUB_ASSERT_TRUE(!s.mouseOver(testinput));
+    LUT_SUB_ASSERT_TRUE(!cb.mouseOver(testinput));
+    testinput.debugSetLMB(true);
+    s.handle(testinput);
+    testinput.debugSetLMB(false);
+    s.handle(testinput);
+    LUT_SUB_ASSERT_TRUE(cb.isChecked());
+    s.bars.vbar.setRelativePosition(0.0);
+    s.handle(testinput);
+    testinput.debugSetMousePos(cb.getCenterX(), cb.getCenterY());
+    s.handle(testinput);
+    testinput.debugSetLMB(true);
+    s.handle(testinput);
+    testinput.debugSetLMB(false);
+    s.handle(testinput);
+    LUT_SUB_ASSERT_TRUE(!cb.isChecked());
+  LUT_CASE_END
+  
+  //TODO: add tests for all mouse functions (mouseOver, mouseJustDownHere, etc...) as well as combinations of them (e.g. test that mouseDownHere and mouseDownElsewhere don't interfere with each other...)
 
   LUT_END_UNIT_TEST
 }

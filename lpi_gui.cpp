@@ -171,6 +171,14 @@ Element* InternalContainer::hitTest(const IInput& input)
   return 0;
 }
 
+void InternalContainer::manageHover(IHoverManager& hover)
+{
+  for(size_t j = 0; j < elements.size(); j++)
+  {
+    elements[j]->manageHover(hover);
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //TOOLTIPMANAGER                                                              //
 ////////////////////////////////////////////////////////////////////////////////
@@ -227,6 +235,11 @@ Element::Element() : elementOver(false)
   totallyEnable();
 }
 
+void Element::manageHover(IHoverManager& hover)
+{
+  (void)hover;
+}
+
 void Element::drawDebugBorder(IGUIDrawer& drawer, const ColorRGB& color) const
 {
   drawer.drawLine(x0    , y0    , x0    , y1 - 1, color);
@@ -237,7 +250,6 @@ void Element::drawDebugBorder(IGUIDrawer& drawer, const ColorRGB& color) const
 
 void Element::drawGUIPart(IGUIDrawer& drawer, const Element* element, GUIPart part)
 {
-  
   drawer.drawGUIPart(part, element->getX0(), element->getY0(), element->getX1(), element->getY1(), GUIPartMod(element->mouseOver(drawer.getInput()), element->mouseDown(drawer.getInput())));
 }
 
@@ -260,7 +272,7 @@ void Element::drawDebugCross(IGUIDrawer& drawer, const ColorRGB& color) const
 
 void Element::drawToolTip(IGUIDrawer& drawer) const
 {
-  (void)drawer;
+  (void)drawer; //by default, do nothing.
 }
 
 bool Element::mouseOver(const IInput& input) const
@@ -311,15 +323,9 @@ void Element::moveCenterTo(int x, int y)
 
 void Element::autoActivate(const IInput& input, MouseState& auto_activate_mouse_state, bool& control_active)
 {
-  bool over = mouseOver(input), down = input.mouseButtonDown(LMB); //for shorter notation
-  
-  if(auto_activate_mouse_state.mouseDownHere(over, down)) control_active = 1;
-  else
-  {
-    bool grabbed = auto_activate_mouse_state.mouseGrabbed(over, down, input.mouseX(), input.mouseY(), mouseGetRelPosX(input), mouseGetRelPosY(input));
-    if(!over && down && !grabbed) control_active = 0; //"forceActive" enabled so that this disactivating also works if mouseActive is false!
-    //without the mouseGrabbed() test, it'll become inactive when you grab the scrollbar scroller and go outside with the mouse = annoying
-  }
+  bool over = mouseOver(input), down = input.mouseButtonDown(LMB);
+  if(control_active && auto_activate_mouse_state.mouseDownElsewhere(over, down, input.mouseX(), input.mouseY(), mouseGetRelPosX(input), mouseGetRelPosY(input))) control_active = false;
+  else if(!control_active && auto_activate_mouse_state.mouseDownHere(over, down)) control_active = true;
 }
 
 void Element::handle(const IInput& input)
@@ -351,7 +357,7 @@ Element* Element::hitTest(const IInput& input)
   else return 0;
 }
 
-bool Element::isContainer() const
+bool Element::isFloating() const
 {
   return false;
 }
@@ -415,6 +421,11 @@ void ElementComposite::resize(int x0, int y0, int x1, int y1)
   Pos<int> newPos = { this->x0, this->y0, this->x1, this->y1 };
   
   ic.resize(oldPos, newPos);
+}
+
+void ElementComposite::manageHover(IHoverManager& hover)
+{
+  ic.manageHover(hover);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -497,15 +508,14 @@ Element* Container::hitTest(const IInput& input)
 
 void Container::handleImpl(const IInput& input)
 {
-  //if(mouseOver(input))
-  if(!elementOver && mouseOver(input))
+  if(mouseOver(input))
   {
     int topElement = -1;
     
     //priority to mouseGrabbed over mouseOver
     for(int i = size() - 1; i >= 0; i--)
     {
-      elements.getElement(i)->setElementOver(0);
+      elements.getElement(i)->setElementOver(false);
       bool grabbed = elements.getElement(i)->getMouseStateForContainer().mouseGrabbed(elements.getElement(i)->mouseOver(input)
                                                                                     , input.mouseButtonDown(LMB)
                                                                                     , input.mouseX()
@@ -517,33 +527,33 @@ void Container::handleImpl(const IInput& input)
         if(topElement < 0) topElement = i;
         //break;
       }
-      elements.getElement(i)->setElementOver(1);
+      elements.getElement(i)->setElementOver(true);
     }
     
     //only now test mouseOver
     if(topElement == -1)
     for(int i = size() - 1; i >= 0; i--)
     {
-      elements.getElement(i)->setElementOver(0);
+      elements.getElement(i)->setElementOver(false);
       if(elements.getElement(i)->mouseOver(input))
       {
         topElement = i;
         break;
       }
-      elements.getElement(i)->setElementOver(1);
+      elements.getElement(i)->setElementOver(true);
     }
 
     //make all elements unresponsive to the mouse by setting "elementover", except the topElement
-    for(size_t i = 0; i < size(); i++) elements.getElement(i)->setElementOver(1);
+    for(size_t i = 0; i < size(); i++) elements.getElement(i)->setElementOver(true);
     if(topElement >= 0 && topElement < (int)size())
     {
-      elements.getElement(topElement)->setElementOver(0);
-      if(elements.getElement(topElement)->isContainer()
+      elements.getElement(topElement)->setElementOver(false);
+      if(elements.getElement(topElement)->isFloating()
       && elements.getElement(topElement)->getMouseStateForContainer().mouseDownHere(elements.getElement(topElement)->mouseOver(input), input.mouseButtonDown(LMB)))
         bringToTop(elements.getElement(topElement));
     }
   }
-  else if(!elementOver) for(size_t i = 0; i < size(); i++) elements.getElement(i)->setElementOver(1); //mouse is over the bars!
+  else for(size_t i = 0; i < size(); i++) elements.getElement(i)->setElementOver(true);
 
   for(unsigned long i = 0; i < size(); i++)
   {
@@ -564,6 +574,11 @@ void Container::drawImpl(IGUIDrawer& drawer) const
   drawer.pushSmallestScissor(x0, y0, x1, y1);
   drawElements(drawer);
   drawer.popScissor();
+}
+
+void Container::manageHover(IHoverManager& hover)
+{
+  elements.manageHover(hover);
 }
 
 unsigned long Container::size() const
@@ -640,11 +655,6 @@ void Container::insertAt(size_t pos, Element* element, int x, int y, const Stick
 void Container::centerElement(Element* element)
 {
   element->moveCenterTo(getCenterX(), getCenterY());
-}
-
-bool Container::isContainer() const
-{
-  return true;
 }
 
 void Container::clear()
@@ -739,6 +749,23 @@ void ScrollElement::drawImpl(IGUIDrawer& drawer) const
   bars.draw(drawer);
 }
 
+void ScrollElement::manageHover(IHoverManager& hover)
+{
+  ElementComposite::manageHover(hover);
+  element->manageHover(hover);
+}
+
+Element* ScrollElement::hitTest(const IInput& input)
+{
+  if(mouseOver(input))
+  {
+    Element* result = element->hitTest(input);
+    if(result) return result;
+    return this;
+  }
+  else return 0;
+}
+
 void ScrollElement::moveImpl(int x, int y)
 {
   ElementComposite::moveImpl(x, y);
@@ -747,7 +774,19 @@ void ScrollElement::moveImpl(int x, int y)
 
 void ScrollElement::handleImpl(const IInput& input)
 {
-  if(element) element->handle(input);
+  if(element)
+  {
+    if(mouseOver(input))
+    {
+      element->setElementOver(false);
+      element->handle(input);
+    }
+    else
+    {
+      element->setElementOver(true);
+      element->handle(input);
+    }
+  }
   
   bars.handle(input);
   
@@ -924,6 +963,11 @@ bool Group::isInside(int x, int y) const
   return false;
 }
 
+void Group::drawImpl(IGUIDrawer& drawer) const
+{
+  drawElements(drawer);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //GUIWINDOW/////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -951,6 +995,7 @@ Window::Window()
   this->enableResizer = 0;
   this->closed = 0;
   this->resizerOverContainer = 0;
+  this->enableTop = false;
   
   addSubElement(&top, Sticky(0.0, 0, 0.0, 0, 1.0, 0, 0.0, top.getSizeY()));
   addSubElement(&resizer, Sticky(1.0, -resizer.getSizeX(), 1.0, -resizer.getSizeY(), 1.0, 0, 1.0, 0));
@@ -1048,7 +1093,7 @@ void Window::setContainerBorders(int left, int up, int right, int down)
   ic.setStickyFull(&container, this);
 }
 
-bool Window::isContainer() const
+bool Window::isFloating() const
 {
   return true;
 }
@@ -1184,6 +1229,13 @@ void Window::drawImpl(IGUIDrawer& drawer) const
   else container.draw(drawer);
 
   if(enableResizer) drawer.drawGUIPart(GP_WINDOW_RESIZER, resizer.getX0(), resizer.getY0(), resizer.getX1(), resizer.getY1()); //draw this after the container so the resizer is drawn over scrollbars if that is needed
+}
+
+void Window::manageHover(IHoverManager& hover)
+{
+  ElementComposite::manageHover(hover);
+  if(scroll.element) scroll.manageHover(hover);
+  else container.manageHover(hover);
 }
 
 void Window::addTitle(const std::string& title, int titleX, int titleY, const Font& titleFont)
@@ -1677,12 +1729,6 @@ double Scrollbar::getValue() const
 void Scrollbar::setValue(double value)
 {
   scrollPos = value - offset;
-}
-
-void Scrollbar::randomize()
-{
-  double r = getRandom();
-  scrollPos = r * scrollSize;
 }
 
 void Scrollbar::handleImpl(const IInput& input)
@@ -2584,6 +2630,15 @@ void Tabs::drawImpl(IGUIDrawer& drawer) const
     drawer.drawText(tabs[i]->name, tabs[i]->getCenterX(), tabs[i]->getCenterY(), FONT_Black, TextAlign(HA_CENTER, VA_CENTER));
     
     tabs[i]->container.draw(drawer);
+  }
+}
+
+void Tabs::manageHover(IHoverManager& hover)
+{
+  ElementComposite::manageHover(hover);
+  for(size_t i = 0; i < tabs.size(); i++)
+  {
+    tabs[i]->container.manageHover(hover);
   }
 }
 

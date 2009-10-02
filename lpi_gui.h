@@ -46,6 +46,47 @@ namespace gui
 
 class Element;
 
+class ToolTipManager //this is made to draw the tooltip at the very end to avoid other gui items to be drawn over it
+{
+  private:
+    std::map<Element*, std::string> elements;
+    
+  private:
+    void drawToolTip(const std::string& tip, IGUIDrawer& drawer) const; //TODO: move this function to ToolTipManager
+    
+  public:
+    void registerElement(Element* element, const std::string& tip); //doing this overrides the tooltip the element itself generates, but usually the element itself won't generate any tooltip at all on its own and using this function of the tooltipmanager is the only way to get a tooltip for that element
+    void draw(Element* root, IGUIDrawer& drawer) const;
+};
+
+/*
+Hovering elements can be caused by any GUI Element. Examples are:
+-menu's (regular menus, which give a popup when opened)
+-dropdown lists: the dropped down part
+-opened colorchooser in dynamic page
+-...
+
+This allows GUI elements to generate something that appears in front of everything
+else, no matter how much levels higher or lower it is in the tree. But, beware,
+to avoid resulting in a messy screen, not too many elements should have a hovering
+element open at the same time. Typically, if you click the mouse outside of one hovering
+panel, it should disappear. If you make a GUI element that doesn't do that, there
+could be created many hovering panels and then all usefullnes is lost since only
+one can be at the top and there's only so much screenspace.
+
+The effect is reached by drawing these elements after all the others, and by
+handling them without any other elements going over them to prevent blocking mouseOver.
+*/
+class IHoverManager
+{
+  public:
+    virtual void addHoverElement(Element* element) = 0;
+    
+    //virtual void drawHover(IGUIDrawer& drawer) = 0;
+    //virtual void handleHover(const IInput& input) = 0;
+    //virtual void manageHover(Element* element) = 0;
+};
+
 class InternalContainer //container inside elements, for elements that contain sub elements to work (e.g. scrollbar exists out of background and 3 buttons)
 {
   private:
@@ -61,6 +102,7 @@ class InternalContainer //container inside elements, for elements that contain s
     void resize(const Pos<int>& oldPos, const Pos<int>& newPos); //this resizes the 2D size of elements, not the amount of elements
     void move(int x, int  y);
     void setElementOver(bool state); //this says to all elements whether or not another element is in front of it in Z order, causing mouse to not work
+    void manageHover(IHoverManager& hover);
     void setBasicMouseInfo(const IInput& input);
     Element* hitTest(const IInput& input);
 
@@ -80,19 +122,6 @@ class InternalContainer //container inside elements, for elements that contain s
     void initSubElement(Element* element, const Sticky& sticky, Element* parent);
     void setStickyElementSize(Element* element, Element* parent);
     void setStickyElementSize(Element* element, const Pos<int>& newPos);
-};
-
-class ToolTipManager //this is made to draw the tooltip at the very end to avoid other gui items to be drawn over it
-{
-  private:
-    std::map<Element*, std::string> elements;
-    
-  private:
-    void drawToolTip(const std::string& tip, IGUIDrawer& drawer) const; //TODO: move this function to ToolTipManager
-    
-  public:
-    void registerElement(Element* element, const std::string& tip);
-    void draw(Element* root, IGUIDrawer& drawer) const;
 };
 
 class Element : public ElementRectangular
@@ -137,9 +166,9 @@ class Element : public ElementRectangular
     Element();
     virtual ~Element(){};
     
-    bool isVisible() { return visible; } //if false, the draw() function doesn't draw anything
-    bool isActive() { return active; } //if false, handle() does nothing, and mouse tests return always false
-    bool isPresent() { return present; } //if true, it reacts to the mouse. if false, it ignores the mouse, even if forceActive is true, if a gui element isn't present, it really isn't present
+    bool isVisible() const { return visible; } //if false, the draw() function doesn't draw anything
+    bool isActive() const { return active; } //if false, handle() does nothing, and mouse tests return always false
+    bool isPresent() const { return present; } //if true, it reacts to the mouse. if false, it ignores the mouse, even if forceActive is true, if a gui element isn't present, it really isn't present
     void setVisible(bool i_visible) { visible = i_visible; }
     void setActive(bool i_active) { active = i_active; }
     void setPresent(bool i_present) { present = i_present; }
@@ -156,10 +185,11 @@ class Element : public ElementRectangular
     void handle(const IInput& input);
     virtual void move(int x, int y);
     virtual void resize(int x0, int y0, int x1, int y1); //especially useful for windows and their container; parameters are the new values for x0, y0, x1 and y1 so this function can both move the object to a target and resize
+    virtual void manageHover(IHoverManager& hover);
     /*
     hitTest: if you override this, only return publically accessible elements, not internal parts of the element. For example, it's ok for a window to return elements you placed inside of it or itself, but not to return its top bar or close button.
     It's for example not ok for a scrollbar to return its arrow buttons or the scroller button
-    In fact, only elements that have isContainer() == true, may return something else than themselves, and only those elements added externally through public function.
+    TODO: revise this.
     */
     virtual Element* hitTest(const IInput& input);
     
@@ -173,7 +203,7 @@ class Element : public ElementRectangular
     void growSizeY0(int sizey) { resize(x0        , y1 - sizey, x1        , y1        ); }
     void growSizeX1(int sizex) { resize(x0        , y0        , x0 + sizex, y1        ); }
     void growSizeY1(int sizey) { resize(x0        , y0        , x1        , y0 + sizey); }
-    virtual bool isContainer() const; //returns 0 if the type of element isn't a container, 1 if it is (Window, Container, ...); this value is used by for example Container: it brings containers to the top of the screen if you click on them. Actually so far it's only been used for that mouse test. It's something for containers, by containers :p
+    virtual bool isFloating() const; //returns true if it's an element that should go to the top if you click on it (like a window). This is used by Container to bring elements to the top.
     
     ////custom tooltip
     virtual void drawToolTip(IGUIDrawer& drawer) const; //override if you can invent a fallback tooltip to draw for the element, but it's not required, the TooltipManager only uses this if no other tooltip was specified by the user
@@ -187,7 +217,7 @@ class Element : public ElementRectangular
     void drawDebugBorder(IGUIDrawer& drawer, const ColorRGB& color = RGB_Red) const;
     void drawDebugCross(IGUIDrawer& drawer, const ColorRGB& color = RGB_Red) const;
     
-    void drag(const IInput& input, MouseButton button = LMB);
+    void drag(const IInput& input, MouseButton button = LMB); //utility function, for moving this element when it's dragged by the mouse
 };
 
 class ElementComposite : public Element //element with "internal container" to automatically handle child elements for you
@@ -202,6 +232,7 @@ class ElementComposite : public Element //element with "internal container" to a
     virtual void move(int x, int y);
     virtual void setElementOver(bool state);
     virtual void resize(int x0, int y0, int x1, int y1);
+    virtual void manageHover(IHoverManager& hover);
     //virtual Element* hitTest(const IInput& input);
 };
 
@@ -363,7 +394,6 @@ class Scrollbar : public ElementComposite
     double offset; //used as an offset of ScrollPos to get/set the scroll value with offset added with the functions below
     double getValue() const;
     void setValue(double value);
-    void randomize(); //it will get a random value
     
     bool forwardedMouseScrollUp() const; //see int forwardedScroll;
     bool forwardedMouseScrollDown() const; //see int forwardedScroll;
@@ -445,6 +475,7 @@ class Container : public Element
   protected:
     
     void drawElements(IGUIDrawer& drawer) const;
+    void drawElementsPopup(IGUIDrawer& drawer) const;
     
   public:
     
@@ -452,6 +483,7 @@ class Container : public Element
     Container(IGUIDrawer& drawer); //drawer is used to initialize the size of the container to the full screen size of the drawer
     virtual void handleImpl(const IInput& input); //you're supposed to handle() before you draw()
     virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void manageHover(IHoverManager& hover);
     
     //push the element without affecting absolute position
     void pushTop(Element* element, const Sticky& sticky = STICKYDEFAULT);
@@ -472,11 +504,10 @@ class Container : public Element
 
     void bringToTop(Element* element); //precondition: element must already be in the list
     
-    void centerElement(Element* element);
+    void centerElement(Element* element); //TODO: remove this function from this class, if necessary put it somewhere else as utility function
 
     void remove(Element* element);
     unsigned long size() const;
-    virtual bool isContainer() const;
     void clear(); //clears all the elements
     void putInside(unsigned long i);
     virtual void moveImpl(int x, int y);
@@ -489,6 +520,83 @@ class Container : public Element
     virtual Element* hitTest(const IInput& input);
     
     void setSizeToElements(); //makes the size of the container as big as the elements. This resizes the container in a non-sticky way: no element is affected
+};
+
+
+class Group : public Container
+{
+  public:
+    virtual bool isInside(int x, int y) const; //difference with the isInside from other guielements, is that it checks all sub elements, not itself, for mouseovers
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+};
+
+/*
+MainContainer has a system for handling hovering elements. Use this as the container spanning
+the whole screen in which every other element is contained, to make hovering (popups) work. Without
+this or an alternative system where you use IHoverManager somehow yourself, menu's, dropdown lists,
+and other elements that use hovering elements won't work.
+TODO: give MainContainer also a ToolTipManager and let it handle it
+*/
+class MainContainer : public IHoverManager, public ElementComposite
+{
+  private:
+    Container c;
+    Container e;
+    Group h;
+    
+  public:
+  
+    MainContainer()
+    {
+      ctor();
+    }
+    
+    MainContainer(IGUIDrawer& drawer)
+    : c(drawer)
+    , e(drawer)
+    {
+      ctor();
+    }
+    
+    void ctor()
+    {
+      addSubElement(&c);
+      c.pushTop(&e);
+      c.pushTop(&h);
+    }
+  
+    virtual void addHoverElement(Element* element)
+    {
+      h.pushTop(element);
+    }
+    
+    virtual void handleImpl(const IInput& input)
+    {
+      h.clear();
+      e.manageHover(*this);
+
+      c.handle(input);
+    }
+    
+    virtual void drawImpl(IGUIDrawer& drawer) const
+    {
+      c.draw(drawer);
+    }
+    
+    //push the element without affecting absolute position
+    void pushTop(Element* element, const Sticky& sticky = STICKYDEFAULT){e.pushTop(element, sticky);}
+    void pushBottom(Element* element, const Sticky& sticky = STICKYDEFAULT){e.pushBottom(element, sticky);}
+    void insert(size_t pos, Element* element, const Sticky& sticky = STICKYDEFAULT){e.insert(pos, element, sticky);}
+    
+    //push the element so that its top left is relative to the top left of this container, thus moving it if the container isn't at 0,0
+    void pushTopRelative(Element* element, const Sticky& sticky = STICKYDEFAULT){e.pushTop(element, sticky);}
+    void pushBottomRelative(Element* element, const Sticky& sticky = STICKYDEFAULT){e.pushBottomRelative(element, sticky);}
+    void insertRelative(size_t pos, Element* element, const Sticky& sticky = STICKYDEFAULT){e.insertRelative(pos, element, sticky);}
+
+    //push the element at the given x, y (relative to this container's top left)
+    void pushTopAt(Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT){e.pushTopAt(element, x, y, sticky);}
+    void pushBottomAt(Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT){e.pushBottomAt(element, x, y, sticky);}
+    void insertAt(size_t pos, Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT){e.insertAt(pos, element, x, y, sticky);}
 };
 
 class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
@@ -506,8 +614,10 @@ class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
     ScrollElement();
     virtual void handleImpl(const IInput& input); //you're supposed to handle() before you draw()
     virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void manageHover(IHoverManager& hover);
     virtual void moveImpl(int x, int y);
     virtual void setElementOver(bool state);
+    virtual Element* hitTest(const IInput& input);
 
     void make(int x, int y, int sizex, int sizey, Element* element, const IGUIPartGeom& geom);
     
@@ -540,12 +650,6 @@ class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
     
     void initBars();
     void toggleBars(); //turns the bars on or of depending on if they're needed or not
-};
-
-class Group : public Container
-{
-  public:
-    virtual bool isInside(int x, int y) const; //difference with the isInside from other guielements, is that it checks all sub elements, not itself, for mouseovers
 };
 
 //Window is a container for other gui elements that'll move and get drawn at the command of the window
@@ -641,9 +745,10 @@ class Window : public ElementComposite
     
 
     virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void manageHover(IHoverManager& hover);
     
     virtual void handleImpl(const IInput& input);
-    virtual bool isContainer() const;
+    virtual bool isFloating() const;
     virtual Element* hitTest(const IInput& input);
     
     ////useful for the close button
@@ -791,6 +896,7 @@ class Tabs : public ElementComposite
     void selectTab(size_t i_index);
     
     virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void manageHover(IHoverManager& hover);
     virtual void handleImpl(const IInput& input);
 };
 

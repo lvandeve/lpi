@@ -27,6 +27,59 @@ namespace lpi
 namespace gui
 {
 
+void DynamicColor::ctor()
+{
+  this->resize(0, 0, 20, 20);
+  box.resize(0, 0, 12, 12);
+  box.move(1, 1);
+  this->addSubElement(&box, Sticky(0.0, 0, 0.5, -box.getSizeY() / 2, 0.0, box.getSizeX(), 0.5, box.getSizeY() / 2));
+  edit.resize(0, 20, 256, 128);
+  edit.totallyDisable();
+}
+
+DynamicColor::DynamicColor(ColorRGB* value)
+: box(value)
+{
+  this->bind = value;
+  ctor();
+}
+
+void DynamicColor::getValue(ColorRGB* value)
+{
+  (void)value;
+}
+
+void DynamicColor::setValue(ColorRGB* value)
+{
+  (void)value;
+}
+
+void DynamicColor::handleImpl(const IInput& input)
+{
+  box.handle(input);
+  
+  if(this->clicked(input))
+  {
+    edit.totallyEnable();
+    edit.moveTo(input.mouseX(), input.mouseY());
+  }
+  else if(edit.isVisible() && edit.mouseJustDownElsewhere(input))
+  {
+    edit.totallyDisable();
+  }
+}
+
+void DynamicColor::drawImpl(IGUIDrawer& drawer) const
+{
+  box.draw(drawer);
+}
+
+void DynamicColor::manageHover(IHoverManager& hover)
+{
+  if(edit.isVisible())
+    hover.addHoverElement(&edit);
+}
+////////////////////////////////////////////////////////////////////////////////
 
 DynamicPage::DynamicPage()
 : title_width(0.5)
@@ -53,7 +106,7 @@ void DynamicPage::valueToControl()
     controls[i]->valueToControl();
 }
 
-void DynamicPage::addControl(const std::string& name, IDynamicPageControl* control)
+void DynamicPage::addControl(const std::string& name, IDynamicControl* control)
 {
   controls.push_back(control);
   control_names.push_back(name);
@@ -81,6 +134,15 @@ void DynamicPage::drawImpl(IGUIDrawer& drawer) const
     controls[i]->draw(drawer);
   }
 }
+
+void DynamicPage::manageHover(IHoverManager& hover)
+{
+  for(size_t i = 0; i < controls.size(); i++)
+  {
+    controls[i]->manageHover(hover);
+  }
+}
+
 
 void DynamicPage::handleImpl(const IInput& input)
 {

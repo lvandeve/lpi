@@ -114,6 +114,7 @@ struct MouseState
   unsigned short justuphere_bool2 : 1;
   unsigned short grabbed_grabbed : 1;
   unsigned short grabbed_prev : 1;
+  unsigned short justdownelsewhere_prev : 1;
   int grabx;
   int graby;
   int grabrelx;
@@ -121,11 +122,14 @@ struct MouseState
   
   MouseState();
   
-  bool mouseDownHere(bool over, bool down);
-  bool mouseJustDown(bool over, bool down);
-  bool mouseJustDownHere(bool over, bool down);
-  bool mouseJustUpHere(bool over, bool down);
+  bool mouseDownHere(bool over, bool down); //mouse is over, down, and was pressed while it was on here
+  bool mouseJustDown(bool over, bool down); //mouse down for the first time after being up or not over the element
+  bool mouseJustDownHere(bool over, bool down); //mouse down for the first time after being up, only returns true if the mouse was above it before you clicked already
+  bool mouseJustUpHere(bool over, bool down); //mouse up for first time after being down, and over the element (so if you have mouse down on element and move mouse away, this will NOT return true, only if you release mouse button while cursor is over it, and mousedownhere)
   
+  bool mouseDownElsewhere(bool over, bool down, int x, int y, int relx, int rely); //mouse is down and not over, and was pressed while it was not on here
+  bool mouseJustDownElsewhere(bool over, bool down); //mouse is just down and not over, returns true if you click mouse button while mouse isn't over, does NOT return true if mouse button is already down while on the element and then you move away from the element
+
   bool mouseGrabbed(bool over, bool down, int x, int y, int relx, int rely);
   void mouseGrab(int x, int y, int relx, int rely);
   void mouseUngrab();
@@ -180,6 +184,10 @@ class ElementShape //describes the shape and mouse handling in this shape
     bool mouseJustUpHere(const IInput& input, MouseButton button = LMB); //mouse up for first time after being down, and over the element (so if you have mouse down on element and move mouse away, this will NOT return true, only if you release mouse button while cursor is over it, and mousedownhere)
     bool pressed(const IInput& input, MouseButton button = LMB); //mouseJustDown and active
     bool clicked(const IInput& input, MouseButton button = LMB); //mouseJustUp and active
+
+    bool mouseDownElsewhere(const IInput& input, MouseButton button = LMB); //mouse is down and not over, and was pressed while it was not on here
+    bool mouseJustDownElsewhere(const IInput& input, MouseButton button = LMB); //mouse is just down and not over, returns true if you click mouse button while mouse isn't over, does NOT return true if mouse button is already down while on the element and then you move away from the element. AKA "antipressed"
+
 
     //these use info from IInput that isn't remembered by each element, so you need to pass the IInput when calling these
     bool mouseScrollUp(const IInput& input) const; //scrolled up while on this element
