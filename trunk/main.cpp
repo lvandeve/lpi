@@ -144,14 +144,12 @@ struct SpawnTexts
 
 SpawnTexts spawns;
 
-
 int main(int, char*[]) //the arguments have to be given here, or DevC++ can't link to SDL for some reason
 {//std::cout<<sizeof(lpi::gui::Element)<<std::endl;
   lpi::ScreenGL screen(width, height, 0, true, "lpi GUI demo");
   lpi::gui::GUIDrawerGL guidrawer(&screen);
   
-  lpi::gui::Container c(guidrawer);
-  
+  lpi::gui::MainContainer c(guidrawer);
   
   lpi::gui::Button tb;
   tb.makeText(20, 530, "Save Built In GUI To PNGs", guidrawer);
@@ -230,7 +228,14 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   tabs.getTabContent(0).pushTopAt(&wb, 20, 50);
   //w2.pushTopAt(&wb, 20, 50);
   
-  //lpi::ColorRGB dyn_value0 = lpi::RGBA_Lightblue(224);
+  lpi::gui::Checkbox wbcb;
+  wbcb.make(0, 0);
+  wbcb.makeLabel("more", wbcb.getSizeX(), wbcb.getRelCenterY() - 4, lpi::FONT_White);
+  tabs.getTabContent(0).pushTopAt(&wbcb, 20, 80);
+  
+
+  
+  lpi::ColorRGB dyn_value0 = lpi::RGBA_Lightblue(224);
   int dyn_value1 = 12345;
   std::string dyn_value2 = "hello";
   bool dyn_value3 = true;
@@ -240,7 +245,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   //dyn.setSizeXY(200, 20);
   dyn.resize(0,0,280,100);
   dyn.setTitle("dynamic page");
-  //dyn.addControl("color", new lpi::gui::DynamicColor(&dyn_value0));
+  dyn.addControl("color", new lpi::gui::DynamicColor(&dyn_value0));
   dyn.addControl("int", new lpi::gui::DynamicValue<int>(&dyn_value1));
   dyn.addControl("string", new lpi::gui::DynamicValue<std::string>(&dyn_value2));
   dyn.addControl("boolean", new lpi::gui::DynamicCheckbox(&dyn_value3));
@@ -316,8 +321,8 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     //dyn.valueToControl();
     
     c.draw(guidrawer);
-    c.handle(lpi::gSDLInput);
     tooltips.draw(&c, guidrawer);
+    c.handle(lpi::gSDLInput);
     
     lpi::ColorHSV colorHSV(hsv.getValueAngle() * 255, hsv.getValueAxial() * 255, 255);
     color = lpi::HSVtoRGB(colorHSV);
@@ -389,6 +394,14 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     if(wb.mouseQuadrupleClicked(lpi::gSDLInput, lpi::RMB)) spawns.addSpawn("right quadruple clicked", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(224, 224, 255));
     if(wb.mouseScrollUp(lpi::gSDLInput)) spawns.addSpawn("scrolled up", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::RGB_Black);
     if(wb.mouseScrollDown(lpi::gSDLInput)) spawns.addSpawn("scrolled down", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::RGB_Black);
+    if(wbcb.isChecked())
+    {
+      if(wb.mouseJustDownElsewhere(lpi::gSDLInput)) spawns.addSpawn("pressed elsewhere", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::RGB_Black);
+      if(wb.mouseDown(lpi::gSDLInput)) guidrawer.drawText("down", lpi::globalMouseX, lpi::globalMouseY, lpi::FONT_White);
+      if(wb.mouseDownHere(lpi::gSDLInput)) guidrawer.drawText("down here", lpi::globalMouseX, lpi::globalMouseY + 8, lpi::FONT_White);
+      if(wb.mouseGrabbed(lpi::gSDLInput)) guidrawer.drawText("grabbed", lpi::globalMouseX, lpi::globalMouseY + 16, lpi::FONT_White);
+      if(wb.mouseDownElsewhere(lpi::gSDLInput)) guidrawer.drawText("down elsewhere", lpi::globalMouseX, lpi::globalMouseY + 8, lpi::FONT_White);
+    }
     
     screen.redraw();
     screen.cls(lpi::RGB_Darkgreen);

@@ -100,6 +100,7 @@ MouseState::MouseState()
   downhere_bool2 = 0;
   justuphere_bool1 = 0;
   justuphere_bool2 = 0;
+  justdownelsewhere_prev = 0;
 }
 
 bool MouseState::mouseDownHere(bool over, bool down)
@@ -193,6 +194,20 @@ void MouseState::mouseGrab(int x, int y, int relx, int rely)
   grabrely = rely;
 }
 
+bool MouseState::mouseDownElsewhere(bool over, bool down, int x, int y, int relx, int rely)
+{
+  return !mouseGrabbed(over, down, x, y, relx, rely) && down && !over;
+}
+
+bool MouseState::mouseJustDownElsewhere(bool over, bool down)
+{
+  bool temp_bool = justdownelsewhere_prev;
+  bool result = lpi::gui::mouseJustDownHere(temp_bool, !over, down);
+  justdownelsewhere_prev = temp_bool;
+  return result;
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 //ELEMENTSHAPE
 ////////////////////////////////////////////////////////////////////////////////
@@ -267,6 +282,22 @@ bool ElementShape::mouseJustUpHere(const IInput& input, MouseButton button)
 {
   return _mouseState[button].mouseJustUpHere(mouseOver(input), input.mouseButtonDown(button));
 }
+
+bool ElementShape::mouseDownElsewhere(const IInput& input, MouseButton button)
+{
+  return _mouseState[button].mouseDownElsewhere(mouseOver(input)
+                                              , input.mouseButtonDown(button)
+                                              , input.mouseX()
+                                              , input.mouseY()
+                                              , mouseGetRelPosX(input)
+                                              , mouseGetRelPosY(input));
+}
+
+bool ElementShape::mouseJustDownElsewhere(const IInput& input, MouseButton button)
+{
+  return _mouseState[button].mouseJustDownElsewhere(mouseOver(input), input.mouseButtonDown(button));
+}
+
 
 bool ElementShape::pressed(const IInput& input, MouseButton button)
 {
