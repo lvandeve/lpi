@@ -114,6 +114,7 @@ class ADrawer2DBuffer : public ADrawer2D //draws on a buffer
     virtual void drawCircle(int x, int y, int radius, const ColorRGB& color, bool filled);
     virtual void drawEllipseCentered(int x, int y, int radiusx, int radiusy, const ColorRGB& color, bool filled);
     
+    virtual void drawGradientRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3);
     virtual void drawGradientTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2);
     virtual void drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3);
     
@@ -124,6 +125,8 @@ class ADrawer2DBuffer : public ADrawer2D //draws on a buffer
     virtual void drawTexture(const ITexture* texture, int x, int y, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureSized(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, const ColorRGB& colorMod = RGB_White);
+    virtual void drawTextureSizedRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White);
+
 };
 
 class Drawer2DBuffer : public ADrawer2DBuffer
@@ -156,14 +159,14 @@ class Drawer2DTexture : public ADrawer2DBuffer
     Drawer2DTexture(ITexture* texture){setTexture(texture);}
 
     
-    virtual size_t getWidth() { return w; }
-    virtual size_t getHeight() { return h; }
+    virtual size_t getWidth() { return u; }
+    virtual size_t getHeight() { return v; }
     
     void setTexture(ITexture* texture)
     {
-      setBufferInternal(texture->getBuffer(), texture->getU(), texture->getV());
-      u = texture->getU2();
-      v = texture->getV2();
+      setBufferInternal(texture->getBuffer(), texture->getU2(), texture->getV2());
+      w = texture->getU2();
+      h = texture->getV2();
     }
 };
 

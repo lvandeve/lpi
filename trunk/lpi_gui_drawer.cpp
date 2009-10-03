@@ -102,6 +102,10 @@ void AGUIDrawer::drawEllipseCentered(int x, int y, int radiusx, int radiusy, con
   getDrawer().drawEllipseCentered(x, y, radiusx, radiusy, color, filled);
 }
 
+void AGUIDrawer::drawGradientRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3)
+{
+  getDrawer().drawGradientRectangle(x0, y0, x1, y1, color0, color1, color2, color3);
+}
 
 void AGUIDrawer::drawGradientTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2)
 {
@@ -156,6 +160,11 @@ void AGUIDrawer::drawTextureSized(const ITexture* texture, int x, int y, size_t 
 void AGUIDrawer::drawTextureRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, const ColorRGB& colorMod)
 {
   getDrawer().drawTextureRepeated(texture, x0, y0, x1, y1, colorMod);
+}
+
+void AGUIDrawer::drawTextureSizedRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, size_t sizex, size_t sizey, const ColorRGB& colorMod)
+{
+  getDrawer().drawTextureSizedRepeated(texture, x0, y0, x1, y1, sizex, sizey, colorMod);
 }
 
 void AGUIDrawer::calcTextRectSize(int& w, int& h, const std::string& text, const Font& font)

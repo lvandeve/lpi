@@ -709,4 +709,49 @@ namespace
 
 ITexture* emptyTexture = &empty;
 
+void getAlignedBuffer(std::vector<unsigned char>& buffer, const ITexture* texture)
+{
+  size_t u = texture->getU();
+  size_t v = texture->getV();
+  size_t u2 = texture->getU2();
+  size_t v2 = texture->getV2();
+  buffer.resize(u * v * 4);
+  for(size_t y = 0; y < v; y++)
+  for(size_t x = 0; x < u; x++)
+  for(size_t c = 0; c < 4; c++)
+  {
+    buffer[y * u * 4 + x * 4 + c] = texture->getBuffer()[y * u2 * 4 + x * v2 + c];
+  }
+}
+
+void setAlignedBuffer(ITexture* texture, const unsigned char* buffer)
+{
+  size_t u = texture->getU();
+  size_t v = texture->getV();
+  size_t u2 = texture->getU2();
+  size_t v2 = texture->getV2();
+  for(size_t y = 0; y < v; y++)
+  for(size_t x = 0; x < u; x++)
+  for(size_t c = 0; c < 4; c++)
+  {
+    texture->getBuffer()[y * u2 * 4 + x * v2 + c] = buffer[y * u * 4 + x * 4 + c];
+  }
+}
+
+void createTexture(ITexture* texture, size_t w, size_t h, const ColorRGB& color)
+{
+  texture->setSize(w, h);
+  unsigned char* buffer = texture->getBuffer();
+  size_t u2 = texture->getU2();
+  size_t v2 = texture->getV2();
+  for(size_t y = 0; y < h; y++)
+  for(size_t x = 0; x < w; x++)
+  {
+    buffer[y * u2 * 4 + x * 4 + 0] = color.r;
+    buffer[y * u2 * 4 + x * 4 + 1] = color.g;
+    buffer[y * u2 * 4 + x * 4 + 2] = color.b;
+    buffer[y * u2 * 4 + x * 4 + 3] = color.a;
+  }
+}
+
 } //namespace lpi

@@ -144,13 +144,9 @@ class Element : public ElementRectangular
     
   protected:
     
-    
-    //TODO: try to eliminate some of these booleans. Visible and Active can go together. ElementOver is needed of course for the correct handling of elements in containers. Present can maybe be comined with active and visible too???
     bool elementOver; //true if there is an element over this element, causing the mouse NOT to be over this one (Z-order related)
     bool enabled; //if false, the draw() and handle() functions don't do anything, and mouse checks return false. So then it's invisible, inactive, totally not present.
 
-  public: //TODO: make these not-public
-    
     ////minimum size
     int minSizeX; //you can't resize this element to something smaller than this
     int minSizeY; //TODO: make this virtual private functions instead of member variables, or even better, remove this completely and make the resize function of elements determine this

@@ -502,6 +502,64 @@ void Drawer2DGL::drawTextureRepeated(const ITexture* texture, int x0, int y0, in
   }
 }
 
+void Drawer2DGL::drawTextureSizedRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, size_t sizex, size_t sizey, const ColorRGB& colorMod)
+{
+  (void)sizex; (void)sizey; //TODO: use the size!!!
+  if(x0 == x1 || y0 == y1) return;
+
+  const TextureGL* texturegl = dynamic_cast<const TextureGL*>(texture);
+  if(!texturegl) return;
+
+  prepareDrawTextured();
+
+  glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
+  texturegl->bind(screen->isSmoothingEnabled());
+
+  bool simple = true;
+  if(x1 - x0 > (int)texture->getU() && texture->getU() != texture->getU2()) simple = false;
+  if(y1 - y0 > (int)texture->getV() && texture->getV() != texture->getV2()) simple = false;
+
+  if(simple)
+  {
+    double coorx = (double(x1 - x0) / texturegl->getU());
+    double coory = (double(y1 - y0) / texturegl->getV());
+
+    //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
+    glBegin(GL_QUADS);
+      glTexCoord2d(0.0,       0.0); glVertex3d(x0, y0, 1);
+      glTexCoord2d(0.0,    +coory); glVertex3d(x0, y1, 1);
+      glTexCoord2d(+coorx, +coory); glVertex3d(x1, y1, 1);
+      glTexCoord2d(+coorx,    0.0); glVertex3d(x1, y0, 1);
+    glEnd();
+  }
+  else //need to tile manually, slow!!
+  {
+    int numx = (x1 - x0) / texture->getU();
+    int numy = (y1 - y0) / texture->getV();
+
+    //TODO: this is just a very lazy implementation because I was doing something else. Fix the TODO's below!!!
+    //TODO: make this more efficient, e.g. quadstrip...
+    //TODO: also add the extra textures at the edge (I mean, now I only have the full tiles, at the sides are possibly also partial tiles)!!!!
+    for(int x = 0; x < numx; x++)
+    {
+      for(int y = 0; y < numy; y++)
+      {
+        int xb0 = x0 + x * texture->getU();
+        int yb0 = y0 + y * texture->getV();
+        int xb1 = xb0 + texture->getU();
+        int yb1 = yb0 + texture->getV();
+
+        glBegin(GL_QUADS);
+          glTexCoord2d(0.0, 0.0); glVertex3d(xb0, yb0, 1);
+          glTexCoord2d(0.0, 1.0); glVertex3d(xb0, yb1, 1);
+          glTexCoord2d(1.0, 1.0); glVertex3d(xb1, yb1, 1);
+          glTexCoord2d(1.0, 0.0); glVertex3d(xb1, yb0, 1);
+        glEnd();
+      }
+    }
+  }
+}
+
 
 } //end of namespace lpi
 
