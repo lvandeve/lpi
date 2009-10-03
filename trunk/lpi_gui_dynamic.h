@@ -284,7 +284,7 @@ class DynamicColor : public TDymamicPageControl<ColorRGB>
     virtual void setValue(ColorRGB* value);
     virtual void handleImpl(const IInput& input);
     virtual void drawImpl(IGUIDrawer& drawer) const;
-    virtual void manageHover(IHoverManager& hover);
+    virtual void manageHoverImpl(IHoverManager& hover);
 };
 
 class DynamicControlDummy : public IDynamicControl
@@ -324,7 +324,7 @@ class DynamicPage : public ElementComposite
   void addControl(const std::string& name, IDynamicControl* control);
   
   virtual void drawImpl(IGUIDrawer& drawer) const;
-  virtual void manageHover(IHoverManager& hover);
+  virtual void manageHoverImpl(IHoverManager& hover);
   virtual void handleImpl(const IInput& input);
 };
 

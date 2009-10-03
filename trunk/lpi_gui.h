@@ -81,10 +81,6 @@ class IHoverManager
 {
   public:
     virtual void addHoverElement(Element* element) = 0;
-    
-    //virtual void drawHover(IGUIDrawer& drawer) = 0;
-    //virtual void handleHover(const IInput& input) = 0;
-    //virtual void manageHover(Element* element) = 0;
 };
 
 class InternalContainer //container inside elements, for elements that contain sub elements to work (e.g. scrollbar exists out of background and 3 buttons)
@@ -152,6 +148,7 @@ class Element : public ElementRectangular
     virtual void handleImpl(const IInput& input);
     virtual void moveImpl(int x, int y); //Override this if you have subelements, unless you use addSubElement in ElementComposite.
     virtual void resizeImpl(const Pos<int>& newPos); //always called after resize, will resize the other elements to the correct size. Override this if you have subelements, unless you use addSubElement in ElementComposite. When resizeWidget is called, you can get the new size from newPos, while the old size is still in x0, y0, x1, y1 from this and will be set after resizeWidget is called.
+    virtual void manageHoverImpl(IHoverManager& hover);
 
     /*
     drawGUIPart: convenient helper function to draw a sub-element with its size and mouseoverstate etc...,
@@ -185,7 +182,7 @@ class Element : public ElementRectangular
     void handle(const IInput& input);
     virtual void move(int x, int y);
     virtual void resize(int x0, int y0, int x1, int y1); //especially useful for windows and their container; parameters are the new values for x0, y0, x1 and y1 so this function can both move the object to a target and resize
-    virtual void manageHover(IHoverManager& hover);
+    void manageHover(IHoverManager& hover);
     /*
     hitTest: if you override this, only return publically accessible elements, not internal parts of the element. For example, it's ok for a window to return elements you placed inside of it or itself, but not to return its top bar or close button.
     It's for example not ok for a scrollbar to return its arrow buttons or the scroller button
@@ -232,7 +229,7 @@ class ElementComposite : public Element //element with "internal container" to a
     virtual void move(int x, int y);
     virtual void setElementOver(bool state);
     virtual void resize(int x0, int y0, int x1, int y1);
-    virtual void manageHover(IHoverManager& hover);
+    virtual void manageHoverImpl(IHoverManager& hover);
     //virtual Element* hitTest(const IInput& input);
 };
 
@@ -483,7 +480,7 @@ class Container : public Element
     Container(IGUIDrawer& drawer); //drawer is used to initialize the size of the container to the full screen size of the drawer
     virtual void handleImpl(const IInput& input); //you're supposed to handle() before you draw()
     virtual void drawImpl(IGUIDrawer& drawer) const;
-    virtual void manageHover(IHoverManager& hover);
+    virtual void manageHoverImpl(IHoverManager& hover);
     
     //push the element without affecting absolute position
     void pushTop(Element* element, const Sticky& sticky = STICKYDEFAULT);
@@ -556,10 +553,17 @@ class MainContainer : public IHoverManager, public ElementComposite
     , e(drawer)
     {
       ctor();
+    
+      //the default container is as big as the screen (note: don't forget to resize it if you resize the resolution of the screen!)
+      x0 = 0;
+      y0 = 0;
+      x1 = drawer.getWidth();
+      y1 = drawer.getHeight();
     }
     
     void ctor()
     {
+      totallyEnable();
       addSubElement(&c);
       c.pushTop(&e);
       c.pushTop(&h);
@@ -597,6 +601,8 @@ class MainContainer : public IHoverManager, public ElementComposite
     void pushTopAt(Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT){e.pushTopAt(element, x, y, sticky);}
     void pushBottomAt(Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT){e.pushBottomAt(element, x, y, sticky);}
     void insertAt(size_t pos, Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT){e.insertAt(pos, element, x, y, sticky);}
+    
+    virtual Element* hitTest(const IInput& input);
 };
 
 class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
@@ -614,7 +620,7 @@ class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
     ScrollElement();
     virtual void handleImpl(const IInput& input); //you're supposed to handle() before you draw()
     virtual void drawImpl(IGUIDrawer& drawer) const;
-    virtual void manageHover(IHoverManager& hover);
+    virtual void manageHoverImpl(IHoverManager& hover);
     virtual void moveImpl(int x, int y);
     virtual void setElementOver(bool state);
     virtual Element* hitTest(const IInput& input);
@@ -745,7 +751,7 @@ class Window : public ElementComposite
     
 
     virtual void drawImpl(IGUIDrawer& drawer) const;
-    virtual void manageHover(IHoverManager& hover);
+    virtual void manageHoverImpl(IHoverManager& hover);
     
     virtual void handleImpl(const IInput& input);
     virtual bool isFloating() const;
@@ -896,7 +902,7 @@ class Tabs : public ElementComposite
     void selectTab(size_t i_index);
     
     virtual void drawImpl(IGUIDrawer& drawer) const;
-    virtual void manageHover(IHoverManager& hover);
+    virtual void manageHoverImpl(IHoverManager& hover);
     virtual void handleImpl(const IInput& input);
 };
 

@@ -180,6 +180,19 @@ void InternalContainer::manageHover(IHoverManager& hover)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+Element* MainContainer::hitTest(const IInput& input)
+{
+  if(mouseOver(input))
+  {
+    Element* result = c.hitTest(input);
+    if(result) return result;
+    return this;
+  }
+  else return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 //TOOLTIPMANAGER                                                              //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -235,9 +248,14 @@ Element::Element() : elementOver(false)
   totallyEnable();
 }
 
-void Element::manageHover(IHoverManager& hover)
+void Element::manageHoverImpl(IHoverManager& hover)
 {
   (void)hover;
+}
+
+void Element::manageHover(IHoverManager& hover)
+{
+  if(active) manageHoverImpl(hover);
 }
 
 void Element::drawDebugBorder(IGUIDrawer& drawer, const ColorRGB& color) const
@@ -423,7 +441,7 @@ void ElementComposite::resize(int x0, int y0, int x1, int y1)
   ic.resize(oldPos, newPos);
 }
 
-void ElementComposite::manageHover(IHoverManager& hover)
+void ElementComposite::manageHoverImpl(IHoverManager& hover)
 {
   ic.manageHover(hover);
 }
@@ -576,7 +594,7 @@ void Container::drawImpl(IGUIDrawer& drawer) const
   drawer.popScissor();
 }
 
-void Container::manageHover(IHoverManager& hover)
+void Container::manageHoverImpl(IHoverManager& hover)
 {
   elements.manageHover(hover);
 }
@@ -749,9 +767,9 @@ void ScrollElement::drawImpl(IGUIDrawer& drawer) const
   bars.draw(drawer);
 }
 
-void ScrollElement::manageHover(IHoverManager& hover)
+void ScrollElement::manageHoverImpl(IHoverManager& hover)
 {
-  ElementComposite::manageHover(hover);
+  ElementComposite::manageHoverImpl(hover);
   element->manageHover(hover);
 }
 
@@ -1231,9 +1249,9 @@ void Window::drawImpl(IGUIDrawer& drawer) const
   if(enableResizer) drawer.drawGUIPart(GP_WINDOW_RESIZER, resizer.getX0(), resizer.getY0(), resizer.getX1(), resizer.getY1()); //draw this after the container so the resizer is drawn over scrollbars if that is needed
 }
 
-void Window::manageHover(IHoverManager& hover)
+void Window::manageHoverImpl(IHoverManager& hover)
 {
-  ElementComposite::manageHover(hover);
+  ElementComposite::manageHoverImpl(hover);
   if(scroll.element) scroll.manageHover(hover);
   else container.manageHover(hover);
 }
@@ -2633,9 +2651,9 @@ void Tabs::drawImpl(IGUIDrawer& drawer) const
   }
 }
 
-void Tabs::manageHover(IHoverManager& hover)
+void Tabs::manageHoverImpl(IHoverManager& hover)
 {
-  ElementComposite::manageHover(hover);
+  ElementComposite::manageHoverImpl(hover);
   for(size_t i = 0; i < tabs.size(); i++)
   {
     tabs[i]->container.manageHover(hover);
