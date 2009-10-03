@@ -126,6 +126,8 @@ class AlphaEffect
 
 void createImageAlpha(unsigned char* image, int w, int h, const AlphaEffect& effect);
 
+///utility functions
+
 //create the texture contents from some source (solid color, buffer, file)
 void makeTextureSolid(ITexture* texture, const ColorRGB& color, size_t w, size_t h); //create texture with plain color of given size
 void makeTextureFromBuffer(ITexture* texture, unsigned char* buffer, size_t w, size_t h, const AlphaEffect& effect = AE_Opaque, int x1=-1, int y1=-1, int x2=-1, int y2=-1); //w and h are the size of the buffer
@@ -145,5 +147,9 @@ void loadTexturesFromBase64PNG(std::vector<ITexture*>& textures, const ITextureF
 
 extern ITexture* emptyTexture; //default texture for initializing pointers
 
+void getAlignedBuffer(std::vector<unsigned char>& buffer, const ITexture* texture);
+void setAlignedBuffer(ITexture* texture, const unsigned char* buffer); //assumes texture has already correct size and buffer contains that many pixels
+
+void createTexture(ITexture* texture, size_t w, size_t h, const ColorRGB& color);
 } //namespace lpi
 

@@ -81,6 +81,7 @@ class IDrawer2D
     ///gradient shapes
     
     //drawGradientQuad: the points must be given in counter-clockwise direction
+    virtual void drawGradientRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3) = 0;
     virtual void drawGradientTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2) = 0;
     virtual void drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3) = 0;
     //todo: gradientLine, gradientCircle and gradientEllipse
@@ -98,7 +99,8 @@ class IDrawer2D
     virtual void drawTextureSized(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White) = 0;
     virtual void drawTextureSizedCentered(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White) = 0;
     virtual void drawTextureRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, const ColorRGB& colorMod = RGB_White) = 0;
-    
+    virtual void drawTextureSizedRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White) = 0;
+
     ////"matrix" is 2x2 matrix given as an array of 4 doubles: topleft element, topright element, bottomleft element, bottomright element. The matrix has column vectors for doing the transformation (the OpenGL convention, not the Direct3D convention).
     //virtual void drawTextureTransformed(const ITexture* texture, int x, int y, const double* matrix, const ColorRGB& colorMod = RGB_White) = 0; //transformed around the top left corner of the texture
     //virtual void drawTextureTransformedCentered(const ITexture* texture, int x, int y, const double* matrix, const ColorRGB& colorMod = RGB_White) = 0; //transformed around the center point of the texture

@@ -496,6 +496,11 @@ void ADrawer2DBuffer::drawRectangle(int x0, int y0, int x1, int y1, const ColorR
   }
 }
 
+void ADrawer2DBuffer::drawGradientRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3)
+{
+  drawGradientQuad(x0, y0, x0, y1, x1, y1, x1, y0, color0, color1, color2, color3);
+}
+
 void ADrawer2DBuffer::drawGradientTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2)
 {
   Vector2 a(x0, y0);
@@ -785,6 +790,49 @@ void ADrawer2DBuffer::drawTextureRepeated(const ITexture* texture, int x0, int y
   }
 }
 
+void ADrawer2DBuffer::drawTextureSizedRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, size_t sizex, size_t sizey, const ColorRGB& colorMod)
+{
+  (void)sizex; (void)sizey; //TODO: use the size!!!
+  
+  lpi::clipRect(x0, y0, x1, y1, x0, y0, x1, y1, clip.x0, clip.y0, clip.x1, clip.y1);
+  const unsigned short cr = colorMod.r;
+  const unsigned short cg = colorMod.g;
+  const unsigned short cb = colorMod.b;
+  const unsigned short ca = colorMod.a;
+
+  const unsigned char* tb = texture->getBuffer();
+
+
+  for(int y = y0, ty = 0; y < y1; y++)
+  {
+    for(int x = x0, tx = 0; x < x1; x++)
+    {
+      int bufferpos = 4 * (y * w + x);
+      int tbufferpos = 4 * (ty * texture->getU2() + tx);
+
+      const unsigned short ccr = (tb[tbufferpos + 0] * cr) / 256;
+      const unsigned short ccg = (tb[tbufferpos + 1] * cg) / 256;
+      const unsigned short ccb = (tb[tbufferpos + 2] * cb) / 256;
+      const unsigned short cca = (tb[tbufferpos + 3] * ca) / 256;
+      const unsigned short cca1 = 256 - cca;
+
+      const unsigned short orr = buffer[bufferpos + 0];
+      const unsigned short org = buffer[bufferpos + 1];
+      const unsigned short orb = buffer[bufferpos + 2];
+      const unsigned short ora = buffer[bufferpos + 3];
+
+      buffer[bufferpos + 0] = ((orr * cca1) + (ccr * cca)) / 256;
+      buffer[bufferpos + 1] = ((org * cca1) + (ccg * cca)) / 256;
+      buffer[bufferpos + 2] = ((orb * cca1) + (ccb * cca)) / 256;
+      buffer[bufferpos + 3] = ora > cca ? ora : cca; //not really correct but good enough for now.
+
+      tx++;
+      if(tx >= (int)texture->getU()) tx = 0;
+    }
+    ty++;
+    if(ty >= (int)texture->getV()) ty = 0;
+  }
+}
 
 /*void ADrawer2DBuffer::cls(const ColorRGB& color)
 {

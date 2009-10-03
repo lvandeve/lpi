@@ -97,8 +97,5 @@ class TextureGL : public ITexture
     double v3; //should always be v / double(v2)
 };
 
-typedef TextureGL Texture; //TODO: remove this again once everything uses ITexture
-
-
 } //namespace lpi
 
