@@ -22,11 +22,10 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_unittest.h"
 #include "lpi_event.h"
 #include "lpi_input_sdl.h"
-#include "lpi_screen_gl.h"
 #include "lpi_gui.h"
 #include "lpi_gui_ex.h"
 #include "lpi_gui_text.h"
-#include "lpi_gui_drawer_gl.h"
+#include "lpi_gui_drawer_buffer.h"
 
 #include <iostream>
 
@@ -86,8 +85,10 @@ GUIInputDebug testinput;
 
 void unitTest()
 {
-  lpi::ScreenGL screen(1024, 768, 0, false, "Unit Testing...");
-  lpi::gui::GUIDrawerGL dummydrawer(&screen);
+  lpi::gui::GUIDrawerBuffer dummydrawer;
+  lpi::Drawer2DBuffer& drawer = dynamic_cast<lpi::Drawer2DBuffer&>(dummydrawer.getDrawer());
+  std::vector<unsigned char> buffer(1024 * 768 * 4);
+  drawer.setBuffer(&buffer[0], 1024, 768);
   
   LUT_START_UNIT_TEST
   
@@ -426,16 +427,16 @@ void unitTest()
     
     testinput.debugSetMousePos(dummy1.getCenterX(), dummy1.getCenterY()); //doesn't matter if you take center of dummy1 or dummy2, both are exactly at same position
     
-    dummy1.totallyEnable();
-    dummy2.totallyDisable();
+    dummy1.setEnabled(true);
+    dummy2.setEnabled(false);
     
     c.handle(testinput);
     
     LUT_SUB_ASSERT_TRUE(dummy1.mouseOver(testinput))
     LUT_SUB_ASSERT_TRUE(!dummy2.mouseOver(testinput))
     
-    dummy1.totallyDisable();
-    dummy2.totallyEnable();
+    dummy1.setEnabled(false);
+    dummy2.setEnabled(true);
     
     c.handle(testinput);
     

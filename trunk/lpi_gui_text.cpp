@@ -88,9 +88,7 @@ void InputLine::make(int x, int y, unsigned long l, const Font& font, int type, 
   this->setSizeY( /*markup.getHeight()*/8); //TODO use IDrawer2D to determine this text size
   this->setSizeX((title.length() + l) * /*markup.getWidth()*/8);
   
-  this->active = 1;
-  this->visible = 1;
-  this->present = 1;
+  this->enabled = 1;
 }
 
 bool InputLine::enteringDone() const
@@ -151,7 +149,7 @@ void InputLine::drawImpl(IGUIDrawer& drawer) const
 bool InputLine::enter()
 {
   bool result = false;
-  if(entered && text.length() > 0 && active) result = true;
+  if(entered && text.length() > 0 && enabled) result = true;
   entered = 0;
   return result;
 }
@@ -794,7 +792,7 @@ int InputLine::getInteger() const
   //this->num = num;
   //this->font = font;
   
-  //this->totallyEnable();
+  //this->setEnabled(true);
 
   //this->scroll = 0;
   
@@ -920,7 +918,7 @@ int InputLine::getInteger() const
   //this->text.splitWords(getSizeX());
 
   
-  //this->totallyEnable();
+  //this->setEnabled(true);
 
   //this->scroll = 0;
 //}
@@ -1274,7 +1272,7 @@ int InputLine::getInteger() const
   //this->setSizeY(/*markup.getHeight()*/8);
   //this->text = text;
   //this->font = font;
-  //this->totallyEnable();
+  //this->setEnabled(true);
 //}
 
 //void FormattedText::drawImpl(IGUIDrawer& /*drawer*/) const

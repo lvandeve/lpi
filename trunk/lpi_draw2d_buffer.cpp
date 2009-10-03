@@ -108,8 +108,8 @@ void verLine(unsigned char* buffer, int buffer_w, int buffer_h, int x, int y1, i
 void bresenhamLine(unsigned char* buffer, int w, int x0, int y0, int x1, int y1, const ColorRGB& color)
 {
   //draw the line with bresenham
-  int deltax = std::abs((double)(x1 - x0));    // The difference between the x's
-  int deltay = std::abs((double)(y1 - y0));    // The difference between the y's
+  int deltax = (int)std::abs((double)(x1 - x0));    // The difference between the x's
+  int deltay = (int)std::abs((double)(y1 - y0));    // The difference between the y's
   int x = x0;           // Start x off at the first pixel
   int y = y0;           // Start y off at the first pixel
   int xinc0, xinc1, yinc0, yinc1, den, num, numadd, numpixels, curpixel;

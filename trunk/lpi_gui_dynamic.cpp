@@ -34,7 +34,7 @@ void DynamicColor::ctor()
   box.move(1, 1);
   this->addSubElement(&box, Sticky(0.0, 0, 0.5, -box.getSizeY() / 2, 0.0, box.getSizeX(), 0.5, box.getSizeY() / 2));
   edit.resize(0, 20, 256, 128);
-  edit.totallyDisable();
+  edit.setEnabled(false);
 }
 
 DynamicColor::DynamicColor(ColorRGB* value)
@@ -60,12 +60,12 @@ void DynamicColor::handleImpl(const IInput& input)
   
   if(this->clicked(input))
   {
-    edit.totallyEnable();
+    edit.setEnabled(true);
     edit.moveTo(input.mouseX(), input.mouseY());
   }
-  else if(edit.isVisible() && edit.mouseJustDownElsewhere(input))
+  else if(edit.isEnabled() && edit.mouseJustDownElsewhere(input))
   {
-    edit.totallyDisable();
+    edit.setEnabled(false);
   }
 }
 
@@ -76,7 +76,7 @@ void DynamicColor::drawImpl(IGUIDrawer& drawer) const
 
 void DynamicColor::manageHoverImpl(IHoverManager& hover)
 {
-  if(edit.isVisible())
+  if(edit.isEnabled())
     hover.addHoverElement(&edit);
 }
 ////////////////////////////////////////////////////////////////////////////////
