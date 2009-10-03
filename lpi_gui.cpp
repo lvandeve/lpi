@@ -229,23 +229,25 @@ void ToolTipManager::draw(Element* root, IGUIDrawer& drawer) const
 GuiElement is the mother class of all the other GUI classes below.
 */
 
-void Element::totallyDisable()
+void Element::setEnabled(bool i_enable)
 {
-  visible = active = present = false;
-  setElementOver(true); //so that sub-elements are also recursively hidden for "mouseOver" events
-} //this sets visible, active and present all at once
-
-void Element::totallyEnable()
-{
-  visible = active = present = true;
-  //setElementOver(false); //don't do this, other things already handle this, the reason for not doing this is, if you constantly totallyEnable an element, then all the elementOver mechanism of containers won't work properly anymore
+  if(i_enable)
+  {
+    enabled = true;
+    //setElementOver(false); //don't do this, other things already handle this, the reason for not doing this is, if you constantly totallyEnable an element, then all the elementOver mechanism of containers won't work properly anymore
+  }
+  else
+  {
+    enabled = false;
+    setElementOver(true); //so that sub-elements are also recursively hidden for "mouseOver" events
+  }
 }
 
 Element::Element() : elementOver(false)
                    , minSizeX(0)
                    , minSizeY(0)
 {
-  totallyEnable();
+  setEnabled(true);
 }
 
 void Element::manageHoverImpl(IHoverManager& hover)
@@ -255,7 +257,7 @@ void Element::manageHoverImpl(IHoverManager& hover)
 
 void Element::manageHover(IHoverManager& hover)
 {
-  if(active) manageHoverImpl(hover);
+  if(enabled) manageHoverImpl(hover);
 }
 
 void Element::drawDebugBorder(IGUIDrawer& drawer, const ColorRGB& color) const
@@ -295,7 +297,7 @@ void Element::drawToolTip(IGUIDrawer& drawer) const
 
 bool Element::mouseOver(const IInput& input) const
 {
-  if(!present) return false;
+  if(!enabled) return false;
   if(elementOver) return false; //there is another element over this element, so says the container containing this element
   
   return ElementShape::mouseOver(input);
@@ -303,13 +305,13 @@ bool Element::mouseOver(const IInput& input) const
 
 bool Element::mouseGrabbable() const
 {
-  return present;
+  return enabled;
 }
 
 
 void Element::draw(IGUIDrawer& drawer) const
 {
-  if(!visible) return;
+  if(!enabled) return;
   
   drawImpl(drawer);
 }
@@ -348,7 +350,7 @@ void Element::autoActivate(const IInput& input, MouseState& auto_activate_mouse_
 
 void Element::handle(const IInput& input)
 {
-  if(!active) return;
+  if(!enabled) return;
   
   handleImpl(input);
 }
@@ -479,7 +481,7 @@ sure you can't press the mouse "through" elements on top of other elements.
 
 Container::Container()
 {
-  totallyEnable();
+  setEnabled(true);
   x0 = 0;
   y0 = 0;
   x1 = 1;
@@ -488,7 +490,7 @@ Container::Container()
 
 Container::Container(IGUIDrawer& drawer)
 {
-  totallyEnable();
+  setEnabled(true);
   
   //the default container is as big as the screen (note: don't forget to resize it if you resize the resolution of the screen!)
   x0 = 0;
@@ -1007,14 +1009,14 @@ window and not something behind it, you'll have to do yourself...
 */
 
 Window::Window()
+: enableResizer(false)
+, closeEnabled(false)
+, enableTop(false)
+, closed(false)
+, resizerOverContainer(false)
 {
-  this->active = 0;
-  this->visible = 0;
-  this->enableResizer = 0;
-  this->closed = 0;
-  this->resizerOverContainer = 0;
-  this->enableTop = false;
-  
+  enabled = false;
+
   addSubElement(&top, Sticky(0.0, 0, 0.0, 0, 1.0, 0, 0.0, top.getSizeY()));
   addSubElement(&resizer, Sticky(1.0, -resizer.getSizeX(), 1.0, -resizer.getSizeY(), 1.0, 0, 1.0, 0));
   addSubElement(&container, Sticky(0.0, 0, 0.0, 0, 1.0, 0, 1.0, 0));
@@ -1122,7 +1124,7 @@ void Window::makeUntextured(int x, int y, int sizex, int sizey, const ColorRGB& 
   this->y0 = y;
   this->setSizeX(sizex);
   this->setSizeY(sizey);
-  this->totallyEnable();
+  this->setEnabled(true);
   this->enableTop = 0;
   
   colorMod = fillColor;
@@ -1137,7 +1139,7 @@ void Window::makeTextured(int x, int y, int sizex, int sizey,
   this->y0 = y;
   this->setSizeX(sizex);
   this->setSizeY(sizey);
-  this->totallyEnable();
+  this->setEnabled(true);
   
   this->enableTop = 0;
   
@@ -1152,7 +1154,7 @@ void Window::make(int x, int y, int sizex, int sizey)
   this->y0 = y;
   this->setSizeX(sizex);
   this->setSizeY(sizey);
-  this->totallyEnable();
+  this->setEnabled(true);
   
   this->enableTop = 0;
   
@@ -1363,8 +1365,7 @@ Button::Button()
   this->font[1].color = RGB_Black;
   this->font[2].color = RGB_Black;
   
-  this->active = 0;
-  this->visible = 0;
+  this->enabled = 0;
   
   this->mouseDownVisualStyle = 0;
 }
@@ -1448,7 +1449,7 @@ void Button::makeImage
   this->panel1.enableCenter = 0;
   this->panel2.enableCenter = 0;*/
   
-  this->totallyEnable();
+  this->setEnabled(true);
   
   this->mouseDownVisualStyle = 0;
 }
@@ -1482,7 +1483,7 @@ void Button::makeText
   
   this->text = text;
   
-  this->totallyEnable();
+  this->setEnabled(true);
   
   this->mouseDownVisualStyle = 0;
   
@@ -1518,7 +1519,7 @@ void Button::makeTextPanel
   this->panelOffsetx = 0;
   this->panelOffsety = 0;
 
-  this->totallyEnable();
+  this->setEnabled(true);
   
   this->mouseDownVisualStyle = 1;
 }
@@ -1707,7 +1708,7 @@ void Scrollbar::makeVertical(int x, int y, int length,
   this->absoluteSpeed = scrollSpeed;
   this->speedMode = speedMode;
   
-  this->totallyEnable();
+  this->setEnabled(true);
   
   init(geom);
   
@@ -1732,7 +1733,7 @@ void Scrollbar::makeHorizontal(int x, int y, int length,
   this->absoluteSpeed = scrollSpeed;
   this->speedMode = speedMode;
   
-  this->totallyEnable();
+  this->setEnabled(true);
   
   init(geom);
   
@@ -1868,7 +1869,7 @@ int ScrollbarPair::getVisibley() const
 
 void ScrollbarPair::make(int x, int y, int sizex, int sizey, double scrollSizeH, double scrollSizeV, const IGUIPartGeom& geom)
 {
-  this->totallyEnable();
+  this->setEnabled(true);
   this->x0 = x;
   this->y0 = y;
   this->x1 = x + sizex;
@@ -1972,14 +1973,13 @@ A simplified version of the scrollbar
 Slider::Slider()
 : slidertype(GP_SLIDER_HBUTTON)
 {
-  this->visible = 0;
-  this->active = 0;
+  this->enabled = 0;
   addSubElement(&slider);
 }
 
 void Slider::makeSmallHorizontal(int x, int y, int length, double scrollSize, const IGUIPartGeom& geom)
 {
-  this->totallyEnable();
+  this->setEnabled(true);
   
   slidertype = GP_SMALL_SLIDER_HBUTTON;
   rulertype = GP_SMALL_SLIDER_HBACK;
@@ -2004,7 +2004,7 @@ void Slider::makeSmallHorizontal(int x, int y, int length, double scrollSize, co
 
 void Slider::makeHorizontal(int x, int y, int length, double scrollSize, const IGUIPartGeom& geom)
 {
-  this->totallyEnable();
+  this->setEnabled(true);
   
   slidertype = GP_SLIDER_HBUTTON;
   rulertype = GP_SLIDER_HBACK;
@@ -2029,7 +2029,7 @@ void Slider::makeHorizontal(int x, int y, int length, double scrollSize, const I
 
 void Slider::makeVertical(int x, int y, int length, double scrollSize, const IGUIPartGeom& geom)
 {
-  this->totallyEnable();
+  this->setEnabled(true);
   
   slidertype = GP_SLIDER_VBUTTON;
   rulertype = GP_SLIDER_VBACK;
@@ -2180,7 +2180,7 @@ Checkbox::Checkbox()
 {
   this->enableImage2 = 0;
   //bad old code, must be fixed!
-  this->active = 0;
+  this->enabled = 0;
   this->checked = 0;
   this->texture[0] = emptyTexture;
   this->texture[1] = emptyTexture;
@@ -2233,7 +2233,7 @@ void Checkbox::make(int x, int y, bool checked, int toggleOnMouseUp)
   this->setSizeX(/*set->checkBox[0]->getU()*/16); //TODO: get size from IGUIPartDrawer
   this->setSizeY(/*set->checkBox[0]->getV()*/16); //TODO: get size from IGUIPartDrawer
   this->toggleOnMouseUp = toggleOnMouseUp;
-  this->totallyEnable();
+  this->setEnabled(true);
   
   positionText();
 }
@@ -2254,7 +2254,7 @@ void Checkbox::makeSmall(int x, int y, bool checked, int toggleOnMouseUp)
   this->setSizeX(/*set->smallCheckBox[0]->getU()*/12); //TODO: get size from IGUIPartDrawer
   this->setSizeY(/*set->smallCheckBox[0]->getV()*/12); //TODO: get size from IGUIPartDrawer
   this->toggleOnMouseUp = toggleOnMouseUp;
-  this->totallyEnable();
+  this->setEnabled(true);
   
   positionText();
 }
@@ -2337,8 +2337,7 @@ style you  want!
 
 BulletList::BulletList()
 {
-  this->active = 0;
-  this->visible = 0;
+  this->enabled = 0;
   this->lastChecked = -1;
   
   this->prototype.make(0, 0, 0, 1);
@@ -2352,7 +2351,7 @@ void BulletList::make(int x, int y, unsigned long amount, int xDiff, int yDiff)
   this->y0 = y;
   this->xDiff = xDiff;
   this->yDiff = yDiff;
-  this->totallyEnable();
+  this->setEnabled(true);
 
   bullet.clear();
   for(unsigned long i = 0; i < amount; i++)
@@ -2380,7 +2379,7 @@ void BulletList::make(int x, int y, unsigned long amount, int xDiff, int yDiff, 
   this->y0 = y;
   this->xDiff = xDiff;
   this->yDiff = yDiff;
-  this->totallyEnable();
+  this->setEnabled(true);
 
   bullet.clear();
   int xPos = x, yPos = y;
@@ -2480,7 +2479,7 @@ const std::string& BulletList::getCurrentText() const
 void BulletList::set(unsigned long i)
 {
   /*if(i >= 0 && i < bullet.size()) bullet[i].checked = true;
-  if(!active) lastChecked = i;*/
+  if(!enabled) lastChecked = i;*/
 
   for(unsigned long j = 0; j < bullet.size(); j++)
   {
@@ -2503,8 +2502,7 @@ Text is just some text as child of Element
 
 Text::Text()
 {
-  this->visible = 0;
-  this->active = 0;
+  this->enabled = 0;
   this->useNewLine = true;
 }
 
@@ -2516,7 +2514,7 @@ void Text::make(int x, int y, const std::string& text, const Font& font)
   this->setSizeY(/*markup.getHeight()*/8);
   this->text = text;
   this->font = font;
-  this->totallyEnable();
+  this->setEnabled(true);
 }
 
 void Text::drawImpl(IGUIDrawer& drawer) const
@@ -2539,8 +2537,7 @@ Image is a simple texture but as child class of Element
 
 Image::Image() : image(0)
 {
-  this->visible = 0;
-  this->active = 0;
+  this->enabled = 0;
 }
 
 void Image::make(int x, int y, ITexture* image, const ColorRGB& colorMod)
@@ -2551,7 +2548,7 @@ void Image::make(int x, int y, ITexture* image, const ColorRGB& colorMod)
   this->setSizeY(image->getV());
   this->image = image;
   this->colorMod = colorMod;
-  this->totallyEnable();
+  this->setEnabled(true);
 }
 
 void Image::make(int x, int y, int sizex, int sizey, ITexture* image, const ColorRGB& colorMod)
@@ -2562,7 +2559,7 @@ void Image::make(int x, int y, int sizex, int sizey, ITexture* image, const Colo
   this->setSizeY(sizey);
   this->image = image;
   this->colorMod = colorMod;
-  this->totallyEnable();
+  this->setEnabled(true);
 }
 
 void Image::drawImpl(IGUIDrawer& drawer) const
@@ -2666,11 +2663,11 @@ void Tabs::updateActiveContainer()
   {
     if(i == selected_tab)
     {
-      tabs[i]->container.totallyEnable();
+      tabs[i]->container.setEnabled(true);
     }
     else
     {
-      tabs[i]->container.totallyDisable();
+      tabs[i]->container.setEnabled(false);
     }
   }
 }

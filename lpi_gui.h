@@ -37,6 +37,22 @@ lpi_gui: an OpenGL GUI. Well actually now it is updated to support any lpi::IDra
 /*
 TODO: all "BackPanel", "BackRule", "GuiSet", "ITexture(GL)", ... will have to go away here!
 "ITexture" is allowed, but no implementations like "ITexture(GL)"
+
+Hint:
+When executing the GUI in a gameloop, when you have put all elements in a MainContainer, you have to
+call each frame both "handle" and "draw" on the container. While it doesn't really matter in what order you call them,
+it works best if you do "handle" first and then immediatly "draw", because then the graphics are shown to the
+user one frame sooner than if you'd do the inverse. The more things you do between "handle" and "draw", the more
+there will appear mouse lag, but if you call them immediatly after each other there won't be any mouse lag in the GUI.
+So the best order is:
+-*beginning of frame*
+-pause a few milliseconds to give the CPU something else to do
+-clear screen (so that all new things can be drawn on it)
+-calculations of the game or program (including drawing game or program related things except the gui)
+-handle lpi gui
+-draw lpi gui
+-redraw screen (that is, make all changes of this frame visible)
+-*end of frame*
 */
 
 namespace lpi
@@ -131,9 +147,7 @@ class Element : public ElementRectangular
     
     //TODO: try to eliminate some of these booleans. Visible and Active can go together. ElementOver is needed of course for the correct handling of elements in containers. Present can maybe be comined with active and visible too???
     bool elementOver; //true if there is an element over this element, causing the mouse NOT to be over this one (Z-order related)
-    bool visible; //if false, the draw() function doesn't draw anything
-    bool active; //if false, handle() does nothing, and mouse tests return always false
-    bool present; //if true, it reacts to the mouse. if false, it ignores the mouse, even if forceActive is true, if a gui element isn't present, it really isn't present
+    bool enabled; //if false, the draw() and handle() functions don't do anything, and mouse checks return false. So then it's invisible, inactive, totally not present.
 
   public: //TODO: make these not-public
     
@@ -163,19 +177,13 @@ class Element : public ElementRectangular
     Element();
     virtual ~Element(){};
     
-    bool isVisible() const { return visible; } //if false, the draw() function doesn't draw anything
-    bool isActive() const { return active; } //if false, handle() does nothing, and mouse tests return always false
-    bool isPresent() const { return present; } //if true, it reacts to the mouse. if false, it ignores the mouse, even if forceActive is true, if a gui element isn't present, it really isn't present
-    void setVisible(bool i_visible) { visible = i_visible; }
-    void setActive(bool i_active) { active = i_active; }
-    void setPresent(bool i_present) { present = i_present; }
-    void totallyDisable(); //this sets visible, active and present all at once
-    void totallyEnable();
+    bool isEnabled() const { return enabled; }
+    void setEnabled(bool i_enabled = true);
     
     ////mouse overrides
     virtual bool mouseOver(const IInput& input) const;
     virtual bool mouseGrabbable() const;
-    virtual bool mouseActive() const { return active; }
+    virtual bool mouseActive() const { return enabled; }
     
     ////core functions of gui::Elements
     void draw(IGUIDrawer& drawer) const; //will draw the actual widget and do some other always-to-do stuff, do NOT override this function
@@ -563,7 +571,7 @@ class MainContainer : public IHoverManager, public ElementComposite
     
     void ctor()
     {
-      totallyEnable();
+      setEnabled();
       addSubElement(&c);
       c.pushTop(&e);
       c.pushTop(&h);
@@ -758,8 +766,8 @@ class Window : public ElementComposite
     virtual Element* hitTest(const IInput& input);
     
     ////useful for the close button
-    void close() { closed = 1; totallyDisable(); } //use this if closed == 1
-    void unClose() { closed = 0; totallyEnable(); }
+    void close() { closed = 1; setEnabled(false); } //use this if closed == 1
+    void unClose() { closed = 0; setEnabled(true); }
     void toggleClose() { if(closed) unClose(); else close(); }
     
     void setColor(const ColorRGB& color) { colorMod = color; }

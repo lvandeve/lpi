@@ -74,7 +74,7 @@ namespace gui
 //{
   //this->x0 = x;
   //this->y0 = y;
-  //this->totallyEnable();
+  //this->setEnabled(true);
   //this->markup1 = markup1;
   //this->markup2 = markup2;
   ////this->panel.makeUntextured(menuColor);
@@ -91,7 +91,7 @@ namespace gui
 //{
   //this->x0 = x;
   //this->y0 = y;
-  //this->totallyEnable();
+  //this->setEnabled(true);
   //this->markup1 = markup1;
   //this->markup2 = markup2;
   //this->panel = panel;
@@ -302,7 +302,7 @@ namespace gui
   //this->selected = 0;
   //this->x0 = x;
   //this->y0 = y;
-  //this->totallyEnable();
+  //this->setEnabled(true);
   
   //int buttonWidth = buttonTexture->getU();
   //int buttonHeight = buttonTexture->getV();
@@ -514,8 +514,7 @@ void Matrix::make(int x0, int y0, int x1, int y1, int numx, int numy)
   this->y0 = y0;
   this->x1 = x1;
   this->y1 = y1;
-  this->active = true;
-  this->visible = true;
+  this->enabled = true;
   this->numx = numx;
   this->numy = numy;
 }
@@ -550,8 +549,7 @@ void Grid::make(int x0, int y0, int x1, int y1, int tileSizeX, int tileSizeY)
   this->y0 = y0; 
   this->x1 = x1;
   this->y1 = y1;
-  this->active = true;
-  this->visible = true;
+  this->enabled = true;
   this->tileSizeX = tileSizeX;
   this->tileSizeY = tileSizeY;
 }
@@ -660,8 +658,7 @@ There's also by default a rectangle behind it, if you don't want it, set alpha c
 
 Painter::Painter()
 {
-  this->visible = 0;
-  this->active = 0;
+  this->enabled = 0;
   this->stack.clear();
 }
 
@@ -673,7 +670,7 @@ void Painter::make(int x, int y, int sizex, int sizey, const ColorRGB& color)
   this->setSizeY(sizey);
   this->color = color;
   this->stack.clear();
-  this->totallyEnable();
+  this->setEnabled(true);
 }
 
 void Painter::drawImpl(IGUIDrawer& drawer) const
@@ -791,8 +788,7 @@ void Painter::queueText(int x, int y, const std::string& text, const Font& font)
 
 YesNoWindow::YesNoWindow()
 {
-  this->active = 0;
-  this->visible = 0;
+  this->enabled = 0;
 }
 
 void YesNoWindow::make(int x, int y, int sizex, int sizey, const std::string& text)
@@ -812,8 +808,7 @@ void YesNoWindow::make(int x, int y, int sizex, int sizey, const std::string& te
   pushTopAt(&yes, centerx - yes.getSizeX() - 16, getSizeY() - yes.getSizeY() - 8 - 16);
   pushTopAt(&no, centerx + 16, getSizeY() - no.getSizeY() - 8 - 16);
   
-  this->active = 1;
-  this->visible = 1;
+  this->enabled = true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -822,8 +817,7 @@ void YesNoWindow::make(int x, int y, int sizex, int sizey, const std::string& te
 
 OkWindow::OkWindow()
 {
-  this->active = 0;
-  this->visible = 0;
+  this->enabled = false;
 }
 
 void OkWindow::make(int x, int y, int sizex, int sizey, const std::string& text)
@@ -840,8 +834,7 @@ void OkWindow::make(int x, int y, int sizex, int sizey, const std::string& text)
   int centerx = getSizeX() / 2;
   pushTopAt(&ok, centerx - ok.getSizeX() / 2, getSizeY() - ok.getSizeY() - 8 - 16);
   
-  this->active = 1;
-  this->visible = 1;
+  this->enabled = 1;
 }
   
 ////////////////////////////////////////////////////////////////////////////////
@@ -855,8 +848,7 @@ Canvas: allows you to draw on it with the mouse
 Canvas::Canvas(IGUIDrawer& drawer) : canvas(new ITexture*)
 {
   (*canvas) = drawer.createTexture();
-  this->visible = 0;
-  this->active = 0;
+  this->enabled = 0;
 }
 
 Canvas::~Canvas()
@@ -867,8 +859,7 @@ Canvas::~Canvas()
 
 void Canvas::make(int x, int y, int sizex, int sizey, const ColorRGB& backColor, int border, const ColorRGB& leftColor, const ColorRGB& rightColor, double size, double hardness, double opacity)
 {
-  this->visible = true;
-  this->active = true;
+  this->enabled = true;
   this->x0 = x;
   this->y0 = y;
   this->setSizeX(sizex);
@@ -939,8 +930,7 @@ Rectangle is a simple rectangle but as child class of Element
 
 Rectangle::Rectangle()
 {
-  this->visible = 0;
-  this->active = 0;
+  this->enabled = 0;
   this->color = RGB_Black;
 }
 
@@ -951,7 +941,7 @@ void Rectangle::make(int x, int y, int sizex, int sizey, const ColorRGB& color)
   this->setSizeX(sizex);
   this->setSizeY(sizey);
   this->color = color;
-  this->totallyEnable();
+  this->setEnabled(true);
 }
 
 void Rectangle::drawImpl(IGUIDrawer& drawer) const
@@ -969,8 +959,7 @@ Line is a simple line but as child class of Element
 
 Line::Line()
 {
-  this->visible = 0;
-  this->active = 0;
+  this->enabled = 0;
   this->color = RGB_Black;
 
   this->lx0 = 0;
@@ -986,7 +975,7 @@ void Line::make(int x, int y, int sizex, int sizey, const ColorRGB& color)
   this->setSizeX(sizex);
   this->setSizeY(sizey);
   this->color = color;
-  this->totallyEnable();
+  this->setEnabled(true);
   this->lx0 = x;
   this->ly0 = y;
   this->lx1 = x + sizex;
@@ -1054,7 +1043,7 @@ This is a sort of advanced checkbox, it can go through multiple states and you c
 NState::NState()
 {
   //bad old code, must be fixed!
-  this->active = 0;
+  this->enabled = 0;
   this->states.clear();
   this->toggleOnMouseUp = 0;
 }
@@ -1066,7 +1055,7 @@ void NState::make(int x, int y, int toggleOnMouseUp)
   this->x0 = x;
   this->y0 = y;
   this->toggleOnMouseUp = toggleOnMouseUp;
-  this->totallyEnable();
+  this->setEnabled(true);
   this->setSizeX(0); //no states yet, size 0
   this->setSizeY(0);
 }

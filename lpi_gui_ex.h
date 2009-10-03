@@ -309,7 +309,7 @@ class Variable : public Element //can be anything the typename is: integer, floa
       drawer.drawText(v, x0 + labelw, y0, font);
     }
     
-    Variable() { totallyDisable(); }
+    Variable() { setEnabled(false); }
     
     void make(int x, int y, T v, const std::string& label="", const Font& font = FONT_Default)
     {
@@ -341,8 +341,7 @@ class PVariable : public Element //A bit similar purpose to Variable, but, uses 
     PVariable()
     : value(0)
     {
-      this->visible = 0;
-      this->active = 0;
+      this->enabled = 0;
     }
 
     void make(int x, int y, T* value, const Font& font = FONT_Default)
@@ -353,7 +352,7 @@ class PVariable : public Element //A bit similar purpose to Variable, but, uses 
       this->setSizeY(/*markup.getHeight()*/8);
       this->value = value;
       this->font = font;
-      this->totallyEnable();
+      this->setEnabled(true);
     }
 
     void drawImpl(IGUIDrawer& drawer) const
