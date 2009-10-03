@@ -74,7 +74,7 @@ void DynamicColor::drawImpl(IGUIDrawer& drawer) const
   box.draw(drawer);
 }
 
-void DynamicColor::manageHover(IHoverManager& hover)
+void DynamicColor::manageHoverImpl(IHoverManager& hover)
 {
   if(edit.isVisible())
     hover.addHoverElement(&edit);
@@ -135,7 +135,7 @@ void DynamicPage::drawImpl(IGUIDrawer& drawer) const
   }
 }
 
-void DynamicPage::manageHover(IHoverManager& hover)
+void DynamicPage::manageHoverImpl(IHoverManager& hover)
 {
   for(size_t i = 0; i < controls.size(); i++)
   {
