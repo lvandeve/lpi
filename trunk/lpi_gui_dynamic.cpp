@@ -82,7 +82,8 @@ void DynamicColor::manageHoverImpl(IHoverManager& hover)
 ////////////////////////////////////////////////////////////////////////////////
 
 DynamicPage::DynamicPage()
-: title_width(0.5)
+: enableTitle(false)
+, title_width(0.5)
 {
   resize(0, 0, 200, 200); //if not resized to something at begin, then added rows go wrong... BUG! :(
 }
@@ -113,18 +114,22 @@ void DynamicPage::addControl(const std::string& name, IDynamicControl* control)
   
   size_t i = controls.size() - 1;
   int xb = (int)(getSizeX() * title_width);
-  control->resize(x0 + xb + 1, y0 + TITLEHEIGHT + i * CONTROLHEIGHT + 1, x1, y0 + TITLEHEIGHT + (i + 1) * CONTROLHEIGHT);
-  addSubElement(control, Sticky(0.0, x0 + xb + 1, 0.0, TITLEHEIGHT + i * CONTROLHEIGHT + 1, 1.0, 0, 0.0, TITLEHEIGHT + (i + 1) * CONTROLHEIGHT));
+  int titleheight = (enableTitle ? TITLEHEIGHT : 0);
+  control->resize(x0 + xb + 1, y0 + titleheight + i * CONTROLHEIGHT + 1, x1, y0 + titleheight + (i + 1) * CONTROLHEIGHT);
+  addSubElement(control, Sticky(0.0, x0 + xb + 1, 0.0, titleheight + i * CONTROLHEIGHT + 1, 1.0, 0, 0.0, titleheight + (i + 1) * CONTROLHEIGHT));
 }
 
 void DynamicPage::drawImpl(IGUIDrawer& drawer) const
 {
-  drawer.drawRectangle(x0, y0, x1, y0 + TITLEHEIGHT, RGB_White, false);
-  drawer.drawText(title, x0 + 4, y0 + 4);
+  if(enableTitle)
+  {
+    drawer.drawRectangle(x0, y0, x1, y0 + TITLEHEIGHT, RGB_White, false);
+    drawer.drawText(title, x0 + 4, y0 + 4);
+  }
   
   for(size_t i = 0; i < controls.size(); i++)
   {
-    int y = TITLEHEIGHT + CONTROLHEIGHT * i;
+    int y = (enableTitle ? TITLEHEIGHT : 0) + CONTROLHEIGHT * i;
     int xb = (int)(getSizeX() * title_width); //"x-between": the divider between title and value
     
     drawer.drawRectangle(x0, y0 + y, x0 + xb, y0 + y + CONTROLHEIGHT, RGB_White, false);
@@ -149,11 +154,12 @@ void DynamicPage::handleImpl(const IInput& input)
   for(size_t i = 0; i < controls.size(); i++)
     controls[i]->handle(input);
   
-  setSizeY(TITLEHEIGHT + controls.size() * CONTROLHEIGHT);
+  setSizeY((enableTitle ? TITLEHEIGHT : 0) + controls.size() * CONTROLHEIGHT);
 }
 
 void DynamicPage::setTitle(const std::string& title)
 {
+  enableTitle = true;
   this->title = title;
 }
 

@@ -300,9 +300,11 @@ class DynamicPage : public ElementComposite
     std::vector<IDynamicControl*> controls;
     std::vector<std::string> control_names;
     
-    double title_width; //title of controls; number from 0.0 to 1.0
+    bool enableTitle;
     std::string title; //title on top of this page
-    
+
+    double title_width; //title of controls; number from 0.0 to 1.0
+
     const static int CONTROLHEIGHT = 16;
     const static int TITLEHEIGHT = 16;
   

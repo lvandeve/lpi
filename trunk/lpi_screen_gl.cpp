@@ -53,7 +53,7 @@ ScreenGL::ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, con
     SDL_Quit();
     std::exit(1);
   }
-  atexit(SDL_Quit);
+  atexit(SDL_Quit); //TODO: do this in the destructor of ScreenGL or elsewhere, instead of here
   
   SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
@@ -69,6 +69,11 @@ ScreenGL::ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, con
     SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 ) ;
     SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, 4 ) ;
   }
+  else
+  {
+    SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 0) ;
+    SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, 0) ;
+  }
   
   Uint32 flags = SDL_OPENGL;
   if(fullscreen) flags |= SDL_FULLSCREEN;
@@ -76,7 +81,7 @@ ScreenGL::ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, con
   
 
   scr = SDL_SetVideoMode(width, height, colorDepth, flags);
-  if(scr == 0 && (enable_fsaa))
+  if(scr == 0 && enable_fsaa)
   {
     std::cout << "FSAA failed" << std::endl;
     SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 0) ;
@@ -105,16 +110,6 @@ ScreenGL::ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, con
 ScreenGL::ScreenGL(bool) //TEMPORARY UGLY CONSTRUCTOR ONLY FOR DURING REFACTORING; SEE LPI_TEXT.CPP
 {
 }
-
-/*int screenWidth()
-{
-  return w;
-}
-
-int screenHeight()
-{
-  return h;
-}*/
 
 //Locks the screen
 void ScreenGL::lock()

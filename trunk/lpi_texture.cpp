@@ -598,14 +598,6 @@ void makeTextureFromBuffer(ITexture* texture, unsigned char* buffer, size_t w, s
   texture->update();
 }
 
-namespace
-{
-  bool isPowerOfTwo(int n) //does not work properly if n is <= 0, then an extra test n > 0 should be added
-  {
-    return !(n & (n - 1)); //this checks if the integer n is a power of two or not
-  }
-}
-
 /*
 Load the texture from a file
 currently works with the png loader function
@@ -720,7 +712,7 @@ void getAlignedBuffer(std::vector<unsigned char>& buffer, const ITexture* textur
   for(size_t x = 0; x < u; x++)
   for(size_t c = 0; c < 4; c++)
   {
-    buffer[y * u * 4 + x * 4 + c] = texture->getBuffer()[y * u2 * 4 + x * v2 + c];
+    buffer[y * u * 4 + x * 4 + c] = texture->getBuffer()[y * u2 * 4 + x * 4 + c];
   }
 }
 
@@ -734,7 +726,7 @@ void setAlignedBuffer(ITexture* texture, const unsigned char* buffer)
   for(size_t x = 0; x < u; x++)
   for(size_t c = 0; c < 4; c++)
   {
-    texture->getBuffer()[y * u2 * 4 + x * v2 + c] = buffer[y * u * 4 + x * 4 + c];
+    texture->getBuffer()[y * u2 * 4 + x * 4 + c] = buffer[y * u * 4 + x * 4 + c];
   }
 }
 
@@ -743,7 +735,6 @@ void createTexture(ITexture* texture, size_t w, size_t h, const ColorRGB& color)
   texture->setSize(w, h);
   unsigned char* buffer = texture->getBuffer();
   size_t u2 = texture->getU2();
-  size_t v2 = texture->getV2();
   for(size_t y = 0; y < h; y++)
   for(size_t x = 0; x < w; x++)
   {
@@ -753,5 +744,28 @@ void createTexture(ITexture* texture, size_t w, size_t h, const ColorRGB& color)
     buffer[y * u2 * 4 + x * 4 + 3] = color.a;
   }
 }
+
+void setPixel(ITexture* texture, int x, int y, const ColorRGB& color)
+{
+  unsigned char* buffer = texture->getBuffer();
+  size_t u2 = texture->getU2();
+  buffer[y * u2 * 4 + x * 4 + 0] = color.r;
+  buffer[y * u2 * 4 + x * 4 + 1] = color.g;
+  buffer[y * u2 * 4 + x * 4 + 2] = color.b;
+  buffer[y * u2 * 4 + x * 4 + 3] = color.a;
+}
+
+ColorRGB getPixel(ITexture* texture, int x, int y)
+{
+  ColorRGB result;
+  unsigned char* buffer = texture->getBuffer();
+  size_t u2 = texture->getU2();
+  result.r = buffer[y * u2 * 4 + x * 4 + 0];
+  result.g = buffer[y * u2 * 4 + x * 4 + 1];
+  result.b = buffer[y * u2 * 4 + x * 4 + 2];
+  result.a = buffer[y * u2 * 4 + x * 4 + 3];
+  return result;
+}
+
 
 } //namespace lpi

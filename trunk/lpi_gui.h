@@ -147,9 +147,9 @@ class Element : public ElementRectangular
     bool elementOver; //true if there is an element over this element, causing the mouse NOT to be over this one (Z-order related)
     bool enabled; //if false, the draw() and handle() functions don't do anything, and mouse checks return false. So then it's invisible, inactive, totally not present.
 
-    ////minimum size
+    ////minimum size - TODO: make this virtual private functions instead of member variables, or even better, remove this completely and make the resize function of elements determine this
     int minSizeX; //you can't resize this element to something smaller than this
-    int minSizeY; //TODO: make this virtual private functions instead of member variables, or even better, remove this completely and make the resize function of elements determine this
+    int minSizeY; 
     
   protected:
     void autoActivate(const IInput& input, MouseState& auto_activate_mouse_state, bool& control_active); //utility function used by text input controls, they need a member variable like "MouseState auto_activate_mouse_state" in them for this and a bool "control_active", and in their handleWidget, put, "autoActivate(input, auto_activate_mouse_state, control_active); if(!control_active) return;"
@@ -193,7 +193,8 @@ class Element : public ElementRectangular
     TODO: revise this.
     */
     virtual Element* hitTest(const IInput& input);
-    
+    virtual bool isFloating() const; //returns true if it's an element that should go to the top if you click on it (like a window). This is used by Container to bring elements to the top.
+
     void moveTo(int x, int y);
     void moveCenterTo(int x, int y);
     void growX0(int d) { resize(x0 + d, y0    , x1    , y1    ); } //growing can also be shrinking
@@ -204,7 +205,6 @@ class Element : public ElementRectangular
     void growSizeY0(int sizey) { resize(x0        , y1 - sizey, x1        , y1        ); }
     void growSizeX1(int sizex) { resize(x0        , y0        , x0 + sizex, y1        ); }
     void growSizeY1(int sizey) { resize(x0        , y0        , x1        , y0 + sizey); }
-    virtual bool isFloating() const; //returns true if it's an element that should go to the top if you click on it (like a window). This is used by Container to bring elements to the top.
     
     ////custom tooltip
     virtual void drawToolTip(IGUIDrawer& drawer) const; //override if you can invent a fallback tooltip to draw for the element, but it's not required, the TooltipManager only uses this if no other tooltip was specified by the user
@@ -320,7 +320,6 @@ class Button : public Element
     
     void addFrontImage(const ITexture* texture1, const ITexture* texture2, const ITexture* texture3,
                        const ColorRGB& imageColor1 = RGB_White, const ColorRGB& imageColor2 = RGB_Brightred, const ColorRGB& imageColor3 = RGB_Grey);
-    
     void addFrontImage(const ITexture* texture);
     
     //text only constructor (without offset)
@@ -778,26 +777,25 @@ class Checkbox : public Element, public Label
     //bool downAndTested; //if mouse is down and that is already handled, leave this on so that it'll ignore mouse till it's back up
     void positionText(); //automaticly place the text a few pixels next to the checkbox, in the center
   
-  public:
     bool checked; //if true: checked, if false: unchecked
-    const ITexture* texture[4]; //todo: remove this member, not used anymore
-    ColorRGB colorMod[4];
     int toggleOnMouseUp;
-    
-    //front image
-    bool enableImage2; //todo: not used anymore, old, remove this!!!
-    const ITexture* texture2[4]; //texture when off, mouseover&off, and checked, mouseover&checked
-    ColorRGB colorMod2[4];
-    //todo: totally irellevant, old, remove these! No more textures are supposed to be in the Checkbox
-    void addFrontImage(const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ITexture* texture4, 
-                       const ColorRGB& imageColor1 = RGB_White, const ColorRGB& imageColor2 = RGB_Grey, const ColorRGB& imageColor3 = RGB_White, const ColorRGB& imageColor4 = RGB_Grey);
-    void addFrontImage(const ITexture* texture);
-    
+
     //text
     bool enableText; //the text is a title drawn next to the checkbox, with automaticly calculated position
     std::string text;
     Font font;
+
+
+    //for when using checkbox with custom image
+    bool useCustomImages;
+    const ITexture* texture[4];
+    ColorRGB colorMod[4];
+    bool useCustomImages2;
+    const ITexture* texture2[4];
+    ColorRGB colorMod2[4];
     
+  public:
+
     Checkbox();
     void make(int x, int y, bool checked = 0, int toggleOnMouseUp = 0);
     void makeSmall(int x, int y, bool checked = 0, int toggleOnMouseUp = 0);
@@ -813,12 +811,19 @@ class Checkbox : public Element, public Label
     bool isChecked() { return checked; }
     void setChecked(bool check) { checked = check; }
     
-    //for giving it alternative textures
+    //TODO: make the functions below more logical and clean
+    //for giving it alternative textures. texture1 = not checked, mouse not over. Texture2 = not checked, mouse over. Texture3 = checked, mouse not over. Texture4 = checked, mouse over.
     void setTexturesAndColors(const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ITexture* texture4, 
                               const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3, const ColorRGB& color4);
     //without mouseOver effect
     void setTexturesAndColors(const ITexture* texture1, const ITexture* texture2, 
                               const ColorRGB& color1, const ColorRGB& color2);
+    void addFrontImage(const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ITexture* texture4,
+                       const ColorRGB& imageColor1 = RGB_White, const ColorRGB& imageColor2 = RGB_Grey, const ColorRGB& imageColor3 = RGB_White, const ColorRGB& imageColor4 = RGB_Grey);
+    void addFrontImage(const ITexture* texture);
+    void setCustomColor(const ColorRGB& color);
+    void setCustomColor2(const ColorRGB& color); //for the front image
+
 };
 
 //The bulletlist, a list of checkboxes where only one can be selected

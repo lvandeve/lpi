@@ -49,9 +49,6 @@ class TextureGL : public ITexture
     //width and height as powers of two (this will be the actual size of the buffer, because OpenGL only supports such textures)
     virtual size_t getU2() const {return u2;}
     virtual size_t getV2() const {return v2;}
-    //multiply openGL texture coordinates between 0.0 and 1.0 with u3 and v3 to let OpenGL draw them correct even when not power of two
-    double getU3() const {return u3;}
-    double getV3() const {return v3;}
     
     virtual void update() { upload(); }
     
@@ -92,9 +89,6 @@ class TextureGL : public ITexture
     //width and height as powers of two (this will be the actual size of the buffer, because OpenGL only supports such textures)
     size_t u2;
     size_t v2;
-    //multiply openGL texture coordinates between 0.0 and 1.0 with u3 and v3 to let OpenGL draw them correct even when not power of two
-    double u3; //should always be u / double(u2)
-    double v3; //should always be v / double(v2)
 };
 
 } //namespace lpi

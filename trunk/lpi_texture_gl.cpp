@@ -65,8 +65,6 @@ void TextureGL::makeBuffer(int u, int v)
   this->v = v;
   this->u2 = u2;
   this->v2 = v2;
-  this->u3 = u / double(u2);
-  this->v3 = v / double(v2);
 }
 
 //free the memory again
