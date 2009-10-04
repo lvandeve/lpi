@@ -52,8 +52,9 @@ int numSegmentsHelper(double radius)
 
 }
 
-void Drawer2DGL::prepareDrawUntextured()
+void Drawer2DGL::prepareDrawUntextured(bool filledGeometry)
 {
+  screen->set2DScreen(filledGeometry);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_BLEND);
   glDisable(GL_TEXTURE_2D);
@@ -62,6 +63,7 @@ void Drawer2DGL::prepareDrawUntextured()
 
 void Drawer2DGL::prepareDrawTextured()
 {
+  screen->set2DScreen(true);
   glEnable(GL_TEXTURE_2D);
   screen->setOpenGLScissor(); //everything that draws something must always do this //TODO: investigate that statement
 }
@@ -69,8 +71,8 @@ void Drawer2DGL::prepareDrawTextured()
 void Drawer2DGL::drawLineInternal(int x0, int y0, int x1, int y1) //doesn't call "prepareDraw", to be used by other things that draw multiple lines
 {
   glBegin(GL_LINES);
-    glVertex2d(x0 + 0.5, y0 + 0.5);
-    glVertex2d(x1 + 0.5, y1 + 0.5);
+    glVertex2f(x0, y0);
+    glVertex2f(x1, y1);
   glEnd();
 }
 
@@ -86,17 +88,17 @@ void Drawer2DGL::drawLineInternal(int x0, int y0, int x1, int y1) //doesn't call
 //Draw a rectangle with 4 different corner colors on screen from (x1, y1) to (x2, y2). The end coordinates should NOT be included
 void Drawer2DGL::drawGradientRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3)
 {
-  prepareDrawUntextured();
+  prepareDrawUntextured(true);
   
   glBegin(GL_QUADS);
     glColor4ub(color1.r, color1.g, color1.b, color1.a);
-    glVertex3d(x1, y0, 1);
+    glVertex2f(x1, y0);
     glColor4ub(color0.r, color0.g, color0.b, color0.a);
-    glVertex3d(x0, y0, 1);
+    glVertex2f(x0, y0);
     glColor4ub(color2.r, color2.g, color2.b, color2.a);
-    glVertex3d(x0, y1, 1);
+    glVertex2f(x0, y1);
     glColor4ub(color3.r, color3.g, color3.b, color3.a);
-    glVertex3d(x1, y1, 1);
+    glVertex2f(x1, y1);
   glEnd();
 }
 
@@ -105,20 +107,20 @@ void Drawer2DGL::drawGradientDisk(int x, int y, double radius, const ColorRGB& c
   static const double pi = 3.141592653589793238;
   static const size_t numsegments = numSegmentsHelper(radius);
   
-  prepareDrawUntextured();
+  prepareDrawUntextured(true);
   
   glBegin(GL_TRIANGLE_FAN);
     glColor4ub(color1.r, color1.g, color1.b, color1.a);
-    glVertex3d(x, y, 1);
+    glVertex2f(x, y);
     glColor4ub(color2.r, color2.g, color2.b, color2.a);
     double angle = 0;
     for(size_t i = 0; i < numsegments; i++)
     {
       
-      glVertex3d(x + std::cos(angle) * radius, y + std::sin(angle) * radius, 1);
+      glVertex2f(x + std::cos(angle) * radius, y + std::sin(angle) * radius);
       angle += 2 * pi / numsegments;
     }
-    glVertex3d(x + radius, y, 1);
+    glVertex2f(x + radius, y);
   glEnd();
 }
 
@@ -127,33 +129,33 @@ void Drawer2DGL::drawGradientEllipse(int x, int y, double radiusx, double radius
   static const double pi = 3.141592653589793238;
   static const size_t numsegments = 32;
   
-  prepareDrawUntextured();
+  prepareDrawUntextured(true);
   
   glBegin(GL_TRIANGLE_FAN);
     glColor4ub(color1.r, color1.g, color1.b, color1.a);
-    glVertex3d(x, y, 1);
+    glVertex2f(x, y);
     glColor4ub(color2.r, color2.g, color2.b, color2.a);
     double angle = 0;
     for(size_t i = 0; i < numsegments; i++)
     {
       
-      glVertex3d(x + std::cos(angle) * radiusx, y + std::sin(angle) * radiusy, 1);
+      glVertex2f(x + std::cos(angle) * radiusx, y + std::sin(angle) * radiusy);
       angle += 2 * pi / numsegments;
     }
-    glVertex3d(x + radiusx, y, 1);
+    glVertex2f(x + radiusx, y);
   glEnd();
 }
 
 //Draw a gradient line from (x1, y1) to (x2, y2)
 void Drawer2DGL::gradientLine(int x1, int y1, int x2, int y2, const ColorRGB& color1, const ColorRGB& color2)
 {
-  prepareDrawUntextured();
+  prepareDrawUntextured(false);
 
   glBegin(GL_LINES);
     glColor4ub(color1.r, color1.g, color1.b, color1.a);
-    glVertex3d(x1, screen->screenHeight() - y1, 1);
+    glVertex2f(x1, screen->screenHeight() - y1);
     glColor4ub(color2.r, color2.g, color2.b, color2.a);
-    glVertex3d(x2, screen->screenHeight() - y2, 1);
+    glVertex2f(x2, screen->screenHeight() - y2);
   glEnd();
 }
 
@@ -193,7 +195,7 @@ void Drawer2DGL::popScissor()
 
 void Drawer2DGL::drawPoint(int x, int y, const ColorRGB& color)
 {
-  prepareDrawUntextured();
+  prepareDrawUntextured(false);
 
   glColor4ub(color.r, color.g, color.b, color.a);
 
@@ -204,7 +206,7 @@ void Drawer2DGL::drawPoint(int x, int y, const ColorRGB& color)
 
 void Drawer2DGL::drawLine(int x0, int y0, int x1, int y1, const ColorRGB& color)
 {
-  prepareDrawUntextured();
+  prepareDrawUntextured(false);
   glColor4ub(color.r, color.g, color.b, color.a);
   
   drawLineInternal(x0, y0, x1, y1);
@@ -242,7 +244,7 @@ void Drawer2DGL::recursive_bezier(double x0, double y0, //endpoint
 
 void Drawer2DGL::drawBezier(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color)
 {
-  prepareDrawUntextured();
+  prepareDrawUntextured(false);
   glColor4ub(color.r, color.g, color.b, color.a);
   
   recursive_bezier(x0, y0, x1, y1, x2, y2, x3, y3, 0);
@@ -251,75 +253,74 @@ void Drawer2DGL::drawBezier(int x0, int y0, int x1, int y1, int x2, int y2, int 
     
 void Drawer2DGL::drawRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled)
 {
-  prepareDrawUntextured();
+  prepareDrawUntextured(filled);
   glColor4ub(color.r, color.g, color.b, color.a);
 
   if(filled)
   {
-    static const double OGLDIFF = 0.0;
-  
     glBegin(GL_QUADS);
-      glVertex3d(x1 - OGLDIFF, y0          , 1);
-      glVertex3d(x0          , y0          , 1);
-      glVertex3d(x0          , y1 - OGLDIFF, 1);
-      glVertex3d(x1 - OGLDIFF, y1 - OGLDIFF, 1);
+      glVertex2f(x1, y0);
+      glVertex2f(x0, y0);
+      glVertex2f(x0, y1);
+      glVertex2f(x1, y1);
     glEnd();
   }
   else
   {
-    drawLineInternal(x0, y0, x1, y0);
-    drawLineInternal(x0, y1 - 1, x1, y1 - 1);
-    drawLineInternal(x0, y0, x0, y1);
-    drawLineInternal(x1 - 1, y0, x1 - 1, y1);
+    glBegin(GL_LINE_LOOP);
+      glVertex2f(x0, y0);
+      glVertex2f(x1 - 1, y0);
+      glVertex2f(x1 - 1, y1 - 1);
+      glVertex2f(x0, y1 - 1);
+    glEnd();
   }
 }
 
 void Drawer2DGL::drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled)
 {
-  prepareDrawUntextured();
+  prepareDrawUntextured(filled);
   glColor4ub(color.r, color.g, color.b, color.a);
 
   if(filled)
   {
-    //static const double OGLDIFFX = 0.0, OGLDIFFY = 0.0;
-  
     glBegin(GL_TRIANGLES);
-      glVertex3d(x0, y0, 1);
-      glVertex3d(x1, y1, 1);
-      glVertex3d(x2, y2, 1);
+      glVertex2f(x0, y0);
+      glVertex2f(x1, y1);
+      glVertex2f(x2, y2);
     glEnd();
   }
   else
   {
-    drawLineInternal(x0, y0, x1, y1);
-    drawLineInternal(x1, y1, x2, y2);
-    drawLineInternal(x2, y2, x0, y0);
+    glBegin(GL_LINE_LOOP);
+      glVertex2f(x0, y0);
+      glVertex2f(x1, y1);
+      glVertex2f(x2, y2);
+    glEnd();
   }
 }
 
 void Drawer2DGL::drawQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color, bool filled)
 {
+  prepareDrawUntextured(filled);
+  glColor4ub(color.r, color.g, color.b, color.a);
+
   if(filled)
   {
-    prepareDrawUntextured();
-  
-    glColor4ub(color.r, color.g, color.b, color.a);
-    
-    //static const double OGLDIFFX = 0.0, OGLDIFFY = 0.0;
-  
     glBegin(GL_QUADS);
-      glVertex3d(x0, y0, 1);
-      glVertex3d(x1, y1, 1);
-      glVertex3d(x2, y2, 1);
-      glVertex3d(x3, y3, 1);
+      glVertex2f(x0, y0);
+      glVertex2f(x1, y1);
+      glVertex2f(x2, y2);
+      glVertex2f(x3, y3);
     glEnd();
   }
   else
   {
-    drawLineInternal(x0, y0, x1, y1);
-    drawLineInternal(x1, y1, x2, y2);
-    drawLineInternal(x2, y2, x3, y3);
-    drawLineInternal(x3, y3, x0, y0);
+    glBegin(GL_LINE_LOOP);
+      glVertex2f(x0, y0);
+      glVertex2f(x1, y1);
+      glVertex2f(x2, y2);
+      glVertex2f(x3, y3);
+    glEnd();
   }
 }
 
@@ -333,20 +334,20 @@ void Drawer2DGL::drawEllipseCentered(int x, int y, int radiusx, int radiusy, con
   static const double pi = 3.141592653589793238;
   static const size_t numsegments = 32;
   
-  prepareDrawUntextured();
+  prepareDrawUntextured(filled);
   glColor4ub(color.r, color.g, color.b, color.a);
 
   if(filled)
   {
     glBegin(GL_TRIANGLE_FAN);
-      glVertex3d(x, y, 1);
+      glVertex2f(x, y);
       double angle = 0;
       for(size_t i = 0; i < numsegments; i++)
       {
-        glVertex3d(x + std::cos(angle) * radiusx, y + std::sin(angle) * radiusy, 1);
+        glVertex2f(x + std::cos(angle) * radiusx, y + std::sin(angle) * radiusy);
         angle += 2 * pi / numsegments;
       }
-      glVertex3d(x + radiusx, y, 1);
+      glVertex2f(x + radiusx, y);
     glEnd();
   }
   else
@@ -355,42 +356,42 @@ void Drawer2DGL::drawEllipseCentered(int x, int y, int radiusx, int radiusy, con
       double angle = 0;
       for(size_t i = 0; i < numsegments; i++)
       {
-        glVertex3d(x + std::cos(angle) * radiusx, y + std::sin(angle) * radiusy, 1);
+        glVertex2f(x + std::cos(angle) * radiusx, y + std::sin(angle) * radiusy);
         angle += 2 * pi / numsegments;
       }
-      glVertex3d(x + radiusx, y, 1);
+      glVertex2f(x + radiusx, y);
     glEnd();
   }
 }
 
 void Drawer2DGL::drawGradientTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2)
 {
-  prepareDrawUntextured();
+  prepareDrawUntextured(true);
   
   glBegin(GL_TRIANGLES);
     glColor4ub(color0.r, color0.g, color0.b, color0.a);
-    glVertex3d(x0, y0, 1);
+    glVertex2f(x0, y0);
     glColor4ub(color1.r, color1.g, color1.b, color1.a);
-    glVertex3d(x1, y1, 1);
+    glVertex2f(x1, y1);
     glColor4ub(color2.r, color2.g, color2.b, color2.a);
-    glVertex3d(x2, y2, 1);
+    glVertex2f(x2, y2);
   glEnd();
 }
 
 
 void Drawer2DGL::drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3)
 {
-  prepareDrawUntextured();
+  prepareDrawUntextured(true);
   
   glBegin(GL_QUADS);
     glColor4ub(color0.r, color0.g, color0.b, color0.a);
-    glVertex3d(x0, y0, 1);
+    glVertex2f(x0, y0);
     glColor4ub(color1.r, color1.g, color1.b, color1.a);
-    glVertex3d(x1, y1, 1);
+    glVertex2f(x1, y1);
     glColor4ub(color2.r, color2.g, color2.b, color2.a);
-    glVertex3d(x2, y2, 1);
+    glVertex2f(x2, y2);
     glColor4ub(color3.r, color3.g, color3.b, color3.a);
-    glVertex3d(x3, y3, 1);
+    glVertex2f(x3, y3);
   glEnd();
 }
 
@@ -467,10 +468,10 @@ void Drawer2DGL::drawTextureRepeated(const ITexture* texture, int x0, int y0, in
 
     //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
     glBegin(GL_QUADS);
-      glTexCoord2d(0.0,       0.0); glVertex3d(x0, y0, 1);
-      glTexCoord2d(0.0,    +coory); glVertex3d(x0, y1, 1);
-      glTexCoord2d(+coorx, +coory); glVertex3d(x1, y1, 1);
-      glTexCoord2d(+coorx,    0.0); glVertex3d(x1, y0, 1);
+      glTexCoord2d(0.0,       0.0); glVertex2f(x0, y0);
+      glTexCoord2d(0.0,    +coory); glVertex2f(x0, y1);
+      glTexCoord2d(+coorx, +coory); glVertex2f(x1, y1);
+      glTexCoord2d(+coorx,    0.0); glVertex2f(x1, y0);
     glEnd();
   }
   else //need to tile manually, slow!!
@@ -491,10 +492,10 @@ void Drawer2DGL::drawTextureRepeated(const ITexture* texture, int x0, int y0, in
         int yb1 = yb0 + texture->getV();
         
         glBegin(GL_QUADS);
-          glTexCoord2d(0.0, 0.0); glVertex3d(xb0, yb0, 1);
-          glTexCoord2d(0.0, 1.0); glVertex3d(xb0, yb1, 1);
-          glTexCoord2d(1.0, 1.0); glVertex3d(xb1, yb1, 1);
-          glTexCoord2d(1.0, 0.0); glVertex3d(xb1, yb0, 1);
+          glTexCoord2d(0.0, 0.0); glVertex2f(xb0, yb0);
+          glTexCoord2d(0.0, 1.0); glVertex2f(xb0, yb1);
+          glTexCoord2d(1.0, 1.0); glVertex2f(xb1, yb1);
+          glTexCoord2d(1.0, 0.0); glVertex2f(xb1, yb0);
         glEnd();
       }
     }
@@ -526,10 +527,10 @@ void Drawer2DGL::drawTextureSizedRepeated(const ITexture* texture, int x0, int y
 
     //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
     glBegin(GL_QUADS);
-      glTexCoord2d(0.0,       0.0); glVertex3d(x0, y0, 1);
-      glTexCoord2d(0.0,    +coory); glVertex3d(x0, y1, 1);
-      glTexCoord2d(+coorx, +coory); glVertex3d(x1, y1, 1);
-      glTexCoord2d(+coorx,    0.0); glVertex3d(x1, y0, 1);
+      glTexCoord2d(0.0,       0.0); glVertex2f(x0, y0);
+      glTexCoord2d(0.0,    +coory); glVertex2f(x0, y1);
+      glTexCoord2d(+coorx, +coory); glVertex2f(x1, y1);
+      glTexCoord2d(+coorx,    0.0); glVertex2f(x1, y0);
     glEnd();
   }
   else //need to tile manually, slow!!
@@ -551,10 +552,10 @@ void Drawer2DGL::drawTextureSizedRepeated(const ITexture* texture, int x0, int y
         int yb1 = yb0 + texture->getV();
 
         glBegin(GL_QUADS);
-          glTexCoord2d(0.0, 0.0); glVertex3d(xb0, yb0, 1);
-          glTexCoord2d(0.0, 1.0); glVertex3d(xb0, yb1, 1);
-          glTexCoord2d(1.0, 1.0); glVertex3d(xb1, yb1, 1);
-          glTexCoord2d(1.0, 0.0); glVertex3d(xb1, yb0, 1);
+          glTexCoord2d(0.0, 0.0); glVertex2f(xb0, yb0);
+          glTexCoord2d(0.0, 1.0); glVertex2f(xb0, yb1);
+          glTexCoord2d(1.0, 1.0); glVertex2f(xb1, yb1);
+          glTexCoord2d(1.0, 0.0); glVertex2f(xb1, yb0);
         glEnd();
       }
     }

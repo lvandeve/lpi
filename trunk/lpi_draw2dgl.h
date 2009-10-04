@@ -44,7 +44,7 @@ class Drawer2DGL : public ADrawer2D
     
   private:
     void recursive_bezier(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, int n);
-    void prepareDrawUntextured();
+    void prepareDrawUntextured(bool filledGeometry);
     void prepareDrawTextured();
     void drawLineInternal(int x0, int y0, int x1, int y1); //doesn't call "prepareDraw", to be used by other things that draw multiple lines
     

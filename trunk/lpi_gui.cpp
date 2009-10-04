@@ -1009,10 +1009,10 @@ window and not something behind it, you'll have to do yourself...
 */
 
 Window::Window()
-: enableResizer(false)
-, closeEnabled(false)
-, enableTop(false)
+: enableTop(false)
 , closed(false)
+, closeEnabled(false)
+, enableResizer(false)
 , resizerOverContainer(false)
 {
   enabled = false;
