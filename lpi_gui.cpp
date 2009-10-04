@@ -2177,8 +2177,9 @@ How to use:
 */
 
 Checkbox::Checkbox()
+: useCustomImages(false)
+, useCustomImages2(false)
 {
-  this->enableImage2 = 0;
   //bad old code, must be fixed!
   this->enabled = 0;
   this->checked = 0;
@@ -2194,31 +2195,10 @@ Checkbox::Checkbox()
   this->enableText = 0;
 }
 
-void Checkbox::addFrontImage
-(
-  const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ITexture* texture4, 
-  const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3, const ColorRGB& imageColor4
-)
-{
-  this->enableImage2 = 1;
-  
-  this->texture2[0] = texture1;
-  this->texture2[1] = texture2;
-  this->texture2[2] = texture3;
-  this->texture2[3] = texture4;
-  this->colorMod2[0] = imageColor1;
-  this->colorMod2[1] = imageColor2;
-  this->colorMod2[2] = imageColor3;
-  this->colorMod2[3] = imageColor4;
-}
-
-void Checkbox::addFrontImage(const ITexture* texture)
-{
-  addFrontImage(texture, texture, texture, texture, colorMod[0], colorMod[1], colorMod[2], colorMod[3]);
-}
-
 void Checkbox::make(int x, int y, bool checked, int toggleOnMouseUp)
 {
+  useCustomImages = false;
+  useCustomImages2 = false;
   this->x0 = x;
   this->y0 = y;
   this->checked = checked;
@@ -2240,6 +2220,8 @@ void Checkbox::make(int x, int y, bool checked, int toggleOnMouseUp)
 
 void Checkbox::makeSmall(int x, int y, bool checked, int toggleOnMouseUp)
 {
+  useCustomImages = false;
+  useCustomImages2 = false;
   this->x0 = x;
   this->y0 = y;
   this->checked = checked;
@@ -2261,6 +2243,7 @@ void Checkbox::makeSmall(int x, int y, bool checked, int toggleOnMouseUp)
 
 void Checkbox::setTexturesAndColors(const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ITexture* texture4, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3, const ColorRGB& color4)
 {
+  useCustomImages = true;
   this->texture[0] = texture1;
   this->texture[1] = texture2;
   this->texture[2] = texture3;
@@ -2278,6 +2261,46 @@ void Checkbox::setTexturesAndColors(const ITexture* texture1, const ITexture* te
 void Checkbox::setTexturesAndColors(const ITexture* texture1, const ITexture* texture2, const ColorRGB& color1, const ColorRGB& color2)
 {
   setTexturesAndColors(texture1, texture1, texture2, texture2, color1, color1, color2, color2);
+}
+
+void Checkbox::addFrontImage
+(
+  const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ITexture* texture4,
+  const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3, const ColorRGB& imageColor4
+)
+{
+  useCustomImages2 = true;
+
+  this->texture2[0] = texture1;
+  this->texture2[1] = texture2;
+  this->texture2[2] = texture3;
+  this->texture2[3] = texture4;
+  this->colorMod2[0] = imageColor1;
+  this->colorMod2[1] = imageColor2;
+  this->colorMod2[2] = imageColor3;
+  this->colorMod2[3] = imageColor4;
+}
+
+void Checkbox::setCustomColor(const ColorRGB& color)
+{
+  colorMod[0] = color;
+  colorMod[1] = color;
+  colorMod[2] = color;
+  colorMod[3] = color;
+}
+
+void Checkbox::setCustomColor2(const ColorRGB& color)
+{
+  colorMod2[0] = color;
+  colorMod2[1] = color;
+  colorMod2[2] = color;
+  colorMod2[3] = color;
+}
+
+
+void Checkbox::addFrontImage(const ITexture* texture)
+{
+  addFrontImage(texture, texture, texture, texture, colorMod[0], colorMod[1], colorMod[2], colorMod[3]);
 }
 
 void Checkbox::addText(const std::string& text, const Font& font)
@@ -2313,9 +2336,29 @@ void Checkbox::handleImpl(const IInput& input)
 //draw the checkbox with a texture depending on it's state
 void Checkbox::drawImpl(IGUIDrawer& drawer) const
 {
-  if(checked) drawer.drawGUIPart(GP_CHECKBOX_ON, x0, y0, x1, y1);
-  else drawer.drawGUIPart(GP_CHECKBOX_OFF, x0, y0, x1, y1);
-  
+  bool over = mouseOver(drawer.getInput());
+  if(useCustomImages)
+  {
+    if(!checked && !over) drawer.drawTexture(texture[0], x0, y0, colorMod[0]);
+    if(!checked && over) drawer.drawTexture(texture[1], x0, y0, colorMod[1]);
+    if(checked && !over) drawer.drawTexture(texture[2], x0, y0, colorMod[2]);
+    if(checked && over) drawer.drawTexture(texture[3], x0, y0, colorMod[3]);
+  }
+  else
+  {
+    if(checked) drawer.drawGUIPart(GP_CHECKBOX_ON, x0, y0, x1, y1);
+    else drawer.drawGUIPart(GP_CHECKBOX_OFF, x0, y0, x1, y1);
+  }
+
+  if(useCustomImages2)
+  {
+    if(!checked && !over) drawer.drawTexture(texture2[0], x0, y0, colorMod2[0]);
+    if(!checked && over) drawer.drawTexture(texture2[1], x0, y0, colorMod2[1]);
+    if(checked && !over) drawer.drawTexture(texture2[2], x0, y0, colorMod2[2]);
+    if(checked && over) drawer.drawTexture(texture2[3], x0, y0, colorMod2[3]);
+  }
+
+
   if(enableText)
     drawer.drawText(text, x0 + textOffsetX, y0 + textOffsetY, font);
   
@@ -2433,17 +2476,17 @@ void BulletList::handleImpl(const IInput& input)
   
   for(size_t i = 0; i < bullet.size(); i++)
   {
-    if(bullet[i].checked && int(i) != lastChecked) newChecked = i;
-    bullet[i].checked = false;
+    if(bullet[i].isChecked() && int(i) != lastChecked) newChecked = i;
+    bullet[i].setChecked(false);
   }
 
   if(newChecked >= 0)
   {
-    bullet[newChecked].checked = true;
+    bullet[newChecked].setChecked(true);
     lastChecked = newChecked;
   }
   else if(lastChecked >= 0 && lastChecked < int(bullet.size()))
-    bullet[lastChecked].checked = true;
+    bullet[lastChecked].setChecked(true);
 }
 
 void BulletList::drawImpl(IGUIDrawer& drawer) const
@@ -2483,8 +2526,8 @@ void BulletList::set(unsigned long i)
 
   for(unsigned long j = 0; j < bullet.size(); j++)
   {
-    if(i != j) bullet[j].checked = false;
-    else bullet[j].checked = true;
+    if(i != j) bullet[j].setChecked(false);
+    else bullet[j].setChecked(true);
   }
   
   lastChecked = i;

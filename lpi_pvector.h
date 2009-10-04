@@ -174,48 +174,76 @@ class pvector
     */
 };
 
-  template<typename T, typename A>
-  inline bool operator==(const pvector<T, A>& x, const pvector<T, A>& y)
-  {
-    return x.v == y.v;
-  }
+template<typename T, typename A>
+inline bool operator==(const pvector<T, A>& x, const pvector<T, A>& y)
+{
+  return x.v == y.v;
+}
 
-  template<typename T, typename A>
-  inline bool operator<(const pvector<T, A>& x, const pvector<T, A>& y)
-  {
-    return x.v < y.v;
-  }
+template<typename T, typename A>
+inline bool operator<(const pvector<T, A>& x, const pvector<T, A>& y)
+{
+  return x.v < y.v;
+}
 
 
-  template<typename T, typename A>
-  inline bool operator!=(const pvector<T, A>& x, const pvector<T, A>& y)
-  {
-    return x.v != y.v;
-  }
+template<typename T, typename A>
+inline bool operator!=(const pvector<T, A>& x, const pvector<T, A>& y)
+{
+  return x.v != y.v;
+}
 
-  template<typename T, typename A>
-  inline bool operator>(const pvector<T, A>& x, const pvector<T, A>& y)
-  {
-    return x.v > y.v;
-  }
+template<typename T, typename A>
+inline bool operator>(const pvector<T, A>& x, const pvector<T, A>& y)
+{
+  return x.v > y.v;
+}
 
-  template<typename T, typename A>
-  inline bool operator<=(const pvector<T, A>& x, const pvector<T, A>& y)
-  {
-    return x.v <= y.v;
-  }
+template<typename T, typename A>
+inline bool operator<=(const pvector<T, A>& x, const pvector<T, A>& y)
+{
+  return x.v <= y.v;
+}
 
-  template<typename T, typename A>
-  inline bool operator>=(const pvector<T, A>& x, const pvector<T, A>& y)
-  {
-    return x.v >= y.v;
-  }
+template<typename T, typename A>
+inline bool operator>=(const pvector<T, A>& x, const pvector<T, A>& y)
+{
+  return x.v >= y.v;
+}
 
-  template<typename T, typename A>
-  inline void swap(pvector<T, A>& x, pvector<T, A>& y)
-  {
-    return x.v.swap(y.v);
-  }
+template<typename T, typename A>
+inline void swap(pvector<T, A>& x, pvector<T, A>& y)
+{
+  return x.v.swap(y.v);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+VectorGuard is a class that will delete all elements of a vector in its destructor.
+This makes it easier to use a regular std::vector where you want all its elements
+to be deleted when it goes out of scope.
+*/
+template<typename T>
+class VectorGuard
+{
+  private:
+    T& v; //the std::vector
+
+  public:
+    VectorGuard(T& v)
+    : v(v)
+    {
+    }
+    
+    ~VectorGuard()
+    {
+      for(size_t i = 0; i < v.size(); i++)
+      {
+        delete v[i];
+      }
+    }
+};
 
 } //namespace lpi
 

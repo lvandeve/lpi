@@ -243,7 +243,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   float dyn_value5 = 60.5;
   lpi::gui::DynamicPage dyn;
   //dyn.setSizeXY(200, 20);
-  dyn.resize(0,0,280,100);
+  dyn.resize(0, 0, 280, 100);
   dyn.setTitle("dynamic page");
   dyn.addControl("color", new lpi::gui::DynamicColor(&dyn_value0));
   dyn.addControl("int", new lpi::gui::DynamicValue<int>(&dyn_value1));
@@ -331,7 +331,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     spawns.draw();
     spawns.handle();
     
-    if(wcb.checked) w1.addScrollbars(guidrawer);
+    if(wcb.isChecked()) w1.addScrollbars(guidrawer);
     else w1.removeScrollbars();
     
     if(sound_button.pressed(lpi::gSDLInput)) lpi::audioPlay(sound);

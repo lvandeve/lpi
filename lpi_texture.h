@@ -147,9 +147,14 @@ void loadTexturesFromBase64PNG(std::vector<ITexture*>& textures, const ITextureF
 
 extern ITexture* emptyTexture; //default texture for initializing pointers
 
+//aligned buffer = having the actual u*v size, instead of the u2*v2 size internally in the texture
 void getAlignedBuffer(std::vector<unsigned char>& buffer, const ITexture* texture);
 void setAlignedBuffer(ITexture* texture, const unsigned char* buffer); //assumes texture has already correct size and buffer contains that many pixels
 
 void createTexture(ITexture* texture, size_t w, size_t h, const ColorRGB& color);
+
+void setPixel(ITexture* texture, int x, int y, const ColorRGB& color);
+ColorRGB getPixel(ITexture* texture, int x, int y);
+
 } //namespace lpi
 

@@ -84,19 +84,19 @@ void Drawer2DGL::drawLineInternal(int x0, int y0, int x1, int y1) //doesn't call
 ////////////////////////////////////////////////////////////////////////////////
 
 //Draw a rectangle with 4 different corner colors on screen from (x1, y1) to (x2, y2). The end coordinates should NOT be included
-void Drawer2DGL::drawGradientRectangle(int x1, int y1, int x2, int y2, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3, const ColorRGB& color4)
+void Drawer2DGL::drawGradientRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3)
 {
   prepareDrawUntextured();
   
   glBegin(GL_QUADS);
-    glColor4ub(color2.r, color2.g, color2.b, color2.a);
-    glVertex3d(x2, y1, 1);
     glColor4ub(color1.r, color1.g, color1.b, color1.a);
-    glVertex3d(x1, y1, 1);
+    glVertex3d(x1, y0, 1);
+    glColor4ub(color0.r, color0.g, color0.b, color0.a);
+    glVertex3d(x0, y0, 1);
+    glColor4ub(color2.r, color2.g, color2.b, color2.a);
+    glVertex3d(x0, y1, 1);
     glColor4ub(color3.r, color3.g, color3.b, color3.a);
-    glVertex3d(x1, y2, 1);
-    glColor4ub(color4.r, color4.g, color4.b, color4.a);
-    glVertex3d(x2, y2, 1);
+    glVertex3d(x1, y1, 1);
   glEnd();
 }
 
@@ -276,12 +276,11 @@ void Drawer2DGL::drawRectangle(int x0, int y0, int x1, int y1, const ColorRGB& c
 
 void Drawer2DGL::drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, const ColorRGB& color, bool filled)
 {
+  prepareDrawUntextured();
+  glColor4ub(color.r, color.g, color.b, color.a);
+
   if(filled)
   {
-    prepareDrawUntextured();
-  
-    glColor4ub(color.r, color.g, color.b, color.a);
-    
     //static const double OGLDIFFX = 0.0, OGLDIFFY = 0.0;
   
     glBegin(GL_TRIANGLES);
@@ -504,7 +503,6 @@ void Drawer2DGL::drawTextureRepeated(const ITexture* texture, int x0, int y0, in
 
 void Drawer2DGL::drawTextureSizedRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, size_t sizex, size_t sizey, const ColorRGB& colorMod)
 {
-  (void)sizex; (void)sizey; //TODO: use the size!!!
   if(x0 == x1 || y0 == y1) return;
 
   const TextureGL* texturegl = dynamic_cast<const TextureGL*>(texture);
@@ -521,8 +519,10 @@ void Drawer2DGL::drawTextureSizedRepeated(const ITexture* texture, int x0, int y
 
   if(simple)
   {
-    double coorx = (double(x1 - x0) / texturegl->getU());
-    double coory = (double(y1 - y0) / texturegl->getV());
+    double scalex = (double)texture->getU() / (double)sizex;
+    double scaley = (double)texture->getV() / (double)sizey;
+    double coorx = ((double)(x1 - x0) / texturegl->getU()) * scalex;
+    double coory = ((double)(y1 - y0) / texturegl->getV()) * scaley;
 
     //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
     glBegin(GL_QUADS);
@@ -540,6 +540,7 @@ void Drawer2DGL::drawTextureSizedRepeated(const ITexture* texture, int x0, int y
     //TODO: this is just a very lazy implementation because I was doing something else. Fix the TODO's below!!!
     //TODO: make this more efficient, e.g. quadstrip...
     //TODO: also add the extra textures at the edge (I mean, now I only have the full tiles, at the sides are possibly also partial tiles)!!!!
+    //TODO: the scaling of sizex and sizey are ignored here, implement that too!!!!
     for(int x = 0; x < numx; x++)
     {
       for(int y = 0; y < numy; y++)

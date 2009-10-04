@@ -77,6 +77,11 @@ class Drawer2DGL : public ADrawer2D
     virtual ITexture* createTexture();
     virtual ITexture* createTexture(ITexture* texture);
     
+    /*
+    Note: while this drawer uses OpenGL, the intention for the 2D drawer is that when
+    drawing a texture sized, that NO filtering is done on the pixels (not blurred). For
+    that, create a different drawer that doesn't use the IDrawer2D interface.
+    */
     virtual void drawTexture(const ITexture* texture, int x, int y, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureSized(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, const ColorRGB& colorMod = RGB_White);
