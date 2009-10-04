@@ -90,6 +90,7 @@ class IDrawer2D
     
     //you can only draw textures that have the correct subtype of ITexture. therefore, you need to use the functions below to get one first before starting to draw
     virtual bool supportsTexture(ITexture* texture) = 0; //if true, you can use it. If false, first use createTexture(texture) and then it'll be drawable by this drawer!
+    //TODO: instead of the createTexture functions here, make it return a texture factory, and put the one that takes a texture as parameter in the interface of the texture factory...
     virtual ITexture* createTexture() = 0; //creates a new texture of the type this drawer implementation supports best
     virtual ITexture* createTexture(ITexture* texture) = 0; //creates a new texture from the given one, the type this drawer implementation supports best. May ruin/destroy/clear the input texture!!
     virtual void convertTextureIfNeeded(ITexture*& texture) = 0; //Utility function to make sure your texture is of the supported type. IMPORTANT!!!! Your ITexture* pointer must be created with new and may be deleted! Instead (if needed) your pointer is made to point to another texture created with new (Note how the pointer is given by reference to allow this).

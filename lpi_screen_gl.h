@@ -30,27 +30,40 @@ namespace lpi
 
 class ScreenGL
 {
+  private:
+    SDL_Surface* scr; //the single SDL surface used
+    int w; //width of the screen
+    int h; //height of the screen
+    bool fullscreenMode; //if true, it's fullscreen
+    
+    std::vector<int> clipLeft;
+    std::vector<int> clipTop;
+    std::vector<int> clipRight;
+    std::vector<int> clipBottom;
+
+    int screenMode; //-1: uninited, 0: 2d thin geometry, 1: 2d filled geometry & textures, 2: 3d
+    double lastNear, lastFar;
+
+  private:
+    void lock();
+    void unlock();
+
+    void initGL();
+    void set2DScreen(int w, int h, bool filledGeometry);
+    void set3DScreen(double near, double far, int w, int h);
+
+    bool glsmoothing;
+
+    
   public:
     ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, const char* text);
     
     void cls(const ColorRGB& color = RGB_Black);
     void redraw();
   
-    void set2DScreen();
+    void set2DScreen(bool filledGeometry);
     void set3DScreen(double near, double far);
   
-  private:
-    void lock();
-    void unlock();
-
-    void initGL();
-    void set2DScreen(int w, int h);
-    void set3DScreen(double near, double far, int w, int h);
-    
-    bool glsmoothing;
-    
-  public:
-
     int screenWidth();
     int screenHeight();
     bool onScreen(int x, int y);
@@ -69,8 +82,6 @@ class ScreenGL
     void disableSmoothing();
     bool isSmoothingEnabled();
     
-  protected:
-    ScreenGL(bool); //TEMPORARY UGLY CONSTRUCTOR ONLY FOR DURING REFACTORING; SEE LPI_TEXT.CPP
 };
 
 

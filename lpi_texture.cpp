@@ -706,7 +706,6 @@ void getAlignedBuffer(std::vector<unsigned char>& buffer, const ITexture* textur
   size_t u = texture->getU();
   size_t v = texture->getV();
   size_t u2 = texture->getU2();
-  size_t v2 = texture->getV2();
   buffer.resize(u * v * 4);
   for(size_t y = 0; y < v; y++)
   for(size_t x = 0; x < u; x++)
@@ -721,7 +720,6 @@ void setAlignedBuffer(ITexture* texture, const unsigned char* buffer)
   size_t u = texture->getU();
   size_t v = texture->getV();
   size_t u2 = texture->getU2();
-  size_t v2 = texture->getV2();
   for(size_t y = 0; y < v; y++)
   for(size_t x = 0; x < u; x++)
   for(size_t c = 0; c < 4; c++)

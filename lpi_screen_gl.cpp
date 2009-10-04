@@ -27,21 +27,14 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
-namespace
-{
-  SDL_Surface* scr; //the single SDL surface used
-  int w; //width of the screen
-  int h; //height of the screen
-  bool fullscreenMode; //if true, it's fullscreen
-}
-
 /*
 This function sets up an SDL window ready for OpenGL graphics.
 You can choose the resolution, whether or not it's fullscreen, and a caption for the window.
 This also inits everything else of the lpi application, so lpi::screen currently acts as init function.
 */
 ScreenGL::ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, const char* text)
-: glsmoothing(false)
+: screenMode(-1)
+, glsmoothing(false)
 {
   int colorDepth = 32;
   w = width;
@@ -107,10 +100,6 @@ ScreenGL::ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, con
   //plane.create(RGB_Black, w, h);
 }
 
-ScreenGL::ScreenGL(bool) //TEMPORARY UGLY CONSTRUCTOR ONLY FOR DURING REFACTORING; SEE LPI_TEXT.CPP
-{
-}
-
 //Locks the screen
 void ScreenGL::lock()
 {
@@ -153,22 +142,26 @@ int ScreenGL::screenHeight()
   return array[3];
 }
 
-namespace
+void ScreenGL::set2DScreen(int w, int h, bool filledGeometry)
 {
-  //these values are in OpenGL viewport coordinates, that is NOT the same as pixel coordinates, use setScissor to properly set these
-  std::vector<int> clipLeft;
-  std::vector<int> clipTop;
-  std::vector<int> clipRight;
-  std::vector<int> clipBottom;
+  //Displacemenet for exact pixelation. This requires some more experimentation.
+  //Different values may be needed for thin geometry, filled geometry and textures
+  //Values to try: 0.0; 0.5; 0.375
+  static const double TWIDDLEX = 0.375;
+  static const double TWIDDLEY = 0.375;
   
-  int screenMode = -1;
-  double lastNear, lastFar;
-}
-
-void ScreenGL::set2DScreen(int w, int h)
-{
-  if(screenMode == 0) return;
-  screenMode = 0;
+  if(filledGeometry)
+  {
+    if(screenMode == 1) return;
+    if(screenMode == 0) { glTranslated(-TWIDDLEX, -TWIDDLEY, 0); screenMode = 1; return; }
+    screenMode = 1;
+  }
+  else
+  {
+    if(screenMode == 0) return;
+    if(screenMode == 1) { glTranslated(TWIDDLEX, TWIDDLEY, 0); screenMode = 0; return; }
+    screenMode = 0;
+  }
   
   //the official code for "Setting Your Raster Position to a Pixel Location" (i.e. set up an oldskool 2D screen)
   glViewport(0, 0, w, h);
@@ -177,6 +170,11 @@ void ScreenGL::set2DScreen(int w, int h)
   glOrtho(0, w, h, 0, -1, 1);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
+  if(!filledGeometry)
+  {
+
+    glTranslated(TWIDDLEX, TWIDDLEY, 0);
+  }
   
   enableTwoSided(); //important, without this, 2D stuff might not be drawn if only one side is enabled
   disableZBuffer();
@@ -193,8 +191,8 @@ before or after calling this function.
 */
 void ScreenGL::set3DScreen(double near, double far, int w, int h)
 {
-  if(screenMode == 1 && near == lastNear && far == lastFar) return;
-  screenMode = 1;
+  if(screenMode == 2 && near == lastNear && far == lastFar) return;
+  screenMode = 2;
   
   glViewport(0, 0, w, h);
   glMatrixMode(GL_PROJECTION);
@@ -227,7 +225,7 @@ void ScreenGL::set3DScreen(double near, double far, int w, int h)
 //Initialize OpenGL: set up the camera and settings to emulate 2D graphics
 void ScreenGL::initGL()
 {
-  set2DScreen();
+  set2DScreen(false);
   
   //glShadeModel(GL_FLAT); //shading, don't do the GL_FLAT thing or gradient rectangles don't work anymore
   //glCullFace(GL_BACK); //culling
@@ -252,11 +250,11 @@ void ScreenGL::initGL()
   clipBottom.push_back(array[3]);
 }
 
-void ScreenGL::set2DScreen()
+void ScreenGL::set2DScreen(bool filledGeometry)
 {
   GLint array[4];
   glGetIntegerv(GL_VIEWPORT, array); //get viewport size from OpenGL
-  set2DScreen(array[2], array[3]);
+  set2DScreen(array[2], array[3], filledGeometry);
 }
 
 void ScreenGL::set3DScreen(double near, double far)

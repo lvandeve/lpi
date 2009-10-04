@@ -243,7 +243,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   float dyn_value5 = 60.5;
   lpi::gui::DynamicPage dyn;
   //dyn.setSizeXY(200, 20);
-  dyn.resize(0, 0, 280, 100);
+  dyn.resize(0,0,280,100);
   dyn.setTitle("dynamic page");
   dyn.addControl("color", new lpi::gui::DynamicColor(&dyn_value0));
   dyn.addControl("int", new lpi::gui::DynamicValue<int>(&dyn_value1));
@@ -320,14 +320,14 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     dyn.controlToValue();
     //dyn.valueToControl();
     
-    c.handle(lpi::gSDLInput);
     c.draw(guidrawer);
     tooltips.draw(&c, guidrawer);
+    c.handle(lpi::gSDLInput);
     
-    lpi::ColorHSV colorHSV((int)(hsv.getValueAngle() * 255), (int)(hsv.getValueAxial() * 255), 255);
+    lpi::ColorHSV colorHSV(hsv.getValueAngle() * 255, hsv.getValueAxial() * 255, 255);
     color = lpi::HSVtoRGB(colorHSV);
     canvas.leftColor = color;
-
+    
     spawns.draw();
     spawns.handle();
     
