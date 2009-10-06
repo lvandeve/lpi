@@ -765,6 +765,8 @@ void ColorSlidersYCbCr::setColor(const ColorRGB& color)
 
   
 ColorEditor2D::ColorEditor2D()
+: drawalpha(true)
+, outofrangeaction(WARNING)
 {
 }
 
@@ -783,8 +785,16 @@ void ColorEditor2D::drawBackground(IGUIDrawer& drawer) const
     
     ColorRGB color = this->color;
     getDrawColor(color, (double)x / (double)NUMX, (double)y / (double)NUMY);
+    bool outofrange = !(color.r >= 0 && color.r <= 255 && color.g >= 0 && color.g <= 255 && color.b >= 0 && color.b <= 255);
+    color.clamp();
     
-    drawer.drawRectangle(drawx0, drawy0, drawx1, drawy1, color, true);
+    if(!outofrange || outofrangeaction == DRAW || outofrangeaction == WARNING)
+      drawer.drawRectangle(drawx0, drawy0, drawx1, drawy1, color, true);
+    if(outofrange && outofrangeaction == WARNING)
+    {
+      drawer.drawLine(drawx0, drawy0, drawx1, drawy1, RGB_Red);
+      drawer.drawLine(drawx0, drawy1, drawx1, drawy0, RGB_Yellow);
+    }
   }
 }
 
