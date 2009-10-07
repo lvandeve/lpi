@@ -31,6 +31,8 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include "lpi_input_sdl.h"
 
+#include <iostream>
+
 namespace lpi
 {
 namespace gui
@@ -50,65 +52,76 @@ const std::string builtInGuiData = "\
 <gui>\n\
 \n\
   <textures_small>\n\
-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\n\
+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\n\
+lvvFHLr+AAAAAElFTkSuQmCC\n\
   </textures_small>\n\
 \n\
   <icons_small>\n\
@@ -370,6 +383,61 @@ void GUIPartDrawerInternal::initBuiltInGuiTexturesSmall(const ITextureFactory& f
   makeTextureFromBuffer(builtInTexture[98], &dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 44, 64, 48);
   for(size_t i = 0; i < 9; i++) builtInGuiSet.whitePanelTextures[i] = builtInTexture[i + 90];
   
+  //fgbgcolor arrows
+  makeTextureFromBuffer(builtInTexture[99], &dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 160, 16, 176);
+  builtInGuiSet.fgBgColorArrows = builtInTexture[99];
+  
+  //white button panel
+  makeTextureFromBuffer(builtInTexture[100], &dataBuffer[0], GDW, GDH, AE_PinkKey, 48, 160, 52, 164);
+  makeTextureFromBuffer(builtInTexture[101], &dataBuffer[0], GDW, GDH, AE_PinkKey, 54, 160, 58, 164);
+  makeTextureFromBuffer(builtInTexture[102], &dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 160, 64, 164);
+  makeTextureFromBuffer(builtInTexture[103], &dataBuffer[0], GDW, GDH, AE_PinkKey, 48, 166, 52, 170);
+  makeTextureFromBuffer(builtInTexture[104], &dataBuffer[0], GDW, GDH, AE_PinkKey, 54, 166, 58, 170);
+  makeTextureFromBuffer(builtInTexture[105], &dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 166, 64, 170);
+  makeTextureFromBuffer(builtInTexture[106], &dataBuffer[0], GDW, GDH, AE_PinkKey, 48, 172, 52, 176);
+  makeTextureFromBuffer(builtInTexture[107], &dataBuffer[0], GDW, GDH, AE_PinkKey, 54, 172, 58, 176);
+  makeTextureFromBuffer(builtInTexture[108], &dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 172, 64, 176);
+  for(size_t i = 0; i < 9; i++) builtInGuiSet.whiteButtonTextures[i] = builtInTexture[i + 100];
+  for(size_t i = 0; i < 9; i++) builtInGuiSet.whiteButtonOverTextures[i] = builtInTexture[i + 100];
+  
+  //white button panel pressed
+  makeTextureFromBuffer(builtInTexture[109], &dataBuffer[0], GDW, GDH, AE_PinkKey, 64, 160, 68, 164);
+  makeTextureFromBuffer(builtInTexture[110], &dataBuffer[0], GDW, GDH, AE_PinkKey, 70, 160, 74, 164);
+  makeTextureFromBuffer(builtInTexture[111], &dataBuffer[0], GDW, GDH, AE_PinkKey, 76, 160, 80, 164);
+  makeTextureFromBuffer(builtInTexture[112], &dataBuffer[0], GDW, GDH, AE_PinkKey, 64, 166, 68, 170);
+  makeTextureFromBuffer(builtInTexture[113], &dataBuffer[0], GDW, GDH, AE_PinkKey, 70, 166, 74, 170);
+  makeTextureFromBuffer(builtInTexture[114], &dataBuffer[0], GDW, GDH, AE_PinkKey, 76, 166, 80, 170);
+  makeTextureFromBuffer(builtInTexture[115], &dataBuffer[0], GDW, GDH, AE_PinkKey, 64, 172, 68, 176);
+  makeTextureFromBuffer(builtInTexture[116], &dataBuffer[0], GDW, GDH, AE_PinkKey, 70, 172, 74, 176);
+  makeTextureFromBuffer(builtInTexture[117], &dataBuffer[0], GDW, GDH, AE_PinkKey, 76, 172, 80, 176);
+  for(size_t i = 0; i < 9; i++) builtInGuiSet.whiteButtonDownTextures[i] = builtInTexture[i + 109];
+
+  //invisible button panel
+  makeTextureFromBuffer(builtInTexture[118], &dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 160, 20, 164);
+  makeTextureFromBuffer(builtInTexture[119], &dataBuffer[0], GDW, GDH, AE_PinkKey, 22, 160, 26, 164);
+  makeTextureFromBuffer(builtInTexture[120], &dataBuffer[0], GDW, GDH, AE_PinkKey, 28, 160, 32, 164);
+  makeTextureFromBuffer(builtInTexture[121], &dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 166, 20, 170);
+  makeTextureFromBuffer(builtInTexture[122], &dataBuffer[0], GDW, GDH, AE_PinkKey, 22, 166, 26, 170);
+  makeTextureFromBuffer(builtInTexture[123], &dataBuffer[0], GDW, GDH, AE_PinkKey, 28, 166, 32, 170);
+  makeTextureFromBuffer(builtInTexture[124], &dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 172, 20, 176);
+  makeTextureFromBuffer(builtInTexture[125], &dataBuffer[0], GDW, GDH, AE_PinkKey, 22, 172, 26, 176);
+  makeTextureFromBuffer(builtInTexture[126], &dataBuffer[0], GDW, GDH, AE_PinkKey, 28, 172, 32, 176);
+  for(size_t i = 0; i < 9; i++) builtInGuiSet.invisibleButtonTextures[i] = builtInTexture[i + 118];
+  for(size_t i = 0; i < 9; i++) builtInGuiSet.invisibleButtonOverTextures[i] = builtInTexture[i + 118];
+  
+  //invisible button panel pressed
+  makeTextureFromBuffer(builtInTexture[127], &dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 160, 36, 164);
+  makeTextureFromBuffer(builtInTexture[128], &dataBuffer[0], GDW, GDH, AE_PinkKey, 38, 160, 42, 164);
+  makeTextureFromBuffer(builtInTexture[129], &dataBuffer[0], GDW, GDH, AE_PinkKey, 44, 160, 48, 164);
+  makeTextureFromBuffer(builtInTexture[130], &dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 166, 36, 170);
+  makeTextureFromBuffer(builtInTexture[131], &dataBuffer[0], GDW, GDH, AE_PinkKey, 38, 166, 42, 170);
+  makeTextureFromBuffer(builtInTexture[132], &dataBuffer[0], GDW, GDH, AE_PinkKey, 44, 166, 48, 170);
+  makeTextureFromBuffer(builtInTexture[133], &dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 172, 36, 176);
+  makeTextureFromBuffer(builtInTexture[134], &dataBuffer[0], GDW, GDH, AE_PinkKey, 38, 172, 42, 176);
+  makeTextureFromBuffer(builtInTexture[135], &dataBuffer[0], GDW, GDH, AE_PinkKey, 44, 172, 48, 176);
+  for(size_t i = 0; i < 9; i++) builtInGuiSet.invisibleButtonDownTextures[i] = builtInTexture[i + 127];
+
+  
   //panels
   builtInPanel[0].makeTextured(&builtInGuiSet.windowTextures[0]/*, RGB_White*/);
   builtInGuiSet.windowPanel = &builtInPanel[0];
@@ -387,6 +455,18 @@ void GUIPartDrawerInternal::initBuiltInGuiTexturesSmall(const ITextureFactory& f
   builtInGuiSet.borderPanel = &builtInPanel[6];
   builtInPanel[7].makeTextured(&builtInGuiSet.whitePanelTextures[0]/*, RGB_White*/);
   builtInGuiSet.whitePanel = &builtInPanel[7];
+  builtInPanel[8].makeTextured(&builtInGuiSet.whiteButtonTextures[0]/*, RGB_White*/);
+  builtInGuiSet.whiteButtonPanel = &builtInPanel[8];
+  builtInPanel[9].makeTextured(&builtInGuiSet.whiteButtonOverTextures[0]/*, RGB_Grey*/);
+  builtInGuiSet.whiteButtonOverPanel = &builtInPanel[9];
+  builtInPanel[10].makeTextured(&builtInGuiSet.whiteButtonDownTextures[0]/*, RGB_Grey*/);
+  builtInGuiSet.whiteButtonDownPanel = &builtInPanel[10];
+  builtInPanel[11].makeTextured(&builtInGuiSet.invisibleButtonTextures[0]/*, RGB_White*/);
+  builtInGuiSet.invisibleButtonPanel = &builtInPanel[11];
+  builtInPanel[12].makeTextured(&builtInGuiSet.invisibleButtonOverTextures[0]/*, RGB_Grey*/);
+  builtInGuiSet.invisibleButtonOverPanel = &builtInPanel[12];
+  builtInPanel[13].makeTextured(&builtInGuiSet.invisibleButtonDownTextures[0]/*, RGB_Grey*/);
+  builtInGuiSet.invisibleButtonDownPanel = &builtInPanel[13];
 
   //rules (= 1D versions of panels)
   builtInRule[0].makeHorizontal(builtInTexture[41], builtInTexture[42], builtInTexture[43]);
@@ -666,8 +746,8 @@ GUIPartDrawerInternal::GUIPartDrawerInternal(const ITextureFactory& factory, IDr
 : drawer(drawer)
 , textdrawer(textdrawer)
 {
-  builtInTexture.resize(128);
-  for(size_t i = 0; i < 128; i++) builtInTexture[i] = factory.createNewTexture();
+  builtInTexture.resize(160);
+  for(size_t i = 0; i < builtInTexture.size(); i++) builtInTexture[i] = factory.createNewTexture();
   initBuiltInGui(factory);
   guiset = &builtInGuiSet;
 }
@@ -710,6 +790,33 @@ void GUIPartDrawerInternal::drawGUIPart(GUIPart part, int x0, int y0, int x1, in
       if(mod.mousedown) guiset->buttonDownPanel->draw(*drawer, x0, y0, x1 - x0, y1 - y0);
       else if(mod.mouseover) guiset->buttonOverPanel->draw(*drawer, x0, y0, x1 - x0, y1 - y0);
       else guiset->buttonPanel->draw(*drawer, x0, y0, x1 - x0, y1 - y0);
+      break;
+    }
+    case GP_BUTTON_PANEL_UP:
+    {
+      guiset->buttonPanel->draw(*drawer, x0, y0, x1 - x0, y1 - y0);
+      break;
+    }
+    case GP_BUTTON_PANEL_DOWN:
+    {
+      guiset->buttonDownPanel->draw(*drawer, x0, y0, x1 - x0, y1 - y0);
+      break;
+    }
+    case GP_INVISIBLE_BUTTON_PANEL:
+    {
+      if(mod.mousedown) guiset->invisibleButtonDownPanel->draw(*drawer, x0, y0, x1 - x0, y1 - y0);
+      else if(mod.mouseover) guiset->invisibleButtonOverPanel->draw(*drawer, x0, y0, x1 - x0, y1 - y0);
+      else guiset->invisibleButtonPanel->draw(*drawer, x0, y0, x1 - x0, y1 - y0);
+      break;
+    }
+    case GP_INVISIBLE_BUTTON_PANEL_UP:
+    {
+      guiset->invisibleButtonPanel->draw(*drawer, x0, y0, x1 - x0, y1 - y0);
+      break;
+    }
+    case GP_INVISIBLE_BUTTON_PANEL_DOWN:
+    {
+      guiset->invisibleButtonDownPanel->draw(*drawer, x0, y0, x1 - x0, y1 - y0);
       break;
     }
     case GP_WHITE_PANEL:
@@ -840,7 +947,12 @@ void GUIPartDrawerInternal::drawGUIPart(GUIPart part, int x0, int y0, int x1, in
       drawer->drawRectangle(x0, y0, x1, y1, RGB_Black, false);
       break;
     }
-    
+    case GP_FG_BG_COLOR_ARROWS:
+    {
+      drawer->drawTexture(guiset->fgBgColorArrows, x1 - guiset->fgBgColorArrows->getU(), y0);
+      break;
+    }
+
     default:
       return;
   }
@@ -860,6 +972,23 @@ void GUIPartDrawerInternal::drawGUIPartColor(GUIPart part, const ColorRGB& color
     case GPC_WHITE_PANEL:
     {
       guiset->whitePanel->draw(*drawer, x0, y0, x1 - x0, y1 - y0, color);
+      break;
+    }
+    case GPC_WHITE_BUTTON_PANEL:
+    {
+      if(mod.mousedown) guiset->whiteButtonDownPanel->draw(*drawer, x0, y0, x1 - x0, y1 - y0, color);
+      else if(mod.mouseover) guiset->whiteButtonOverPanel->draw(*drawer, x0, y0, x1 - x0, y1 - y0, color);
+      else guiset->whiteButtonPanel->draw(*drawer, x0, y0, x1 - x0, y1 - y0, color);
+      break;
+    }
+    case GPC_WHITE_BUTTON_PANEL_UP:
+    {
+      guiset->whiteButtonPanel->draw(*drawer, x0, y0, x1 - x0, y1 - y0, color);
+      break;
+    }
+    case GPC_WHITE_BUTTON_PANEL_DOWN:
+    {
+      guiset->whiteButtonDownPanel->draw(*drawer, x0, y0, x1 - x0, y1 - y0, color);
       break;
     }
     default:
@@ -899,6 +1028,7 @@ void GUIPartDrawerInternal::drawGUIPartText(GUIPart part, const std::string& tex
       textdrawer->calcTextRectSize(w, h, text, guiset->tooltipFont);
       drawGUIPart(GP_TOOLTIP_BACKGROUND, x0 - 2, y0 - 2, x0 + w + 2, y0 + h + 2, mod);
       textdrawer->drawText(text, x0, y0, guiset->tooltipFont);
+      break;
     };
     default:
       return;
@@ -927,6 +1057,7 @@ size_t GUIPartDrawerInternal::getGUIPartSizeX(GUIPart part) const
     case GP_SCROLLBAR_HBACK: return guiset->scrollbarBackground->getU();
     case GP_SCROLLBAR_VBACK: return guiset->scrollbarBackground->getU();
     case GP_SCROLLBARPAIR_CORNER: return guiset->scrollBarPairCorner->getU();
+    case GP_FG_BG_COLOR_ARROWS: return guiset->fgBgColorArrows->getU();
     default: return 0;
   }
 }
@@ -954,6 +1085,7 @@ size_t GUIPartDrawerInternal::getGUIPartSizeY(GUIPart part) const
     case GP_SCROLLBAR_HBACK: return guiset->scrollbarBackground->getV();
     case GP_SCROLLBAR_VBACK: return guiset->scrollbarBackground->getV();
     case GP_SCROLLBARPAIR_CORNER: return guiset->scrollBarPairCorner->getV();
+    case GP_FG_BG_COLOR_ARROWS: return guiset->fgBgColorArrows->getV();
     default: return 0;
   }
 }
