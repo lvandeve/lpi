@@ -419,14 +419,27 @@ class FGBGColor : public ElementComposite
 {
   /*
   this class represents the following kind of thing (seen in many painting programs):
-  _______
+  
+  There is a foreground and background color, and arrows to swap them.
+   ______
   [      ] <-+
   |      |   v
   |      |____
   [______]    ]
-       [      ]
-       [      ]
+       |      |
+       |      |
        [______]
+  
+  because there can't be enough mouse buttons, it also supports a third color (MG or "middleground"), which
+  can be used for the middle mouse button. Then it looks somewhat like this:
+   ______
+  [      ]_<-+
+  |      | ]_v
+  |      | | ]
+  [______] | |
+    [______] |
+      [______]
+     
   */
   
   //TODO: if color is out of RGB range, draw some exclamation mark, warning sign or cross over the color in the square
@@ -439,16 +452,27 @@ class FGBGColor : public ElementComposite
         virtual void drawImpl(IGUIDrawer& drawer) const;
     };
     
+    class ColorPlane : public Element
+    {
+      public:
+        ColorRGB color;
+        bool selected;
+        
+        ColorPlane();
+        virtual void drawImpl(IGUIDrawer& drawer) const;
+        virtual void handleImpl(const IInput& input);
+    };
+    
   private:
     ColorPlane fg;
     ColorPlane bg;
     Arrows arrows;
-    ColorPlane* selected; //the foreground or background color; this is the color being edited; the selected one is drawn as a "down" button, the other one as "up"
     
-    mutable bool fg_just; //for function that checks if it's just selected
-    mutable bool bg_just;
+    bool selected_bg; //if false, fg is selected
   
   public:
+  
+    FGBGColor();
     
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
@@ -456,9 +480,11 @@ class FGBGColor : public ElementComposite
     void setFG(const ColorRGB& color);
     void setBG(const ColorRGB& color);
     
-    bool selectedFG(const IInput& input) const; //returns true only if FG is just selected
-    bool selectedBG(const IInput& input) const; //returns true only if BG is just selected
-    bool clickedArrows(const IInput& input) const; //returns true if the arrows button is just clicked, indicating that you have to switch the FG and BG color (NOTE: FGBGColor takes no action itself, it doesn't even swap its own colors, you have to do that when this returns true (to allow updating everything on your side))
+    ColorRGB getFG() const;
+    ColorRGB getBG() const;
+    
+    bool selectedFG() const;
+    bool selectedBG() const;
 };
 
 } //namespace gui

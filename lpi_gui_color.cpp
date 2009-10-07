@@ -945,6 +945,87 @@ ColorPlane::ColorPlane()
 {
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+void FGBGColor::Arrows::drawImpl(IGUIDrawer& drawer) const
+{
+}
+
+FGBGColor::ColorPlane::ColorPlane()
+: selected(false)
+{
+}
+
+void FGBGColor::ColorPlane::drawImpl(IGUIDrawer& drawer) const
+{
+  int checkersize = 8;
+  if(getSizeX() < 16 && getSizeY() < 16) checkersize = getSizeX() / 2;
+  drawCheckerBackground(drawer, x0, y0, x1, y1, checkersize, checkersize);
+  drawer.drawRectangle(x0, y0, x1, y1, color, true);
+  drawer.drawGUIPart(selected ? GP_INVISIBLE_BUTTON_PANEL_DOWN : GP_INVISIBLE_BUTTON_PANEL_UP, x0, y0, x1, y1);
+}
+
+void FGBGColor::ColorPlane::handleImpl(const IInput& input)
+{
+}
+
+FGBGColor::FGBGColor()
+: selected_bg(false)
+{
+  addSubElement(&fg, Sticky(0.0, 0, 0.0, 0, 0.66, 0, 0.66, 0));
+  addSubElement(&bg, Sticky(0.33, 0, 0.33, 0, 1.0, 0, 1.0, 0));
+}
+
+void FGBGColor::drawImpl(IGUIDrawer& drawer) const
+{
+  bg.draw(drawer);
+  fg.draw(drawer);
+}
+
+void FGBGColor::handleImpl(const IInput& input)
+{
+  if(fg.mouseDownHere(input))
+  {
+    fg.selected = true;
+    bg.selected = false;
+  }
+  else if(bg.mouseDownHere(input))
+  {
+    fg.selected = false;
+    bg.selected = true;
+  }
+}
+
+void FGBGColor::setFG(const ColorRGB& color)
+{
+  fg.color = color;
+}
+
+void FGBGColor::setBG(const ColorRGB& color)
+{
+  bg.color = color;
+}
+
+ColorRGB FGBGColor::getFG() const
+{
+  return fg.color;
+}
+
+ColorRGB FGBGColor::getBG() const
+{
+  return bg.color;
+}
+
+bool FGBGColor::selectedFG() const
+{
+  return !selected_bg;
+}
+
+bool FGBGColor::selectedBG() const
+{
+  return selected_bg;
+}
+
 } //namespace gui
 } //namespace lpi
 

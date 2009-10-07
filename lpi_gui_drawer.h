@@ -46,7 +46,7 @@ Class diagram of a typical scenario, where
 
            ____________________________________________________ 
           |                  _______________________________   |
-          |                 |      IGUIPartGeom _________   |  |
+          |                 |      IGUIPartGeom  ________   |  |
           |                 |             ^     |        |  |  |
           v                 v             |     v        |  |  |
      IDrawer2D       ITextDrawer     IGUIPartDrawer    IGUIDrawer
@@ -89,6 +89,11 @@ enum GUIPart
 {
   //button panel
   GP_BUTTON_PANEL,
+  GP_BUTTON_PANEL_UP,
+  GP_BUTTON_PANEL_DOWN, //not used for graphic of button down if mouse is down, but if you want one down without having mouse down over it
+  GP_INVISIBLE_BUTTON_PANEL,
+  GP_INVISIBLE_BUTTON_PANEL_UP,
+  GP_INVISIBLE_BUTTON_PANEL_DOWN, //not used for graphic of button down if mouse is down, but if you want one down without having mouse down over it
   //scrollbar
   GP_SCROLLBAR_N,
   GP_SCROLLBAR_E,
@@ -128,15 +133,14 @@ enum GUIPart
   //image buttons with same size as scrollbar buttons
   GP_EMPTY_BUTTON,
   GP_EMPTY_BUTTON_ROUND,
-  //custom colorable
-  GP_WHITE_PANEL, //panel which can be given any color
-  GP_WHITE_BUTTON, //button with same size as scrollbar buttons
-  GP_WHITE_BUTTON_ROUND, //button with same size as scrollbar buttons
+  GP_WHITE_PANEL,
   //other panels
   GP_PANEL_BORDER, //only border, the center is invisible
   //rulers / lines (to divide areas)
   GP_RULER_H,
   GP_RULER_V,
+  //fgbgcolor
+  GP_FG_BG_COLOR_ARROWS, //those arrows to swap colors at a FG-BG color selector
   //built-in extra's
   GP_SMILEY,
   GP_CROSSHAIR,
@@ -147,6 +151,9 @@ enum GUIPart
   GPC_WINDOW_PANEL, //colored windows
   GPC_WHITE_PANEL, //panel which can be given any color
   GPC_WHITE_BUTTON, //button with same size as scrollbar buttons
+  GPC_WHITE_BUTTON_PANEL,
+  GPC_WHITE_BUTTON_PANEL_UP,
+  GPC_WHITE_BUTTON_PANEL_DOWN, //not used for graphic of button down if mouse is down, but if you want one down without having mouse down over it
   GPC_WHITE_BUTTON_ROUND, //button with same size as scrollbar buttons
   
   

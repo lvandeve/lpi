@@ -277,7 +277,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   hsv.setValueAxial(1.0);
   tabs.getTabContent(2).pushTopAt(&hsv, 20, 50);
   lpi::ColorRGB color;
-  lpi::gui::PColorPlane colorplane(&color);
+  lpi::gui::FGBGColor colorplane;
   colorplane.resize(0, 0, 64, 48);
   //colorplane.color = lpi::ColorRGB(128, 255, 255, 192);
   tabs.getTabContent(2).pushTopAt(&colorplane, 144, 50);

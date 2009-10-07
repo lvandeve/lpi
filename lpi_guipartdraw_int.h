@@ -118,9 +118,6 @@ class BackRule
 #define DEFAULTHRULE BackRule(1)
 #define DEFAULTVRULE BackRule(2)
 
-extern BackPanel builtInPanel[8];
-extern BackRule builtInRule[2];
-
 struct GuiSet //GuiSet is a bit of a LEGACY lpi concept. Currently it's just used as the container of the internal built in GUI textures.
 {
   const ITexture* windowTextures[9];
@@ -150,11 +147,17 @@ struct GuiSet //GuiSet is a bit of a LEGACY lpi concept. Currently it's just use
   const ITexture* whiteButton; //can easily be given any color with color mods
   const ITexture* whiteRoundButton;
   const ITexture* crossHair; //for example to indicate a 2D location on a map, color picker, ...
+  const ITexture* fgBgColorArrows;
   const ITexture* tabUnSelected[9];
   const ITexture* tabSelected[9];
   const ITexture* borderPanelTextures[9];
   const ITexture* whitePanelTextures[9];
-  
+  const ITexture* whiteButtonTextures[9];
+  const ITexture* whiteButtonOverTextures[9];
+  const ITexture* whiteButtonDownTextures[9];
+  const ITexture* invisibleButtonTextures[9];
+  const ITexture* invisibleButtonOverTextures[9];
+  const ITexture* invisibleButtonDownTextures[9];
   
   const BackPanel* windowPanel;
   const BackPanel* buttonPanel;
@@ -164,7 +167,13 @@ struct GuiSet //GuiSet is a bit of a LEGACY lpi concept. Currently it's just use
   const BackPanel* tabSelectedPanel;
   const BackPanel* borderPanel;
   const BackPanel* whitePanel;
-  
+  const BackPanel* whiteButtonPanel;
+  const BackPanel* whiteButtonOverPanel;
+  const BackPanel* whiteButtonDownPanel;
+  const BackPanel* invisibleButtonPanel;
+  const BackPanel* invisibleButtonOverPanel;
+  const BackPanel* invisibleButtonDownPanel;
+
   const BackRule* sliderHRule;
   const BackRule* sliderVRule;
   const BackRule* smallSliderHRule;
@@ -187,7 +196,7 @@ class GUIPartDrawerInternal : public IGUIPartDrawer
     GuiSet* guiset;
     
     std::vector<ITexture*> builtInTexture;
-    BackPanel builtInPanel[8];
+    BackPanel builtInPanel[14];
     BackRule builtInRule[3];
     GuiSet builtInGuiSet;
     
