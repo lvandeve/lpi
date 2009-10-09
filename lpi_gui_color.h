@@ -27,6 +27,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include <vector>
 #include <string>
 
+
 namespace lpi
 {
 namespace gui
@@ -52,8 +53,8 @@ class ColorEditor : public ColorChangeable
     virtual void setColor(const ColorRGB& color) = 0;
 };
 
-//base class for all color channel editing classes
-class ColorChannelEditor : public ColorChangeable
+
+class PartialEditor : public ColorChangeable
 {
   public:
     enum OutOfRangeAction //what to do with sliders of other color model than RGB that produce values out of RGB range
@@ -65,13 +66,13 @@ class ColorChannelEditor : public ColorChangeable
     
     
   public:
-    ColorChannelEditor();
-    virtual ~ColorChannelEditor(){};
+    PartialEditor();
+    virtual ~PartialEditor(){};
     
     virtual void setAdaptiveColor(const ColorRGB& color) = 0;
 };
 
-class ColorSlider : public ColorChannelEditor, public Element
+class ChannelSlider : public PartialEditor, public Element
 {
   protected:
     Direction dir;
@@ -87,7 +88,7 @@ class ColorSlider : public ColorChannelEditor, public Element
   
   public:
   
-    ColorSlider();
+    ChannelSlider();
   
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
@@ -98,6 +99,8 @@ class ColorSlider : public ColorChannelEditor, public Element
     virtual void setAdaptiveColor(const ColorRGB& color) { this->color = color; }
     virtual void setDrawAlpha(bool drawalpha) { this->drawalpha = drawalpha; }
     virtual void setDrawOutOfRangeRGBColors(OutOfRangeAction action) { this->outofrangeaction = action; }
+    
+    void setDirection(Direction dir) { this->dir = dir; }
 };
 
 enum ColorChannelType //for dynamic sliders
@@ -133,15 +136,15 @@ enum ColorChannelType //for dynamic sliders
   A //alpha
 };
 
-class ColorSliderType : public ColorSlider //can dynamically take any color type
+class ChannelSliderType : public ChannelSlider //can dynamically take any color type
 {
   private:
     ColorChannelType type;
     
   public:
   
-    ColorSliderType() : type(RGB_R) {}
-    ColorSliderType(ColorChannelType type) : type(type) {}
+    ChannelSliderType() : type(RGB_R) {}
+    ChannelSliderType(ColorChannelType type) : type(type) {}
     
     void setType(ColorChannelType type) { this->type = type; }
     ColorChannelType getType() const { return type; }
@@ -153,7 +156,7 @@ class ColorSliderType : public ColorSlider //can dynamically take any color type
     virtual void handleImpl(const IInput& input); //used for debugging...
 };
 
-class ColorSliderEx : public ColorChannelEditor, public ElementComposite
+class ChannelSliderEx : public PartialEditor, public ElementComposite
 {
   /*
   ColorSlicerEx extends ColorSlicer with multiple features:
@@ -166,7 +169,7 @@ class ColorSliderEx : public ColorChannelEditor, public ElementComposite
   */
   protected:
   
-    ColorSlider* slider;
+    ChannelSlider* slider;
     InputLine input;
     Text label;
     double smallest; //the slider internally ranges from 0.0 to 1.0,
@@ -175,13 +178,13 @@ class ColorSliderEx : public ColorChannelEditor, public ElementComposite
     void fixUpSizes();
     
   public:
-    ColorSliderEx(ColorSlider* slider, const std::string& label = "", double smallest = 0, double largest = 255); //you must create slider with new, but ColorSliderEx's dtor will delete it!!
-    ~ColorSliderEx() { delete slider; }
+    ChannelSliderEx(ChannelSlider* slider, const std::string& label = "", double smallest = 0, double largest = 255); //you must create slider with new, but ChannelSliderEx's dtor will delete it!!
+    ~ChannelSliderEx() { delete slider; }
     
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
     
-    double getValue() const; //this is in range 0.0-1.0, like ColorSlider!
+    double getValue() const; //this is in range 0.0-1.0, like ChannelSlider!
     void setValue(double value);
     
     double getValueScaled() const; //this is in range smallest-largest
@@ -192,15 +195,15 @@ class ColorSliderEx : public ColorChannelEditor, public ElementComposite
     void setDrawOutOfRangeRGBColors(OutOfRangeAction action) { slider->setDrawOutOfRangeRGBColors(action); }
 };
 
-class ColorSliderExType : public ColorSliderEx
+class ChannelSliderExType : public ChannelSliderEx
 {
   protected:
-    ColorSliderType* the_slider;
+    ChannelSliderType* the_slider;
   public:
-    ColorSliderExType(ColorChannelType type, const std::string& label = "", double smallest = 0, double largest = 255)
-    : ColorSliderEx(new ColorSliderType(type), label, smallest, largest)
+    ChannelSliderExType(ColorChannelType type, const std::string& label = "", double smallest = 0, double largest = 255)
+    : ChannelSliderEx(new ChannelSliderType(type), label, smallest, largest)
     {
-      the_slider = dynamic_cast<ColorSliderType*>(slider);
+      the_slider = dynamic_cast<ChannelSliderType*>(slider);
     }
 };
 
@@ -211,7 +214,7 @@ class ColorSliders : public ColorEditor, public ElementComposite
   */
   
   protected:
-    std::vector<ColorSliderEx*> sliders;
+    std::vector<ChannelSliderEx*> sliders;
     
     void fixUpSizes();
     
@@ -219,7 +222,7 @@ class ColorSliders : public ColorEditor, public ElementComposite
     ColorSliders();
     ~ColorSliders();
     
-    void addSlider(ColorSliderEx* slider); //this class takes ownership of the pointer
+    void addSlider(ChannelSliderEx* slider); //this class takes ownership of the pointer
     void addAlpha(const std::string& label = "A:", double smallest = 0, double largest = 255); //adds a ColorSliderA, has its own function for convenience, since every color model can have the same alpha channel
 
     virtual void drawImpl(IGUIDrawer& drawer) const;
@@ -301,7 +304,7 @@ class ColorSlidersYCbCr : public ColorSliders
     virtual void setColor(const ColorRGB& color);
 };
 
-class ColorEditor2D : public ColorChannelEditor, public Element
+class PartialEditorSquare : public PartialEditor, public Element
 {
   protected:
 
@@ -317,7 +320,7 @@ class ColorEditor2D : public ColorChannelEditor, public Element
   
   public:
   
-    ColorEditor2D();
+    PartialEditorSquare();
   
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
@@ -332,7 +335,7 @@ class ColorEditor2D : public ColorChannelEditor, public Element
     virtual void setDrawOutOfRangeRGBColors(OutOfRangeAction action) { this->outofrangeaction = action; }
 };
 
-class ColorEditor2DType : public ColorEditor2D
+class PartialEditorSquareType : public PartialEditorSquare
 {
   protected:
     ColorChannelType typex;
@@ -341,17 +344,17 @@ class ColorEditor2DType : public ColorEditor2D
     virtual void getDrawColor(ColorRGB& o_color, double value_x, double value_y) const;
   
   public:
-    ColorEditor2DType() {}
-    ColorEditor2DType(ColorChannelType typex, ColorChannelType typey) : typex(typex), typey(typey) {}
+    PartialEditorSquareType() {}
+    PartialEditorSquareType(ColorChannelType typex, ColorChannelType typey) : typex(typex), typey(typey) {}
     void setChannels(ColorChannelType typex, ColorChannelType typey) { this->typex = typex; this->typey = typey; }
 };
 
-class HueCircle : public ColorChannelEditor, public Element
+class PartialEditorHueCircle : public PartialEditor, public Element
 {
   protected:
 
-    double value_angle;
-    double value_axial;
+    double value_angle; //0.0-1.0
+    double value_axial; //0.0-1.0
     
     void drawBackground(IGUIDrawer& drawer) const;
     virtual void getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const = 0;
@@ -362,7 +365,7 @@ class HueCircle : public ColorChannelEditor, public Element
   
   public:
   
-    HueCircle();
+    PartialEditorHueCircle();
   
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
@@ -377,24 +380,91 @@ class HueCircle : public ColorChannelEditor, public Element
     virtual void setDrawOutOfRangeRGBColors(OutOfRangeAction action) { this->outofrangeaction = action; }
 };
 
-class HueCircle_HSV_HS : public HueCircle
+class PartialEditorHueCircle_HSV_HS : public PartialEditorHueCircle
 {
   virtual void getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const;
 };
 
-class HueCircle_HSV_HV : public HueCircle
+class PartialEditorHueCircle_HSV_HV : public PartialEditorHueCircle
 {
   virtual void getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const;
 };
 
-class HueCircle_HSL_HS : public HueCircle
+class PartialEditorHueCircle_HSL_HS : public PartialEditorHueCircle
 {
   virtual void getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const;
 };
 
-class HueCircle_HSL_HL : public HueCircle
+class PartialEditorHueCircle_HSL_HL : public PartialEditorHueCircle
 {
   virtual void getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const;
+};
+
+//HueCircleEditor: a full color editor, with hue circle, a vertical bar to the right, and a horizontal alpha channel bar below.
+class HueCircleEditor : public ColorEditor, public ElementComposite
+{
+  protected:
+    PartialEditorHueCircle* circle;
+    ChannelSlider* sliderc; //the slider for third component of the color
+    ChannelSlider* slidera; //the slider for alpha channel
+};
+
+class HueCircleEditor_HSV_HS : public HueCircleEditor
+{
+  private:
+  
+  public:
+    
+    HueCircleEditor_HSV_HS()
+    {
+      circle = new PartialEditorHueCircle_HSV_HS();
+      addSubElement(circle, Sticky(0.0, 0, 0.0, 0, 0.8, 0, 0.8, 0));
+      sliderc = new ChannelSliderType(HSV_V);
+      sliderc->setDirection(V);
+      addSubElement(sliderc, Sticky(0.85, 0, 0.0, 0, 0.95, 0, 0.8, 0));
+      slidera = new ChannelSliderType(A);
+      addSubElement(slidera, Sticky(0.0, 0, 0.85, 0, 0.8, 0, 0.95, 0));
+    }
+    
+    virtual void drawImpl(IGUIDrawer& drawer) const
+    {
+      circle->draw(drawer);
+      sliderc->draw(drawer);
+      slidera->draw(drawer);
+    }
+    
+    virtual void handleImpl(const IInput& input)
+    {
+      circle->handle(input);
+      sliderc->handle(input);
+      slidera->handle(input);
+      if(circle->hasChanged()) setChanged();
+      if(sliderc->hasChanged()) setChanged();
+      if(slidera->hasChanged()) setChanged();
+      circle->setAdaptiveColor(getColor());
+      sliderc->setAdaptiveColor(getColor());
+      slidera->setAdaptiveColor(getColor());
+    }
+    
+    //these are from the ColorEditor interface, returns the currently selected color
+    virtual ColorRGB getColor() const
+    {
+      ColorHSV hsv;
+      hsv.h = (int)(circle->getValueAngle() * 255);
+      hsv.s = (int)(circle->getValueAxial() * 255);
+      hsv.v = (int)(sliderc->getValue() * 255);
+      hsv.a = (int)(slidera->getValue() * 255);
+      return HSVtoRGB(hsv);
+    }
+    
+    virtual void setColor(const ColorRGB& color)
+    {
+      ColorHSV hsv = RGBtoHSV(color);
+      circle->setValueAngle(hsv.h / 255.0);
+      circle->setValueAxial(hsv.s / 255.0);
+      sliderc->setValue(hsv.v / 255.0);
+      slidera->setValue(hsv.a / 255.0);
+    }
 };
 
 class PColorPlane : public Element
@@ -415,7 +485,7 @@ class ColorPlane : public PColorPlane
 };
 
 
-class FGBGColor : public ElementComposite
+class FGBGColor : public ColorEditor, public ElementComposite
 {
   /*
   this class represents the following kind of thing (seen in many painting programs):
@@ -429,17 +499,7 @@ class FGBGColor : public ElementComposite
        |      |
        |      |
        [______]
-  
-  because there can't be enough mouse buttons, it also supports a third color (MG or "middleground"), which
-  can be used for the middle mouse button. Then it looks somewhat like this:
-   ______
-  [      ]_<-+
-  |      | ]_v
-  |      | | ]
-  [______] | |
-    [______] |
-      [______]
-     
+       
   */
   
   //TODO: if color is out of RGB range, draw some exclamation mark, warning sign or cross over the color in the square
@@ -467,8 +527,6 @@ class FGBGColor : public ElementComposite
     ColorPlane fg;
     ColorPlane bg;
     Arrows arrows;
-    
-    bool selected_bg; //if false, fg is selected
   
   public:
   
@@ -485,6 +543,42 @@ class FGBGColor : public ElementComposite
     
     bool selectedFG() const;
     bool selectedBG() const;
+    
+    //these are from the ColorEditor interface, returns the currently selected color
+    virtual ColorRGB getColor() const;
+    virtual void setColor(const ColorRGB& color);
+};
+
+class FGMGBGColor
+{
+  /*
+  TODO
+  because there can't be enough mouse buttons, it also supports a third color (MG or "middleground"), which
+  can be used for the middle mouse button. Then it looks somewhat like this:
+   ______
+  [      ]_<-+
+  |      | ]_v
+  |      | | ]
+  [______] | |
+    [______] |
+      [______]
+  */
+};
+
+class ColorEditorSynchronizer
+{
+  private:
+    std::vector<ColorEditor*> editors;
+  
+  public:
+  
+    void add(ColorEditor* editor);
+    void remove(ColorEditor* editor);
+    void clear();
+    
+    void handle();
+    
+    void setColor(const ColorRGB& color); //set the color of everything
 };
 
 } //namespace gui

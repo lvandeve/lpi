@@ -24,6 +24,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include <cstdlib> //abs(int)
 #include <iostream>
+#include <algorithm>
 
 namespace lpi
 {
@@ -54,7 +55,7 @@ void drawCheckerBackground(IGUIDrawer& drawer, int x0, int y0, int x1, int y1, i
   }
 }
 
-ColorChannelEditor::ColorChannelEditor()
+PartialEditor::PartialEditor()
 {
 }
 
@@ -77,7 +78,9 @@ ColorRGB getIndicatorColor(const ColorRGB& color) //returns a color that is alwa
   return result;
 }
 
-ColorSlider::ColorSlider()
+////////////////////////////////////////////////////////////////////////////////
+
+ChannelSlider::ChannelSlider()
 : dir(H)
 , value(0.5)
 , drawalpha(true)
@@ -86,7 +89,7 @@ ColorSlider::ColorSlider()
 }
 
 
-void ColorSlider::drawImpl(IGUIDrawer& drawer) const
+void ChannelSlider::drawImpl(IGUIDrawer& drawer) const
 {
   (void)drawer;
   
@@ -104,7 +107,7 @@ void ColorSlider::drawImpl(IGUIDrawer& drawer) const
   else
   {
     drawBackgroundV(drawer);
-    int pos = y0 + (int)(value * getSizeY());
+    int pos = y1 - (int)(value * getSizeY()) - 1;
     if(pos <= y0) pos = y0 + 1; if(pos >= y1 - 1) pos = y1 - 2; //don't make it hidden by border...
     drawer.drawLine(x0, pos, x1, pos, indicator);
   }
@@ -112,9 +115,9 @@ void ColorSlider::drawImpl(IGUIDrawer& drawer) const
   drawer.drawRectangle(x0, y0, x1, y1, RGB_Black, false);
 }
 
-void ColorSlider::drawBackgroundH(IGUIDrawer& drawer) const
+void ChannelSlider::drawBackgroundH(IGUIDrawer& drawer) const
 {
-  static const size_t NUM = 128;
+  static const size_t NUM = 64;
   ColorRGB c;
   
   if(drawalpha) drawCheckerBackground(drawer, x0, y0, x1, y1, 4, 4, RGB_White, RGB_Black);
@@ -142,9 +145,9 @@ void ColorSlider::drawBackgroundH(IGUIDrawer& drawer) const
   }
 }
 
-void ColorSlider::drawBackgroundV(IGUIDrawer& drawer) const
+void ChannelSlider::drawBackgroundV(IGUIDrawer& drawer) const
 {
-  static const size_t NUM = 128;
+  static const size_t NUM = 64;
   ColorRGB c;
   
   if(drawalpha) drawCheckerBackground(drawer, x0, y0, x1, y1, 4, 4, RGB_White, RGB_Black);
@@ -154,7 +157,7 @@ void ColorSlider::drawBackgroundV(IGUIDrawer& drawer) const
     int ya = 1 + y0 + ((i * getSizeY()) / NUM);
     int yb = 1 + y0 + (((i + 1) * getSizeY()) / NUM);
     if(i == NUM - 1) yb = y1 - 1;
-    double v = (double)((ya + yb) / 2 - y0) / (getSizeY() - 2);
+    double v = 1.0 - (double)((ya + yb) / 2 - y0) / (getSizeY() - 2);
     getDrawColor(c, v);
     if(!drawalpha) c.a = 255;
     bool outofrange = !(c.r >= 0 && c.r <= 255 && c.g >= 0 && c.g <= 255 && c.b >= 0 && c.b <= 255);
@@ -172,14 +175,14 @@ void ColorSlider::drawBackgroundV(IGUIDrawer& drawer) const
   }
 }
 
-void ColorSlider::handleImpl(const IInput& input)
+void ChannelSlider::handleImpl(const IInput& input)
 {
   if(mouseGrabbed(input))
   {
     if(dir == H)
       value = mouseGetRelPosX(input) / (double)(getSizeX());
     else
-      value = mouseGetRelPosY(input) / (double)(getSizeY());
+      value = (getSizeY() - mouseGetRelPosY(input) - 1) / (double)(getSizeY());
     
     if(value < 0.0) value = 0.0;
     if(value > 1.0) value = 1.0;
@@ -307,12 +310,12 @@ void getColorDynamic(ColorRGB& o_color, const ColorRGB& color, double value, Col
   }
 }
 
-void ColorSliderType::getDrawColor(ColorRGB& o_color, double value) const
+void ChannelSliderType::getDrawColor(ColorRGB& o_color, double value) const
 {
   getColorDynamic(o_color, color, value, type);
 }
 
-void ColorSliderType::incrementType()
+void ChannelSliderType::incrementType()
 {
   if(type == A)
     type = RGB_R;
@@ -320,7 +323,7 @@ void ColorSliderType::incrementType()
     type = (ColorChannelType)((int)(type) + 1);
 }
 
-void ColorSliderType::decrementType()
+void ChannelSliderType::decrementType()
 {
   if(type == RGB_R)
     type = A;
@@ -328,9 +331,9 @@ void ColorSliderType::decrementType()
     type = (ColorChannelType)((int)(type) - 1);
 }
 
-void ColorSliderType::handleImpl(const IInput& input)
+void ChannelSliderType::handleImpl(const IInput& input)
 {
-  ColorSlider::handleImpl(input);
+  ChannelSlider::handleImpl(input);
   if(mouseDoubleClicked(input, LMB)) incrementType();
   if(mouseDoubleClicked(input, RMB)) decrementType();
 }
@@ -344,7 +347,7 @@ void ColorSliderType::handleImpl(const IInput& input)
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-ColorSliderEx::ColorSliderEx(ColorSlider* slider, const std::string& label, double smallest, double largest)
+ChannelSliderEx::ChannelSliderEx(ChannelSlider* slider, const std::string& label, double smallest, double largest)
 : slider(slider)
 , smallest(smallest)
 , largest(largest)
@@ -363,11 +366,11 @@ ColorSliderEx::ColorSliderEx(ColorSlider* slider, const std::string& label, doub
   ic.setStickyFull(slider, this);
 }
 
-void ColorSliderEx::fixUpSizes()
+void ChannelSliderEx::fixUpSizes()
 {
 }
 
-void ColorSliderEx::drawImpl(IGUIDrawer& drawer) const
+void ChannelSliderEx::drawImpl(IGUIDrawer& drawer) const
 {
   slider->draw(drawer);
   drawer.drawRectangle(input.getX0()-1, input.getY0()-1, input.getX1(), input.getY1(), RGB_White, true);
@@ -376,7 +379,7 @@ void ColorSliderEx::drawImpl(IGUIDrawer& drawer) const
   label.draw(drawer);
 }
 
-void ColorSliderEx::handleImpl(const IInput& input)
+void ChannelSliderEx::handleImpl(const IInput& input)
 {
   slider->handle(input);
   this->input.handle(input);
@@ -394,23 +397,23 @@ void ColorSliderEx::handleImpl(const IInput& input)
   }
 }
 
-double ColorSliderEx::getValue() const
+double ChannelSliderEx::getValue() const
 {
   return slider->getValue();
 }
 
-void ColorSliderEx::setValue(double value)
+void ChannelSliderEx::setValue(double value)
 {
   slider->setValue(value);
   input.setText(valtostr((int)(smallest + value * (largest - smallest))));
 }
 
-double ColorSliderEx::getValueScaled() const
+double ChannelSliderEx::getValueScaled() const
 {
   return smallest + getValue() * (largest - smallest);
 }
 
-void ColorSliderEx::setValueScaled(double value)
+void ChannelSliderEx::setValueScaled(double value)
 {
   setValue(value / (largest - smallest) - smallest);
 }
@@ -455,7 +458,7 @@ ColorSliders::~ColorSliders()
     delete sliders[i];
 }
 
-void ColorSliders::addSlider(ColorSliderEx* slider)
+void ColorSliders::addSlider(ChannelSliderEx* slider)
 {
   sliders.push_back(slider);
   addSubElement(slider);
@@ -464,7 +467,7 @@ void ColorSliders::addSlider(ColorSliderEx* slider)
 
 void ColorSliders::addAlpha(const std::string& label, double smallest, double largest)
 {
-  addSlider(new ColorSliderExType(A, label, smallest, largest));
+  addSlider(new ChannelSliderExType(A, label, smallest, largest));
 }
 
 void ColorSliders::drawImpl(IGUIDrawer& drawer) const
@@ -492,9 +495,9 @@ void ColorSliders::handleImpl(const IInput& input)
 
 ColorSlidersRGB::ColorSlidersRGB(bool with_alpha)
 {
-  addSlider(new ColorSliderExType(RGB_R, "R:"));
-  addSlider(new ColorSliderExType(RGB_G, "G:"));
-  addSlider(new ColorSliderExType(RGB_B, "B:"));
+  addSlider(new ChannelSliderExType(RGB_R, "R:"));
+  addSlider(new ChannelSliderExType(RGB_G, "G:"));
+  addSlider(new ChannelSliderExType(RGB_B, "B:"));
   for(size_t i = 0; i < sliders.size(); i++) sliders[i]->setDrawAlpha(false);
   if(with_alpha) addAlpha("A:");
 }
@@ -519,9 +522,9 @@ void ColorSlidersRGB::setColor(const ColorRGB& color)
 
 ColorSlidersHSV::ColorSlidersHSV(bool with_alpha)
 {
-  addSlider(new ColorSliderExType(HSV_H, "H:"));
-  addSlider(new ColorSliderExType(HSV_S, "S:"));
-  addSlider(new ColorSliderExType(HSV_V, "V:"));
+  addSlider(new ChannelSliderExType(HSV_H, "H:"));
+  addSlider(new ChannelSliderExType(HSV_S, "S:"));
+  addSlider(new ChannelSliderExType(HSV_V, "V:"));
   for(size_t i = 0; i < sliders.size(); i++) sliders[i]->setDrawAlpha(false);
   if(with_alpha) addAlpha("A:");
 }
@@ -548,9 +551,9 @@ void ColorSlidersHSV::setColor(const ColorRGB& color)
 
 ColorSlidersHSL::ColorSlidersHSL(bool with_alpha)
 {
-  addSlider(new ColorSliderExType(HSL_H, "H:"));
-  addSlider(new ColorSliderExType(HSL_S, "S:"));
-  addSlider(new ColorSliderExType(HSL_L, "L:"));
+  addSlider(new ChannelSliderExType(HSL_H, "H:"));
+  addSlider(new ChannelSliderExType(HSL_S, "S:"));
+  addSlider(new ChannelSliderExType(HSL_L, "L:"));
   for(size_t i = 0; i < sliders.size(); i++) sliders[i]->setDrawAlpha(false);
   if(with_alpha) addAlpha("A:");
 }
@@ -577,9 +580,9 @@ void ColorSlidersHSL::setColor(const ColorRGB& color)
 
 ColorSlidersCMY::ColorSlidersCMY(bool with_alpha)
 {
-  addSlider(new ColorSliderExType(CMY_C, "C:"));
-  addSlider(new ColorSliderExType(CMY_M, "M:"));
-  addSlider(new ColorSliderExType(CMY_Y, "Y:"));
+  addSlider(new ChannelSliderExType(CMY_C, "C:"));
+  addSlider(new ChannelSliderExType(CMY_M, "M:"));
+  addSlider(new ChannelSliderExType(CMY_Y, "Y:"));
   for(size_t i = 0; i < sliders.size(); i++) sliders[i]->setDrawAlpha(false);
   if(with_alpha) addAlpha("A:");
 }
@@ -606,10 +609,10 @@ void ColorSlidersCMY::setColor(const ColorRGB& color)
 
 ColorSlidersCMYK::ColorSlidersCMYK(bool with_alpha)
 {
-  addSlider(new ColorSliderExType(CMYK_C, "C:"));
-  addSlider(new ColorSliderExType(CMYK_M, "M:"));
-  addSlider(new ColorSliderExType(CMYK_Y, "Y:"));
-  addSlider(new ColorSliderExType(CMYK_K, "K:"));
+  addSlider(new ChannelSliderExType(CMYK_C, "C:"));
+  addSlider(new ChannelSliderExType(CMYK_M, "M:"));
+  addSlider(new ChannelSliderExType(CMYK_Y, "Y:"));
+  addSlider(new ChannelSliderExType(CMYK_K, "K:"));
   for(size_t i = 0; i < sliders.size(); i++) sliders[i]->setDrawAlpha(false);
   if(with_alpha) addAlpha("A:");
 }
@@ -638,9 +641,9 @@ void ColorSlidersCMYK::setColor(const ColorRGB& color)
 
 ColorSlidersCIEXYZ::ColorSlidersCIEXYZ(bool with_alpha)
 {
-  addSlider(new ColorSliderExType(CIEXYZ_X, "X:"));
-  addSlider(new ColorSliderExType(CIEXYZ_Y, "Y:"));
-  addSlider(new ColorSliderExType(CIEXYZ_Z, "Z:"));
+  addSlider(new ChannelSliderExType(CIEXYZ_X, "X:"));
+  addSlider(new ChannelSliderExType(CIEXYZ_Y, "Y:"));
+  addSlider(new ChannelSliderExType(CIEXYZ_Z, "Z:"));
   for(size_t i = 0; i < sliders.size(); i++) sliders[i]->setDrawAlpha(false);
   if(with_alpha) addAlpha("A:");
 }
@@ -667,9 +670,9 @@ void ColorSlidersCIEXYZ::setColor(const ColorRGB& color)
 
 ColorSlidersCIELab::ColorSlidersCIELab(bool with_alpha)
 {
-  addSlider(new ColorSliderExType(CIELab_L, "L:", 0, 255));
-  addSlider(new ColorSliderExType(CIELab_a, "a:", -128, 127));
-  addSlider(new ColorSliderExType(CIELab_b, "b:", -128, 127));
+  addSlider(new ChannelSliderExType(CIELab_L, "L:", 0, 255));
+  addSlider(new ChannelSliderExType(CIELab_a, "a:", -128, 127));
+  addSlider(new ChannelSliderExType(CIELab_b, "b:", -128, 127));
   for(size_t i = 0; i < sliders.size(); i++) sliders[i]->setDrawAlpha(false);
   if(with_alpha) addAlpha("A:");
 }
@@ -698,9 +701,9 @@ void ColorSlidersCIELab::setColor(const ColorRGB& color)
 
 ColorSlidersYPbPr::ColorSlidersYPbPr(bool with_alpha)
 {
-  addSlider(new ColorSliderExType(YPbPr_Y, " Y:", 0, 255));
-  addSlider(new ColorSliderExType(YPbPr_Pb, "Pb:", -128, 127));
-  addSlider(new ColorSliderExType(YPbPr_Pr, "Pr:", -128, 127));
+  addSlider(new ChannelSliderExType(YPbPr_Y, " Y:", 0, 255));
+  addSlider(new ChannelSliderExType(YPbPr_Pb, "Pb:", -128, 127));
+  addSlider(new ChannelSliderExType(YPbPr_Pr, "Pr:", -128, 127));
   for(size_t i = 0; i < sliders.size(); i++) sliders[i]->setDrawAlpha(false);
   if(with_alpha) addAlpha(" A:");
 }
@@ -727,9 +730,9 @@ void ColorSlidersYPbPr::setColor(const ColorRGB& color)
 
 ColorSlidersYCbCr::ColorSlidersYCbCr(bool with_alpha)
 {
-  addSlider(new ColorSliderExType(YCbCr_Y, " Y:"));
-  addSlider(new ColorSliderExType(YCbCr_Cb, "Cb:"));
-  addSlider(new ColorSliderExType(YCbCr_Cr, "Cr:"));
+  addSlider(new ChannelSliderExType(YCbCr_Y, " Y:"));
+  addSlider(new ChannelSliderExType(YCbCr_Cb, "Cb:"));
+  addSlider(new ChannelSliderExType(YCbCr_Cr, "Cr:"));
   for(size_t i = 0; i < sliders.size(); i++) sliders[i]->setDrawAlpha(false);
   if(with_alpha) addAlpha(" A:");
 }
@@ -764,13 +767,13 @@ void ColorSlidersYCbCr::setColor(const ColorRGB& color)
 ////////////////////////////////////////////////////////////////////////////////
 
   
-ColorEditor2D::ColorEditor2D()
+PartialEditorSquare::PartialEditorSquare()
 : drawalpha(true)
 , outofrangeaction(WARNING)
 {
 }
 
-void ColorEditor2D::drawBackground(IGUIDrawer& drawer) const
+void PartialEditorSquare::drawBackground(IGUIDrawer& drawer) const
 {
   static const size_t NUMX = 16;
   static const size_t NUMY = 16;
@@ -798,17 +801,17 @@ void ColorEditor2D::drawBackground(IGUIDrawer& drawer) const
   }
 }
 
-void ColorEditor2D::drawImpl(IGUIDrawer& drawer) const
+void PartialEditorSquare::drawImpl(IGUIDrawer& drawer) const
 {
   drawBackground(drawer);
 }
 
-void ColorEditor2D::handleImpl(const IInput& input)
+void PartialEditorSquare::handleImpl(const IInput& input)
 {
   (void)input;
 }
 
-void ColorEditor2DType::getDrawColor(ColorRGB& o_color, double value_x, double value_y) const
+void PartialEditorSquareType::getDrawColor(ColorRGB& o_color, double value_x, double value_y) const
 {
   ColorRGB temp;
   getColorDynamic(temp, color, value_x, typex);
@@ -825,11 +828,11 @@ void ColorEditor2DType::getDrawColor(ColorRGB& o_color, double value_x, double v
 ////////////////////////////////////////////////////////////////////////////////
 
   
-HueCircle::HueCircle()
+PartialEditorHueCircle::PartialEditorHueCircle()
 {
 }
 
-void HueCircle::drawImpl(IGUIDrawer& drawer) const
+void PartialEditorHueCircle::drawImpl(IGUIDrawer& drawer) const
 {
   static const size_t NUMANGLE = 24;
   static const size_t NUMAXIAL = 8;
@@ -838,9 +841,10 @@ void HueCircle::drawImpl(IGUIDrawer& drawer) const
   int cy = getCenterY();
   double radius = getSizeX() < getSizeY() ? getSizeX() / 2 : getSizeY() / 2;
   
+  const double twopi = 2.0 * 3.14159;
+  
   for(size_t a = 0; a < NUMANGLE; a++)
   {
-    const double twopi = 2.0 * 3.14159;
     double angle = ((double)a / (double)NUMANGLE) * twopi;
     double angle2 = ((double)(a == NUMANGLE ? 0 : a + 1) / (double)NUMANGLE) * twopi;
     for(size_t r = 0; r < NUMAXIAL; r++)
@@ -865,9 +869,16 @@ void HueCircle::drawImpl(IGUIDrawer& drawer) const
       drawer.drawGradientQuad(x0, y0, x1, y1, x2, y2, x3, y3, color0, color1, color2, color3);
     }
   }
+  
+  int x = cx + (int)(std::cos(twopi * value_angle) * value_axial * radius);
+  int y = cy + (int)(std::sin(twopi * value_angle) * value_axial * radius);
+  ColorRGB indicator;
+  getDrawColor(indicator, value_angle, value_axial);
+  indicator = getIndicatorColor(indicator);
+  drawer.drawCircle(x, y, 4, indicator, false);
 }
 
-void HueCircle::handleImpl(const IInput& input)
+void PartialEditorHueCircle::handleImpl(const IInput& input)
 {
   if(mouseGrabbed(input))
   {
@@ -889,7 +900,7 @@ void HueCircle::handleImpl(const IInput& input)
   }
 }
 
-void HueCircle_HSV_HS::getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const
+void PartialEditorHueCircle_HSV_HS::getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const
 {
   ColorHSV convert = RGBtoHSV(color);
   convert.h = (int)(value_angle * 255.0);
@@ -897,7 +908,7 @@ void HueCircle_HSV_HS::getDrawColor(ColorRGB& o_color, double value_angle, doubl
   o_color = HSVtoRGB(convert);
 }
 
-void HueCircle_HSV_HV::getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const
+void PartialEditorHueCircle_HSV_HV::getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const
 {
   ColorHSV convert = RGBtoHSV(color);
   convert.h = (int)(value_angle * 255.0);
@@ -905,7 +916,7 @@ void HueCircle_HSV_HV::getDrawColor(ColorRGB& o_color, double value_angle, doubl
   o_color = HSVtoRGB(convert);
 }
 
-void HueCircle_HSL_HS::getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const
+void PartialEditorHueCircle_HSL_HS::getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const
 {
   ColorHSL convert = RGBtoHSL(color);
   convert.h = (int)(value_angle * 255.0);
@@ -913,7 +924,7 @@ void HueCircle_HSL_HS::getDrawColor(ColorRGB& o_color, double value_angle, doubl
   o_color = HSLtoRGB(convert);
 }
 
-void HueCircle_HSL_HL::getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const
+void PartialEditorHueCircle_HSL_HL::getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const
 {
   ColorHSL convert = RGBtoHSL(color);
   convert.h = (int)(value_angle * 255.0);
@@ -949,6 +960,7 @@ ColorPlane::ColorPlane()
 
 void FGBGColor::Arrows::drawImpl(IGUIDrawer& drawer) const
 {
+  drawer.drawGUIPart(GP_FG_BG_COLOR_ARROWS, x0, y0, x1, y1);
 }
 
 FGBGColor::ColorPlane::ColorPlane()
@@ -967,19 +979,22 @@ void FGBGColor::ColorPlane::drawImpl(IGUIDrawer& drawer) const
 
 void FGBGColor::ColorPlane::handleImpl(const IInput& input)
 {
+  (void)input;
 }
 
 FGBGColor::FGBGColor()
-: selected_bg(false)
 {
-  addSubElement(&fg, Sticky(0.0, 0, 0.0, 0, 0.66, 0, 0.66, 0));
-  addSubElement(&bg, Sticky(0.33, 0, 0.33, 0, 1.0, 0, 1.0, 0));
+  addSubElement(&fg, Sticky(0.0, 0, 0.0, 0, 1.0, -16, 1.0, -16));
+  addSubElement(&bg, Sticky(0.0, 16, 0.0, 16, 1.0, 0, 1.0, 0));
+  addSubElement(&arrows, Sticky(0.66, 0, 0.0, 0, 1.0, 0, 0.33, 0));
+  fg.selected = true;
 }
 
 void FGBGColor::drawImpl(IGUIDrawer& drawer) const
 {
   bg.draw(drawer);
   fg.draw(drawer);
+  arrows.draw(drawer);
 }
 
 void FGBGColor::handleImpl(const IInput& input)
@@ -988,11 +1003,20 @@ void FGBGColor::handleImpl(const IInput& input)
   {
     fg.selected = true;
     bg.selected = false;
+    setChanged();
   }
   else if(bg.mouseDownHere(input))
   {
     fg.selected = false;
     bg.selected = true;
+    setChanged();
+  }
+  else if(arrows.clicked(input))
+  {
+    ColorRGB temp = fg.color;
+    fg.color = bg.color;
+    bg.color = temp;
+    setChanged();
   }
 }
 
@@ -1018,12 +1042,62 @@ ColorRGB FGBGColor::getBG() const
 
 bool FGBGColor::selectedFG() const
 {
-  return !selected_bg;
+  return fg.selected;
 }
 
 bool FGBGColor::selectedBG() const
 {
-  return selected_bg;
+  return bg.selected;
+}
+
+ColorRGB FGBGColor::getColor() const
+{
+  return fg.selected? fg.color : bg.color;
+}
+
+void FGBGColor::setColor(const ColorRGB& color)
+{
+  if(fg.selected) fg.color = color; else bg.color = color;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void ColorEditorSynchronizer::add(ColorEditor* editor)
+{
+  editors.push_back(editor);
+}
+
+void ColorEditorSynchronizer::remove(ColorEditor* editor)
+{
+  editors.erase(std::remove(editors.begin(), editors.end(), editor), editors.end());
+}
+
+void ColorEditorSynchronizer::clear()
+{
+  editors.clear();
+}
+
+void ColorEditorSynchronizer::handle()
+{
+  for(size_t i = 0; i < editors.size(); i++)
+  {
+    if(editors[i]->hasChanged())
+    {
+      for(size_t j = 0; j < editors.size(); j++)
+      {
+        if(j != i) editors[j]->setColor(editors[i]->getColor());
+      }
+      break;
+    }
+  }
+}
+
+void ColorEditorSynchronizer::setColor(const ColorRGB& color)
+{
+  for(size_t i = 0; i < editors.size(); i++)
+  {
+    editors[i]->setColor(color);
+  }
 }
 
 } //namespace gui
