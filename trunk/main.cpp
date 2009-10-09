@@ -271,16 +271,14 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   tval5.make(0, 0, &dyn_value5);
   tabs.getTabContent(1).pushTopAt(&tval5, 10, 172);
   
-  lpi::gui::HueCircle_HSV_HS hsv;
+  lpi::gui::HueCircleEditor_HSV_HS hsv;
   hsv.resize(0,0,120,120);
-  hsv.setAdaptiveColor(lpi::RGBA_Lightred(192));
-  hsv.setValueAxial(1.0);
+  //hsv.setAdaptiveColor(lpi::RGBA_Lightred(192));
+  //hsv.setValueAxial(1.0);
   tabs.getTabContent(2).pushTopAt(&hsv, 20, 50);
-  lpi::ColorRGB color;
-  lpi::gui::FGBGColor colorplane;
-  colorplane.resize(0, 0, 64, 48);
-  //colorplane.color = lpi::ColorRGB(128, 255, 255, 192);
-  tabs.getTabContent(2).pushTopAt(&colorplane, 144, 50);
+  lpi::gui::FGBGColor fgbg;
+  fgbg.resize(0, 0, 64, 48);
+  tabs.getTabContent(2).pushTopAt(&fgbg, 144, 50);
   lpi::gui::Canvas canvas(guidrawer);
   canvas.make(0, 0, 128, 128);
   tabs.getTabContent(2).pushTopAt(&canvas, 144, 100);
@@ -304,6 +302,11 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   tooltips.registerElement(&sound_button, "beware...\nthis button makes sound");
   tooltips.registerElement(&tb_guitopng, "Unlike the main GUI, which is rendered\nusing 2D triangles with OpenGL,\nthe alternative renderer is entirely in software.");
   
+  lpi::gui::ColorEditorSynchronizer colorSynchronizer;
+  colorSynchronizer.add(&fgbg);
+  colorSynchronizer.add(&hsv);
+  colorSynchronizer.setColor(lpi::RGB_Red);
+  
   while(lpi::frame(true, true))
   {
     gametime.update();
@@ -323,10 +326,25 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     c.draw(guidrawer);
     tooltips.draw(&c, guidrawer);
     c.handle(lpi::gSDLInput);
+    colorSynchronizer.handle();
     
-    lpi::ColorHSV colorHSV(hsv.getValueAngle() * 255, hsv.getValueAxial() * 255, 255);
-    color = lpi::HSVtoRGB(colorHSV);
-    canvas.leftColor = color;
+    canvas.leftColor = fgbg.getFG();
+    canvas.rightColor = fgbg.getBG();
+    
+    /*if(fgbg.selectedFG())
+    {
+      lpi::ColorHSV colorHSV(hsv.getValueAngle() * 255, hsv.getValueAxial() * 255, 255);
+      lpi::ColorRGB color = lpi::HSVtoRGB(colorHSV);
+      canvas.leftColor = color;
+      fgbg.setFG(color);
+    }
+    else
+    {
+      lpi::ColorHSV colorHSV(hsv.getValueAngle() * 255, hsv.getValueAxial() * 255, 255);
+      lpi::ColorRGB color = lpi::HSVtoRGB(colorHSV);
+      canvas.rightColor = color;
+      fgbg.setBG(color);
+    }*/
     
     spawns.draw();
     spawns.handle();
