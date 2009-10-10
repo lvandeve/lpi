@@ -886,8 +886,10 @@ void PartialEditorHueCircle::handleImpl(const IInput& input)
 {
   if(mouseGrabbed(input))
   {
-    double x = (double)(mouseGetRelPosX(input) - getSizeX() / 2) / (double)(getSizeX() / 2);
-    double y = (double)(mouseGetRelPosY(input) - getSizeX() / 2) / (double)(getSizeY() / 2);
+    double radius = getSizeX() < getSizeY() ? getSizeX() / 2 : getSizeY() / 2;
+    
+    double x = (double)(mouseGetRelPosX(input) - getSizeX() / 2) / radius;
+    double y = (double)(mouseGetRelPosY(input) - getSizeY() / 2) / radius;
     
     value_axial = std::sqrt(x*x+y*y);
     if(value_axial < 0.0) value_axial = 0.0;
@@ -956,9 +958,10 @@ void PColorPlane::drawImpl(IGUIDrawer& drawer) const
 {
   int checkersize = 8;
   if(getSizeX() < 16 && getSizeY() < 16) checkersize = getSizeX() / 2;
-  drawCheckerBackground(drawer, x0, y0, x1, y1, checkersize, checkersize);
+  bool largeenough = getSizeX() > 4 && getSizeY() > 4;
+  if(largeenough) drawCheckerBackground(drawer, x0, y0, x1, y1, checkersize, checkersize);
   drawer.drawRectangle(x0, y0, x1, y1, *color, true);
-  drawer.drawGUIPart(GP_PANEL_BORDER, x0, y0, x1, y1);
+  if(largeenough) drawer.drawGUIPart(GP_PANEL_BORDER, x0, y0, x1, y1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -980,9 +983,10 @@ void SelectableColorPlane::drawImpl(IGUIDrawer& drawer) const
 {
   int checkersize = 8;
   if(getSizeX() < 16 && getSizeY() < 16) checkersize = getSizeX() / 2;
-  drawCheckerBackground(drawer, x0, y0, x1, y1, checkersize, checkersize);
+  bool largeenough = getSizeX() > 4 && getSizeY() > 4;
+  if(largeenough) drawCheckerBackground(drawer, x0, y0, x1, y1, checkersize, checkersize);
   drawer.drawRectangle(x0, y0, x1, y1, color, true);
-  drawer.drawGUIPart(selected ? GP_INVISIBLE_BUTTON_PANEL_DOWN : GP_INVISIBLE_BUTTON_PANEL_UP, x0, y0, x1, y1);
+  if(largeenough) drawer.drawGUIPart(selected ? GP_INVISIBLE_BUTTON_PANEL_DOWN : GP_INVISIBLE_BUTTON_PANEL_UP, x0, y0, x1, y1);
 }
 
 void SelectableColorPlane::handleImpl(const IInput& input)

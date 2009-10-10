@@ -190,7 +190,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   tabs.addTab("tab 2");
   tabs.addTab("tab 3");
   tabs.addTab("tab 4");
-  w2.pushTopAt(&tabs, 0, 16, lpi::gui::Sticky(0.0, 0, 0.1, 0, 1.0, 0, 0.9, 0));
+  w2.pushTopAt(&tabs, 0, 16, lpi::gui::Sticky(0.0, 0, 0.1, 0, 1.0, 0, 1.0, 0));
 
 
   lpi::gui::Button sound_button;
@@ -273,22 +273,22 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   
   lpi::gui::HueCircleEditor_HSV_HS hsv;
   hsv.resize(0,0,120,120);
-  tabs.getTabContent(2).pushTopAt(&hsv, 20, 20);
+  tabs.getTabContent(2).pushTopAt(&hsv, 20, 20, lpi::gui::Sticky(0.01,0, 0.0,0, 0.45,0, 0.45,0));
   lpi::gui::ColorSlidersRGB rgb;
   rgb.resize(0,0,120,64);
-  tabs.getTabContent(2).pushTopAt(&rgb, 20, 150);
+  tabs.getTabContent(2).pushTopAt(&rgb, 20, 150, lpi::gui::Sticky(0.01,0, 0.55,0, 0.45,0, 0.7,0));
   lpi::gui::FGBGColor fgbg;
   fgbg.resize(0, 0, 48, 48);
-  tabs.getTabContent(2).pushTopAt(&fgbg, 144, 20);
+  tabs.getTabContent(2).pushTopAt(&fgbg, 144, 20, lpi::gui::Sticky(0.01,0, 0.8,0, 0.2,0, 1.0,0));
   lpi::gui::Canvas canvas(guidrawer);
-  canvas.make(0, 0, 128, 128);
-  tabs.getTabContent(2).pushTopAt(&canvas, 144, 100);
+  canvas.make(0, 0, 256, 256);
+  tabs.getTabContent(2).pushTopAt(&canvas, 144, 100, lpi::gui::Sticky(0.55,0, 0.55,0, 1.0,0, 1.0,0));
   
   lpi::gui::MultiColorPalette palette;
   //palette.generateDefault();
   palette.generateVibrant16x16();
   palette.resize(0, 0, 96, 96);
-  tabs.getTabContent(2).pushTopAt(&palette, 200, 4);
+  tabs.getTabContent(2).pushTopAt(&palette, 200, 4, lpi::gui::Sticky(0.55,0, 0.0,0, 1.0,0, 0.45,0));
   
   lpi::gui::Checkbox wcb;
   wcb.make(0, 0);
