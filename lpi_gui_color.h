@@ -51,8 +51,9 @@ class ColorEditor : public ColorChangeable
   public:
     //main color: a single color, not associated to any mouse button (not even the first or left one)
     virtual bool isMainColorGettable() const { return true; }
-    virtual ColorRGB getColor() const = 0;
-    virtual void setColor(const ColorRGB& color) = 0;
+    virtual ColorRGBd getColor() const = 0;
+    virtual ColorRGB getColor255() { return RGBdtoRGB(getColor()); }
+    virtual void setColor(const ColorRGBd& color) = 0;
     
     //multi color: a color per mouse button
     
@@ -64,8 +65,8 @@ class ColorEditor : public ColorChangeable
     };
     
     virtual bool isMultiColorGettable(Plane plane) const { (void)plane; return false; }
-    virtual ColorRGB getMultiColor(Plane plane) const { return getColor(); }
-    virtual void setMultiColor(Plane plane, const ColorRGB& color) { (void)plane; (void)color; }
+    virtual ColorRGBd getMultiColor(Plane plane) const { return getColor(); }
+    virtual void setMultiColor(Plane plane, const ColorRGBd& color) { (void)plane; (void)color; }
     
     //multi color linker: choose which of the multi-colors is linked to the main color
     virtual bool isMultiColorLinker() const { return false; }
@@ -99,7 +100,7 @@ class PartialEditor : public ColorChangeable
     PartialEditor();
     virtual ~PartialEditor(){};
     
-    virtual void setAdaptiveColor(const ColorRGB& color) = 0;
+    virtual void setAdaptiveColor(const ColorRGBd& color) = 0;
 };
 
 class ChannelSlider : public PartialEditor, public Element
@@ -112,7 +113,7 @@ class ChannelSlider : public PartialEditor, public Element
     void drawBackgroundV(IGUIDrawer& drawer) const;
     virtual void getDrawColor(ColorRGB& o_color, double value) const = 0;
     
-    ColorRGB color; //this color is used as base color, e.g. when it's a lightness slider, the darkest is black, the brightest is this color. Can be used to show the effect of this slider on the current color.
+    ColorRGBd color; //this color is used as base color, e.g. when it's a lightness slider, the darkest is black, the brightest is this color. Can be used to show the effect of this slider on the current color.
     bool drawalpha; //if true, draws alpha channel of color, if false, always draws it opaque (this depends on whether or not you want the adaptive color to show alpha channel too)
     OutOfRangeAction outofrangeaction;
   
@@ -126,7 +127,7 @@ class ChannelSlider : public PartialEditor, public Element
     double getValue() const { return value; }
     void setValue(double value) { this->value = value; }
     
-    virtual void setAdaptiveColor(const ColorRGB& color) { this->color = color; }
+    virtual void setAdaptiveColor(const ColorRGBd& color) { this->color = color; }
     virtual void setDrawAlpha(bool drawalpha) { this->drawalpha = drawalpha; }
     virtual void setDrawOutOfRangeRGBColors(OutOfRangeAction action) { this->outofrangeaction = action; }
     
@@ -220,7 +221,7 @@ class ChannelSliderEx : public PartialEditor, public ElementComposite
     double getValueScaled() const; //this is in range smallest-largest
     void setValueScaled(double value);
 
-    void setAdaptiveColor(const ColorRGB& color) { slider->setAdaptiveColor(color); }
+    void setAdaptiveColor(const ColorRGBd& color) { slider->setAdaptiveColor(color); }
     void setDrawAlpha(bool drawalpha) { slider->setDrawAlpha(drawalpha); }
     void setDrawOutOfRangeRGBColors(OutOfRangeAction action) { slider->setDrawOutOfRangeRGBColors(action); }
 };
@@ -258,80 +259,80 @@ class ColorSliders : public ColorEditor, public ElementComposite
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
     
-    virtual ColorRGB getColor() const = 0;
-    virtual void setColor(const ColorRGB& color) = 0;
+    virtual ColorRGBd getColor() const = 0;
+    virtual void setColor(const ColorRGBd& color) = 0;
 };
 
 class ColorSlidersRGB : public ColorSliders
 {
   public:
     ColorSlidersRGB(bool with_alpha = true);
-    virtual ColorRGB getColor() const;
-    virtual void setColor(const ColorRGB& color);
+    virtual ColorRGBd getColor() const;
+    virtual void setColor(const ColorRGBd& color);
 };
 
 class ColorSlidersHSV : public ColorSliders
 {
   public:
     ColorSlidersHSV(bool with_alpha = true);
-    virtual ColorRGB getColor() const;
-    virtual void setColor(const ColorRGB& color);
+    virtual ColorRGBd getColor() const;
+    virtual void setColor(const ColorRGBd& color);
 };
 
 class ColorSlidersHSL : public ColorSliders
 {
   public:
     ColorSlidersHSL(bool with_alpha = true);
-    virtual ColorRGB getColor() const;
-    virtual void setColor(const ColorRGB& color);
+    virtual ColorRGBd getColor() const;
+    virtual void setColor(const ColorRGBd& color);
 };
 
 class ColorSlidersCMY : public ColorSliders
 {
   public:
     ColorSlidersCMY(bool with_alpha = true);
-    virtual ColorRGB getColor() const;
-    virtual void setColor(const ColorRGB& color);
+    virtual ColorRGBd getColor() const;
+    virtual void setColor(const ColorRGBd& color);
 };
 
 class ColorSlidersCMYK : public ColorSliders
 {
   public:
     ColorSlidersCMYK(bool with_alpha = true);
-    virtual ColorRGB getColor() const;
-    virtual void setColor(const ColorRGB& color);
+    virtual ColorRGBd getColor() const;
+    virtual void setColor(const ColorRGBd& color);
 };
 
 class ColorSlidersCIEXYZ : public ColorSliders
 {
   public:
     ColorSlidersCIEXYZ(bool with_alpha = true);
-    virtual ColorRGB getColor() const;
-    virtual void setColor(const ColorRGB& color);
+    virtual ColorRGBd getColor() const;
+    virtual void setColor(const ColorRGBd& color);
 };
 
 class ColorSlidersCIELab : public ColorSliders
 {
   public:
     ColorSlidersCIELab(bool with_alpha = true);
-    virtual ColorRGB getColor() const;
-    virtual void setColor(const ColorRGB& color);
+    virtual ColorRGBd getColor() const;
+    virtual void setColor(const ColorRGBd& color);
 };
 
 class ColorSlidersYPbPr : public ColorSliders
 {
   public:
     ColorSlidersYPbPr(bool with_alpha = true);
-    virtual ColorRGB getColor() const;
-    virtual void setColor(const ColorRGB& color);
+    virtual ColorRGBd getColor() const;
+    virtual void setColor(const ColorRGBd& color);
 };
 
 class ColorSlidersYCbCr : public ColorSliders
 {
   public:
     ColorSlidersYCbCr(bool with_alpha = true);
-    virtual ColorRGB getColor() const;
-    virtual void setColor(const ColorRGB& color);
+    virtual ColorRGBd getColor() const;
+    virtual void setColor(const ColorRGBd& color);
 };
 
 class PartialEditorSquare : public PartialEditor, public Element
@@ -344,7 +345,7 @@ class PartialEditorSquare : public PartialEditor, public Element
     void drawBackground(IGUIDrawer& drawer) const;
     virtual void getDrawColor(ColorRGB& o_color, double value_x, double value_y) const = 0;
     
-    ColorRGB color; //this color is used as base color, e.g. when it's a lightness slider, the darkest is black, the brightest is this color. Can be used to show the effect of this slider on the current color.
+    ColorRGBd color; //this color is used as base color, e.g. when it's a lightness slider, the darkest is black, the brightest is this color. Can be used to show the effect of this slider on the current color.
     bool drawalpha; //if true, draws alpha channel of color, if false, always draws it opaque (this depends on whether or not you want the adaptive color to show alpha channel too)
     OutOfRangeAction outofrangeaction;
   
@@ -360,7 +361,7 @@ class PartialEditorSquare : public PartialEditor, public Element
     double getValueY() const { return value_y; }
     void setValueY(double value) { this->value_y = value; }
     
-    virtual void setAdaptiveColor(const ColorRGB& color) { this->color = color; }
+    virtual void setAdaptiveColor(const ColorRGBd& color) { this->color = color; }
     virtual void setDrawAlpha(bool drawalpha) { this->drawalpha = drawalpha; }
     virtual void setDrawOutOfRangeRGBColors(OutOfRangeAction action) { this->outofrangeaction = action; }
 };
@@ -389,7 +390,7 @@ class PartialEditorHueCircle : public PartialEditor, public Element
     void drawBackground(IGUIDrawer& drawer) const;
     virtual void getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const = 0;
     
-    ColorRGB color; //this color is used as base color, e.g. when it's a lightness slider, the darkest is black, the brightest is this color. Can be used to show the effect of this slider on the current color.
+    ColorRGBd color; //this color is used as base color, e.g. when it's a lightness slider, the darkest is black, the brightest is this color. Can be used to show the effect of this slider on the current color.
     bool drawalpha; //if true, draws alpha channel of color, if false, always draws it opaque (this depends on whether or not you want the adaptive color to show alpha channel too)
     OutOfRangeAction outofrangeaction;
   
@@ -405,7 +406,7 @@ class PartialEditorHueCircle : public PartialEditor, public Element
     double getValueAxial() const { return value_axial; }
     void setValueAxial(double value) { this->value_axial = value; }
     
-    virtual void setAdaptiveColor(const ColorRGB& color) { this->color = color; }
+    virtual void setAdaptiveColor(const ColorRGBd& color) { this->color = color; }
     virtual void setDrawAlpha(bool drawalpha) { this->drawalpha = drawalpha; }
     virtual void setDrawOutOfRangeRGBColors(OutOfRangeAction action) { this->outofrangeaction = action; }
 };
@@ -480,23 +481,23 @@ class HueCircleEditor_HSV_HS : public HueCircleEditor
     }
     
     //these are from the ColorEditor interface, returns the currently selected color
-    virtual ColorRGB getColor() const
+    virtual ColorRGBd getColor() const
     {
-      ColorHSV hsv;
-      hsv.h = (int)(circle->getValueAngle() * 255);
-      hsv.s = (int)(circle->getValueAxial() * 255);
-      hsv.v = (int)(sliderc->getValue() * 255);
-      hsv.a = (int)(slidera->getValue() * 255);
+      ColorHSVd hsv;
+      hsv.h = circle->getValueAngle();
+      hsv.s = circle->getValueAxial();
+      hsv.v = sliderc->getValue();
+      hsv.a = slidera->getValue();
       return HSVtoRGB(hsv);
     }
     
-    virtual void setColor(const ColorRGB& color)
+    virtual void setColor(const ColorRGBd& color)
     {
-      ColorHSV hsv = RGBtoHSV(color);
-      circle->setValueAngle(hsv.h / 255.0);
-      circle->setValueAxial(hsv.s / 255.0);
-      sliderc->setValue(hsv.v / 255.0);
-      slidera->setValue(hsv.a / 255.0);
+      ColorHSVd hsv = RGBtoHSV(color);
+      circle->setValueAngle(hsv.h);
+      circle->setValueAxial(hsv.s);
+      sliderc->setValue(hsv.v);
+      slidera->setValue(hsv.a);
     }
 };
 
@@ -520,7 +521,7 @@ class ColorPlane : public PColorPlane
 class SelectableColorPlane : public Element
 {
   public:
-    ColorRGB color;
+    ColorRGBd color;
     bool selected;
     
     SelectableColorPlane();
@@ -569,27 +570,30 @@ class FGBGColor : public ColorEditor, public ElementComposite
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
     
-    void setFG(const ColorRGB& color);
-    void setBG(const ColorRGB& color);
+    void setFG(const ColorRGBd& color);
+    void setBG(const ColorRGBd& color);
     
-    ColorRGB getFG() const;
-    ColorRGB getBG() const;
-    
+    ColorRGBd getFG() const;
+    ColorRGBd getBG() const;
+
+    ColorRGB getFG255() const { return RGBdtoRGB(getFG()); }
+    ColorRGB getBG255() const { return RGBdtoRGB(getBG()); }
+
     bool selectedFG() const;
     bool selectedBG() const;
     
     //these are from the ColorEditor interface, returns the currently selected color
-    virtual ColorRGB getColor() const;
-    virtual void setColor(const ColorRGB& color);
+    virtual ColorRGBd getColor() const;
+    virtual void setColor(const ColorRGBd& color);
     
     bool isMultiColorGettable(Plane plane) const { return plane == FG || plane == BG; }
-    virtual ColorRGB getMultiColor(Plane plane) const
+    virtual ColorRGBd getMultiColor(Plane plane) const
     {
       if(plane == FG) return fg.color;
       else if(plane == BG) return bg.color;
-      else return RGB_Black;
+      else return RGBd_Black;
     }
-    virtual void setMultiColor(Plane plane, const ColorRGB& color)
+    virtual void setMultiColor(Plane plane, const ColorRGBd& color)
     {
       if(plane == FG) fg.color = color;
       else if(plane == BG) bg.color = color;
@@ -660,7 +664,7 @@ class AColorPalette : public ColorEditor, public ElementComposite
       }
     }
     
-    void setColor(int i, const ColorRGB& color)
+    void setColor(int i, const ColorRGBd& color)
     {
       colors[i]->color = color;
     }
@@ -668,14 +672,14 @@ class AColorPalette : public ColorEditor, public ElementComposite
     void generateDefault()
     {
       setPaletteSize(4, 2);
-      setColor(0, RGB_Black);
-      setColor(1, RGB_White);
-      setColor(2, RGB_Gray);
-      setColor(3, RGB_Grey);
-      setColor(4, RGB_Red);
-      setColor(5, RGB_Green);
-      setColor(6, RGB_Blue);
-      setColor(7, RGB_Yellow);
+      setColor(0, RGBd_Black);
+      setColor(1, RGBd_White);
+      setColor(2, RGBd_Gray);
+      setColor(3, RGBd_Grey);
+      setColor(4, RGBd_Red);
+      setColor(5, RGBd_Green);
+      setColor(6, RGBd_Blue);
+      setColor(7, RGBd_Yellow);
     }
     
     void generateVibrant16x16();
@@ -739,13 +743,13 @@ class ColorPalette : public AColorPalette
     }
 
     //these are from the ColorEditor interface, returns the currently selected color
-    virtual ColorRGB getColor() const
+    virtual ColorRGBd getColor() const
     {
       if(selected >= 0) return colors[selected]->color;
-      else return RGB_Black;
+      else return RGBd_Black;
     }
 
-    virtual void setColor(const ColorRGB& color)
+    virtual void setColor(const ColorRGBd& color)
     {
       (void)color; //ignore setColor! Palette has only a limited amount of colors.
       if(selected >= 0) colors[selected]->selected = false;
@@ -808,15 +812,15 @@ class MultiColorPalette : public AColorPalette
     }
     
     //these are from the ColorEditor interface, returns the currently selected color
-    virtual ColorRGB getColor() const
+    virtual ColorRGBd getColor() const
     {
       if(selectedfg >= 0) return colors[selectedfg]->color;
       if(selectedmg >= 0) return colors[selectedmg]->color;
       if(selectedbg >= 0) return colors[selectedbg]->color;
-      else return RGB_Black;
+      else return RGBd_Black;
     }
     
-    virtual void setColor(const ColorRGB& color)
+    virtual void setColor(const ColorRGBd& color)
     {
       (void)color;
       validfg = validmg = validbg = false;
@@ -831,14 +835,14 @@ class MultiColorPalette : public AColorPalette
       if(plane == BG) return validbg;
       return false;
     }
-    virtual ColorRGB getMultiColor(Plane plane) const
+    virtual ColorRGBd getMultiColor(Plane plane) const
     {
       if(plane == FG && selectedfg >= 0) return colors[selectedfg]->color;
       if(plane == MG && selectedmg >= 0) return colors[selectedmg]->color;
       if(plane == BG && selectedbg >= 0) return colors[selectedbg]->color;
-      return RGB_Black;
+      return RGBd_Black;
     }
-    virtual void setMultiColor(Plane plane, const ColorRGB& color)
+    virtual void setMultiColor(Plane plane, const ColorRGBd& color)
     {
       //The palette is not changeable, don't do anything
       (void)color;
@@ -867,7 +871,7 @@ class ColorEditorSynchronizer
     
     void handle();
     
-    void setColor(const ColorRGB& color); //set the color of everything
+    void setColor(const ColorRGBd& color); //set the color of everything
 };
 
 } //namespace gui

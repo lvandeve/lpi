@@ -260,6 +260,18 @@ static const ColorRGB RGB_Invisible(  0,   0,   0,   0);
 #define RGBA_Brightyellow(a) ColorRGB(255, 255, 192, a)
 #define RGBA_Orange(a)       ColorRGB(255, 165,   0, a)
 
+static const ColorRGBd RGBd_Black        (  0,   0,   0, 1.0);
+static const ColorRGBd RGBd_Red          (1.0,   0,   0, 1.0);
+static const ColorRGBd RGBd_Green        (  0, 1.0,   0, 1.0);
+static const ColorRGBd RGBd_Blue         (  0,   0, 1.0, 1.0);
+static const ColorRGBd RGBd_Cyan         (  0, 1.0, 1.0, 1.0);
+static const ColorRGBd RGBd_Magenta      (1.0,   0, 1.0, 1.0);
+static const ColorRGBd RGBd_Yellow       (1.0, 1.0,   0, 1.0);
+static const ColorRGBd RGBd_White        (1.0, 1.0, 1.0, 1.0);
+static const ColorRGBd RGBd_Gray         (0.5, 0.5, 0.5, 1.0);
+static const ColorRGBd RGBd_Grey         (.75, .75, .75, 1.0);
+
+
 template<typename T>
 struct TColorHSL255
 {
@@ -993,6 +1005,9 @@ ColorRGBd YIQtoRGB(const ColorYIQd& colorYIQ);
 
 unsigned long RGBtoINT(const ColorRGB& colorRGB);
 ColorRGB INTtoRGB(unsigned long colorINT);
+
+ColorRGB RGBdtoRGB(const ColorRGBd& color);
+ColorRGBd RGBtoRGBd(const ColorRGB& color);
 
 }
 

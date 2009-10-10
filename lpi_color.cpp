@@ -687,6 +687,7 @@ ColorHSLd RGBtoHSL(const ColorRGBd& colorRGB)
   colorHSL.h = h;
   colorHSL.s = s;
   colorHSL.l = l;
+  colorHSL.a = colorRGB.a;
   return colorHSL;
 }
 
@@ -737,6 +738,7 @@ ColorRGBd HSLtoRGB(const ColorHSLd& colorHSL)
   colorRGB.r = r;
   colorRGB.g = g;
   colorRGB.b = b;
+  colorRGB.a = colorHSL.a;
   return colorRGB;
 }
 
@@ -779,6 +781,7 @@ ColorHSVd RGBtoHSV(const ColorRGBd& colorRGB)
   colorHSV.h = h;
   colorHSV.s = s;
   colorHSV.v = v;
+  colorHSV.a = colorRGB.a;
   return colorHSV;
 }
 
@@ -820,6 +823,7 @@ ColorRGBd HSVtoRGB(const ColorHSVd& colorHSV)
   colorRGB.r = r;
   colorRGB.g = g;
   colorRGB.b = b;
+  colorRGB.a = colorHSV.a;
   return colorRGB;
 }
 
@@ -849,6 +853,7 @@ ColorCMYKd RGBtoCMYK(const ColorRGBd& colorRGB)
     result.m = (result.m - result.k) / (1.0 - result.k);
     result.y = (result.y - result.k) / (1.0 - result.k);
   }
+  result.a = colorRGB.a;
   return result;
 }
 
@@ -1068,5 +1073,16 @@ ColorRGBd YIQtoRGB(const ColorYIQd& colorYIQ)
   result.a = colorYIQ.alpha;
   return result;
 }
+
+ColorRGB RGBdtoRGB(const ColorRGBd& color)
+{
+  return ColorRGB((int)(color.r*255),(int)(color.g*255),(int)(color.b*255),(int)(color.a*255));
+}
+
+ColorRGBd RGBtoRGBd(const ColorRGB& color)
+{
+  return ColorRGBd(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
+}
+
 
 } // namespace lpi
