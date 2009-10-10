@@ -197,107 +197,107 @@ void getColorDynamic(ColorRGB& o_color, const ColorRGB& color, double value, Col
 {
   switch(type)
   {
-    case RGB_R:
-    case RGB_G:
-    case RGB_B:
+    case CC_RGB_R:
+    case CC_RGB_G:
+    case CC_RGB_B:
       {
         o_color = color;
-        if(type == RGB_R) o_color.r = (int)(value * 255.0);
-        else if(type == RGB_G) o_color.g = (int)(value * 255.0);
-        else if(type == RGB_B) o_color.b = (int)(value * 255.0);
+        if(type == CC_RGB_R) o_color.r = (int)(value * 255.0);
+        else if(type == CC_RGB_G) o_color.g = (int)(value * 255.0);
+        else if(type == CC_RGB_B) o_color.b = (int)(value * 255.0);
       }
       break;
-    case HSV_H:
-    case HSV_S:
-    case HSV_V:
+    case CC_HSV_H:
+    case CC_HSV_S:
+    case CC_HSV_V:
       {
         ColorHSV convert = RGBtoHSV(color);
-        if(type == HSV_H) convert.h = (int)(value * 255.0);
-        else if(type == HSV_S) convert.s = (int)(value * 255.0);
-        else if(type == HSV_V) convert.v = (int)(value * 255.0);
+        if(type == CC_HSV_H) convert.h = (int)(value * 255.0);
+        else if(type == CC_HSV_S) convert.s = (int)(value * 255.0);
+        else if(type == CC_HSV_V) convert.v = (int)(value * 255.0);
         o_color = HSVtoRGB(convert);
       }
       break;
-    case HSL_H:
-    case HSL_S:
-    case HSL_L:
+    case CC_HSL_H:
+    case CC_HSL_S:
+    case CC_HSL_L:
       {
         ColorHSL convert = RGBtoHSL(color);
-        if(type == HSL_H) convert.h = (int)(value * 255.0);
-        else if(type == HSL_S) convert.s = (int)(value * 255.0);
-        else if(type == HSL_L) convert.l = (int)(value * 255.0);
+        if(type == CC_HSL_H) convert.h = (int)(value * 255.0);
+        else if(type == CC_HSL_S) convert.s = (int)(value * 255.0);
+        else if(type == CC_HSL_L) convert.l = (int)(value * 255.0);
         o_color = HSLtoRGB(convert);
       }
       break;
-    case CMY_C:
-    case CMY_M:
-    case CMY_Y:
+    case CC_CMY_C:
+    case CC_CMY_M:
+    case CC_CMY_Y:
       {
         ColorCMY convert = RGBtoCMY(color);
-        if(type == CMY_C) convert.c = (int)(value * 255.0);
-        else if(type == CMY_M) convert.m = (int)(value * 255.0);
-        else if(type == CMY_Y) convert.y = (int)(value * 255.0);
+        if(type == CC_CMY_C) convert.c = (int)(value * 255.0);
+        else if(type == CC_CMY_M) convert.m = (int)(value * 255.0);
+        else if(type == CC_CMY_Y) convert.y = (int)(value * 255.0);
         o_color = CMYtoRGB(convert);
       }
       break;
-    case CMYK_C:
-    case CMYK_M:
-    case CMYK_Y:
-    case CMYK_K:
+    case CC_CMYK_C:
+    case CC_CMYK_M:
+    case CC_CMYK_Y:
+    case CC_CMYK_K:
       {
         ColorCMYK convert = RGBtoCMYK(color);
-        if(type == CMYK_C) convert.c = (int)(value * 255.0);
-        else if(type == CMYK_M) convert.m = (int)(value * 255.0);
-        else if(type == CMYK_Y) convert.y = (int)(value * 255.0);
-        else if(type == CMYK_K) convert.k = (int)(value * 255.0);
+        if(type == CC_CMYK_C) convert.c = (int)(value * 255.0);
+        else if(type == CC_CMYK_M) convert.m = (int)(value * 255.0);
+        else if(type == CC_CMYK_Y) convert.y = (int)(value * 255.0);
+        else if(type == CC_CMYK_K) convert.k = (int)(value * 255.0);
         o_color = CMYKtoRGB(convert);
       }
       break;
-    case CIEXYZ_X:
-    case CIEXYZ_Y:
-    case CIEXYZ_Z:
+    case CC_CIEXYZ_X:
+    case CC_CIEXYZ_Y:
+    case CC_CIEXYZ_Z:
       {
         ColorCIEXYZ convert = RGBtoCIEXYZ(color);
-        if(type == CIEXYZ_X) convert.x = (int)(value * 255.0);
-        else if(type == CIEXYZ_Y) convert.y = (int)(value * 255.0);
-        else if(type == CIEXYZ_Z) convert.z = (int)(value * 255.0);
+        if(type == CC_CIEXYZ_X) convert.x = (int)(value * 255.0);
+        else if(type == CC_CIEXYZ_Y) convert.y = (int)(value * 255.0);
+        else if(type == CC_CIEXYZ_Z) convert.z = (int)(value * 255.0);
         o_color = CIEXYZtoRGB(convert);
       }
       break;
-    case CIELab_L:
-    case CIELab_a:
-    case CIELab_b:
+    case CC_CIELab_L:
+    case CC_CIELab_a:
+    case CC_CIELab_b:
       {
         ColorCIELab convert = RGBtoCIELab(color);
-        if(type == CIELab_L) convert.l = (int)(value * 255.0);
-        else if(type == CIELab_a) convert.a = (int)((2.0 * value - 1.0) * 255.0);
-        else if(type == CIELab_b) convert.b = (int)((2.0 * value - 1.0) * 255.0);
+        if(type == CC_CIELab_L) convert.l = (int)(value * 255.0);
+        else if(type == CC_CIELab_a) convert.a = (int)((2.0 * value - 1.0) * 255.0);
+        else if(type == CC_CIELab_b) convert.b = (int)((2.0 * value - 1.0) * 255.0);
         o_color = CIELabtoRGB(convert);
       }
       break;
-    case YPbPr_Y:
-    case YPbPr_Pb:
-    case YPbPr_Pr:
+    case CC_YPbPr_Y:
+    case CC_YPbPr_Pb:
+    case CC_YPbPr_Pr:
       {
         ColorYPbPr convert = RGBtoYPbPr(color);
-        if(type == YPbPr_Y) convert.y = (int)(value * 255.0);
-        else if(type == YPbPr_Pb) convert.pb = (int)((value - 0.5) * 255.0);
-        else if(type == YPbPr_Pr) convert.pr = (int)((value - 0.5) * 255.0);
+        if(type == CC_YPbPr_Y) convert.y = (int)(value * 255.0);
+        else if(type == CC_YPbPr_Pb) convert.pb = (int)((value - 0.5) * 255.0);
+        else if(type == CC_YPbPr_Pr) convert.pr = (int)((value - 0.5) * 255.0);
         o_color = YPbPrtoRGB(convert);
       }
       break;
-    case YCbCr_Y:
-    case YCbCr_Cb:
-    case YCbCr_Cr:
+    case CC_YCbCr_Y:
+    case CC_YCbCr_Cb:
+    case CC_YCbCr_Cr:
       {
         ColorYCbCr convert = RGBtoYCbCr(color);
-        if(type == YCbCr_Y) convert.y = (int)(value * 255.0);
-        else if(type == YCbCr_Cb) convert.cb = (int)(value * 255.0);
-        else if(type == YCbCr_Cr) convert.cr = (int)(value * 255.0);
+        if(type == CC_YCbCr_Y) convert.y = (int)(value * 255.0);
+        else if(type == CC_YCbCr_Cb) convert.cb = (int)(value * 255.0);
+        else if(type == CC_YCbCr_Cr) convert.cr = (int)(value * 255.0);
         o_color = YCbCrtoRGB(convert);
       }
       break;
-    case A:
+    case CC_A:
       {
         o_color = color;
         o_color.a = (int)(value * 255.0);
@@ -317,16 +317,16 @@ void ChannelSliderType::getDrawColor(ColorRGB& o_color, double value) const
 
 void ChannelSliderType::incrementType()
 {
-  if(type == A)
-    type = RGB_R;
+  if(type == CC_A)
+    type = CC_RGB_R;
   else
     type = (ColorChannelType)((int)(type) + 1);
 }
 
 void ChannelSliderType::decrementType()
 {
-  if(type == RGB_R)
-    type = A;
+  if(type == CC_RGB_R)
+    type = CC_A;
   else
     type = (ColorChannelType)((int)(type) - 1);
 }
@@ -467,7 +467,7 @@ void ColorSliders::addSlider(ChannelSliderEx* slider)
 
 void ColorSliders::addAlpha(const std::string& label, double smallest, double largest)
 {
-  addSlider(new ChannelSliderExType(A, label, smallest, largest));
+  addSlider(new ChannelSliderExType(CC_A, label, smallest, largest));
 }
 
 void ColorSliders::drawImpl(IGUIDrawer& drawer) const
@@ -495,9 +495,9 @@ void ColorSliders::handleImpl(const IInput& input)
 
 ColorSlidersRGB::ColorSlidersRGB(bool with_alpha)
 {
-  addSlider(new ChannelSliderExType(RGB_R, "R:"));
-  addSlider(new ChannelSliderExType(RGB_G, "G:"));
-  addSlider(new ChannelSliderExType(RGB_B, "B:"));
+  addSlider(new ChannelSliderExType(CC_RGB_R, "R:"));
+  addSlider(new ChannelSliderExType(CC_RGB_G, "G:"));
+  addSlider(new ChannelSliderExType(CC_RGB_B, "B:"));
   for(size_t i = 0; i < sliders.size(); i++) sliders[i]->setDrawAlpha(false);
   if(with_alpha) addAlpha("A:");
 }
@@ -522,9 +522,9 @@ void ColorSlidersRGB::setColor(const ColorRGB& color)
 
 ColorSlidersHSV::ColorSlidersHSV(bool with_alpha)
 {
-  addSlider(new ChannelSliderExType(HSV_H, "H:"));
-  addSlider(new ChannelSliderExType(HSV_S, "S:"));
-  addSlider(new ChannelSliderExType(HSV_V, "V:"));
+  addSlider(new ChannelSliderExType(CC_HSV_H, "H:"));
+  addSlider(new ChannelSliderExType(CC_HSV_S, "S:"));
+  addSlider(new ChannelSliderExType(CC_HSV_V, "V:"));
   for(size_t i = 0; i < sliders.size(); i++) sliders[i]->setDrawAlpha(false);
   if(with_alpha) addAlpha("A:");
 }
@@ -551,9 +551,9 @@ void ColorSlidersHSV::setColor(const ColorRGB& color)
 
 ColorSlidersHSL::ColorSlidersHSL(bool with_alpha)
 {
-  addSlider(new ChannelSliderExType(HSL_H, "H:"));
-  addSlider(new ChannelSliderExType(HSL_S, "S:"));
-  addSlider(new ChannelSliderExType(HSL_L, "L:"));
+  addSlider(new ChannelSliderExType(CC_HSL_H, "H:"));
+  addSlider(new ChannelSliderExType(CC_HSL_S, "S:"));
+  addSlider(new ChannelSliderExType(CC_HSL_L, "L:"));
   for(size_t i = 0; i < sliders.size(); i++) sliders[i]->setDrawAlpha(false);
   if(with_alpha) addAlpha("A:");
 }
@@ -580,9 +580,9 @@ void ColorSlidersHSL::setColor(const ColorRGB& color)
 
 ColorSlidersCMY::ColorSlidersCMY(bool with_alpha)
 {
-  addSlider(new ChannelSliderExType(CMY_C, "C:"));
-  addSlider(new ChannelSliderExType(CMY_M, "M:"));
-  addSlider(new ChannelSliderExType(CMY_Y, "Y:"));
+  addSlider(new ChannelSliderExType(CC_CMY_C, "C:"));
+  addSlider(new ChannelSliderExType(CC_CMY_M, "M:"));
+  addSlider(new ChannelSliderExType(CC_CMY_Y, "Y:"));
   for(size_t i = 0; i < sliders.size(); i++) sliders[i]->setDrawAlpha(false);
   if(with_alpha) addAlpha("A:");
 }
@@ -609,10 +609,10 @@ void ColorSlidersCMY::setColor(const ColorRGB& color)
 
 ColorSlidersCMYK::ColorSlidersCMYK(bool with_alpha)
 {
-  addSlider(new ChannelSliderExType(CMYK_C, "C:"));
-  addSlider(new ChannelSliderExType(CMYK_M, "M:"));
-  addSlider(new ChannelSliderExType(CMYK_Y, "Y:"));
-  addSlider(new ChannelSliderExType(CMYK_K, "K:"));
+  addSlider(new ChannelSliderExType(CC_CMYK_C, "C:"));
+  addSlider(new ChannelSliderExType(CC_CMYK_M, "M:"));
+  addSlider(new ChannelSliderExType(CC_CMYK_Y, "Y:"));
+  addSlider(new ChannelSliderExType(CC_CMYK_K, "K:"));
   for(size_t i = 0; i < sliders.size(); i++) sliders[i]->setDrawAlpha(false);
   if(with_alpha) addAlpha("A:");
 }
@@ -641,9 +641,9 @@ void ColorSlidersCMYK::setColor(const ColorRGB& color)
 
 ColorSlidersCIEXYZ::ColorSlidersCIEXYZ(bool with_alpha)
 {
-  addSlider(new ChannelSliderExType(CIEXYZ_X, "X:"));
-  addSlider(new ChannelSliderExType(CIEXYZ_Y, "Y:"));
-  addSlider(new ChannelSliderExType(CIEXYZ_Z, "Z:"));
+  addSlider(new ChannelSliderExType(CC_CIEXYZ_X, "X:"));
+  addSlider(new ChannelSliderExType(CC_CIEXYZ_Y, "Y:"));
+  addSlider(new ChannelSliderExType(CC_CIEXYZ_Z, "Z:"));
   for(size_t i = 0; i < sliders.size(); i++) sliders[i]->setDrawAlpha(false);
   if(with_alpha) addAlpha("A:");
 }
@@ -670,9 +670,9 @@ void ColorSlidersCIEXYZ::setColor(const ColorRGB& color)
 
 ColorSlidersCIELab::ColorSlidersCIELab(bool with_alpha)
 {
-  addSlider(new ChannelSliderExType(CIELab_L, "L:", 0, 255));
-  addSlider(new ChannelSliderExType(CIELab_a, "a:", -128, 127));
-  addSlider(new ChannelSliderExType(CIELab_b, "b:", -128, 127));
+  addSlider(new ChannelSliderExType(CC_CIELab_L, "L:", 0, 255));
+  addSlider(new ChannelSliderExType(CC_CIELab_a, "a:", -128, 127));
+  addSlider(new ChannelSliderExType(CC_CIELab_b, "b:", -128, 127));
   for(size_t i = 0; i < sliders.size(); i++) sliders[i]->setDrawAlpha(false);
   if(with_alpha) addAlpha("A:");
 }
@@ -701,9 +701,9 @@ void ColorSlidersCIELab::setColor(const ColorRGB& color)
 
 ColorSlidersYPbPr::ColorSlidersYPbPr(bool with_alpha)
 {
-  addSlider(new ChannelSliderExType(YPbPr_Y, " Y:", 0, 255));
-  addSlider(new ChannelSliderExType(YPbPr_Pb, "Pb:", -128, 127));
-  addSlider(new ChannelSliderExType(YPbPr_Pr, "Pr:", -128, 127));
+  addSlider(new ChannelSliderExType(CC_YPbPr_Y, " Y:", 0, 255));
+  addSlider(new ChannelSliderExType(CC_YPbPr_Pb, "Pb:", -128, 127));
+  addSlider(new ChannelSliderExType(CC_YPbPr_Pr, "Pr:", -128, 127));
   for(size_t i = 0; i < sliders.size(); i++) sliders[i]->setDrawAlpha(false);
   if(with_alpha) addAlpha(" A:");
 }
@@ -730,9 +730,9 @@ void ColorSlidersYPbPr::setColor(const ColorRGB& color)
 
 ColorSlidersYCbCr::ColorSlidersYCbCr(bool with_alpha)
 {
-  addSlider(new ChannelSliderExType(YCbCr_Y, " Y:"));
-  addSlider(new ChannelSliderExType(YCbCr_Cb, "Cb:"));
-  addSlider(new ChannelSliderExType(YCbCr_Cr, "Cr:"));
+  addSlider(new ChannelSliderExType(CC_YCbCr_Y, " Y:"));
+  addSlider(new ChannelSliderExType(CC_YCbCr_Cb, "Cb:"));
+  addSlider(new ChannelSliderExType(CC_YCbCr_Cr, "Cr:"));
   for(size_t i = 0; i < sliders.size(); i++) sliders[i]->setDrawAlpha(false);
   if(with_alpha) addAlpha(" A:");
 }
@@ -849,22 +849,23 @@ void PartialEditorHueCircle::drawImpl(IGUIDrawer& drawer) const
     double angle2 = ((double)(a == NUMANGLE ? 0 : a + 1) / (double)NUMANGLE) * twopi;
     for(size_t r = 0; r < NUMAXIAL; r++)
     {
-      double axial = ((double)r / (double)NUMAXIAL) * radius;
-      double axial2 = ((double)(r + 1) / (double)NUMAXIAL) * radius;
+      double avoidWeirdAnnoyingSpiralEffect = 0.0;//1.0 - (double)a / (double)NUMANGLE;
+      double axial = ((double)r / (double)NUMAXIAL) * (radius - avoidWeirdAnnoyingSpiralEffect);
+      double axial2 = ((double)(r + 1) / (double)NUMAXIAL) * (radius - avoidWeirdAnnoyingSpiralEffect);
       int x0 = cx + (int)(std::cos(angle) * axial);
       int y0 = cy + (int)(std::sin(angle) * axial);
-      int x1 = cx + (int)(std::cos(angle) * axial2);
-      int y1 = cy + (int)(std::sin(angle) * axial2);
+      int x1 = cx + (int)(std::cos(angle2) * axial);
+      int y1 = cy + (int)(std::sin(angle2) * axial);
       int x2 = cx + (int)(std::cos(angle2) * axial2);
       int y2 = cy + (int)(std::sin(angle2) * axial2);
-      int x3 = cx + (int)(std::cos(angle2) * axial);
-      int y3 = cy + (int)(std::sin(angle2) * axial);
+      int x3 = cx + (int)(std::cos(angle) * axial2);
+      int y3 = cy + (int)(std::sin(angle) * axial2);
       
       ColorRGB color0 = this->color, color1 = this->color, color2 = this->color, color3 = this->color;
       getDrawColor(color0, angle / twopi, axial / radius);
-      getDrawColor(color1, angle / twopi, axial2 / radius);
+      getDrawColor(color1, angle2 / twopi, axial / radius);
       getDrawColor(color2, angle2 / twopi, axial2 / radius);
-      getDrawColor(color3, angle2 / twopi, axial / radius);
+      getDrawColor(color3, angle / twopi, axial2 / radius);
       
       drawer.drawGradientQuad(x0, y0, x1, y1, x2, y2, x3, y3, color0, color1, color2, color3);
     }
@@ -934,6 +935,15 @@ void PartialEditorHueCircle_HSL_HL::getDrawColor(ColorRGB& o_color, double value
 
 ////////////////////////////////////////////////////////////////////////////////
 
+HueCircleEditor::~HueCircleEditor()
+{
+  delete circle;
+  delete sliderc;
+  delete slidera;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 PColorPlane::PColorPlane(ColorRGB* color)
 : color(color)
 {
@@ -958,17 +968,12 @@ ColorPlane::ColorPlane()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void FGBGColor::Arrows::drawImpl(IGUIDrawer& drawer) const
-{
-  drawer.drawGUIPart(GP_FG_BG_COLOR_ARROWS, x0, y0, x1, y1);
-}
-
-FGBGColor::ColorPlane::ColorPlane()
+SelectableColorPlane::SelectableColorPlane()
 : selected(false)
 {
 }
 
-void FGBGColor::ColorPlane::drawImpl(IGUIDrawer& drawer) const
+void SelectableColorPlane::drawImpl(IGUIDrawer& drawer) const
 {
   int checkersize = 8;
   if(getSizeX() < 16 && getSizeY() < 16) checkersize = getSizeX() / 2;
@@ -977,10 +982,19 @@ void FGBGColor::ColorPlane::drawImpl(IGUIDrawer& drawer) const
   drawer.drawGUIPart(selected ? GP_INVISIBLE_BUTTON_PANEL_DOWN : GP_INVISIBLE_BUTTON_PANEL_UP, x0, y0, x1, y1);
 }
 
-void FGBGColor::ColorPlane::handleImpl(const IInput& input)
+void SelectableColorPlane::handleImpl(const IInput& input)
 {
   (void)input;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+void FGBGColor::Arrows::drawImpl(IGUIDrawer& drawer) const
+{
+  drawer.drawGUIPart(GP_FG_BG_COLOR_ARROWS, x0, y0, x1, y1);
+}
+
+
 
 FGBGColor::FGBGColor()
 {
@@ -1062,9 +1076,15 @@ void FGBGColor::setColor(const ColorRGB& color)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+ColorEditorSynchronizer::ColorEditorSynchronizer()
+: mainColorLink(ColorEditor::FG)
+{
+}
+
 void ColorEditorSynchronizer::add(ColorEditor* editor)
 {
   editors.push_back(editor);
+  if(editor->isMultiColorLinker()) mainColorLink = editor->getMultiColorLink();
 }
 
 void ColorEditorSynchronizer::remove(ColorEditor* editor)
@@ -1081,11 +1101,67 @@ void ColorEditorSynchronizer::handle()
 {
   for(size_t i = 0; i < editors.size(); i++)
   {
+    ColorEditor* editor = editors[i];
     if(editors[i]->hasChanged())
     {
-      for(size_t j = 0; j < editors.size(); j++)
+      if(editor->isMultiColorLinker())
       {
-        if(j != i) editors[j]->setColor(editors[i]->getColor());
+        mainColorLink = editor->getMultiColorLink();
+        for(size_t j = 0; j < editors.size(); j++)
+        {
+          if(j != i && editors[j]->isMultiColorLinker()) editors[j]->setMultiColorLink(mainColorLink);
+        }
+      }
+      
+      
+      if(editor->isMainColorGettable())
+      {
+        ColorRGB color = editor->getColor();
+        for(size_t j = 0; j < editors.size(); j++)
+        {
+          ColorRGB color = editor->getColor();
+          if(j != i)
+          {
+            editors[j]->setColor(color);
+            editors[j]->setMultiColor(mainColorLink, color);
+          }
+        }
+      }
+      if(editor->isMultiColorGettable(ColorEditor::FG))
+      {
+        ColorRGB fg = editor->getMultiColor(ColorEditor::FG);
+        for(size_t j = 0; j < editors.size(); j++)
+        {
+          if(j != i)
+          {
+            editors[j]->setMultiColor(ColorEditor::FG, fg);
+            if(mainColorLink == ColorEditor::FG) editors[j]->setColor(fg);
+          }
+        }
+      }
+      if(editor->isMultiColorGettable(ColorEditor::MG))
+      {
+        ColorRGB mg = editor->getMultiColor(ColorEditor::MG);
+        for(size_t j = 0; j < editors.size(); j++)
+        {
+          if(j != i)
+          {
+            editors[j]->setMultiColor(ColorEditor::MG, mg);
+            if(mainColorLink == ColorEditor::MG) editors[j]->setColor(mg);
+          }
+        }
+      }
+      if(editor->isMultiColorGettable(ColorEditor::BG))
+      {
+        ColorRGB bg = editor->getMultiColor(ColorEditor::BG);
+        for(size_t j = 0; j < editors.size(); j++)
+        {
+          if(j != i)
+          {
+            editors[j]->setMultiColor(ColorEditor::BG, bg);
+            if(mainColorLink == ColorEditor::BG) editors[j]->setColor(bg);
+          }
+        }
       }
       break;
     }

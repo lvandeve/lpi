@@ -146,7 +146,7 @@ SpawnTexts spawns;
 
 int main(int, char*[]) //the arguments have to be given here, or DevC++ can't link to SDL for some reason
 {//std::cout<<sizeof(lpi::gui::Element)<<std::endl;
-  lpi::ScreenGL screen(width, height, 0, true, "lpi GUI demo");
+  lpi::ScreenGL screen(width, height, false, false, "lpi GUI demo");
   lpi::gui::GUIDrawerGL guidrawer(&screen);
   
   lpi::gui::MainContainer c(guidrawer);
@@ -273,15 +273,21 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   
   lpi::gui::HueCircleEditor_HSV_HS hsv;
   hsv.resize(0,0,120,120);
-  //hsv.setAdaptiveColor(lpi::RGBA_Lightred(192));
-  //hsv.setValueAxial(1.0);
-  tabs.getTabContent(2).pushTopAt(&hsv, 20, 50);
+  tabs.getTabContent(2).pushTopAt(&hsv, 20, 20);
+  lpi::gui::ColorSlidersRGB rgb;
+  rgb.resize(0,0,120,64);
+  tabs.getTabContent(2).pushTopAt(&rgb, 20, 150);
   lpi::gui::FGBGColor fgbg;
   fgbg.resize(0, 0, 64, 48);
-  tabs.getTabContent(2).pushTopAt(&fgbg, 144, 50);
+  tabs.getTabContent(2).pushTopAt(&fgbg, 144, 20);
   lpi::gui::Canvas canvas(guidrawer);
   canvas.make(0, 0, 128, 128);
   tabs.getTabContent(2).pushTopAt(&canvas, 144, 100);
+  
+  lpi::gui::MultiColorPalette palette;
+  palette.generateDefault();
+  palette.resize(0, 0, 64, 32);
+  tabs.getTabContent(2).pushTopAt(&palette, 210, 50);
   
   lpi::gui::Checkbox wcb;
   wcb.make(0, 0);
@@ -305,7 +311,11 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   lpi::gui::ColorEditorSynchronizer colorSynchronizer;
   colorSynchronizer.add(&fgbg);
   colorSynchronizer.add(&hsv);
-  colorSynchronizer.setColor(lpi::RGB_Red);
+  colorSynchronizer.add(&rgb);
+  colorSynchronizer.add(&palette);
+  fgbg.setFG(lpi::RGB_Gray);
+  fgbg.setBG(lpi::RGB_White);
+  colorSynchronizer.setColor(fgbg.getFG()); //make synchronizer update the above change
   
   while(lpi::frame(true, true))
   {

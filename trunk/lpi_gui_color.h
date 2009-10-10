@@ -49,8 +49,38 @@ class ColorChangeable
 class ColorEditor : public ColorChangeable
 {
   public:
+    //main color: a single color, not associated to any mouse button (not even the first or left one)
+    virtual bool isMainColorGettable() const { return true; }
     virtual ColorRGB getColor() const = 0;
     virtual void setColor(const ColorRGB& color) = 0;
+    
+    //multi color: a color per mouse button
+    
+    enum Plane //don't know best name for this enum, could also be "Depth" or "Dimension"...
+    {
+      FG, //foreground
+      MG, //middleground
+      BG  //background
+    };
+    
+    virtual bool isMultiColorGettable(Plane plane) const { (void)plane; return false; }
+    virtual ColorRGB getMultiColor(Plane plane) const { return getColor(); }
+    virtual void setMultiColor(Plane plane, const ColorRGB& color) { (void)plane; (void)color; }
+    
+    //multi color linker: choose which of the multi-colors is linked to the main color
+    virtual bool isMultiColorLinker() const { return false; }
+    virtual Plane getMultiColorLink() const { return FG; }
+    virtual void setMultiColorLink(Plane plane) { (void)plane; }
+    
+    /*
+    The above functionality is all to cooperate with the ColorEditorSynchronizer
+    The intention is that colors are synchronized between multiple controls that all edit the same color.
+    What makes it more complex is that there are controls that can select multiple colors (FG, MG and BG) while
+    others only edit one main color, and some controls (e.g. the FGBG) can make you choose which plane (FG,
+    MG or BG) is currently being edited and link the controls with a main color to that plane.
+    The controls that edit multiple colors often have one mouse button associated to each plane: left for FG,
+    right for BG and middle for MG.
+    */
 };
 
 
@@ -105,35 +135,35 @@ class ChannelSlider : public PartialEditor, public Element
 
 enum ColorChannelType //for dynamic sliders
 {
-  RGB_R,
-  RGB_G,
-  RGB_B,
-  HSV_H,
-  HSV_S,
-  HSV_V,
-  HSL_H,
-  HSL_S,
-  HSL_L,
-  CMY_C,
-  CMY_M,
-  CMY_Y,
-  CMYK_C,
-  CMYK_M,
-  CMYK_Y,
-  CMYK_K,
-  CIEXYZ_X,
-  CIEXYZ_Y,
-  CIEXYZ_Z,
-  CIELab_L,
-  CIELab_a,
-  CIELab_b,
-  YPbPr_Y,
-  YPbPr_Pb,
-  YPbPr_Pr,
-  YCbCr_Y,
-  YCbCr_Cb,
-  YCbCr_Cr,
-  A //alpha
+  CC_RGB_R,
+  CC_RGB_G,
+  CC_RGB_B,
+  CC_HSV_H,
+  CC_HSV_S,
+  CC_HSV_V,
+  CC_HSL_H,
+  CC_HSL_S,
+  CC_HSL_L,
+  CC_CMY_C,
+  CC_CMY_M,
+  CC_CMY_Y,
+  CC_CMYK_C,
+  CC_CMYK_M,
+  CC_CMYK_Y,
+  CC_CMYK_K,
+  CC_CIEXYZ_X,
+  CC_CIEXYZ_Y,
+  CC_CIEXYZ_Z,
+  CC_CIELab_L,
+  CC_CIELab_a,
+  CC_CIELab_b,
+  CC_YPbPr_Y,
+  CC_YPbPr_Pb,
+  CC_YPbPr_Pr,
+  CC_YCbCr_Y,
+  CC_YCbCr_Cb,
+  CC_YCbCr_Cr,
+  CC_A //alpha
 };
 
 class ChannelSliderType : public ChannelSlider //can dynamically take any color type
@@ -143,7 +173,7 @@ class ChannelSliderType : public ChannelSlider //can dynamically take any color 
     
   public:
   
-    ChannelSliderType() : type(RGB_R) {}
+    ChannelSliderType() : type(CC_RGB_R) {}
     ChannelSliderType(ColorChannelType type) : type(type) {}
     
     void setType(ColorChannelType type) { this->type = type; }
@@ -407,6 +437,9 @@ class HueCircleEditor : public ColorEditor, public ElementComposite
     PartialEditorHueCircle* circle;
     ChannelSlider* sliderc; //the slider for third component of the color
     ChannelSlider* slidera; //the slider for alpha channel
+    
+  public:
+    virtual ~HueCircleEditor();
 };
 
 class HueCircleEditor_HSV_HS : public HueCircleEditor
@@ -418,12 +451,12 @@ class HueCircleEditor_HSV_HS : public HueCircleEditor
     HueCircleEditor_HSV_HS()
     {
       circle = new PartialEditorHueCircle_HSV_HS();
-      addSubElement(circle, Sticky(0.0, 0, 0.0, 0, 0.8, 0, 0.8, 0));
-      sliderc = new ChannelSliderType(HSV_V);
+      addSubElement(circle, Sticky(0.0, 0, 0.0, 0, 0.9, 0, 0.9, 0));
+      sliderc = new ChannelSliderType(CC_HSV_V);
       sliderc->setDirection(V);
-      addSubElement(sliderc, Sticky(0.85, 0, 0.0, 0, 0.95, 0, 0.8, 0));
-      slidera = new ChannelSliderType(A);
-      addSubElement(slidera, Sticky(0.0, 0, 0.85, 0, 0.8, 0, 0.95, 0));
+      addSubElement(sliderc, Sticky(0.9, 0, 0.0, 0, 1.0, 0, 0.9, 0));
+      slidera = new ChannelSliderType(CC_A);
+      addSubElement(slidera, Sticky(0.0, 0, 0.9, 0, 0.9, 0, 1.0, 0));
     }
     
     virtual void drawImpl(IGUIDrawer& drawer) const
@@ -484,6 +517,17 @@ class ColorPlane : public PColorPlane
     ColorPlane();
 };
 
+class SelectableColorPlane : public Element
+{
+  public:
+    ColorRGB color;
+    bool selected;
+    
+    SelectableColorPlane();
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IInput& input);
+};
+
 
 class FGBGColor : public ColorEditor, public ElementComposite
 {
@@ -512,20 +556,10 @@ class FGBGColor : public ColorEditor, public ElementComposite
         virtual void drawImpl(IGUIDrawer& drawer) const;
     };
     
-    class ColorPlane : public Element
-    {
-      public:
-        ColorRGB color;
-        bool selected;
-        
-        ColorPlane();
-        virtual void drawImpl(IGUIDrawer& drawer) const;
-        virtual void handleImpl(const IInput& input);
-    };
     
   private:
-    ColorPlane fg;
-    ColorPlane bg;
+    SelectableColorPlane fg;
+    SelectableColorPlane bg;
     Arrows arrows;
   
   public:
@@ -547,6 +581,36 @@ class FGBGColor : public ColorEditor, public ElementComposite
     //these are from the ColorEditor interface, returns the currently selected color
     virtual ColorRGB getColor() const;
     virtual void setColor(const ColorRGB& color);
+    
+    bool isMultiColorGettable(Plane plane) const { return plane == FG || plane == BG; }
+    virtual ColorRGB getMultiColor(Plane plane) const
+    {
+      if(plane == FG) return fg.color;
+      else if(plane == BG) return bg.color;
+      else return RGB_Black;
+    }
+    virtual void setMultiColor(Plane plane, const ColorRGB& color)
+    {
+      if(plane == FG) fg.color = color;
+      else if(plane == BG) bg.color = color;
+    }
+
+    //multi color linker: choose which of the multi-colors is linked to the main color
+    bool isMultiColorLinker() const { return true; }
+    virtual Plane getMultiColorLink() const { return selectedFG() ? FG : BG; }
+    void setMultiColorLink(Plane plane)
+    {
+      if(plane == FG)
+      {
+        fg.selected = true;
+        bg.selected = false;
+      }
+      else if(plane == BG)
+      {
+        fg.selected = false;
+        bg.selected = true;
+      }
+    }
 };
 
 class FGMGBGColor
@@ -565,12 +629,235 @@ class FGMGBGColor
   */
 };
 
+
+/*
+Palette: contains N * M fixed color buttons
+*/
+class AColorPalette : public ColorEditor, public ElementComposite
+{
+  protected:
+    std::vector<SelectableColorPlane*> colors;
+    
+  public:
+
+    virtual ~AColorPalette()
+    {
+      clear();
+    }
+
+    virtual void setPaletteSize(size_t n, size_t m)
+    {
+      clear();
+      for(size_t y = 0; y < m; y++)
+      for(size_t x = 0; x < n; x++)
+      {
+        colors.push_back(new SelectableColorPlane);
+        double x0 = (double)(x + 0) / (double)n;
+        double y0 = (double)(y + 0) / (double)m;
+        double x1 = (double)(x + 1) / (double)n;
+        double y1 = (double)(y + 1) / (double)m;
+        addSubElement(colors.back(), Sticky(x0, 0, y0, 0, x1, 0, y1, 0));
+      }
+    }
+    
+    void setColor(int i, const ColorRGB& color)
+    {
+      colors[i]->color = color;
+    }
+
+    void generateDefault()
+    {
+      setPaletteSize(4, 2);
+      setColor(0, RGB_Black);
+      setColor(1, RGB_White);
+      setColor(2, RGB_Gray);
+      setColor(3, RGB_Grey);
+      setColor(4, RGB_Red);
+      setColor(5, RGB_Green);
+      setColor(6, RGB_Blue);
+      setColor(7, RGB_Yellow);
+    }
+    
+    virtual void clear()
+    {
+      clearSubElements();
+      for(size_t i = 0; i < colors.size(); i++)
+      {
+        delete colors[i];
+      }
+      colors.clear();
+    }
+};
+
+/*
+ColorPalette allows choosing one color and shows the selected one if applicable.
+It only uses the left mouse button.
+*/
+class ColorPalette : public AColorPalette
+{
+  private:
+    int selected;
+
+  public:
+
+    ColorPalette()
+    {
+      selected = -1;
+    }
+
+    ~ColorPalette()
+    {
+      clear();
+    }
+
+    virtual void clear()
+    {
+      AColorPalette::clear();
+      selected = -1;
+    }
+
+    virtual void drawImpl(IGUIDrawer& drawer) const
+    {
+      for(size_t i = 0; i < colors.size(); i++) colors[i]->draw(drawer);
+    }
+
+    virtual void handleImpl(const IInput& input)
+    {
+      for(size_t i = 0; i < colors.size(); i++)
+      {
+        if(colors[i]->pressed(input))
+        {
+          if(selected >= 0) colors[selected]->selected = false;
+          colors[i]->selected = true;
+          selected = i;
+          setChanged();
+          break;
+        }
+      }
+    }
+
+    //these are from the ColorEditor interface, returns the currently selected color
+    virtual ColorRGB getColor() const
+    {
+      if(selected >= 0) return colors[selected]->color;
+      else return RGB_Black;
+    }
+
+    virtual void setColor(const ColorRGB& color)
+    {
+      (void)color; //ignore setColor! Palette has only a limited amount of colors.
+      if(selected >= 0) colors[selected]->selected = false;
+    }
+};
+
+/*
+MultiColorPalette allows selecting one color per mouse button (FG, MG, BG)
+*/
+class MultiColorPalette : public AColorPalette
+{
+  private:
+
+    int selectedfg;
+    int selectedmg;
+    int selectedbg;
+    bool validfg; //to make the ColorEditorSynchronizer system work properly. A color is only valid if it was chosen HERE.
+    bool validmg;
+    bool validbg;
+
+  public:
+  
+    MultiColorPalette()
+    : selectedfg(-1)
+    , selectedmg(-1)
+    , selectedbg(-1)
+    , validfg(false)
+    , validmg(false)
+    , validbg(false)
+    {
+    }
+    
+    ~MultiColorPalette()
+    {
+      clear();
+    }
+    
+    virtual void clear()
+    {
+      AColorPalette::clear();
+      
+      selectedfg = -1;
+      selectedmg = -1;
+      selectedbg = -1;
+    }
+    
+    virtual void drawImpl(IGUIDrawer& drawer) const
+    {
+      for(size_t i = 0; i < colors.size(); i++) colors[i]->draw(drawer);
+    }
+    
+    virtual void handleImpl(const IInput& input)
+    {
+      for(size_t i = 0; i < colors.size(); i++)
+      {
+        if(colors[i]->pressed(input, LMB)) { selectedfg = i; validfg = true; setChanged(); break; }
+        if(colors[i]->pressed(input, MMB)) { selectedmg = i; validmg = true; setChanged(); break; }
+        if(colors[i]->pressed(input, RMB)) { selectedbg = i; validbg = true; setChanged(); break; }
+      }
+    }
+    
+    //these are from the ColorEditor interface, returns the currently selected color
+    virtual ColorRGB getColor() const
+    {
+      if(selectedfg >= 0) return colors[selectedfg]->color;
+      if(selectedmg >= 0) return colors[selectedmg]->color;
+      if(selectedbg >= 0) return colors[selectedbg]->color;
+      else return RGB_Black;
+    }
+    
+    virtual void setColor(const ColorRGB& color)
+    {
+      (void)color;
+      validfg = validmg = validbg = false;
+    }
+    
+    virtual bool isMainColorGettable() const { return false; }
+
+    bool isMultiColorGettable(Plane plane) const
+    {
+      if(plane == FG) return validfg;
+      if(plane == MG) return validmg;
+      if(plane == BG) return validbg;
+      return false;
+    }
+    virtual ColorRGB getMultiColor(Plane plane) const
+    {
+      if(plane == FG && selectedfg >= 0) return colors[selectedfg]->color;
+      if(plane == MG && selectedmg >= 0) return colors[selectedmg]->color;
+      if(plane == BG && selectedbg >= 0) return colors[selectedbg]->color;
+      return RGB_Black;
+    }
+    virtual void setMultiColor(Plane plane, const ColorRGB& color)
+    {
+      //The palette is not changeable, don't do anything
+      (void)color;
+      if(plane == FG) validfg = false;
+      if(plane == MG) validmg = false;
+      if(plane == BG) validbg = false;
+      /*if(plane == FG && selectedfg >= 0) colors[selectedfg]->color = color;
+      if(plane == MG && selectedmg >= 0) colors[selectedmg]->color = color;
+      if(plane == BG && selectedbg >= 0) colors[selectedbg]->color = color;*/
+    }
+};
+
 class ColorEditorSynchronizer
 {
   private:
     std::vector<ColorEditor*> editors;
+    ColorEditor::Plane mainColorLink;
   
   public:
+
+    ColorEditorSynchronizer();
   
     void add(ColorEditor* editor);
     void remove(ColorEditor* editor);
