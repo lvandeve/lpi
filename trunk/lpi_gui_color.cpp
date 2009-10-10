@@ -20,11 +20,14 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include "lpi_gui_color.h"
 
+#include "lpi_base64.h"
 #include "lpi_parse.h"
+#include "lodepng.h"
 
 #include <cstdlib> //abs(int)
 #include <iostream>
 #include <algorithm>
+#include <string>
 
 namespace lpi
 {
@@ -1173,6 +1176,33 @@ void ColorEditorSynchronizer::setColor(const ColorRGB& color)
   for(size_t i = 0; i < editors.size(); i++)
   {
     editors[i]->setColor(color);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void AColorPalette::generateVibrant16x16()
+{
+  setPaletteSize(16, 16);
+  static const std::string palette = "\
+iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAABVklEQVR42pWQsUoDQRCG/8UDHyXP\n\
+YSfYpkyX1gdIYZ8XsbgXsDJgHsHC4gqLFfZgixVGHHBCBtbd2VyIEEFn//v5ZvdubnaAGn1Z6Pve\n\
+qJ9ju93Oa+Sy5jlno2yPSykRETM3P8JvqcvAO8DnROc2XR4GeI8Qqp9CvwAFkC8aGbFJ0GGGqhY7\n\
+QA84hvuYECMiVU/x8I17zgtGIPgETyMogu14tRzCz1+be4eTS3R/uIQbcvZAADx2HpcGVRhHa2hS\n\
+av1Ft9jkwPACX0taT6bhbumD9RGmhgwc8L/BdjldgRlMEHOWh9vMZZgY22CSzYmRzLlDesJ0iQY3\n\
+NtY3IALJPJ6wy/G11i5SOYAItDjZb+lDVERZlQuous3quuaWlCgHBdobBcj2K5dqJWXpHtczIWnS\n\
+CYQbXwhloX31veinype6gdkzB+YhpReRkkLV1zGYauXSoR71DaUbwZs3rATaAAAAAElFTkSuQmCC\n\
+";
+
+  std::vector<unsigned char> png;
+  decodeBase64(png, palette);
+  LodePNG::Decoder pngdec;
+  std::vector<unsigned char> data;
+  pngdec.decode(data, png);
+  
+  for(size_t i = 0; i < 256; i++)
+  {
+    setColor(i, ColorRGB(data[i * 4 + 0],data[i * 4 + 1],data[i * 4 + 2],data[i * 4 + 3]));
   }
 }
 
