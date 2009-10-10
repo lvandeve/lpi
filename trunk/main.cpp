@@ -314,8 +314,8 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   colorSynchronizer.add(&hsv);
   colorSynchronizer.add(&rgb);
   colorSynchronizer.add(&palette);
-  fgbg.setFG(lpi::RGB_Gray);
-  fgbg.setBG(lpi::RGB_White);
+  fgbg.setFG(lpi::RGBd_Gray);
+  fgbg.setBG(lpi::RGBd_White);
   colorSynchronizer.setColor(fgbg.getFG()); //make synchronizer update the above change
   
   while(lpi::frame(true, true))
@@ -339,8 +339,8 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     c.handle(lpi::gSDLInput);
     colorSynchronizer.handle();
     
-    canvas.leftColor = fgbg.getFG();
-    canvas.rightColor = fgbg.getBG();
+    canvas.leftColor = fgbg.getFG255();
+    canvas.rightColor = fgbg.getBG255();
     
     /*if(fgbg.selectedFG())
     {
