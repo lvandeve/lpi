@@ -120,6 +120,7 @@ class InternalContainer //container inside elements, for elements that contain s
 
     void addSubElement(Element* element, const Sticky& sticky, Element* parent);
     void insertSubElement(size_t index, Element* element, const Sticky& sticky, Element* parent);
+    void clearSubElements();
     
     Element* getElement(size_t i) const { return elements[i]; }
     
@@ -228,6 +229,7 @@ class ElementComposite : public Element //element with "internal container" to a
     
   protected:
     void addSubElement(Element* element, const Sticky& sticky = STICKYDEFAULT); //only used for INTERNAL parts of the gui element, such as the buttons in a scrollbar, hence this function is protected
+    void clearSubElements();
     
   public:
     virtual void move(int x, int y);

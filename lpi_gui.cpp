@@ -161,6 +161,11 @@ void InternalContainer::removeElement(Element* element)
   sticky.erase(sticky.find(element));
 }
 
+void InternalContainer::clearSubElements()
+{
+  elements.clear();
+}
+
 Element* InternalContainer::hitTest(const IInput& input)
 {
   for(size_t j = 0; j < elements.size(); j++)
@@ -416,6 +421,11 @@ void Element::drag(const IInput& input, MouseButton button)
 void ElementComposite::addSubElement(Element* element, const Sticky& sticky)
 {
   ic.addSubElement(element, sticky, this);
+}
+
+void ElementComposite::clearSubElements()
+{
+  ic.clearSubElements();
 }
 
 void ElementComposite::move(int x, int y)
