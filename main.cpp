@@ -278,16 +278,17 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   rgb.resize(0,0,120,64);
   tabs.getTabContent(2).pushTopAt(&rgb, 20, 150);
   lpi::gui::FGBGColor fgbg;
-  fgbg.resize(0, 0, 64, 48);
+  fgbg.resize(0, 0, 48, 48);
   tabs.getTabContent(2).pushTopAt(&fgbg, 144, 20);
   lpi::gui::Canvas canvas(guidrawer);
   canvas.make(0, 0, 128, 128);
   tabs.getTabContent(2).pushTopAt(&canvas, 144, 100);
   
   lpi::gui::MultiColorPalette palette;
-  palette.generateDefault();
-  palette.resize(0, 0, 64, 32);
-  tabs.getTabContent(2).pushTopAt(&palette, 210, 50);
+  //palette.generateDefault();
+  palette.generateVibrant16x16();
+  palette.resize(0, 0, 96, 96);
+  tabs.getTabContent(2).pushTopAt(&palette, 200, 4);
   
   lpi::gui::Checkbox wcb;
   wcb.make(0, 0);

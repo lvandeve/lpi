@@ -678,6 +678,8 @@ class AColorPalette : public ColorEditor, public ElementComposite
       setColor(7, RGB_Yellow);
     }
     
+    void generateVibrant16x16();
+    
     virtual void clear()
     {
       clearSubElements();
