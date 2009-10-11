@@ -190,7 +190,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   tabs.addTab("tab 2");
   tabs.addTab("tab 3");
   tabs.addTab("tab 4");
-  w2.pushTopAt(&tabs, 0, 16, lpi::gui::Sticky(0.0, 0, 0.1, 0, 1.0, 0, 1.0, 0));
+  w2.pushTopAt(&tabs, 0, 0, lpi::gui::Sticky(0.0, 0, 0.0, 0, 1.0, 0, 1.0, 0));
 
 
   lpi::gui::Button sound_button;
@@ -232,7 +232,6 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   wbcb.make(0, 0);
   wbcb.makeLabel("more", wbcb.getSizeX(), wbcb.getRelCenterY() - 4, lpi::FONT_White);
   tabs.getTabContent(0).pushTopAt(&wbcb, 20, 80);
-  
 
   
   lpi::ColorRGB dyn_value0 = lpi::RGBA_Lightblue(224);
@@ -245,7 +244,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   //dyn.setSizeXY(200, 20);
   dyn.resize(0,0,280,100);
   dyn.setTitle("dynamic page");
-  dyn.addControl("color", new lpi::gui::DynamicColor(&dyn_value0));
+  dyn.addControl("color", new lpi::gui::DynamicColor(&dyn_value0, guidrawer));
   dyn.addControl("int", new lpi::gui::DynamicValue<int>(&dyn_value1));
   dyn.addControl("string", new lpi::gui::DynamicValue<std::string>(&dyn_value2));
   dyn.addControl("boolean", new lpi::gui::DynamicCheckbox(&dyn_value3));

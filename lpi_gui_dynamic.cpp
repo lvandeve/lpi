@@ -37,8 +37,9 @@ void DynamicColor::ctor()
   edit.setEnabled(false);
 }
 
-DynamicColor::DynamicColor(ColorRGB* value)
+DynamicColor::DynamicColor(ColorRGB* value, const IGUIPartGeom& geom)
 : box(value)
+, edit(value, geom)
 {
   this->bind = value;
   ctor();
