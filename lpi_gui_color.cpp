@@ -1342,13 +1342,13 @@ void AColorPalette::generateVibrant16x16()
 {
   setPaletteSize(16, 16);
   static const std::string palette = "\
-iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAABVklEQVR42pWQsUoDQRCG/8UDHyXP\n\
-YSfYpkyX1gdIYZ8XsbgXsDJgHsHC4gqLFfZgixVGHHBCBtbd2VyIEEFn//v5ZvdubnaAGn1Z6Pve\n\
-qJ9ju93Oa+Sy5jlno2yPSykRETM3P8JvqcvAO8DnROc2XR4GeI8Qqp9CvwAFkC8aGbFJ0GGGqhY7\n\
-QA84hvuYECMiVU/x8I17zgtGIPgETyMogu14tRzCz1+be4eTS3R/uIQbcvZAADx2HpcGVRhHa2hS\n\
-av1Ft9jkwPACX0taT6bhbumD9RGmhgwc8L/BdjldgRlMEHOWh9vMZZgY22CSzYmRzLlDesJ0iQY3\n\
-NtY3IALJPJ6wy/G11i5SOYAItDjZb+lDVERZlQuous3quuaWlCgHBdobBcj2K5dqJWXpHtczIWnS\n\
-CYQbXwhloX31veinype6gdkzB+YhpReRkkLV1zGYauXSoR71DaUbwZs3rATaAAAAAElFTkSuQmCC\n\
+iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAABU0lEQVR42pWQMU4DMRBFv8VKHCVX\n\
+SUGZMlS5RAp6zkANxd6BFDkCBcUiUbjwSi6MNIhBTJSRjD3ORkEKEsz+/Xpj747HA9Toy4O+7436\n\
+Bbbb7aJGLs8i52yU7XUpJSJi5uZH+C11GXgD+Jzo3KLLwwDvEUL1U+iXoADyRSMjNgk6zFDVYgfo\n\
+AcfwEBNiRKTqKR7+cU95yQgEn+BpBEWwba9XQ/h5tLl3OLlE94dLuCFnDwTAY+dxaVCFcbSGJqXW\n\
+X3TLTQ4ML/C1pPVkGm5WPlgfYWrIwAH/G2yX8zU+GUJgBhPEnOXuKrTBJJsTI5lzh5d7TJc4hTnG\n\
+CCQgTmrscnytVYtUDiACbWeWA+ldVERZlQuous16XnNLSpSNAu2LAmTrlUu1krJ0j7czIWnSCYQb\n\
+XwhloX31veiHype6gdkzB+YhpWeRkkLV1wGYauXSoR71Df2Cwy3C/XOmAAAAAElFTkSuQmCC\n\
 ";
 
   std::vector<unsigned char> png;
@@ -1574,6 +1574,46 @@ void MultiColorPalette::setMultiColor(Plane plane, const ColorRGBd& color)
   if(plane == BG && selectedbg >= 0) colors[selectedbg]->color = color;*/
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+ColorDialogSmall::ColorDialogSmall(const IGUIPartGeom& geom)
+{
+  addTop(geom);
+  addTitle("Color");
+  //addResizer(geom);
+  pushTop(&rgb, Sticky(0.05,0, 0.05,0, 0.95,0, 1.0,-24));
+  ok.makeTextPanel(0, 0, "Ok", 64, 24);
+  pushTop(&ok, Sticky(0.5, -32, 1.0,-20, 0.5,32, 1.0,-4));
+}
+
+void ColorDialogSmall::handleImpl(const IInput& input)
+{
+  rgb.handle(input);
+  ok.handle(input);
+  Window::handleImpl(input);
+}
+
+void ColorDialogSmall::drawImpl(IGUIDrawer& drawer) const
+{
+  Window::drawImpl(drawer);
+  rgb.draw(drawer);
+  ok.draw(drawer);
+}
+
+bool ColorDialogSmall::pressedOk(const IInput& input)
+{
+  return ok.clicked(input);
+}
+
+ColorRGBd ColorDialogSmall::getColor() const
+{
+  return rgb.getColor();
+}
+
+void ColorDialogSmall::setColor(const ColorRGBd& color)
+{
+  rgb.setColor(color);
+}
 
 } //namespace gui
 } //namespace lpi

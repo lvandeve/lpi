@@ -269,45 +269,7 @@ class DynamicColor : public TDymamicPageControl<ColorRGB>
   private:
     PColorPlane box;
 
-    class Edit : public Window //todo: make this class a standard color chooser window in lpi_gui_color.h and add some more tabs to it with different ways to select color
-    {
-      protected:
-        ColorSlidersRGB rgb;
-        Button ok;
-        ColorRGB* color;
-
-      public:
-        Edit(ColorRGB* color, const IGUIPartGeom& geom)
-        : color(color)
-        {
-          addTop(geom);
-          addTitle("Color");
-          //addResizer(geom);
-          pushTop(&rgb, Sticky(0.05,0, 0.05,0, 0.95,0, 1.0,-24));
-          rgb.setColor(RGBtoRGBd(*color));
-          ok.makeTextPanel(0, 0, "Ok", 64, 24);
-          pushTop(&ok, Sticky(0.5, -32, 1.0,-20, 0.5,32, 1.0,-4));
-        }
-      
-        virtual void handleImpl(const IInput& input)
-        {
-          rgb.handle(input);
-          ok.handle(input);
-          Window::handleImpl(input);
-          *color = RGBdtoRGB(rgb.getColor());
-          
-          if(ok.clicked(input)) setEnabled(false);
-        }
-
-        virtual void drawImpl(IGUIDrawer& drawer) const
-        {
-          Window::drawImpl(drawer);
-          rgb.draw(drawer);
-          ok.draw(drawer);
-        }
-    };
-    
-    Edit edit;
+    ColorDialogSmall edit;
     
     void ctor();
     

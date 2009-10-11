@@ -52,8 +52,8 @@ class ColorEditor : public ColorChangeable
     //main color: a single color, not associated to any mouse button (not even the first or left one)
     virtual bool isMainColorGettable() const { return true; }
     virtual ColorRGBd getColor() const = 0;
-    virtual ColorRGB getColor255() { return RGBdtoRGB(getColor()); }
     virtual void setColor(const ColorRGBd& color) = 0;
+    virtual ColorRGB getColor255() { return RGBdtoRGB(getColor()); }
     
     //multi color: a color per mouse button
     
@@ -65,7 +65,7 @@ class ColorEditor : public ColorChangeable
     };
     
     virtual bool isMultiColorGettable(Plane plane) const { (void)plane; return false; }
-    virtual ColorRGBd getMultiColor(Plane plane) const { return getColor(); }
+    virtual ColorRGBd getMultiColor(Plane plane) const { (void)plane; return getColor(); }
     virtual void setMultiColor(Plane plane, const ColorRGBd& color) { (void)plane; (void)color; }
     
     //multi color linker: choose which of the multi-colors is linked to the main color
@@ -804,6 +804,24 @@ class ColorEditorSynchronizer
     
     void setColor(const ColorRGBd& color); //set the color of everything
 };
+
+class ColorDialogSmall : public ColorEditor, public Window //todo: make this class a standard color chooser window in lpi_gui_color.h and add some more tabs to it with different ways to select color
+{
+  protected:
+    ColorSlidersRGB rgb;
+    Button ok;
+
+  public:
+    ColorDialogSmall(const IGUIPartGeom& geom);
+    virtual void handleImpl(const IInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    bool pressedOk(const IInput& input);
+    
+    virtual ColorRGBd getColor() const;
+    virtual void setColor(const ColorRGBd& color);
+
+};
+
 
 } //namespace gui
 } //namespace lpi

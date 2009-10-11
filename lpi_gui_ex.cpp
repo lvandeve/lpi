@@ -793,7 +793,7 @@ YesNoWindow::YesNoWindow()
 
 void YesNoWindow::make(int x, int y, int sizex, int sizey, const std::string& text)
 {
-  Window::make(x, y , sizex, sizey);
+  Window::resize(x, y , sizex, sizey);
   //addTop();
   
   yes.makeTextPanel(0, 0, "Yes");
@@ -822,7 +822,7 @@ OkWindow::OkWindow()
 
 void OkWindow::make(int x, int y, int sizex, int sizey, const std::string& text)
 {
-  Window::make(x, y , sizex, sizey);
+  resize(x, y , sizex, sizey);
   //addTop();
   
   ok.makeTextPanel(0, 0, "Ok");

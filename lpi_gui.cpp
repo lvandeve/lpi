@@ -1031,7 +1031,7 @@ Window::Window()
 , enableResizer(false)
 , resizerOverContainer(false)
 {
-  enabled = false;
+  setEnabled(true);
 
   addSubElement(&top, Sticky(0.0, 0, 0.0, 0, 1.0, 0, 0.0, top.getSizeY()));
   addSubElement(&resizer, Sticky(1.0, -resizer.getSizeX(), 1.0, -resizer.getSizeY(), 1.0, 0, 1.0, 0));
@@ -1128,57 +1128,9 @@ int Window::getContainerRightmost() const
   return x1;
 }
 
-void Window::setContainerBorders(int left, int up, int right, int down)
-{
-  if(up < 0) up = left;
-  if(right < 0) right = left;
-  if(down < 0) down = left;
-  
-  container.resize(getContainerLeftmost() + left, getContainerHighest() + up, getContainerRightmost() - right, getContainerLowest() - down);
-  
-  ic.setStickyFull(&container, this);
-}
-
 bool Window::isFloating() const
 {
   return true;
-}
-
-void Window::makeUntextured(int x, int y, int sizex, int sizey, const ColorRGB& fillColor)
-{
-  this->x0 = x;
-  this->y0 = y;
-  this->setSizeX(sizex);
-  this->setSizeY(sizey);
-  this->setEnabled(true);
-  this->enableTop = 0;
-  
-  colorMod = fillColor;
-}
-
-void Window::makeTextured(int x, int y, int sizex, int sizey,
-       const ITexture* /*t00*/, const ColorRGB& colorMod)
-{
-  this->x0 = x;
-  this->y0 = y;
-  this->setSizeX(sizex);
-  this->setSizeY(sizey);
-  this->setEnabled(true);
-  
-  this->enableTop = 0;
-  
-  this->colorMod = colorMod;
-}
-
-void Window::make(int x, int y, int sizex, int sizey)
-{
-  this->x0 = x;
-  this->y0 = y;
-  this->setSizeX(sizex);
-  this->setSizeY(sizey);
-  this->setEnabled(true);
-  
-  this->enableTop = 0;
 }
 
 //to let the scrollbars work properly, call this AFTER using setContainerBorders, addTop, addResizer and such of the window
