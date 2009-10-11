@@ -107,6 +107,13 @@ void InternalContainer::setElementOver(bool state)
   }
 }
 
+Sticky InternalContainer::getSticky(Element* element) const
+{
+  std::map<Element*, Sticky>::const_iterator it = sticky.find(element);
+  if(it != sticky.end()) return it->second;
+  else return Sticky();
+}
+
 void InternalContainer::setSticky(Element* element, const Sticky& sticky, Element* parent)
 {
   this->sticky[element] = sticky;
@@ -1017,7 +1024,8 @@ window and not something behind it, you'll have to do yourself...
 */
 
 Window::Window()
-: enableTop(false)
+: colorMod(RGB_Grey)
+, enableTop(false)
 , closed(false)
 , closeEnabled(false)
 , enableResizer(false)
@@ -1073,11 +1081,24 @@ void Window::addResizer(const IGUIPartGeom& geom, bool overContainer)
   
   if(!overContainer)
   {
-    container.resize(container.getX0(), container.getY0(), container.getX1(), container.getY1() - (y1 - resizer.getY0()));
-    ic.setStickyFull(&container, this);
+    Sticky sticky = ic.getSticky(&container);
+    sticky.i.y1 = resizer.getY0() - y1;
+    ic.setSticky(&container, sticky, this);
   }
   
   resizerOverContainer = overContainer;
+}
+
+
+void Window::addTop(const IGUIPartGeom& geom)
+{
+  top.resize(x0, y0, x1, y0 + geom.getGUIPartSizeY(GP_WINDOW_TOP));
+  this->enableTop = 1;
+  ic.setSticky(&top, Sticky(0.0, 0, 0.0, 0, 1.0, 0, 0.0, top.getSizeY()), this);
+
+  Sticky sticky = ic.getSticky(&container);
+  sticky.i.y0 = top.getY1() - y0;
+  ic.setSticky(&container, sticky, this);
 }
 
 //returns the lowest position the container bottom side is allowed to have (for example not over resizer if resizerOverContainer is false
@@ -1133,8 +1154,6 @@ void Window::makeUntextured(int x, int y, int sizex, int sizey, const ColorRGB& 
   this->enableTop = 0;
   
   colorMod = fillColor;
-  
-  initContainer();
 }
 
 void Window::makeTextured(int x, int y, int sizex, int sizey,
@@ -1149,8 +1168,6 @@ void Window::makeTextured(int x, int y, int sizex, int sizey,
   this->enableTop = 0;
   
   this->colorMod = colorMod;
-  
-  initContainer();
 }
 
 void Window::make(int x, int y, int sizex, int sizey)
@@ -1162,25 +1179,6 @@ void Window::make(int x, int y, int sizex, int sizey)
   this->setEnabled(true);
   
   this->enableTop = 0;
-  
-  initContainer();
-}
-
-void Window::addTop(const IGUIPartGeom& geom)
-{
-  top.resize(x0, y0, x1, y0 + geom.getGUIPartSizeY(GP_WINDOW_TOP));
-  this->enableTop = 1;
-  ic.setSticky(&top, Sticky(0.0, 0, 0.0, 0, 1.0, 0, 0.0, top.getSizeY()), this);
-  
-  container.resize(container.getX0(), container.getY0() + (top.getY1() - y0), container.getX1(), container.getY1());
-  ic.setStickyFull(&container, this);
-}
-
-
-void Window::initContainer()
-{
-  container.make(x0, y0, getSizeX(), getSizeY());
-  ic.setStickyFull(&container, this);
 }
 
 //to let the scrollbars work properly, call this AFTER using setContainerBorders, addTop, addResizer and such of the window
@@ -1263,11 +1261,9 @@ void Window::manageHoverImpl(IHoverManager& hover)
   else container.manageHover(hover);
 }
 
-void Window::addTitle(const std::string& title, int titleX, int titleY, const Font& titleFont)
+void Window::addTitle(const std::string& title, const Font& titleFont)
 {
   this->title = title;
-  this->titleX = titleX;
-  this->titleY = titleY;
   this->titleFont = titleFont;
 }
 

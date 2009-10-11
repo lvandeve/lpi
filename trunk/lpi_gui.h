@@ -137,6 +137,7 @@ class InternalContainer //container inside elements, for elements that contain s
     size_t findElementIndex(Element* element);
     void removeElement(Element* element);
     
+    Sticky getSticky(Element* element) const;
     void setSticky(Element* element, const Sticky& sticky, Element* parent);
     void setStickyRelative(Element* element, Element* parent); //automatically calculates the sticky for completely relative position, based on the current sizes
     void setStickyFull(Element* element, Element* parent); //automatically calculates the sticky for "full" behaviour, sides will follow parent's corresponding size, compared to current position
@@ -695,7 +696,6 @@ class Window : public ElementComposite
     int getContainerHighest() const;
     int getContainerLeftmost() const;
     int getContainerRightmost() const;
-    void initContainer();
     Container* getContainer() { return &container; }
     
     //get the parameters for the container surface on which the elements in the window will be
@@ -707,7 +707,7 @@ class Window : public ElementComposite
     int getContainerSizeY() const { return container.getSizeY(); }
     
     //if a parameter is -1, it's set to left
-    void setContainerBorders(int left = 0, int up = -1, int right = -1, int down = -1);
+    void setContainerBorders(int left = 0, int up = -1, int right = -1, int down = -1); //TODO: remove this
     
     //push the element without affecting absolute position
     void pushTop(Element* element, const Sticky& sticky = STICKYDEFAULT);
@@ -742,10 +742,8 @@ class Window : public ElementComposite
 
     ////optional part "title"
     std::string title;
-    int titleX; //position of title, relative to the top bar (NOT relative to the window but to the TOP BAR!)
-    int titleY;
     Font titleFont;
-    void addTitle(const std::string& title, int titleX = 2, int titleY = 4, const Font& titleFont = FONT_Default);
+    void addTitle(const std::string& title, const Font& titleFont = FONT_Default);
     void setTitle(const std::string& title); //only to be used after "addTitle" (or the x, y position will be messed up)
     
     ////optional part "close button"
