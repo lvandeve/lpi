@@ -440,23 +440,14 @@ class HueCircleEditor : public ColorEditor, public ElementComposite
     ChannelSlider* slidera; //the slider for alpha channel
     
   public:
+    HueCircleEditor();
     virtual ~HueCircleEditor();
-};
-
-class HueCircleEditor_HSV_HS : public HueCircleEditor
-{
-  private:
-  
-  public:
     
-    HueCircleEditor_HSV_HS()
+    void init()
     {
-      circle = new PartialEditorHueCircle_HSV_HS();
       addSubElement(circle, Sticky(0.0, 0, 0.0, 0, 0.9, 0, 0.9, 0));
-      sliderc = new ChannelSliderType(CC_HSV_V);
       sliderc->setDirection(V);
       addSubElement(sliderc, Sticky(0.9, 0, 0.0, 0, 1.0, 0, 0.9, 0));
-      slidera = new ChannelSliderType(CC_A);
       addSubElement(slidera, Sticky(0.0, 0, 0.9, 0, 0.9, 0, 1.0, 0));
     }
     
@@ -466,7 +457,7 @@ class HueCircleEditor_HSV_HS : public HueCircleEditor
       sliderc->draw(drawer);
       slidera->draw(drawer);
     }
-    
+
     virtual void handleImpl(const IInput& input)
     {
       circle->handle(input);
@@ -479,16 +470,22 @@ class HueCircleEditor_HSV_HS : public HueCircleEditor
       sliderc->setAdaptiveColor(getColor());
       slidera->setAdaptiveColor(getColor());
     }
+};
+
+class HueCircleEditor_HSV_HS : public HueCircleEditor
+{
+  public:
+    HueCircleEditor_HSV_HS()
+    {
+      circle = new PartialEditorHueCircle_HSV_HS();
+      sliderc = new ChannelSliderType(CC_HSV_V);
+      slidera = new ChannelSliderType(CC_A);
+      init();
+    }
     
-    //these are from the ColorEditor interface, returns the currently selected color
     virtual ColorRGBd getColor() const
     {
-      ColorHSVd hsv;
-      hsv.h = circle->getValueAngle();
-      hsv.s = circle->getValueAxial();
-      hsv.v = sliderc->getValue();
-      hsv.a = slidera->getValue();
-      return HSVtoRGB(hsv);
+      return HSVtoRGB(ColorHSVd(circle->getValueAngle(), circle->getValueAxial(), sliderc->getValue(), slidera->getValue()));
     }
     
     virtual void setColor(const ColorRGBd& color)
@@ -498,6 +495,84 @@ class HueCircleEditor_HSV_HS : public HueCircleEditor
       circle->setValueAxial(hsv.s);
       sliderc->setValue(hsv.v);
       slidera->setValue(hsv.a);
+    }
+};
+
+class HueCircleEditor_HSV_HV : public HueCircleEditor
+{
+  public:
+    HueCircleEditor_HSV_HV()
+    {
+      circle = new PartialEditorHueCircle_HSV_HV();
+      sliderc = new ChannelSliderType(CC_HSV_S);
+      slidera = new ChannelSliderType(CC_A);
+      init();
+    }
+
+    virtual ColorRGBd getColor() const
+    {
+      return HSVtoRGB(ColorHSVd(circle->getValueAngle(), sliderc->getValue(), circle->getValueAxial(), slidera->getValue()));
+    }
+
+    virtual void setColor(const ColorRGBd& color)
+    {
+      ColorHSVd hsv = RGBtoHSV(color);
+      circle->setValueAngle(hsv.h);
+      sliderc->setValue(hsv.s);
+      circle->setValueAxial(hsv.v);
+      slidera->setValue(hsv.a);
+    }
+};
+
+class HueCircleEditor_HSL_HS : public HueCircleEditor
+{
+  public:
+    HueCircleEditor_HSL_HS()
+    {
+      circle = new PartialEditorHueCircle_HSL_HS();
+      sliderc = new ChannelSliderType(CC_HSL_L);
+      slidera = new ChannelSliderType(CC_A);
+      init();
+    }
+
+    virtual ColorRGBd getColor() const
+    {
+      return HSLtoRGB(ColorHSLd(circle->getValueAngle(), circle->getValueAxial(), sliderc->getValue(), slidera->getValue()));
+    }
+
+    virtual void setColor(const ColorRGBd& color)
+    {
+      ColorHSLd hsl = RGBtoHSL(color);
+      circle->setValueAngle(hsl.h);
+      circle->setValueAxial(hsl.s);
+      sliderc->setValue(hsl.l);
+      slidera->setValue(hsl.a);
+    }
+};
+
+class HueCircleEditor_HSL_HL : public HueCircleEditor
+{
+  public:
+    HueCircleEditor_HSL_HL()
+    {
+      circle = new PartialEditorHueCircle_HSL_HL();
+      sliderc = new ChannelSliderType(CC_HSL_S);
+      slidera = new ChannelSliderType(CC_A);
+      init();
+    }
+
+    virtual ColorRGBd getColor() const
+    {
+      return HSLtoRGB(ColorHSLd(circle->getValueAngle(), sliderc->getValue(), circle->getValueAxial(), slidera->getValue()));
+    }
+
+    virtual void setColor(const ColorRGBd& color)
+    {
+      ColorHSLd hsl = RGBtoHSL(color);
+      circle->setValueAngle(hsl.h);
+      sliderc->setValue(hsl.s);
+      circle->setValueAxial(hsl.l);
+      slidera->setValue(hsl.a);
     }
 };
 
@@ -518,13 +593,13 @@ class ColorPlane : public PColorPlane
     ColorPlane();
 };
 
-class SelectableColorPlane : public Element
+class InternalColorPlane : public Element //for internal use
 {
   public:
     ColorRGBd color;
     bool selected;
     
-    SelectableColorPlane();
+    InternalColorPlane();
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
 };
@@ -559,8 +634,8 @@ class FGBGColor : public ColorEditor, public ElementComposite
     
     
   private:
-    SelectableColorPlane fg;
-    SelectableColorPlane bg;
+    InternalColorPlane fg;
+    InternalColorPlane bg;
     Arrows arrows;
   
   public:
@@ -639,60 +714,13 @@ Palette: contains N * M fixed color buttons
 */
 class AColorPalette : public ColorEditor, public ElementComposite
 {
-  protected:
-    std::vector<SelectableColorPlane*> colors;
-    
   public:
 
-    virtual ~AColorPalette()
-    {
-      clear();
-    }
-
-    virtual void setPaletteSize(size_t n, size_t m)
-    {
-      clear();
-      for(size_t y = 0; y < m; y++)
-      for(size_t x = 0; x < n; x++)
-      {
-        colors.push_back(new SelectableColorPlane);
-        double x0 = (double)(x + 0) / (double)n;
-        double y0 = (double)(y + 0) / (double)m;
-        double x1 = (double)(x + 1) / (double)n;
-        double y1 = (double)(y + 1) / (double)m;
-        addSubElement(colors.back(), Sticky(x0, 0, y0, 0, x1, 0, y1, 0));
-      }
-    }
-    
-    void setColor(int i, const ColorRGBd& color)
-    {
-      colors[i]->color = color;
-    }
-
-    void generateDefault()
-    {
-      setPaletteSize(4, 2);
-      setColor(0, RGBd_Black);
-      setColor(1, RGBd_White);
-      setColor(2, RGBd_Gray);
-      setColor(3, RGBd_Grey);
-      setColor(4, RGBd_Red);
-      setColor(5, RGBd_Green);
-      setColor(6, RGBd_Blue);
-      setColor(7, RGBd_Yellow);
-    }
-    
+    virtual ~AColorPalette();
+    virtual void setPaletteSize(size_t n, size_t m) = 0;
+    virtual void setColor(int i, const ColorRGBd& color) = 0;
+    void generateDefault();
     void generateVibrant16x16();
-    
-    virtual void clear()
-    {
-      clearSubElements();
-      for(size_t i = 0; i < colors.size(); i++)
-      {
-        delete colors[i];
-      }
-      colors.clear();
-    }
 };
 
 /*
@@ -701,59 +729,22 @@ It only uses the left mouse button.
 */
 class ColorPalette : public AColorPalette
 {
-  private:
+  protected:
+    std::vector<InternalColorPlane*> colors;
     int selected;
 
   public:
 
-    ColorPalette()
-    {
-      selected = -1;
-    }
-
-    ~ColorPalette()
-    {
-      clear();
-    }
-
-    virtual void clear()
-    {
-      AColorPalette::clear();
-      selected = -1;
-    }
-
-    virtual void drawImpl(IGUIDrawer& drawer) const
-    {
-      for(size_t i = 0; i < colors.size(); i++) colors[i]->draw(drawer);
-    }
-
-    virtual void handleImpl(const IInput& input)
-    {
-      for(size_t i = 0; i < colors.size(); i++)
-      {
-        if(colors[i]->pressed(input))
-        {
-          if(selected >= 0) colors[selected]->selected = false;
-          colors[i]->selected = true;
-          selected = i;
-          setChanged();
-          break;
-        }
-      }
-    }
-
+    ColorPalette();
+    ~ColorPalette();
+    void clear();
+    virtual void setPaletteSize(size_t n, size_t m);
+    virtual void setColor(int i, const ColorRGBd& color);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IInput& input);
     //these are from the ColorEditor interface, returns the currently selected color
-    virtual ColorRGBd getColor() const
-    {
-      if(selected >= 0) return colors[selected]->color;
-      else return RGBd_Black;
-    }
-
-    virtual void setColor(const ColorRGBd& color)
-    {
-      (void)color; //ignore setColor! Palette has only a limited amount of colors.
-      if(selected >= 0) colors[selected]->selected = false;
-    }
+    virtual ColorRGBd getColor() const;
+    virtual void setColor(const ColorRGBd& color);
 };
 
 /*
@@ -762,6 +753,12 @@ MultiColorPalette allows selecting one color per mouse button (FG, MG, BG)
 class MultiColorPalette : public AColorPalette
 {
   private:
+
+    ITexture** texture; //for speed, palette is presented on a texture (double pointer due to a const-correctness situation)
+    std::vector<ColorRGBd> colors;
+    size_t m;
+    size_t n;
+    mutable bool textureuptodate;
 
     int selectedfg;
     int selectedmg;
@@ -772,87 +769,21 @@ class MultiColorPalette : public AColorPalette
 
   public:
   
-    MultiColorPalette()
-    : selectedfg(-1)
-    , selectedmg(-1)
-    , selectedbg(-1)
-    , validfg(false)
-    , validmg(false)
-    , validbg(false)
-    {
-    }
-    
-    ~MultiColorPalette()
-    {
-      clear();
-    }
-    
-    virtual void clear()
-    {
-      AColorPalette::clear();
-      
-      selectedfg = -1;
-      selectedmg = -1;
-      selectedbg = -1;
-    }
-    
-    virtual void drawImpl(IGUIDrawer& drawer) const
-    {
-      for(size_t i = 0; i < colors.size(); i++) colors[i]->draw(drawer);
-    }
-    
-    virtual void handleImpl(const IInput& input)
-    {
-      for(size_t i = 0; i < colors.size(); i++)
-      {
-        if(colors[i]->pressed(input, LMB)) { selectedfg = i; validfg = true; setChanged(); break; }
-        if(colors[i]->pressed(input, MMB)) { selectedmg = i; validmg = true; setChanged(); break; }
-        if(colors[i]->pressed(input, RMB)) { selectedbg = i; validbg = true; setChanged(); break; }
-      }
-    }
-    
+    MultiColorPalette();
+    ~MultiColorPalette();
+    void clear();
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    void generateTexture() const;
+    virtual void setPaletteSize(size_t n, size_t m);
+    virtual void setColor(int i, const ColorRGBd& color);
+    virtual void handleImpl(const IInput& input);
     //these are from the ColorEditor interface, returns the currently selected color
-    virtual ColorRGBd getColor() const
-    {
-      if(selectedfg >= 0) return colors[selectedfg]->color;
-      if(selectedmg >= 0) return colors[selectedmg]->color;
-      if(selectedbg >= 0) return colors[selectedbg]->color;
-      else return RGBd_Black;
-    }
-    
-    virtual void setColor(const ColorRGBd& color)
-    {
-      (void)color;
-      validfg = validmg = validbg = false;
-    }
-    
-    virtual bool isMainColorGettable() const { return false; }
-
-    bool isMultiColorGettable(Plane plane) const
-    {
-      if(plane == FG) return validfg;
-      if(plane == MG) return validmg;
-      if(plane == BG) return validbg;
-      return false;
-    }
-    virtual ColorRGBd getMultiColor(Plane plane) const
-    {
-      if(plane == FG && selectedfg >= 0) return colors[selectedfg]->color;
-      if(plane == MG && selectedmg >= 0) return colors[selectedmg]->color;
-      if(plane == BG && selectedbg >= 0) return colors[selectedbg]->color;
-      return RGBd_Black;
-    }
-    virtual void setMultiColor(Plane plane, const ColorRGBd& color)
-    {
-      //The palette is not changeable, don't do anything
-      (void)color;
-      if(plane == FG) validfg = false;
-      if(plane == MG) validmg = false;
-      if(plane == BG) validbg = false;
-      /*if(plane == FG && selectedfg >= 0) colors[selectedfg]->color = color;
-      if(plane == MG && selectedmg >= 0) colors[selectedmg]->color = color;
-      if(plane == BG && selectedbg >= 0) colors[selectedbg]->color = color;*/
-    }
+    virtual ColorRGBd getColor() const;
+    virtual void setColor(const ColorRGBd& color);
+    virtual bool isMainColorGettable() const;
+    bool isMultiColorGettable(Plane plane) const;
+    virtual ColorRGBd getMultiColor(Plane plane) const;
+    virtual void setMultiColor(Plane plane, const ColorRGBd& color);
 };
 
 class ColorEditorSynchronizer

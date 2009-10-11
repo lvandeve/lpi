@@ -1068,6 +1068,13 @@ void PartialEditorHueCircle_HSL_HL::getDrawColor(ColorRGB& o_color, double value
 
 ////////////////////////////////////////////////////////////////////////////////
 
+HueCircleEditor::HueCircleEditor()
+: circle(0)
+, sliderc(0)
+, slidera(0)
+{
+}
+
 HueCircleEditor::~HueCircleEditor()
 {
   delete circle;
@@ -1102,12 +1109,12 @@ ColorPlane::ColorPlane()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-SelectableColorPlane::SelectableColorPlane()
+InternalColorPlane::InternalColorPlane()
 : selected(false)
 {
 }
 
-void SelectableColorPlane::drawImpl(IGUIDrawer& drawer) const
+void InternalColorPlane::drawImpl(IGUIDrawer& drawer) const
 {
   int checkersize = 8;
   if(getSizeX() < 16 && getSizeY() < 16) checkersize = getSizeX() / 2;
@@ -1117,7 +1124,7 @@ void SelectableColorPlane::drawImpl(IGUIDrawer& drawer) const
   if(largeenough) drawer.drawGUIPart(selected ? GP_INVISIBLE_BUTTON_PANEL_DOWN : GP_INVISIBLE_BUTTON_PANEL_UP, x0, y0, x1, y1);
 }
 
-void SelectableColorPlane::handleImpl(const IInput& input)
+void InternalColorPlane::handleImpl(const IInput& input)
 {
   (void)input;
 }
@@ -1313,6 +1320,24 @@ void ColorEditorSynchronizer::setColor(const ColorRGBd& color)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+AColorPalette::~AColorPalette()
+{
+}
+
+
+void AColorPalette::generateDefault()
+{
+  setPaletteSize(4, 2);
+  setColor(0, RGBd_Black);
+  setColor(1, RGBd_White);
+  setColor(2, RGBd_Gray);
+  setColor(3, RGBd_Grey);
+  setColor(4, RGBd_Red);
+  setColor(5, RGBd_Green);
+  setColor(6, RGBd_Blue);
+  setColor(7, RGBd_Yellow);
+}
+
 void AColorPalette::generateVibrant16x16()
 {
   setPaletteSize(16, 16);
@@ -1331,12 +1356,224 @@ CYQbXwhloX31veinype6gdkzB+YhpReRkkLV1zGYauXSoR71DaUbwZs3rATaAAAAAElFTkSuQmCC\n\
   LodePNG::Decoder pngdec;
   std::vector<unsigned char> data;
   pngdec.decode(data, png);
-  
+
   for(size_t i = 0; i < 256; i++)
   {
     setColor(i, RGBtoRGBd(ColorRGB(data[i * 4 + 0],data[i * 4 + 1],data[i * 4 + 2],data[i * 4 + 3])));
   }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+ColorPalette::ColorPalette()
+{
+  selected = -1;
+}
+
+ColorPalette::~ColorPalette()
+{
+  clear();
+}
+
+void ColorPalette::clear()
+{
+  clearSubElements();
+  for(size_t i = 0; i < colors.size(); i++)
+  {
+    delete colors[i];
+  }
+  colors.clear();
+  selected = -1;
+}
+
+
+void ColorPalette::setPaletteSize(size_t n, size_t m)
+{
+  clear();
+  for(size_t y = 0; y < m; y++)
+  for(size_t x = 0; x < n; x++)
+  {
+    colors.push_back(new InternalColorPlane);
+    double x0 = (double)(x + 0) / (double)n;
+    double y0 = (double)(y + 0) / (double)m;
+    double x1 = (double)(x + 1) / (double)n;
+    double y1 = (double)(y + 1) / (double)m;
+    addSubElement(colors.back(), Sticky(x0, 0, y0, 0, x1, 0, y1, 0));
+  }
+}
+
+void ColorPalette::setColor(int i, const ColorRGBd& color)
+{
+  colors[i]->color = color;
+}
+
+
+void ColorPalette::drawImpl(IGUIDrawer& drawer) const
+{
+  for(size_t i = 0; i < colors.size(); i++) colors[i]->draw(drawer);
+}
+
+void ColorPalette::handleImpl(const IInput& input)
+{
+  for(size_t i = 0; i < colors.size(); i++)
+  {
+    if(colors[i]->pressed(input))
+    {
+      if(selected >= 0) colors[selected]->selected = false;
+      colors[i]->selected = true;
+      selected = i;
+      setChanged();
+      break;
+    }
+  }
+}
+
+//these are from the ColorEditor interface, returns the currently selected color
+ColorRGBd ColorPalette::getColor() const
+{
+  if(selected >= 0) return colors[selected]->color;
+  else return RGBd_Black;
+}
+
+void ColorPalette::setColor(const ColorRGBd& color)
+{
+  (void)color; //ignore setColor! Palette has only a limited amount of colors.
+  if(selected >= 0) colors[selected]->selected = false;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+MultiColorPalette::MultiColorPalette()
+: texture(new ITexture*)
+, m(0)
+, n(0)
+, textureuptodate(false)
+, selectedfg(-1)
+, selectedmg(-1)
+, selectedbg(-1)
+, validfg(false)
+, validmg(false)
+, validbg(false)
+{
+  *texture = 0;
+}
+
+MultiColorPalette::~MultiColorPalette()
+{
+  delete *texture;
+  delete texture;
+}
+
+void MultiColorPalette::clear()
+{
+  selectedfg = -1;
+  selectedmg = -1;
+  selectedbg = -1;
+  n = m = 0;
+  colors.clear();
+  textureuptodate = false;
+}
+
+void MultiColorPalette::drawImpl(IGUIDrawer& drawer) const
+{
+  if(*texture == 0) (*texture) = drawer.createTexture();
+  if(!textureuptodate) generateTexture();
+  drawer.convertTextureIfNeeded((*texture));
+  drawer.drawTextureSized(*texture, x0, y0, x1 - x0, y1 - y0);
+  if(n > 0 && m > 0 && getSizeX() / n > 4 && getSizeY() / m > 4)
+  {
+    for(size_t x = 0; x <= n; x++) drawer.drawLine(x0 + (getSizeX() * x) / n, y0, x0 + (getSizeX() * x) / n, y1, RGB_Grey);
+    for(size_t y = 0; y <= m; y++) drawer.drawLine(x0, y0 + (getSizeY() * y) / m, x1, y0 + (getSizeY() * y) / m, RGB_Grey);
+  }
+}
+
+void MultiColorPalette::generateTexture() const
+{
+  if(!(*texture)) return;
+
+  (*texture)->setSize(n, m);
+  for(size_t y = 0; y < m; y++)
+  for(size_t x = 0; x < n; x++)
+  {
+    size_t i = y * n + x;
+    ColorRGB rgb = RGBdtoRGB(colors[i]);
+    setPixel(*texture, x, y, rgb);
+  }
+  (*texture)->update();
+  textureuptodate = true;
+}
+
+void MultiColorPalette::setPaletteSize(size_t n, size_t m)
+{
+  this->n = n;
+  this->m = m;
+  colors.resize(n * m);
+  textureuptodate = false;
+}
+
+void MultiColorPalette::setColor(int i, const ColorRGBd& color)
+{
+  colors[i] = color;
+  textureuptodate = false;
+}
+
+void MultiColorPalette::handleImpl(const IInput& input)
+{
+  if(n > 0 && m > 0)
+  {
+    size_t x = ((input.mouseX() - x0) * n) / getSizeX();
+    size_t y = ((input.mouseY() - y0) * m) / getSizeY();
+    size_t i = y * n + x;
+
+    if(pressed(input, LMB)) { selectedfg = i; validfg = true; setChanged(); }
+    if(pressed(input, MMB)) { selectedmg = i; validmg = true; setChanged(); }
+    if(pressed(input, RMB)) { selectedbg = i; validbg = true; setChanged(); }
+  }
+}
+
+//these are from the ColorEditor interface, returns the currently selected color
+ColorRGBd MultiColorPalette::getColor() const
+{
+  if(selectedfg >= 0) return colors[selectedfg];
+  if(selectedmg >= 0) return colors[selectedmg];
+  if(selectedbg >= 0) return colors[selectedbg];
+  else return RGBd_Black;
+}
+
+void MultiColorPalette::setColor(const ColorRGBd& color)
+{
+  (void)color;
+  validfg = validmg = validbg = false;
+}
+
+bool MultiColorPalette::isMainColorGettable() const { return false; }
+
+bool MultiColorPalette::isMultiColorGettable(Plane plane) const
+{
+  if(plane == FG) return validfg;
+  if(plane == MG) return validmg;
+  if(plane == BG) return validbg;
+  return false;
+}
+ColorRGBd MultiColorPalette::getMultiColor(Plane plane) const
+{
+  if(plane == FG && selectedfg >= 0) return colors[selectedfg];
+  if(plane == MG && selectedmg >= 0) return colors[selectedmg];
+  if(plane == BG && selectedbg >= 0) return colors[selectedbg];
+  return RGBd_Black;
+}
+void MultiColorPalette::setMultiColor(Plane plane, const ColorRGBd& color)
+{
+  //The palette is not changeable, don't do anything
+  (void)color;
+  if(plane == FG) validfg = false;
+  if(plane == MG) validmg = false;
+  if(plane == BG) validbg = false;
+  /*if(plane == FG && selectedfg >= 0) colors[selectedfg]->color = color;
+  if(plane == MG && selectedmg >= 0) colors[selectedmg]->color = color;
+  if(plane == BG && selectedbg >= 0) colors[selectedbg]->color = color;*/
+}
+
 
 } //namespace gui
 } //namespace lpi

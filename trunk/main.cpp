@@ -271,9 +271,9 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   tval5.make(0, 0, &dyn_value5);
   tabs.getTabContent(1).pushTopAt(&tval5, 10, 172);
   
-  lpi::gui::HueCircleEditor_HSV_HS hsv;
-  hsv.resize(0,0,120,120);
-  tabs.getTabContent(2).pushTopAt(&hsv, 20, 20, lpi::gui::Sticky(0.01,0, 0.0,0, 0.45,0, 0.45,0));
+  lpi::gui::HueCircleEditor_HSL_HS huecircle;
+  huecircle.resize(0,0,120,120);
+  tabs.getTabContent(2).pushTopAt(&huecircle, 20, 20, lpi::gui::Sticky(0.01,0, 0.0,0, 0.45,0, 0.45,0));
   lpi::gui::ColorSlidersRGB rgb;
   rgb.resize(0,0,120,64);
   tabs.getTabContent(2).pushTopAt(&rgb, 20, 150, lpi::gui::Sticky(0.01,0, 0.55,0, 0.45,0, 0.7,0));
@@ -299,7 +299,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   for(size_t i = 0; i < 30000; i++) sound[i] = 0.1 * std::sin(i / (30.0 * (40000.0-i)/30000.0));
   
   lpi::audioOpen(44100, 2048);
-  
+
   tabs.setElementOver(true);
   
   lpi::GameTime gametime;
@@ -310,9 +310,9 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   tooltips.registerElement(&tb_guitopng, "Unlike the main GUI, which is rendered\nusing 2D triangles with OpenGL,\nthe alternative renderer is entirely in software.");
   
   lpi::gui::ColorEditorSynchronizer colorSynchronizer;
-  colorSynchronizer.add(&fgbg);
-  colorSynchronizer.add(&hsv);
   colorSynchronizer.add(&rgb);
+  colorSynchronizer.add(&fgbg);
+  colorSynchronizer.add(&huecircle);
   colorSynchronizer.add(&palette);
   fgbg.setFG(lpi::RGBd_Gray);
   fgbg.setBG(lpi::RGBd_White);
@@ -341,21 +341,6 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     
     canvas.leftColor = fgbg.getFG255();
     canvas.rightColor = fgbg.getBG255();
-    
-    /*if(fgbg.selectedFG())
-    {
-      lpi::ColorHSV colorHSV(hsv.getValueAngle() * 255, hsv.getValueAxial() * 255, 255);
-      lpi::ColorRGB color = lpi::HSVtoRGB(colorHSV);
-      canvas.leftColor = color;
-      fgbg.setFG(color);
-    }
-    else
-    {
-      lpi::ColorHSV colorHSV(hsv.getValueAngle() * 255, hsv.getValueAxial() * 255, 255);
-      lpi::ColorRGB color = lpi::HSVtoRGB(colorHSV);
-      canvas.rightColor = color;
-      fgbg.setBG(color);
-    }*/
     
     spawns.draw();
     spawns.handle();
@@ -395,7 +380,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
         }
       }
     }
-    
+
     if(tb2.clicked(lpi::gSDLInput))
     {
       lpi::binaryFileToBase64File("textures_small_new.txt", "textures_small_new.png", true);

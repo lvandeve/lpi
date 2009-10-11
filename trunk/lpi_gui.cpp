@@ -249,8 +249,6 @@ void Element::setEnabled(bool i_enable)
 }
 
 Element::Element() : elementOver(false)
-                   , minSizeX(0)
-                   , minSizeY(0)
 {
   setEnabled(true);
 }
@@ -390,8 +388,8 @@ bool Element::isFloating() const
 void Element::resize(int x0, int y0, int x1, int y1)
 {
   
-  if(x1 - x0 < minSizeX) x1 = x0 + minSizeX;
-  if(y1 - y0 < minSizeY) y1 = y0 + minSizeY;
+  if(x1 - x0 < getMinSizeX()) x1 = x0 + getMinSizeX();
+  if(y1 - y0 < getMinSizeY()) y1 = y0 + getMinSizeY();
 
   Pos<int> newPos = { x0, y0, x1, y1 };
   
@@ -1031,9 +1029,6 @@ Window::Window()
   addSubElement(&resizer, Sticky(1.0, -resizer.getSizeX(), 1.0, -resizer.getSizeY(), 1.0, 0, 1.0, 0));
   addSubElement(&container, Sticky(0.0, 0, 0.0, 0, 1.0, 0, 1.0, 0));
   addSubElement(&closeButton, Sticky(1.0, -closeButton.getSizeX(), 0.0, 0, 1.0, 0, 0.0, closeButton.getSizeY()));
-  
-  minSizeX = 64;
-  minSizeY = 64;
 }
 
 

@@ -269,7 +269,7 @@ class Canvas : public Element
     int oldMouseX;
     int oldMouseY;
     bool validOldMousePos;
-    ITexture** canvas; //the OpenGL canvas texture (gets updated with canvasData all the time) (double pointer due to a const-correctness situation)
+    ITexture** canvas; //the canvas texture (gets updated with canvasData all the time) (double pointer due to a const-correctness situation)
     
   public:
     ColorRGB leftColor; //color of the brush for left mouse button
