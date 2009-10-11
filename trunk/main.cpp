@@ -167,7 +167,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   c.pushTop(&tb_guitopng);
   
   lpi::gui::Window w1;
-  w1.make(100, 100, 500, 500);
+  w1.resize(100, 100, 500, 500);
   w1.addTop(guidrawer);
   w1.addTitle("Window 1");
   w1.addCloseButton(guidrawer);
@@ -176,7 +176,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   c.pushTop(&w1);
 
   lpi::gui::Window w2;
-  w2.make(50, 50, 300, 300);
+  w2.resize(50, 50, 300, 300);
   w2.addTop(guidrawer);
   w2.addTitle("Window 2");
   w2.addCloseButton(guidrawer);

@@ -39,7 +39,7 @@ void DynamicColor::ctor()
 
 DynamicColor::DynamicColor(ColorRGB* value, const IGUIPartGeom& geom)
 : box(value)
-, edit(value, geom)
+, edit(geom)
 {
   this->bind = value;
   ctor();
@@ -62,11 +62,18 @@ void DynamicColor::handleImpl(const IInput& input)
   if(this->clicked(input))
   {
     edit.setEnabled(true);
+    edit.setColor(RGBtoRGBd(*bind));
     edit.moveTo(input.mouseX(), input.mouseY());
   }
   else if(edit.isEnabled() && edit.mouseJustDownElsewhere(input))
   {
     edit.setEnabled(false);
+  }
+  else if(edit.pressedOk(input)) edit.setEnabled(false);
+  
+  if(edit.isEnabled())
+  {
+    *bind = edit.getColor255();
   }
 }
 

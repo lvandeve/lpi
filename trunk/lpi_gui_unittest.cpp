@@ -166,7 +166,7 @@ void unitTest()
   LUT_CASE("mouseJustDownHere on top of window")
     Container c(dummydrawer);
     Window w;
-    w.make(0, 0, 100, 100);
+    w.resize(0, 0, 100, 100);
     c.pushTopAt(&w, 0, 0);
     
     w.addTop(dummydrawer);
@@ -240,7 +240,7 @@ void unitTest()
   LUT_CASE("mouseGrabbed on top of window")
     Container c(dummydrawer);
     Window w;
-    w.make(0, 0, 100, 100);
+    w.resize(0, 0, 100, 100);
     c.pushTopAt(&w, 0, 0);
     
     w.addTop(dummydrawer);
@@ -270,7 +270,7 @@ void unitTest()
   LUT_CASE("dragging a window")
     Container c(dummydrawer);
     Window w;
-    w.make(0, 0, 100, 100);
+    w.resize(0, 0, 100, 100);
     c.pushTopAt(&w, 0, 0);
     
     w.addTop(dummydrawer);
@@ -372,7 +372,7 @@ void unitTest()
   LUT_CASE("selfActivate of InputLine in Window")
     Container c(dummydrawer);
     Window w;
-    w.make(0, 0, 100, 100);
+    w.resize(0, 0, 100, 100);
     c.pushTopAt(&w, 0, 0);
     
     InputLine line;
@@ -414,7 +414,7 @@ void unitTest()
   LUT_CASE("enabled and disabled on each other")
     Container c(dummydrawer);
     Window w;
-    w.make(0, 0, 100, 100);
+    w.resize(0, 0, 100, 100);
     c.pushTopAt(&w, 0, 0);
     
     Dummy dummy1;
@@ -449,7 +449,7 @@ void unitTest()
   
     Container c(dummydrawer);
     Window w;
-    w.make(0, 0, 100, 100);
+    w.resize(0, 0, 100, 100);
     w.addTop(dummydrawer);
     c.pushTopAt(&w, 0, 0);
     
@@ -474,12 +474,12 @@ void unitTest()
   
     Container c(dummydrawer);
     Window A;
-    A.make(0, 0, 100, 100);
+    A.resize(0, 0, 100, 100);
     A.addTop(dummydrawer);
     c.pushTopAt(&A, 0, 0);
     
     Window B;
-    B.make(0, 0, 100, 100);
+    B.resize(0, 0, 100, 100);
     B.addTop(dummydrawer);
     c.pushTopAt(&B, 200, 0);
     
@@ -511,7 +511,7 @@ void unitTest()
   
     Container c(dummydrawer);
     Window w;
-    w.make(0, 0, 100, 100);
+    w.resize(0, 0, 100, 100);
     w.addTop(dummydrawer); //could cause jump of two pixels when the bug was there
     c.pushTopAt(&w, 0, 0);
     
@@ -532,7 +532,7 @@ void unitTest()
     Container c(dummydrawer);
     
     Window w; //window is nested container in c
-    w.make(0, 0, 100, 100);
+    w.resize(0, 0, 100, 100);
     c.pushTopAt(&w, 0, 0);
     
     Dummy dummy;
@@ -549,7 +549,7 @@ void unitTest()
     Container c(dummydrawer);
 
     Window w2;
-    w2.make(50, 50, 300, 300);
+    w2.resize(50, 50, 300, 300);
     w2.addTop(dummydrawer);
     w2.addTitle("Window 2");
     w2.addCloseButton(dummydrawer);
@@ -566,7 +566,7 @@ void unitTest()
     w2.pushTopAt(&tabs, 0, 16, lpi::gui::Sticky(0.1, 0, 0.1, 0, 0.9, 0, 0.5, 0));
     
     Window w1;
-    w1.make(0, 0, 500, 500);
+    w1.resize(0, 0, 500, 500);
     w1.addTop(dummydrawer);
     w1.addTitle("Window 1");
     w1.addCloseButton(dummydrawer);
@@ -596,7 +596,7 @@ void unitTest()
     Container c(dummydrawer);
 
     Window w2;
-    w2.make(50, 50, 300, 300);
+    w2.resize(50, 50, 300, 300);
     w2.addTop(dummydrawer);
     w2.addTitle("Window 2");
     w2.addCloseButton(dummydrawer);

@@ -706,9 +706,6 @@ class Window : public ElementComposite
     int getContainerSizeX() const { return container.getSizeX(); }
     int getContainerSizeY() const { return container.getSizeY(); }
     
-    //if a parameter is -1, it's set to left
-    void setContainerBorders(int left = 0, int up = -1, int right = -1, int down = -1); //TODO: remove this
-    
     //push the element without affecting absolute position
     void pushTop(Element* element, const Sticky& sticky = STICKYDEFAULT);
     void pushBottom(Element* element, const Sticky& sticky = STICKYDEFAULT);
@@ -755,11 +752,6 @@ class Window : public ElementComposite
     bool enableResizer;
     void addResizer(const IGUIPartGeom& geom, bool overContainer = false);
     bool resizerOverContainer;
-    ////the make functions
-    void make(int x, int y, int sizex, int sizey);
-    void makeUntextured(int x, int y, int sizex, int sizey, const ColorRGB& fillColor);
-    void makeTextured(int x, int y, int sizex, int sizey,
-                      const ITexture* t00, const ColorRGB& colorMod = RGB_White);
          
     int getRelContainerStart() const { return container.getY0() - y0; }
     
