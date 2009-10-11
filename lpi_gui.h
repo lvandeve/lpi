@@ -35,8 +35,18 @@ lpi_gui: an OpenGL GUI. Well actually now it is updated to support any lpi::IDra
 #include "lpi_gui_drawer.h"
 
 /*
-TODO: all "BackPanel", "BackRule", "GuiSet", "ITexture(GL)", ... will have to go away here!
-"ITexture" is allowed, but no implementations like "ITexture(GL)"
+TODO:
+[ ] modal vs modeless dialogs or elements
+[ ] progress bar (and a good multilevel one)
+[ ] menu (both menu bar and right click popup menus)
+[ ] minimizable windows (and bar to dock them in?)
+[ ] spinner (value with up and down button)
+[ ] dropdown list
+[ ] tree (and flat list and table)
+[ ] file dialog
+[ ] toolbar (just a bunch of image buttons, not hard to make)
+[ ] textfield with multiple lines
+[ ] status bar in windows
 
 Hint:
 When executing the GUI in a gameloop, when you have put all elements in a MainContainer, you have to
@@ -148,9 +158,9 @@ class Element : public ElementRectangular
     bool elementOver; //true if there is an element over this element, causing the mouse NOT to be over this one (Z-order related)
     bool enabled; //if false, the draw() and handle() functions don't do anything, and mouse checks return false. So then it's invisible, inactive, totally not present.
 
-    ////minimum size - TODO: make this virtual private functions instead of member variables, or even better, remove this completely and make the resize function of elements determine this
-    int minSizeX; //you can't resize this element to something smaller than this
-    int minSizeY; 
+    ////minimum size
+    virtual int getMinSizeX() { return 0; } //you can't resize this element to something smaller than this
+    virtual int getMinSizeY() { return 0; }
     
   protected:
     void autoActivate(const IInput& input, MouseState& auto_activate_mouse_state, bool& control_active); //utility function used by text input controls, they need a member variable like "MouseState auto_activate_mouse_state" in them for this and a bool "control_active", and in their handleWidget, put, "autoActivate(input, auto_activate_mouse_state, control_active); if(!control_active) return;"
@@ -672,6 +682,9 @@ class Window : public ElementComposite
     ColorRGB colorMod;
     Dummy closeButton;
     Dummy resizer;
+    
+    virtual int getMinSizeX() { return 64; }
+    virtual int getMinSizeY() { return 64; }
     
   public:
   
