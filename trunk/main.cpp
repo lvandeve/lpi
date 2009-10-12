@@ -172,7 +172,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   w1.addTitle("Window 1");
   w1.addCloseButton(guidrawer);
   w1.addResizer(guidrawer);
-  w1.setColor(lpi::RGBA_Red(192));
+  w1.setColorMod(lpi::RGBA_Red(192));
   c.pushTop(&w1);
 
   lpi::gui::Window w2;
@@ -180,7 +180,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   w2.addTop(guidrawer);
   w2.addTitle("Window 2");
   w2.addCloseButton(guidrawer);
-  w2.setColor(lpi::RGBA_White(224));
+  w2.setColorMod(lpi::RGBA_White(224));
   w2.addResizer(guidrawer);
   c.pushTop(&w2);
   
@@ -279,15 +279,20 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   lpi::gui::FGBGColor fgbg;
   fgbg.resize(0, 0, 48, 48);
   tabs.getTabContent(2).pushTopAt(&fgbg, 144, 20, lpi::gui::Sticky(0.01,0, 0.8,0, 0.2,0, 1.0,0));
+  lpi::gui::ColorDialogSmall colordialogfgbg(guidrawer);
+  fgbg.setColorChoosingDialog(&colordialogfgbg);
   lpi::gui::Canvas canvas(guidrawer);
   canvas.make(0, 0, 256, 256);
   tabs.getTabContent(2).pushTopAt(&canvas, 144, 100, lpi::gui::Sticky(0.55,0, 0.55,0, 1.0,0, 1.0,0));
   
   lpi::gui::MultiColorPalette palette;
+  //lpi::gui::ColorPalette palette;
   //palette.generateDefault();
   palette.generateVibrant16x16();
   palette.resize(0, 0, 96, 96);
   tabs.getTabContent(2).pushTopAt(&palette, 200, 4, lpi::gui::Sticky(0.55,0, 0.0,0, 1.0,0, 0.45,0));
+  lpi::gui::ColorDialogSmall colordialog(guidrawer);
+  palette.setColorChoosingDialog(&colordialog);
   
   lpi::gui::Checkbox wcb;
   wcb.make(0, 0);
@@ -304,9 +309,8 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   lpi::GameTime gametime;
   gametime.init_fps();
   
-  lpi::gui::ToolTipManager tooltips;
-  tooltips.registerElement(&sound_button, "beware...\nthis button makes sound");
-  tooltips.registerElement(&tb_guitopng, "Unlike the main GUI, which is rendered\nusing 2D triangles with OpenGL,\nthe alternative renderer is entirely in software.");
+  c.getToolTipManager().registerElement(&sound_button, "beware...\nthis button makes sound");
+  c.getToolTipManager().registerElement(&tb_guitopng, "Unlike the main GUI, which is rendered\nusing 2D triangles with OpenGL,\nthe alternative renderer is entirely in software.");
   
   lpi::gui::ColorEditorSynchronizer colorSynchronizer;
   colorSynchronizer.add(&rgb);
@@ -334,7 +338,6 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     //dyn.valueToControl();
     
     c.draw(guidrawer);
-    tooltips.draw(&c, guidrawer);
     c.handle(lpi::gSDLInput);
     colorSynchronizer.handle();
     

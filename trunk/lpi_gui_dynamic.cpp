@@ -33,7 +33,6 @@ void DynamicColor::ctor()
   box.resize(0, 0, 12, 12);
   box.move(1, 1);
   this->addSubElement(&box, Sticky(0.0, 0, 0.5, -box.getSizeY() / 2, 0.0, box.getSizeX(), 0.5, box.getSizeY() / 2));
-  edit.resize(0, 20, 256, 128);
   edit.setEnabled(false);
 }
 

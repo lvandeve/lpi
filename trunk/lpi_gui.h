@@ -75,14 +75,14 @@ class Element;
 class ToolTipManager //this is made to draw the tooltip at the very end to avoid other gui items to be drawn over it
 {
   private:
-    std::map<Element*, std::string> elements;
+    std::map<const Element*, std::string> elements;
     
   private:
     void drawToolTip(const std::string& tip, IGUIDrawer& drawer) const; //TODO: move this function to ToolTipManager
     
   public:
     void registerElement(Element* element, const std::string& tip); //doing this overrides the tooltip the element itself generates, but usually the element itself won't generate any tooltip at all on its own and using this function of the tooltipmanager is the only way to get a tooltip for that element
-    void draw(Element* root, IGUIDrawer& drawer) const;
+    void draw(const Element* root, IGUIDrawer& drawer) const;
 };
 
 /*
@@ -126,7 +126,7 @@ class InternalContainer //container inside elements, for elements that contain s
     void setElementOver(bool state); //this says to all elements whether or not another element is in front of it in Z order, causing mouse to not work
     void manageHover(IHoverManager& hover);
     void setBasicMouseInfo(const IInput& input);
-    Element* hitTest(const IInput& input);
+    const Element* hitTest(const IInput& input) const;
 
     void addSubElement(Element* element, const Sticky& sticky, Element* parent);
     void insertSubElement(size_t index, Element* element, const Sticky& sticky, Element* parent);
@@ -204,6 +204,7 @@ class Element : public ElementRectangular
     It's for example not ok for a scrollbar to return its arrow buttons or the scroller button
     TODO: revise this.
     */
+    virtual const Element* hitTest(const IInput& input) const;
     virtual Element* hitTest(const IInput& input);
     virtual bool isFloating() const; //returns true if it's an element that should go to the top if you click on it (like a window). This is used by Container to bring elements to the top.
 
@@ -247,7 +248,7 @@ class ElementComposite : public Element //element with "internal container" to a
     virtual void setElementOver(bool state);
     virtual void resize(int x0, int y0, int x1, int y1);
     virtual void manageHoverImpl(IHoverManager& hover);
-    //virtual Element* hitTest(const IInput& input);
+    //virtual const Element* hitTest(const IInput& input);
 };
 
 class Label //convenience class: elements that want an optional label (e.g. checkboxes) can inherit from this and use drawLabel(this) in their drawWidget function
@@ -530,7 +531,7 @@ class Container : public Element
     virtual void resizeImpl(const Pos<int>& newPos);
     
     virtual void setElementOver(bool state);
-    virtual Element* hitTest(const IInput& input);
+    virtual const Element* hitTest(const IInput& input) const;
     
     void setSizeToElements(); //makes the size of the container as big as the elements. This resizes the container in a non-sticky way: no element is affected
 };
@@ -557,51 +558,21 @@ class MainContainer : public IHoverManager, public ElementComposite
     Container e;
     Group h;
     
+    ToolTipManager tooltips;
+    
   public:
   
-    MainContainer()
-    {
-      ctor();
-    }
+    MainContainer();
+    MainContainer(IGUIDrawer& drawer);
     
-    MainContainer(IGUIDrawer& drawer)
-    : c(drawer)
-    , e(drawer)
-    {
-      ctor();
+    void ctor();
     
-      //the default container is as big as the screen (note: don't forget to resize it if you resize the resolution of the screen!)
-      x0 = 0;
-      y0 = 0;
-      x1 = drawer.getWidth();
-      y1 = drawer.getHeight();
-    }
-    
-    void ctor()
-    {
-      setEnabled();
-      addSubElement(&c);
-      c.pushTop(&e);
-      c.pushTop(&h);
-    }
+    ToolTipManager& getToolTipManager();
+    const ToolTipManager& getToolTipManager() const;
   
-    virtual void addHoverElement(Element* element)
-    {
-      h.pushTop(element);
-    }
-    
-    virtual void handleImpl(const IInput& input)
-    {
-      h.clear();
-      e.manageHover(*this);
-
-      c.handle(input);
-    }
-    
-    virtual void drawImpl(IGUIDrawer& drawer) const
-    {
-      c.draw(drawer);
-    }
+    virtual void addHoverElement(Element* element);
+    virtual void handleImpl(const IInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
     
     //push the element without affecting absolute position
     void pushTop(Element* element, const Sticky& sticky = STICKYDEFAULT){e.pushTop(element, sticky);}
@@ -618,7 +589,7 @@ class MainContainer : public IHoverManager, public ElementComposite
     void pushBottomAt(Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT){e.pushBottomAt(element, x, y, sticky);}
     void insertAt(size_t pos, Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT){e.insertAt(pos, element, x, y, sticky);}
     
-    virtual Element* hitTest(const IInput& input);
+    virtual const Element* hitTest(const IInput& input) const;
 };
 
 class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
@@ -639,7 +610,7 @@ class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
     virtual void manageHoverImpl(IHoverManager& hover);
     virtual void moveImpl(int x, int y);
     virtual void setElementOver(bool state);
-    virtual Element* hitTest(const IInput& input);
+    virtual const Element* hitTest(const IInput& input) const;
 
     void make(int x, int y, int sizex, int sizey, Element* element, const IGUIPartGeom& geom);
     
@@ -763,14 +734,14 @@ class Window : public ElementComposite
     
     virtual void handleImpl(const IInput& input);
     virtual bool isFloating() const;
-    virtual Element* hitTest(const IInput& input);
+    virtual const Element* hitTest(const IInput& input) const;
     
     ////useful for the close button
     void close() { closed = 1; setEnabled(false); } //use this if closed == 1
     void unClose() { closed = 0; setEnabled(true); }
     void toggleClose() { if(closed) unClose(); else close(); }
     
-    void setColor(const ColorRGB& color) { colorMod = color; }
+    void setColorMod(const ColorRGB& color) { colorMod = color; }
 };
 
 //The Checkbox

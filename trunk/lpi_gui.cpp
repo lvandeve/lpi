@@ -173,7 +173,7 @@ void InternalContainer::clearSubElements()
   elements.clear();
 }
 
-Element* InternalContainer::hitTest(const IInput& input)
+const Element* InternalContainer::hitTest(const IInput& input) const
 {
   for(size_t j = 0; j < elements.size(); j++)
   {
@@ -193,15 +193,70 @@ void InternalContainer::manageHover(IHoverManager& hover)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Element* MainContainer::hitTest(const IInput& input)
+MainContainer::MainContainer()
+{
+  ctor();
+}
+
+MainContainer::MainContainer(IGUIDrawer& drawer)
+: c(drawer)
+, e(drawer)
+{
+  ctor();
+
+  //the default container is as big as the screen (note: don't forget to resize it if you resize the resolution of the screen!)
+  x0 = 0;
+  y0 = 0;
+  x1 = drawer.getWidth();
+  y1 = drawer.getHeight();
+}
+
+void MainContainer::ctor()
+{
+  setEnabled();
+  addSubElement(&c);
+  c.pushTop(&e);
+  c.pushTop(&h);
+}
+
+void MainContainer::addHoverElement(Element* element)
+{
+  h.pushTop(element);
+}
+
+void MainContainer::handleImpl(const IInput& input)
+{
+  h.clear();
+  e.manageHover(*this);
+
+  c.handle(input);
+}
+
+void MainContainer::drawImpl(IGUIDrawer& drawer) const
+{
+  c.draw(drawer);
+  tooltips.draw(this, drawer);
+}
+
+const Element* MainContainer::hitTest(const IInput& input) const
 {
   if(mouseOver(input))
   {
-    Element* result = c.hitTest(input);
+    const Element* result = c.hitTest(input);
     if(result) return result;
     return this;
   }
   else return 0;
+}
+
+ToolTipManager& MainContainer::getToolTipManager()
+{
+  return tooltips;
+}
+
+const ToolTipManager& MainContainer::getToolTipManager() const
+{
+  return tooltips;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -213,11 +268,11 @@ void ToolTipManager::registerElement(Element* element, const std::string& tip)
   elements[element] = tip;
 }
 
-void ToolTipManager::draw(Element* root, IGUIDrawer& drawer) const
+void ToolTipManager::draw(const Element* root, IGUIDrawer& drawer) const
 {
-  Element* element = root->hitTest(drawer.getInput());
+  const Element* element = root->hitTest(drawer.getInput());
   if(!element) return;
-  std::map<Element*, std::string>::const_iterator it = elements.find(element);
+  std::map<const Element*, std::string>::const_iterator it = elements.find(element);
   if(it != elements.end())
   {
     drawer.drawGUIPartText(GPT_TOOLTIP, it->second, drawer.getInput().mouseX(), drawer.getInput().mouseY(), drawer.getInput().mouseX(), drawer.getInput().mouseY());
@@ -381,10 +436,15 @@ bool Element::hasElementOver() const
   return elementOver;
 }
 
-Element* Element::hitTest(const IInput& input)
+const Element* Element::hitTest(const IInput& input) const
 {
   if(mouseOver(input)) return this;
   else return 0;
+}
+
+Element* Element::hitTest(const IInput& input)
+{
+  return const_cast<Element*>((const_cast<const Element*>(this))->hitTest(input));
 }
 
 bool Element::isFloating() const
@@ -530,11 +590,11 @@ void Container::setElementOver(bool state)
   elements.setElementOver(state);
 }
 
-Element* Container::hitTest(const IInput& input)
+const Element* Container::hitTest(const IInput& input) const
 {
   if(mouseOver(input))
   {
-    Element* result = elements.hitTest(input);
+    const Element* result = elements.hitTest(input);
     if(result) return result;
     return this;
   }
@@ -790,11 +850,11 @@ void ScrollElement::manageHoverImpl(IHoverManager& hover)
   element->manageHover(hover);
 }
 
-Element* ScrollElement::hitTest(const IInput& input)
+const Element* ScrollElement::hitTest(const IInput& input) const
 {
   if(mouseOver(input))
   {
-    Element* result = element->hitTest(input);
+    const Element* result = element->hitTest(input);
     if(result) return result;
     return this;
   }
@@ -1040,11 +1100,11 @@ Window::Window()
 }
 
 
-Element* Window::hitTest(const IInput& input)
+const Element* Window::hitTest(const IInput& input) const
 {
   if(mouseOver(input))
   {
-    Element* result = container.hitTest(input);
+    const Element* result = container.hitTest(input);
     if(result && result != &container) return result;
     return this;
   }
