@@ -553,7 +553,6 @@ void unitTest()
     w2.addTop(dummydrawer);
     w2.addTitle("Window 2");
     w2.addCloseButton(dummydrawer);
-    w2.setColor(lpi::RGBA_White(192));
     w2.addResizer(dummydrawer);
     c.pushTop(&w2);
     
@@ -571,7 +570,6 @@ void unitTest()
     w1.addTitle("Window 1");
     w1.addCloseButton(dummydrawer);
     w1.addResizer(dummydrawer);
-    w1.setColor(lpi::RGBA_Red(192));
     c.pushTop(&w1);
     
     Button wb;
@@ -600,7 +598,6 @@ void unitTest()
     w2.addTop(dummydrawer);
     w2.addTitle("Window 2");
     w2.addCloseButton(dummydrawer);
-    w2.setColor(lpi::RGBA_White(192));
     w2.addResizer(dummydrawer);
     c.pushTop(&w2);
     

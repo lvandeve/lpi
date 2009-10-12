@@ -1139,6 +1139,7 @@ void FGBGColor::Arrows::drawImpl(IGUIDrawer& drawer) const
 
 
 FGBGColor::FGBGColor()
+: selectable(true)
 {
   addSubElement(&fg, Sticky(0.0, 0, 0.0, 0, 1.0, -16, 1.0, -16));
   addSubElement(&bg, Sticky(0.0, 16, 0.0, 16, 1.0, 0, 1.0, 0));
@@ -1155,24 +1156,60 @@ void FGBGColor::drawImpl(IGUIDrawer& drawer) const
 
 void FGBGColor::handleImpl(const IInput& input)
 {
-  if(fg.mouseDownHere(input))
+  if(dialog && dialog->isEnabled())
   {
-    fg.selected = true;
-    bg.selected = false;
-    setChanged();
+    if(dialog->pressedOk(input))
+    {
+      dialog->setEnabled(false);
+      if(fg.selected) fg.color = dialog->getColor();
+      else bg.color = dialog->getColor();
+      setChanged();
+    }
   }
-  else if(bg.mouseDownHere(input))
+  else
   {
-    fg.selected = false;
-    bg.selected = true;
-    setChanged();
-  }
-  else if(arrows.clicked(input))
-  {
-    ColorRGBd temp = fg.color;
-    fg.color = bg.color;
-    bg.color = temp;
-    setChanged();
+    if(selectable)
+    {
+      if(fg.mouseDownHere(input))
+      {
+        fg.selected = true;
+        bg.selected = false;
+        setChanged();
+      }
+      else if(bg.mouseDownHere(input))
+      {
+        fg.selected = false;
+        bg.selected = true;
+        setChanged();
+      }
+    }
+    
+    if(dialog)
+    {
+      if(selectable ? fg.mouseDoubleClicked(input, LMB) : fg.clicked(input, LMB))
+      {
+        fg.selected = true;
+        bg.selected = false;
+        dialog->setColor(fg.color);
+        dialog->setEnabled(true);
+      }
+      else if(selectable ? bg.mouseDoubleClicked(input, LMB) : bg.clicked(input, LMB))
+      {
+        fg.selected = false;
+        bg.selected = true;
+        dialog->setColor(bg.color);
+        dialog->setEnabled(true);
+      }
+
+    }
+
+    if(arrows.clicked(input))
+    {
+      ColorRGBd temp = fg.color;
+      fg.color = bg.color;
+      bg.color = temp;
+      setChanged();
+    }
   }
 }
 
@@ -1214,6 +1251,18 @@ ColorRGBd FGBGColor::getColor() const
 void FGBGColor::setColor(const ColorRGBd& color)
 {
   if(fg.selected) fg.color = color; else bg.color = color;
+}
+
+void FGBGColor::setColorChoosingDialog(AColorDialog* dialog)
+{
+  this->dialog = dialog;
+  if(dialog) dialog->setEnabled(false);
+}
+
+void FGBGColor::manageHoverImpl(IHoverManager& hover)
+{
+  if(dialog && dialog->isEnabled())
+    hover.addHoverElement(dialog);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1320,10 +1369,14 @@ void ColorEditorSynchronizer::setColor(const ColorRGBd& color)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-AColorPalette::~AColorPalette()
+AColorPalette::AColorPalette()
+: dialog(0)
 {
 }
 
+AColorPalette::~AColorPalette()
+{
+}
 
 void AColorPalette::generateDefault()
 {
@@ -1361,6 +1414,18 @@ XwhloX31veiHype6gdkzB+YhpWeRkkLV1wGYauXSoR71Df2Cwy3C/XOmAAAAAElFTkSuQmCC\n\
   {
     setColor(i, RGBtoRGBd(ColorRGB(data[i * 4 + 0],data[i * 4 + 1],data[i * 4 + 2],data[i * 4 + 3])));
   }
+}
+
+void AColorPalette::setColorChoosingDialog(AColorDialog* dialog)
+{
+  this->dialog = dialog;
+  if(dialog) dialog->setEnabled(false);
+}
+
+void AColorPalette::manageHoverImpl(IHoverManager& hover)
+{
+  if(dialog && dialog->isEnabled())
+    hover.addHoverElement(dialog);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1415,15 +1480,33 @@ void ColorPalette::drawImpl(IGUIDrawer& drawer) const
 
 void ColorPalette::handleImpl(const IInput& input)
 {
-  for(size_t i = 0; i < colors.size(); i++)
+  if(dialog && dialog->isEnabled())
   {
-    if(colors[i]->pressed(input))
+    if(dialog->pressedOk(input))
     {
-      if(selected >= 0) colors[selected]->selected = false;
-      colors[i]->selected = true;
-      selected = i;
+      dialog->setEnabled(false);
+      if(selected >= 0) setColor(selected, dialog->getColor());
       setChanged();
-      break;
+    }
+  }
+  else
+  {
+    for(size_t i = 0; i < colors.size(); i++)
+    {
+      if(colors[i]->pressed(input))
+      {
+        if(selected >= 0) colors[selected]->selected = false;
+        colors[i]->selected = true;
+        selected = i;
+        setChanged();
+        break;
+      }
+      if(dialog && colors[i]->mouseDoubleClicked(input, LMB))
+      {
+        selected = i;
+        dialog->setColor(colors[i]->color);
+        dialog->setEnabled(true);
+      }
     }
   }
 }
@@ -1454,6 +1537,7 @@ MultiColorPalette::MultiColorPalette()
 , validfg(false)
 , validmg(false)
 , validbg(false)
+, selectedEditing(-1)
 {
   *texture = 0;
 }
@@ -1469,6 +1553,7 @@ void MultiColorPalette::clear()
   selectedfg = -1;
   selectedmg = -1;
   selectedbg = -1;
+  selectedEditing = -1;
   n = m = 0;
   colors.clear();
   textureuptodate = false;
@@ -1521,13 +1606,33 @@ void MultiColorPalette::handleImpl(const IInput& input)
 {
   if(n > 0 && m > 0)
   {
-    size_t x = ((input.mouseX() - x0) * n) / getSizeX();
-    size_t y = ((input.mouseY() - y0) * m) / getSizeY();
-    size_t i = y * n + x;
+    if(dialog && dialog->isEnabled())
+    {
+      if(dialog->pressedOk(input))
+      {
+        dialog->setEnabled(false);
+        if(selectedEditing >= 0) setColor(selectedEditing, dialog->getColor());
+        validfg = true;
+        setChanged();
+      }
+    }
+    else
+    {
+      size_t x = ((input.mouseX() - x0) * n) / getSizeX();
+      size_t y = ((input.mouseY() - y0) * m) / getSizeY();
+      size_t i = y * n + x;
 
-    if(pressed(input, LMB)) { selectedfg = i; validfg = true; setChanged(); }
-    if(pressed(input, MMB)) { selectedmg = i; validmg = true; setChanged(); }
-    if(pressed(input, RMB)) { selectedbg = i; validbg = true; setChanged(); }
+      if(pressed(input, LMB)) { selectedfg = i; validfg = true; setChanged(); }
+      if(pressed(input, MMB)) { selectedmg = i; validmg = true; setChanged(); }
+      if(pressed(input, RMB)) { selectedbg = i; validbg = true; setChanged(); }
+      
+      if(dialog && mouseDoubleClicked(input, LMB))
+      {
+        selectedEditing = i;
+        dialog->setColor(colors[i]);
+        dialog->setEnabled(true);
+      }
+    }
   }
 }
 
@@ -1584,6 +1689,7 @@ ColorDialogSmall::ColorDialogSmall(const IGUIPartGeom& geom)
   pushTop(&rgb, Sticky(0.05,0, 0.05,0, 0.95,0, 1.0,-24));
   ok.makeTextPanel(0, 0, "Ok", 64, 24);
   pushTop(&ok, Sticky(0.5, -32, 1.0,-20, 0.5,32, 1.0,-4));
+  resize(0, 20, 256, 128);
 }
 
 void ColorDialogSmall::handleImpl(const IInput& input)

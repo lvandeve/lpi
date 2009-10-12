@@ -604,6 +604,7 @@ class InternalColorPlane : public Element //for internal use
     virtual void handleImpl(const IInput& input);
 };
 
+class AColorDialog;
 
 class FGBGColor : public ColorEditor, public ElementComposite
 {
@@ -632,6 +633,18 @@ class FGBGColor : public ColorEditor, public ElementComposite
         virtual void drawImpl(IGUIDrawer& drawer) const;
     };
     
+    /*
+    selectable:
+    If true, FG and BG can be selected and link other color editors to that plane.
+    If false, FG and BG cannot be selected, and main colors aren't linked to
+    planes (see explanation at synchronizer)
+    If true, a doubleclick is needed to open color dialog if there is one.
+    If false, a single click opens the color dialog if there is one.
+    */
+    bool selectable; 
+    
+    AColorDialog* dialog; //if 0, no color dialog can be opened. If some value, then that dialog can be opened.
+    
     
   private:
     InternalColorPlane fg;
@@ -656,6 +669,8 @@ class FGBGColor : public ColorEditor, public ElementComposite
 
     bool selectedFG() const;
     bool selectedBG() const;
+    
+    void setSelectable(bool selectable) { this->selectable = selectable; } //see explanation at field "bool selectable"
     
     //these are from the ColorEditor interface, returns the currently selected color
     virtual ColorRGBd getColor() const;
@@ -690,6 +705,9 @@ class FGBGColor : public ColorEditor, public ElementComposite
         bg.selected = true;
       }
     }
+    
+    void setColorChoosingDialog(AColorDialog* dialog);
+    virtual void manageHoverImpl(IHoverManager& hover);
 };
 
 class FGMGBGColor
@@ -714,13 +732,20 @@ Palette: contains N * M fixed color buttons
 */
 class AColorPalette : public ColorEditor, public ElementComposite
 {
+  protected:
+  
+    AColorDialog* dialog; //if 0, dialog for changing colors is disabled
+    
   public:
 
+    AColorPalette();
     virtual ~AColorPalette();
     virtual void setPaletteSize(size_t n, size_t m) = 0;
     virtual void setColor(int i, const ColorRGBd& color) = 0;
     void generateDefault();
     void generateVibrant16x16();
+    void setColorChoosingDialog(AColorDialog* dialog);
+    virtual void manageHoverImpl(IHoverManager& hover);
 };
 
 /*
@@ -749,6 +774,8 @@ class ColorPalette : public AColorPalette
 
 /*
 MultiColorPalette allows selecting one color per mouse button (FG, MG, BG)
+Multiple does not mean multiple colors (the regular one also has multiple colors),
+but it means multiple mouse buttons or multiple planes
 */
 class MultiColorPalette : public AColorPalette
 {
@@ -766,6 +793,7 @@ class MultiColorPalette : public AColorPalette
     bool validfg; //to make the ColorEditorSynchronizer system work properly. A color is only valid if it was chosen HERE.
     bool validmg;
     bool validbg;
+    int selectedEditing; //color editing with dialog
 
   public:
   
@@ -805,7 +833,14 @@ class ColorEditorSynchronizer
     void setColor(const ColorRGBd& color); //set the color of everything
 };
 
-class ColorDialogSmall : public ColorEditor, public Window //todo: make this class a standard color chooser window in lpi_gui_color.h and add some more tabs to it with different ways to select color
+class AColorDialog : public ColorEditor, public Window
+{
+  public:
+    virtual ~AColorDialog() {};
+    virtual bool pressedOk(const IInput& input) = 0;
+};
+
+class ColorDialogSmall : public AColorDialog
 {
   protected:
     ColorSlidersRGB rgb;
@@ -815,7 +850,7 @@ class ColorDialogSmall : public ColorEditor, public Window //todo: make this cla
     ColorDialogSmall(const IGUIPartGeom& geom);
     virtual void handleImpl(const IInput& input);
     virtual void drawImpl(IGUIDrawer& drawer) const;
-    bool pressedOk(const IInput& input);
+    virtual bool pressedOk(const IInput& input);
     
     virtual ColorRGBd getColor() const;
     virtual void setColor(const ColorRGBd& color);
