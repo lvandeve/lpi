@@ -958,11 +958,11 @@ void PartialEditorSquareType::getDrawColor(ColorRGB& o_color, double value_x, do
 ////////////////////////////////////////////////////////////////////////////////
 
   
-PartialEditorHueCircle::PartialEditorHueCircle()
+PartialEditorHueDisk::PartialEditorHueDisk()
 {
 }
 
-void PartialEditorHueCircle::drawImpl(IGUIDrawer& drawer) const
+void PartialEditorHueDisk::drawImpl(IGUIDrawer& drawer) const
 {
   static const size_t NUMANGLE = 24;
   static const size_t NUMAXIAL = 8;
@@ -1010,7 +1010,7 @@ void PartialEditorHueCircle::drawImpl(IGUIDrawer& drawer) const
   drawer.drawCircle(x, y, 4, indicator, false);
 }
 
-void PartialEditorHueCircle::handleImpl(const IInput& input)
+void PartialEditorHueDisk::handleImpl(const IInput& input)
 {
   if(mouseGrabbed(input))
   {
@@ -1034,7 +1034,7 @@ void PartialEditorHueCircle::handleImpl(const IInput& input)
   }
 }
 
-void PartialEditorHueCircle_HSV_HS::getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const
+void PartialEditorHueDisk_HSV_HS::getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const
 {
   ColorHSV convert = RGBtoHSV(RGBdtoRGB(color));
   convert.h = (int)(value_angle * 255.0);
@@ -1042,7 +1042,7 @@ void PartialEditorHueCircle_HSV_HS::getDrawColor(ColorRGB& o_color, double value
   o_color = HSVtoRGB(convert);
 }
 
-void PartialEditorHueCircle_HSV_HV::getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const
+void PartialEditorHueDisk_HSV_HV::getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const
 {
   ColorHSV convert = RGBtoHSV(RGBdtoRGB(color));
   convert.h = (int)(value_angle * 255.0);
@@ -1050,7 +1050,7 @@ void PartialEditorHueCircle_HSV_HV::getDrawColor(ColorRGB& o_color, double value
   o_color = HSVtoRGB(convert);
 }
 
-void PartialEditorHueCircle_HSL_HS::getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const
+void PartialEditorHueDisk_HSL_HS::getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const
 {
   ColorHSL convert = RGBtoHSL(RGBdtoRGB(color));
   convert.h = (int)(value_angle * 255.0);
@@ -1058,7 +1058,7 @@ void PartialEditorHueCircle_HSL_HS::getDrawColor(ColorRGB& o_color, double value
   o_color = HSLtoRGB(convert);
 }
 
-void PartialEditorHueCircle_HSL_HL::getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const
+void PartialEditorHueDisk_HSL_HL::getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const
 {
   ColorHSL convert = RGBtoHSL(RGBdtoRGB(color));
   convert.h = (int)(value_angle * 255.0);
@@ -1068,14 +1068,14 @@ void PartialEditorHueCircle_HSL_HL::getDrawColor(ColorRGB& o_color, double value
 
 ////////////////////////////////////////////////////////////////////////////////
 
-HueCircleEditor::HueCircleEditor()
+HueDiskEditor::HueDiskEditor()
 : circle(0)
 , sliderc(0)
 , slidera(0)
 {
 }
 
-HueCircleEditor::~HueCircleEditor()
+HueDiskEditor::~HueDiskEditor()
 {
   delete circle;
   delete sliderc;
@@ -1104,6 +1104,41 @@ void PColorPlane::drawImpl(IGUIDrawer& drawer) const
 ColorPlane::ColorPlane()
 : PColorPlane(&color)
 , color(RGB_White)
+{
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+PColorPlaned::PColorPlaned(ColorRGBd* color)
+: color(color)
+{
+}
+
+void PColorPlaned::drawImpl(IGUIDrawer& drawer) const
+{
+  int checkersize = 8;
+  if(getSizeX() < 16 && getSizeY() < 16) checkersize = getSizeX() / 2;
+  bool largeenough = getSizeX() > 4 && getSizeY() > 4;
+  if(largeenough) drawCheckerBackground(drawer, x0, y0, x1, y1, checkersize, checkersize);
+  drawer.drawRectangle(x0, y0, x1, y1, RGBdtoRGB(*color), true);
+  if(largeenough) drawer.drawGUIPart(GP_PANEL_BORDER, x0, y0, x1, y1);
+}
+
+ColorRGBd PColorPlaned::getColor() const
+{
+  return *color;
+}
+
+void PColorPlaned::setColor(const ColorRGBd& color)
+{
+  *(this->color) = color;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+ColorPlaned::ColorPlaned()
+: PColorPlaned(&color)
+, color(RGBd_White)
 {
 }
 
@@ -1416,6 +1451,50 @@ XwhloX31veiHype6gdkzB+YhpWeRkkLV1wGYauXSoR71Df2Cwy3C/XOmAAAAAElFTkSuQmCC\n\
   }
 }
 
+void AColorPalette::generateVibrant8x8()
+{
+  setPaletteSize(8, 8);
+  static const std::string palette = "\
+iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAtklEQVQYlT2MMWrDUBAFR0RFbuAc\n\
+Z/ukTOkjGHKFPYQLHyFHSPkLlS4UUKFCxQo28A0KqBGuzEvjuHgwMMPDXQIJXGBySUjCXZgJlwsh\n\
+HGFI98QdmSF0v/gEGfx7OS7D1EjSPM9ExGOllAc3qpPIAbLnMo0My0rUlXFZGZaV9nvn5K5jegmy\n\
+hafXD7IE2V2JItrn7cTxfOZrHCGC09uBGz0bPRsDjbQXvwk1YUmo7xAdPxn0Ff4AWj+M3ac/TB8A\n\
+AAAASUVORK5CYII=\n\
+";
+
+  std::vector<unsigned char> png;
+  decodeBase64(png, palette);
+  LodePNG::Decoder pngdec;
+  std::vector<unsigned char> data;
+  pngdec.decode(data, png);
+
+  for(size_t i = 0; i < 64; i++)
+  {
+    setColor(i, RGBtoRGBd(ColorRGB(data[i * 4 + 0],data[i * 4 + 1],data[i * 4 + 2],data[i * 4 + 3])));
+  }
+}
+
+void AColorPalette::generateVibrant6x6()
+{
+  setPaletteSize(6, 6);
+  static const std::string palette = "\
+iVBORw0KGgoAAAANSUhEUgAAAAYAAAAGCAYAAADgzO9IAAAAZklEQVQImTWLoRHDMADE5EmSUTxE\n\
+B/pxAjtEYUFBQUCBgXuX3hl4A5UkQEQ6kSgoxKioJBIjIkHPlCCeywaXN8QCWGvlYl1XlmWhOKoc\n\
+HUaH4wbtwbc3is+79Be/z857TNox2cfkD1/gTTo56eXqAAAAAElFTkSuQmCC\n\
+";
+
+  std::vector<unsigned char> png;
+  decodeBase64(png, palette);
+  LodePNG::Decoder pngdec;
+  std::vector<unsigned char> data;
+  pngdec.decode(data, png);
+
+  for(size_t i = 0; i < 36; i++)
+  {
+    setColor(i, RGBtoRGBd(ColorRGB(data[i * 4 + 0],data[i * 4 + 1],data[i * 4 + 2],data[i * 4 + 3])));
+  }
+}
+
 void AColorPalette::setColorChoosingDialog(AColorDialog* dialog)
 {
   this->dialog = dialog;
@@ -1717,6 +1796,65 @@ ColorRGBd ColorDialogSmall::getColor() const
 }
 
 void ColorDialogSmall::setColor(const ColorRGBd& color)
+{
+  rgb.setColor(color);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+ColorDialog::ColorDialog(const IGUIPartGeom& geom)
+{
+  addTop(geom);
+  addTitle("Color");
+  addResizer(geom);
+  
+  pushTop(&rgb, Sticky(0.05,0, 0.75,0, 0.49,0, 0.99,0));
+  pushTop(&hsl, Sticky(0.05,0, 0.05,0, 0.49,0, 0.74,0));
+  pushTop(&palette, Sticky(0.5,4, 0.0,4, 1.0,-4, 0.75,-4));
+  palette.generateVibrant6x6();
+  pushTop(&plane, Sticky(0.5,4, 0.75,4, 0.75,-4, 1.0,-4));
+  ok.makeTextPanel(0, 0, "Ok", 64, 24);
+  pushTop(&ok, Sticky(1.0, -80, 1.0,-20, 1.0,-16, 1.0,-4));
+  resize(0, 20, 400, 300);
+  
+  synchronizer.add(&rgb);
+  synchronizer.add(&hsl);
+  synchronizer.add(&palette);
+  synchronizer.add(&plane);
+}
+
+void ColorDialog::handleImpl(const IInput& input)
+{
+  rgb.handle(input);
+  hsl.handle(input);
+  palette.handle(input);
+  plane.handle(input);
+  ok.handle(input);
+  synchronizer.handle();
+  Window::handleImpl(input);
+}
+
+void ColorDialog::drawImpl(IGUIDrawer& drawer) const
+{
+  Window::drawImpl(drawer);
+  rgb.draw(drawer);
+  hsl.draw(drawer);
+  palette.draw(drawer);
+  plane.draw(drawer);
+  ok.draw(drawer);
+}
+
+bool ColorDialog::pressedOk(const IInput& input)
+{
+  return ok.clicked(input);
+}
+
+ColorRGBd ColorDialog::getColor() const
+{
+  return rgb.getColor();
+}
+
+void ColorDialog::setColor(const ColorRGBd& color)
 {
   rgb.setColor(color);
 }

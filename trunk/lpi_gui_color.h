@@ -380,7 +380,7 @@ class PartialEditorSquareType : public PartialEditorSquare
     void setChannels(ColorChannelType typex, ColorChannelType typey) { this->typex = typex; this->typey = typey; }
 };
 
-class PartialEditorHueCircle : public PartialEditor, public Element
+class PartialEditorHueDisk : public PartialEditor, public Element
 {
   protected:
 
@@ -396,7 +396,7 @@ class PartialEditorHueCircle : public PartialEditor, public Element
   
   public:
   
-    PartialEditorHueCircle();
+    PartialEditorHueDisk();
   
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
@@ -411,37 +411,37 @@ class PartialEditorHueCircle : public PartialEditor, public Element
     virtual void setDrawOutOfRangeRGBColors(OutOfRangeAction action) { this->outofrangeaction = action; }
 };
 
-class PartialEditorHueCircle_HSV_HS : public PartialEditorHueCircle
+class PartialEditorHueDisk_HSV_HS : public PartialEditorHueDisk
 {
   virtual void getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const;
 };
 
-class PartialEditorHueCircle_HSV_HV : public PartialEditorHueCircle
+class PartialEditorHueDisk_HSV_HV : public PartialEditorHueDisk
 {
   virtual void getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const;
 };
 
-class PartialEditorHueCircle_HSL_HS : public PartialEditorHueCircle
+class PartialEditorHueDisk_HSL_HS : public PartialEditorHueDisk
 {
   virtual void getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const;
 };
 
-class PartialEditorHueCircle_HSL_HL : public PartialEditorHueCircle
+class PartialEditorHueDisk_HSL_HL : public PartialEditorHueDisk
 {
   virtual void getDrawColor(ColorRGB& o_color, double value_angle, double value_axial) const;
 };
 
-//HueCircleEditor: a full color editor, with hue circle, a vertical bar to the right, and a horizontal alpha channel bar below.
-class HueCircleEditor : public ColorEditor, public ElementComposite
+//HueDiskEditor: a full color editor, with hue circle, a vertical bar to the right, and a horizontal alpha channel bar below.
+class HueDiskEditor : public ColorEditor, public ElementComposite
 {
   protected:
-    PartialEditorHueCircle* circle;
+    PartialEditorHueDisk* circle;
     ChannelSlider* sliderc; //the slider for third component of the color
     ChannelSlider* slidera; //the slider for alpha channel
     
   public:
-    HueCircleEditor();
-    virtual ~HueCircleEditor();
+    HueDiskEditor();
+    virtual ~HueDiskEditor();
     
     void init()
     {
@@ -472,12 +472,12 @@ class HueCircleEditor : public ColorEditor, public ElementComposite
     }
 };
 
-class HueCircleEditor_HSV_HS : public HueCircleEditor
+class HueDiskEditor_HSV_HS : public HueDiskEditor
 {
   public:
-    HueCircleEditor_HSV_HS()
+    HueDiskEditor_HSV_HS()
     {
-      circle = new PartialEditorHueCircle_HSV_HS();
+      circle = new PartialEditorHueDisk_HSV_HS();
       sliderc = new ChannelSliderType(CC_HSV_V);
       slidera = new ChannelSliderType(CC_A);
       init();
@@ -498,12 +498,12 @@ class HueCircleEditor_HSV_HS : public HueCircleEditor
     }
 };
 
-class HueCircleEditor_HSV_HV : public HueCircleEditor
+class HueDiskEditor_HSV_HV : public HueDiskEditor
 {
   public:
-    HueCircleEditor_HSV_HV()
+    HueDiskEditor_HSV_HV()
     {
-      circle = new PartialEditorHueCircle_HSV_HV();
+      circle = new PartialEditorHueDisk_HSV_HV();
       sliderc = new ChannelSliderType(CC_HSV_S);
       slidera = new ChannelSliderType(CC_A);
       init();
@@ -524,12 +524,12 @@ class HueCircleEditor_HSV_HV : public HueCircleEditor
     }
 };
 
-class HueCircleEditor_HSL_HS : public HueCircleEditor
+class HueDiskEditor_HSL_HS : public HueDiskEditor
 {
   public:
-    HueCircleEditor_HSL_HS()
+    HueDiskEditor_HSL_HS()
     {
-      circle = new PartialEditorHueCircle_HSL_HS();
+      circle = new PartialEditorHueDisk_HSL_HS();
       sliderc = new ChannelSliderType(CC_HSL_L);
       slidera = new ChannelSliderType(CC_A);
       init();
@@ -550,12 +550,12 @@ class HueCircleEditor_HSL_HS : public HueCircleEditor
     }
 };
 
-class HueCircleEditor_HSL_HL : public HueCircleEditor
+class HueDiskEditor_HSL_HL : public HueDiskEditor
 {
   public:
-    HueCircleEditor_HSL_HL()
+    HueDiskEditor_HSL_HL()
     {
-      circle = new PartialEditorHueCircle_HSL_HL();
+      circle = new PartialEditorHueDisk_HSL_HL();
       sliderc = new ChannelSliderType(CC_HSL_S);
       slidera = new ChannelSliderType(CC_A);
       init();
@@ -591,6 +591,26 @@ class ColorPlane : public PColorPlane
   public:
     ColorRGB color;
     ColorPlane();
+};
+
+class PColorPlaned : public Element, public ColorEditor
+{
+  private:
+    ColorRGBd* color;
+
+  public:
+    PColorPlaned(ColorRGBd* color);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    
+    virtual ColorRGBd getColor() const;
+    virtual void setColor(const ColorRGBd& color);
+};
+
+class ColorPlaned : public PColorPlaned
+{
+  public:
+    ColorRGBd color;
+    ColorPlaned();
 };
 
 class InternalColorPlane : public Element //for internal use
@@ -744,6 +764,8 @@ class AColorPalette : public ColorEditor, public ElementComposite
     virtual void setColor(int i, const ColorRGBd& color) = 0;
     void generateDefault();
     void generateVibrant16x16();
+    void generateVibrant8x8();
+    void generateVibrant6x6();
     void setColorChoosingDialog(AColorDialog* dialog);
     virtual void manageHoverImpl(IHoverManager& hover);
 };
@@ -855,6 +877,36 @@ class ColorDialogSmall : public AColorDialog
     virtual ColorRGBd getColor() const;
     virtual void setColor(const ColorRGBd& color);
 
+};
+
+class ColorDialog : public AColorDialog
+{
+  protected:
+    ColorSlidersRGB rgb;
+    HueDiskEditor_HSL_HS hsl;
+    ColorPalette palette;
+    ColorPlaned plane;
+    //TODO: HTML code color controller
+    Button ok;
+    ColorEditorSynchronizer synchronizer;
+    
+  public:
+    ColorDialog(const IGUIPartGeom& geom);
+    virtual void handleImpl(const IInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual bool pressedOk(const IInput& input);
+    
+    virtual ColorRGBd getColor() const;
+    virtual void setColor(const ColorRGBd& color);
+
+};
+
+/*
+TODO: ColorDialogTabbed will have tabs with color sliders in some color
+model under each tab: RGB, CMYK, HSV, HSL, Lab, XYZ, YPbPr, YCbCr
+*/
+class ColorDialogTabbed : public AColorDialog
+{
 };
 
 

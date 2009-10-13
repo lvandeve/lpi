@@ -270,7 +270,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   tval5.make(0, 0, &dyn_value5);
   tabs.getTabContent(1).pushTopAt(&tval5, 10, 172);
   
-  lpi::gui::HueCircleEditor_HSL_HS huecircle;
+  lpi::gui::HueDiskEditor_HSL_HS huecircle;
   huecircle.resize(0,0,120,120);
   tabs.getTabContent(2).pushTopAt(&huecircle, 20, 20, lpi::gui::Sticky(0.01,0, 0.0,0, 0.45,0, 0.45,0));
   lpi::gui::ColorSlidersRGB rgb;
@@ -279,7 +279,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   lpi::gui::FGBGColor fgbg;
   fgbg.resize(0, 0, 48, 48);
   tabs.getTabContent(2).pushTopAt(&fgbg, 144, 20, lpi::gui::Sticky(0.01,0, 0.8,0, 0.2,0, 1.0,0));
-  lpi::gui::ColorDialogSmall colordialogfgbg(guidrawer);
+  lpi::gui::ColorDialog colordialogfgbg(guidrawer);
   fgbg.setColorChoosingDialog(&colordialogfgbg);
   lpi::gui::Canvas canvas(guidrawer);
   canvas.make(0, 0, 256, 256);
