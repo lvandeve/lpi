@@ -1808,28 +1808,72 @@ ColorDialog::ColorDialog(const IGUIPartGeom& geom)
   addTitle("Color");
   addResizer(geom);
   
-  pushTop(&rgb, Sticky(0.05,0, 0.75,0, 0.49,0, 0.99,0));
-  pushTop(&hsl, Sticky(0.05,0, 0.05,0, 0.49,0, 0.74,0));
-  pushTop(&palette, Sticky(0.5,4, 0.0,4, 1.0,-4, 0.75,-4));
   palette.generateVibrant6x6();
-  pushTop(&plane, Sticky(0.5,4, 0.75,4, 0.75,-4, 1.0,-4));
+  
   ok.makeTextPanel(0, 0, "Ok", 64, 24);
-  pushTop(&ok, Sticky(1.0, -80, 1.0,-20, 1.0,-16, 1.0,-4));
-  resize(0, 20, 400, 300);
+  ok2.makeTextPanel(0, 0, "Ok", 64, 24);
+  
+  resize(0, 20, 500, 300);
+  
+  pushTop(&tabs, Sticky(0.0,0, 0.0,0, 1.0,0, 1.0,0));
+  tabs.addTab("Basic");
+  tabs.addTab("Advanced");
+  
+  tabs.getTabContent(0).pushTop(&ok, Sticky(1.0, -80, 1.0,-20, 1.0,-16, 1.0,-4));
+  tabs.getTabContent(0).pushTop(&rgb, Sticky(0.05,0, 0.75,0, 0.49,0, 0.99,0));
+  tabs.getTabContent(0).pushTop(&plane, Sticky(0.5,4, 0.75,4, 0.75,-4, 1.0,-4));
+  tabs.getTabContent(0).pushTop(&hsl, Sticky(0.05,0, 0.05,0, 0.49,0, 0.74,0));
+  tabs.getTabContent(0).pushTop(&palette, Sticky(0.5,4, 0.0,4, 1.0,-4, 0.75,-4));
   
   synchronizer.add(&rgb);
   synchronizer.add(&hsl);
   synchronizer.add(&palette);
   synchronizer.add(&plane);
+  
+  tabs.getTabContent(1).pushTop(&ok2, Sticky(1.0, -80, 1.0,-20, 1.0,-16, 1.0,-4));
+  tabs.getTabContent(1).pushTop(&plane2, Sticky(0.66,4, 0.66,4, 1.0,-84, 1.0,-4));
+  tabs.getTabContent(1).pushTop(&rgb2, Sticky(0.0,4, 0.0,4, 0.33,-4, 0.33,-4));
+  tabs.getTabContent(1).pushTop(&hsl2, Sticky(0.0,4, 0.33,4, 0.33,-4, 0.66,-4));
+  tabs.getTabContent(1).pushTop(&hsv2, Sticky(0.0,4, 0.66,4, 0.33,-4, 1.0,-4));
+  tabs.getTabContent(1).pushTop(&cmyk2, Sticky(0.33,4, 0.0,4, 0.66,-4, 0.33,-4));
+  tabs.getTabContent(1).pushTop(&ypbpr2, Sticky(0.33,4, 0.33,4, 0.66,-4, 0.66,-4));
+  tabs.getTabContent(1).pushTop(&ycbcr2, Sticky(0.33,4, 0.66,4, 0.66,-4, 1.0,-4));
+  tabs.getTabContent(1).pushTop(&cielab2, Sticky(0.66,4, 0.0,4, 1.0,-4, 0.33,-4));
+  tabs.getTabContent(1).pushTop(&ciexyz2, Sticky(0.66,4, 0.33,4, 1.0,-4, 0.66,-4));
+
+  synchronizer.add(&plane2);
+  synchronizer.add(&rgb2);
+  synchronizer.add(&hsl2);
+  synchronizer.add(&hsv2);
+  synchronizer.add(&cmyk2);
+  synchronizer.add(&ypbpr2);
+  synchronizer.add(&ycbcr2);
+  synchronizer.add(&cielab2);
+  synchronizer.add(&ciexyz2);
+
 }
 
 void ColorDialog::handleImpl(const IInput& input)
 {
-  rgb.handle(input);
+  /*rgb.handle(input);
   hsl.handle(input);
   palette.handle(input);
   plane.handle(input);
   ok.handle(input);
+
+  ok2.handle(input);
+  plane2.handle(input);
+  rgb2.handle(input);
+  hsl2.handle(input);
+  hsv2.handle(input);
+  cmyk2.handle(input);
+  ypbpr2.handle(input);
+  ycbcr2.handle(input);
+  cielab2.handle(input);
+  ciexyz2.handle(input);*/
+  
+  tabs.handle(input);
+
   synchronizer.handle();
   Window::handleImpl(input);
 }
@@ -1837,11 +1881,26 @@ void ColorDialog::handleImpl(const IInput& input)
 void ColorDialog::drawImpl(IGUIDrawer& drawer) const
 {
   Window::drawImpl(drawer);
-  rgb.draw(drawer);
+  
+  /*rgb.draw(drawer);
   hsl.draw(drawer);
   palette.draw(drawer);
   plane.draw(drawer);
   ok.draw(drawer);
+  
+  ok2.draw(drawer);
+  plane2.draw(drawer);
+  rgb2.draw(drawer);
+  hsl2.draw(drawer);
+  hsv2.draw(drawer);
+  cmyk2.draw(drawer);
+  ypbpr2.draw(drawer);
+  ycbcr2.draw(drawer);
+  cielab2.draw(drawer);
+  ciexyz2.draw(drawer);*/
+  
+  tabs.draw(drawer);
+
 }
 
 bool ColorDialog::pressedOk(const IInput& input)

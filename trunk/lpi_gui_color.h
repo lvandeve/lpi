@@ -882,13 +882,29 @@ class ColorDialogSmall : public AColorDialog
 class ColorDialog : public AColorDialog
 {
   protected:
+  
+    Tabs tabs;
+
+    //first tab
+    Button ok;
+    ColorPlaned plane;
     ColorSlidersRGB rgb;
     HueDiskEditor_HSL_HS hsl;
     ColorPalette palette;
-    ColorPlaned plane;
     //TODO: HTML code color controller
-    Button ok;
     ColorEditorSynchronizer synchronizer;
+    
+    //second tab
+    Button ok2;
+    ColorPlaned plane2;
+    ColorSlidersRGB rgb2;
+    ColorSlidersHSL hsl2;
+    ColorSlidersHSV hsv2;
+    ColorSlidersCMYK cmyk2;
+    ColorSlidersYPbPr ypbpr2;
+    ColorSlidersYCbCr ycbcr2;
+    ColorSlidersCIELab cielab2;
+    ColorSlidersCIEXYZ ciexyz2;
     
   public:
     ColorDialog(const IGUIPartGeom& geom);
@@ -901,13 +917,6 @@ class ColorDialog : public AColorDialog
 
 };
 
-/*
-TODO: ColorDialogTabbed will have tabs with color sliders in some color
-model under each tab: RGB, CMYK, HSV, HSL, Lab, XYZ, YPbPr, YCbCr
-*/
-class ColorDialogTabbed : public AColorDialog
-{
-};
 
 
 } //namespace gui
