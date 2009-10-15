@@ -52,6 +52,9 @@ class Drawer2DGL : public ADrawer2D
     Drawer2DGL(ScreenGL* screen);
     ~Drawer2DGL();
     
+    virtual void frameStart();
+    virtual void frameEnd();
+    
     virtual size_t getWidth();
     virtual size_t getHeight();
     

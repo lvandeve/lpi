@@ -325,6 +325,8 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   {
     gametime.update();
     
+    guidrawer.frameStart();
+    
     guidrawer.drawText("lpi GUI demo", 0, 0);
     guidrawer.print(gametime.fps(), 0, 8);
     
@@ -419,6 +421,8 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
       if(wb.mouseDownElsewhere(lpi::gSDLInput)) guidrawer.drawText("down elsewhere", lpi::globalMouseX, lpi::globalMouseY + 8, lpi::FONT_White);
     }
     
+    
+    guidrawer.frameEnd();
     screen.redraw();
     screen.cls(lpi::RGB_Darkgreen);
   }

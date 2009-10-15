@@ -246,6 +246,9 @@ class AGUIDrawer : public IGUIDrawer //abstract GUI drawer which already wraps a
     
   public:
   
+    virtual void frameStart();
+    virtual void frameEnd();
+  
     virtual size_t getWidth();
     virtual size_t getHeight();
     

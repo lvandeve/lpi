@@ -36,7 +36,38 @@ namespace gui
 
 void drawCheckerBackground(IGUIDrawer& drawer, int x0, int y0, int x1, int y1, int w, int h, const ColorRGB& c0, const ColorRGB& c1)
 {
-  bool bx = true, by = true;
+  static ITexture* texture0 = 0;
+  static ITexture* texture1 = 0;
+  if(texture0 == 0)
+  {
+    texture0 = drawer.createTexture();
+    texture0->setSize(2, 2);
+    setPixel(texture0, 0, 0, RGB_White);
+    setPixel(texture0, 0, 1, RGB_Invisible);
+    setPixel(texture0, 1, 0, RGB_Invisible);
+    setPixel(texture0, 1, 1, RGB_White);
+    texture0->update();
+  }
+  if(texture1 == 0)
+  {
+    texture1 = drawer.createTexture();
+    texture1->setSize(2, 2);
+    setPixel(texture1, 0, 0, RGB_Invisible);
+    setPixel(texture1, 0, 1, RGB_White);
+    setPixel(texture1, 1, 0, RGB_White);
+    setPixel(texture1, 1, 1, RGB_Invisible);
+    texture1->update();
+  }
+  drawer.convertTextureIfNeeded(texture0);
+  drawer.convertTextureIfNeeded(texture1);
+  
+  drawer.drawTextureSizedRepeated(texture0, x0, y0, x1, y1, w * 2, h * 2, c0);
+  drawer.drawTextureSizedRepeated(texture1, x0, y0, x1, y1, w * 2, h * 2, c1);
+  
+  
+  //Rectangle method below is too slow.
+  
+  /*bool bx = true, by = true;
   
   for(int x = x0; x < x1; x += w)
   {
@@ -55,7 +86,7 @@ void drawCheckerBackground(IGUIDrawer& drawer, int x0, int y0, int x1, int y1, i
       
       drawer.drawRectangle(x, y, xb, yb, b ? c0 : c1, true);
     }
-  }
+  }*/
 }
 
 PartialEditor::PartialEditor()
@@ -120,7 +151,7 @@ void ChannelSlider::drawImpl(IGUIDrawer& drawer) const
 
 void ChannelSlider::drawBackgroundH(IGUIDrawer& drawer) const
 {
-  static const size_t NUM = 64;
+  static const size_t NUM = 32;
   ColorRGB c;
   
   if(drawalpha) drawCheckerBackground(drawer, x0, y0, x1, y1, 4, 4, RGB_White, RGB_Black);
@@ -150,7 +181,7 @@ void ChannelSlider::drawBackgroundH(IGUIDrawer& drawer) const
 
 void ChannelSlider::drawBackgroundV(IGUIDrawer& drawer) const
 {
-  static const size_t NUM = 64;
+  static const size_t NUM = 32;
   ColorRGB c;
   
   if(drawalpha) drawCheckerBackground(drawer, x0, y0, x1, y1, 4, 4, RGB_White, RGB_Black);
@@ -516,12 +547,12 @@ void ChannelSliderEx::handleImpl(const IInput& input)
   
   if(slider->hasChanged())
   {
-    this->input.setText(valtostr((int)(smallest + slider->getValue() * (largest - smallest))));
+    this->input.setText(valtostr((int)(0.49 + smallest + slider->getValue() * (largest - smallest)))); //the 0.49 is for rounding
     setChanged();
   }
   else if(this->input.enteringDone())
   {
-    int d = strtoval<int>(this->input.getText());
+    double d = strtoval<double>(this->input.getText());
     slider->setValue((d  - smallest) / (largest - smallest));
     setChanged();
   }
@@ -534,8 +565,8 @@ double ChannelSliderEx::getValue() const
 
 void ChannelSliderEx::setValue(double value)
 {
+  input.setText(valtostr((int)(0.49 + smallest + value * (largest - smallest)))); //the 0.49 is for rounding
   slider->setValue(value);
-  input.setText(valtostr((int)(smallest + value * (largest - smallest))));
 }
 
 double ChannelSliderEx::getValueScaled() const
@@ -578,6 +609,7 @@ void ColorSliders::fixUpSizes()
 }
 
 ColorSliders::ColorSliders()
+: with_alpha(false)
 {
   resize(0, 0, 256, 64); //sort of sloppy solution: set x-size large enough initially, because otherwise the color slider's relative sizes become corrupted
 }
@@ -598,6 +630,7 @@ void ColorSliders::addSlider(ChannelSliderEx* slider)
 void ColorSliders::addAlpha(const std::string& label, double smallest, double largest)
 {
   addSlider(new ChannelSliderExType(CC_A, label, smallest, largest));
+  with_alpha = true;
 }
 
 void ColorSliders::drawImpl(IGUIDrawer& drawer) const
@@ -612,9 +645,10 @@ void ColorSliders::handleImpl(const IInput& input)
     sliders[i]->handle(input);
     
   //for "adaptive color" in the sliders
-  ColorRGBd color = getColor();
+  ColorRGBd adaptive;
+  getColor(adaptive);
   for(size_t i = 0; i < sliders.size(); i++)
-    sliders[i]->setAdaptiveColor(color);
+    sliders[i]->setAdaptiveColor(adaptive);
   
   for(size_t i = 0; i < sliders.size(); i++)
   {
@@ -632,14 +666,12 @@ ColorSlidersRGB::ColorSlidersRGB(bool with_alpha)
   if(with_alpha) addAlpha("A:");
 }
 
-ColorRGBd ColorSlidersRGB::getColor() const
+void ColorSlidersRGB::getColor(ColorRGBd& color) const
 {
-  ColorRGBd result;
-  result.r = sliders[0]->getValue();
-  result.g = sliders[1]->getValue();
-  result.b = sliders[2]->getValue();
-  result.a = sliders[3]->getValue();
-  return result;
+  color.r = sliders[0]->getValue();
+  color.g = sliders[1]->getValue();
+  color.b = sliders[2]->getValue();
+  if(with_alpha) color.a = sliders[3]->getValue();
 }
 
 void ColorSlidersRGB::setColor(const ColorRGBd& color)
@@ -659,15 +691,14 @@ ColorSlidersHSV::ColorSlidersHSV(bool with_alpha)
   if(with_alpha) addAlpha("A:");
 }
 
-ColorRGBd ColorSlidersHSV::getColor() const
+void ColorSlidersHSV::getColor(ColorRGBd& color) const
 {
   lpi::ColorHSVd convert;
   convert.h = sliders[0]->getValue();
   convert.s = sliders[1]->getValue();
   convert.v = sliders[2]->getValue();
-  convert.a = sliders[3]->getValue();
-  lpi::ColorRGBd result = lpi::HSVtoRGB(convert);
-  return result;
+  convert.a = with_alpha ? sliders[3]->getValue() : color.a;
+  color = lpi::HSVtoRGB(convert);
 }
 
 void ColorSlidersHSV::setColor(const ColorRGBd& color)
@@ -688,15 +719,14 @@ ColorSlidersHSL::ColorSlidersHSL(bool with_alpha)
   if(with_alpha) addAlpha("A:");
 }
 
-ColorRGBd ColorSlidersHSL::getColor() const
+void ColorSlidersHSL::getColor(ColorRGBd& color) const
 {
   lpi::ColorHSLd convert;
   convert.h = sliders[0]->getValue();
   convert.s = sliders[1]->getValue();
   convert.l = sliders[2]->getValue();
-  convert.a = sliders[3]->getValue();
-  lpi::ColorRGBd result = lpi::HSLtoRGB(convert);
-  return result;
+  convert.a = with_alpha ? sliders[3]->getValue() : color.a;
+  color = lpi::HSLtoRGB(convert);
 }
 
 void ColorSlidersHSL::setColor(const ColorRGBd& color)
@@ -717,15 +747,14 @@ ColorSlidersCMY::ColorSlidersCMY(bool with_alpha)
   if(with_alpha) addAlpha("A:");
 }
 
-ColorRGBd ColorSlidersCMY::getColor() const
+void ColorSlidersCMY::getColor(ColorRGBd& color) const
 {
   lpi::ColorCMYd convert;
   convert.c = sliders[0]->getValue();
   convert.m = sliders[1]->getValue();
   convert.y = sliders[2]->getValue();
-  convert.a = sliders[3]->getValue();
-  lpi::ColorRGBd result = lpi::CMYtoRGB(convert);
-  return result;
+  convert.a = with_alpha ? sliders[3]->getValue() : color.a;
+  color = lpi::CMYtoRGB(convert);
 }
 
 void ColorSlidersCMY::setColor(const ColorRGBd& color)
@@ -747,7 +776,7 @@ ColorSlidersCMYK::ColorSlidersCMYK(bool with_alpha)
   if(with_alpha) addAlpha("A:");
 }
 
-ColorRGBd ColorSlidersCMYK::getColor() const
+void ColorSlidersCMYK::getColor(ColorRGBd& color) const
 {
   lpi::ColorCMYKd convert;
   convert.c = sliders[0]->getValue();
@@ -755,8 +784,7 @@ ColorRGBd ColorSlidersCMYK::getColor() const
   convert.y = sliders[2]->getValue();
   convert.k = sliders[3]->getValue();
   convert.a = sliders[4]->getValue();
-  lpi::ColorRGBd result = lpi::CMYKtoRGB(convert);
-  return result;
+  color = lpi::CMYKtoRGB(convert);
 }
 
 void ColorSlidersCMYK::setColor(const ColorRGBd& color)
@@ -778,15 +806,14 @@ ColorSlidersCIEXYZ::ColorSlidersCIEXYZ(bool with_alpha)
   if(with_alpha) addAlpha("A:");
 }
 
-ColorRGBd ColorSlidersCIEXYZ::getColor() const
+void ColorSlidersCIEXYZ::getColor(ColorRGBd& color) const
 {
   lpi::ColorCIEXYZd convert;
   convert.x = sliders[0]->getValue();
   convert.y = sliders[1]->getValue();
   convert.z = sliders[2]->getValue();
-  convert.alpha = sliders[3]->getValue();
-  lpi::ColorRGBd result = lpi::CIEXYZtoRGB(convert);
-  return result;
+  convert.alpha = with_alpha ? sliders[3]->getValue() : color.a;
+  color = lpi::CIEXYZtoRGB(convert);
 }
 
 void ColorSlidersCIEXYZ::setColor(const ColorRGBd& color)
@@ -807,15 +834,14 @@ ColorSlidersCIELab::ColorSlidersCIELab(bool with_alpha)
   if(with_alpha) addAlpha("A:");
 }
 
-ColorRGBd ColorSlidersCIELab::getColor() const
+void ColorSlidersCIELab::getColor(ColorRGBd& color) const
 {
   lpi::ColorCIELabd convert;
   convert.l = sliders[0]->getValue();
   convert.a = (sliders[1]->getValue() * 2.0 - 1.0);
   convert.b = (sliders[2]->getValue() * 2.0 - 1.0);
-  convert.alpha = sliders[3]->getValue();
-  lpi::ColorRGBd result = lpi::CIELabtoRGB(convert);
-  return result;
+  convert.alpha = with_alpha ? sliders[3]->getValue() : color.a;
+  color = lpi::CIELabtoRGB(convert);
 }
 
 void ColorSlidersCIELab::setColor(const ColorRGBd& color)
@@ -838,15 +864,14 @@ ColorSlidersYPbPr::ColorSlidersYPbPr(bool with_alpha)
   if(with_alpha) addAlpha(" A:");
 }
 
-ColorRGBd ColorSlidersYPbPr::getColor() const
+void ColorSlidersYPbPr::getColor(ColorRGBd& color) const
 {
   lpi::ColorYPbPrd convert;
   convert.y = sliders[0]->getValue();
   convert.pb = (sliders[1]->getValue()-0.5);
   convert.pr = (sliders[2]->getValue()-0.5);
-  convert.alpha = sliders[3]->getValue();
-  lpi::ColorRGBd result = lpi::YPbPrtoRGB(convert);
-  return result;
+  convert.alpha = with_alpha ? sliders[3]->getValue() : color.a;
+  color = lpi::YPbPrtoRGB(convert);
 }
 
 void ColorSlidersYPbPr::setColor(const ColorRGBd& color)
@@ -867,15 +892,14 @@ ColorSlidersYCbCr::ColorSlidersYCbCr(bool with_alpha)
   if(with_alpha) addAlpha(" A:");
 }
 
-ColorRGBd ColorSlidersYCbCr::getColor() const
+void ColorSlidersYCbCr::getColor(ColorRGBd& color) const
 {
   lpi::ColorYCbCrd convert;
   convert.y = sliders[0]->getValue();
   convert.cb = sliders[1]->getValue();
   convert.cr = sliders[2]->getValue();
-  convert.alpha = sliders[3]->getValue();
-  lpi::ColorRGBd result = lpi::YCbCrtoRGB(convert);
-  return result;
+  convert.alpha = with_alpha ? sliders[3]->getValue() : color.a;
+  color = lpi::YCbCrtoRGB(convert);
 }
 
 void ColorSlidersYCbCr::setColor(const ColorRGBd& color)
@@ -1124,9 +1148,9 @@ void PColorPlaned::drawImpl(IGUIDrawer& drawer) const
   if(largeenough) drawer.drawGUIPart(GP_PANEL_BORDER, x0, y0, x1, y1);
 }
 
-ColorRGBd PColorPlaned::getColor() const
+void PColorPlaned::getColor(ColorRGBd& color) const
 {
-  return *color;
+  color = *(this->color);
 }
 
 void PColorPlaned::setColor(const ColorRGBd& color)
@@ -1196,8 +1220,8 @@ void FGBGColor::handleImpl(const IInput& input)
     if(dialog->pressedOk(input))
     {
       dialog->setEnabled(false);
-      if(fg.selected) fg.color = dialog->getColor();
-      else bg.color = dialog->getColor();
+      if(fg.selected)  dialog->getColor(fg.color);
+      else  dialog->getColor(bg.color);
       setChanged();
     }
   }
@@ -1235,7 +1259,6 @@ void FGBGColor::handleImpl(const IInput& input)
         dialog->setColor(bg.color);
         dialog->setEnabled(true);
       }
-
     }
 
     if(arrows.clicked(input))
@@ -1278,9 +1301,9 @@ bool FGBGColor::selectedBG() const
   return bg.selected;
 }
 
-ColorRGBd FGBGColor::getColor() const
+void FGBGColor::getColor(ColorRGBd& color) const
 {
-  return fg.selected? fg.color : bg.color;
+  color = fg.selected? fg.color : bg.color;
 }
 
 void FGBGColor::setColor(const ColorRGBd& color)
@@ -1342,10 +1365,10 @@ void ColorEditorSynchronizer::handle()
       
       if(editor->isMainColorGettable())
       {
-        ColorRGBd color = editor->getColor();
+        ColorRGBd color;
+        editor->getColor(color);
         for(size_t j = 0; j < editors.size(); j++)
         {
-          ColorRGBd color = editor->getColor();
           if(j != i)
           {
             editors[j]->setColor(color);
@@ -1355,7 +1378,8 @@ void ColorEditorSynchronizer::handle()
       }
       if(editor->isMultiColorGettable(ColorEditor::FG))
       {
-        ColorRGBd fg = editor->getMultiColor(ColorEditor::FG);
+        ColorRGBd fg;
+        editor->getMultiColor(fg, ColorEditor::FG);
         for(size_t j = 0; j < editors.size(); j++)
         {
           if(j != i)
@@ -1367,7 +1391,8 @@ void ColorEditorSynchronizer::handle()
       }
       if(editor->isMultiColorGettable(ColorEditor::MG))
       {
-        ColorRGBd mg = editor->getMultiColor(ColorEditor::MG);
+        ColorRGBd mg;
+        editor->getMultiColor(mg, ColorEditor::MG);
         for(size_t j = 0; j < editors.size(); j++)
         {
           if(j != i)
@@ -1379,7 +1404,8 @@ void ColorEditorSynchronizer::handle()
       }
       if(editor->isMultiColorGettable(ColorEditor::BG))
       {
-        ColorRGBd bg = editor->getMultiColor(ColorEditor::BG);
+        ColorRGBd bg;
+        editor->getMultiColor(bg, ColorEditor::BG);
         for(size_t j = 0; j < editors.size(); j++)
         {
           if(j != i)
@@ -1564,7 +1590,12 @@ void ColorPalette::handleImpl(const IInput& input)
     if(dialog->pressedOk(input))
     {
       dialog->setEnabled(false);
-      if(selected >= 0) setColor(selected, dialog->getColor());
+      if(selected >= 0)
+      {
+        ColorRGBd temp;
+        dialog->getColor(temp);
+        setColor(selected, temp);
+      }
       setChanged();
     }
   }
@@ -1591,10 +1622,9 @@ void ColorPalette::handleImpl(const IInput& input)
 }
 
 //these are from the ColorEditor interface, returns the currently selected color
-ColorRGBd ColorPalette::getColor() const
+void ColorPalette::getColor(ColorRGBd& color) const
 {
-  if(selected >= 0) return colors[selected]->color;
-  else return RGBd_Black;
+  if(selected >= 0) color = colors[selected]->color;
 }
 
 void ColorPalette::setColor(const ColorRGBd& color)
@@ -1690,7 +1720,12 @@ void MultiColorPalette::handleImpl(const IInput& input)
       if(dialog->pressedOk(input))
       {
         dialog->setEnabled(false);
-        if(selectedEditing >= 0) setColor(selectedEditing, dialog->getColor());
+        if(selectedEditing >= 0)
+        {
+          ColorRGBd temp;
+          dialog->getColor(temp);
+          setColor(selectedEditing, temp);
+        }
         validfg = true;
         setChanged();
       }
@@ -1716,12 +1751,11 @@ void MultiColorPalette::handleImpl(const IInput& input)
 }
 
 //these are from the ColorEditor interface, returns the currently selected color
-ColorRGBd MultiColorPalette::getColor() const
+void MultiColorPalette::getColor(ColorRGBd& color) const
 {
-  if(selectedfg >= 0) return colors[selectedfg];
-  if(selectedmg >= 0) return colors[selectedmg];
-  if(selectedbg >= 0) return colors[selectedbg];
-  else return RGBd_Black;
+  if(selectedfg >= 0) color = colors[selectedfg];
+  if(selectedmg >= 0) color = colors[selectedmg];
+  if(selectedbg >= 0) color = colors[selectedbg];
 }
 
 void MultiColorPalette::setColor(const ColorRGBd& color)
@@ -1739,13 +1773,13 @@ bool MultiColorPalette::isMultiColorGettable(Plane plane) const
   if(plane == BG) return validbg;
   return false;
 }
-ColorRGBd MultiColorPalette::getMultiColor(Plane plane) const
+void MultiColorPalette::getMultiColor(ColorRGBd& color, Plane plane) const
 {
-  if(plane == FG && selectedfg >= 0) return colors[selectedfg];
-  if(plane == MG && selectedmg >= 0) return colors[selectedmg];
-  if(plane == BG && selectedbg >= 0) return colors[selectedbg];
-  return RGBd_Black;
+  if(plane == FG && selectedfg >= 0) color = colors[selectedfg];
+  if(plane == MG && selectedmg >= 0) color = colors[selectedmg];
+  if(plane == BG && selectedbg >= 0) color = colors[selectedbg];
 }
+
 void MultiColorPalette::setMultiColor(Plane plane, const ColorRGBd& color)
 {
   //The palette is not changeable, don't do anything
@@ -1790,9 +1824,9 @@ bool ColorDialogSmall::pressedOk(const IInput& input)
   return ok.clicked(input);
 }
 
-ColorRGBd ColorDialogSmall::getColor() const
+void ColorDialogSmall::getColor(ColorRGBd& color) const
 {
-  return rgb.getColor();
+  rgb.getColor(color);
 }
 
 void ColorDialogSmall::setColor(const ColorRGBd& color)
@@ -1819,7 +1853,8 @@ ColorDialog::ColorDialog(const IGUIPartGeom& geom)
   tabs.addTab("Basic");
   tabs.addTab("Advanced");
   
-  tabs.getTabContent(0).pushTop(&ok, Sticky(1.0, -80, 1.0,-20, 1.0,-16, 1.0,-4));
+  tabs.getTabContent(0).pushTop(&ok, Sticky(1.0, -100, 1.0,-20, 1.0,-16, 1.0,-4));
+  tabs.getTabContent(0).pushTop(&html, Sticky(1.0, -100, 1.0,-40, 1.0,-16, 1.0,-24));
   tabs.getTabContent(0).pushTop(&rgb, Sticky(0.05,0, 0.75,0, 0.49,0, 0.99,0));
   tabs.getTabContent(0).pushTop(&plane, Sticky(0.5,4, 0.75,4, 0.75,-4, 1.0,-4));
   tabs.getTabContent(0).pushTop(&hsl, Sticky(0.05,0, 0.05,0, 0.49,0, 0.74,0));
@@ -1829,6 +1864,7 @@ ColorDialog::ColorDialog(const IGUIPartGeom& geom)
   synchronizer.add(&hsl);
   synchronizer.add(&palette);
   synchronizer.add(&plane);
+  synchronizer.add(&html);
   
   tabs.getTabContent(1).pushTop(&ok2, Sticky(1.0, -80, 1.0,-20, 1.0,-16, 1.0,-4));
   tabs.getTabContent(1).pushTop(&plane2, Sticky(0.66,4, 0.66,4, 1.0,-84, 1.0,-4));
@@ -1855,23 +1891,6 @@ ColorDialog::ColorDialog(const IGUIPartGeom& geom)
 
 void ColorDialog::handleImpl(const IInput& input)
 {
-  /*rgb.handle(input);
-  hsl.handle(input);
-  palette.handle(input);
-  plane.handle(input);
-  ok.handle(input);
-
-  ok2.handle(input);
-  plane2.handle(input);
-  rgb2.handle(input);
-  hsl2.handle(input);
-  hsv2.handle(input);
-  cmyk2.handle(input);
-  ypbpr2.handle(input);
-  ycbcr2.handle(input);
-  cielab2.handle(input);
-  ciexyz2.handle(input);*/
-  
   tabs.handle(input);
 
   synchronizer.handle();
@@ -1882,25 +1901,7 @@ void ColorDialog::drawImpl(IGUIDrawer& drawer) const
 {
   Window::drawImpl(drawer);
   
-  /*rgb.draw(drawer);
-  hsl.draw(drawer);
-  palette.draw(drawer);
-  plane.draw(drawer);
-  ok.draw(drawer);
-  
-  ok2.draw(drawer);
-  plane2.draw(drawer);
-  rgb2.draw(drawer);
-  hsl2.draw(drawer);
-  hsv2.draw(drawer);
-  cmyk2.draw(drawer);
-  ypbpr2.draw(drawer);
-  ycbcr2.draw(drawer);
-  cielab2.draw(drawer);
-  ciexyz2.draw(drawer);*/
-  
   tabs.draw(drawer);
-
 }
 
 bool ColorDialog::pressedOk(const IInput& input)
@@ -1908,14 +1909,14 @@ bool ColorDialog::pressedOk(const IInput& input)
   return ok.clicked(input);
 }
 
-ColorRGBd ColorDialog::getColor() const
+void ColorDialog::getColor(ColorRGBd& color) const
 {
-  return rgb.getColor();
+  rgb.getColor(color);
 }
 
 void ColorDialog::setColor(const ColorRGBd& color)
 {
-  rgb.setColor(color);
+  synchronizer.setColor(color);
 }
 
 } //namespace gui

@@ -72,7 +72,7 @@ void DynamicColor::handleImpl(const IInput& input)
   
   if(edit.isEnabled())
   {
-    *bind = edit.getColor255();
+    edit.getColor255(*bind);
   }
 }
 
