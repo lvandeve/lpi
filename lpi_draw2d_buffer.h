@@ -96,6 +96,9 @@ class ADrawer2DBuffer : public ADrawer2D //draws on a buffer
     virtual ~ADrawer2DBuffer();
     
   public:
+  
+    virtual void frameStart(){};
+    virtual void frameEnd(){};
 
     virtual size_t getWidth() = 0;
     virtual size_t getHeight() = 0;

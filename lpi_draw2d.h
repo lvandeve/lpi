@@ -43,6 +43,17 @@ class IDrawer2D
   public:
     virtual ~IDrawer2D(){};
     
+    ///call these before and after drawing with this drawer during a frame (some implementations need this, others ignore it)
+    
+    /*
+    Between a frameStart and frameEnd call, this drawer has set the state of the backend it
+    uses to the state it needs. Don't change the state of the backend (e.g. OpenGL) manually
+    while using the drawer during these two calls. Before frameStart and after frameEnd
+    some changes are allowed (e.g. the scissor area size of OpenGL or the view matrix).
+    */
+    virtual void frameStart() = 0;
+    virtual void frameEnd() = 0;
+    
     ///size of drawable coordinates, goes from (0,0) to (width, height)
     
     virtual size_t getWidth() = 0;

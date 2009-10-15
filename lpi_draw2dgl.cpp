@@ -58,14 +58,14 @@ void Drawer2DGL::prepareDrawUntextured(bool filledGeometry)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_BLEND);
   glDisable(GL_TEXTURE_2D);
-  screen->setOpenGLScissor(); //everything that draws something must always do this //TODO: investigate this statement
+  //screen->setOpenGLScissor(); //everything that draws something must always do this //TODO: investigate this statement
 }
 
 void Drawer2DGL::prepareDrawTextured()
 {
   screen->set2DScreen(true);
   glEnable(GL_TEXTURE_2D);
-  screen->setOpenGLScissor(); //everything that draws something must always do this //TODO: investigate that statement
+  //screen->setOpenGLScissor(); //everything that draws something must always do this //TODO: investigate that statement
 }
 
 void Drawer2DGL::drawLineInternal(int x0, int y0, int x1, int y1) //doesn't call "prepareDraw", to be used by other things that draw multiple lines
@@ -84,6 +84,16 @@ void Drawer2DGL::drawLineInternal(int x0, int y0, int x1, int y1) //doesn't call
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+void Drawer2DGL::frameStart()
+{
+  screen->setOpenGLScissor();
+}
+
+void Drawer2DGL::frameEnd()
+{
+}
+
 
 //Draw a rectangle with 4 different corner colors on screen from (x1, y1) to (x2, y2). The end coordinates should NOT be included
 void Drawer2DGL::drawGradientRectangle(int x0, int y0, int x1, int y1, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3)

@@ -26,6 +26,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include <vector>
 #include <string>
+#include <sstream>
 
 
 namespace lpi
@@ -51,9 +52,9 @@ class ColorEditor : public ColorChangeable
   public:
     //main color: a single color, not associated to any mouse button (not even the first or left one)
     virtual bool isMainColorGettable() const { return true; }
-    virtual ColorRGBd getColor() const = 0;
+    virtual void getColor(ColorRGBd& color) const = 0;
     virtual void setColor(const ColorRGBd& color) = 0;
-    virtual ColorRGB getColor255() { return RGBdtoRGB(getColor()); }
+    virtual void getColor255(ColorRGB& color) { ColorRGBd d = RGBtoRGBd(color); getColor(d); color = RGBdtoRGB(d); }
     
     //multi color: a color per mouse button
     
@@ -65,7 +66,7 @@ class ColorEditor : public ColorChangeable
     };
     
     virtual bool isMultiColorGettable(Plane plane) const { (void)plane; return false; }
-    virtual ColorRGBd getMultiColor(Plane plane) const { (void)plane; return getColor(); }
+    virtual void getMultiColor(ColorRGBd& color, Plane plane) const { (void)plane; getColor(color); }
     virtual void setMultiColor(Plane plane, const ColorRGBd& color) { (void)plane; (void)color; }
     
     //multi color linker: choose which of the multi-colors is linked to the main color
@@ -246,6 +247,7 @@ class ColorSliders : public ColorEditor, public ElementComposite
   
   protected:
     std::vector<ChannelSliderEx*> sliders;
+    bool with_alpha;
     
     void fixUpSizes();
     
@@ -259,7 +261,7 @@ class ColorSliders : public ColorEditor, public ElementComposite
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
     
-    virtual ColorRGBd getColor() const = 0;
+    virtual void getColor(ColorRGBd& color) const = 0;
     virtual void setColor(const ColorRGBd& color) = 0;
 };
 
@@ -267,7 +269,7 @@ class ColorSlidersRGB : public ColorSliders
 {
   public:
     ColorSlidersRGB(bool with_alpha = true);
-    virtual ColorRGBd getColor() const;
+    virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 };
 
@@ -275,7 +277,7 @@ class ColorSlidersHSV : public ColorSliders
 {
   public:
     ColorSlidersHSV(bool with_alpha = true);
-    virtual ColorRGBd getColor() const;
+    virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 };
 
@@ -283,7 +285,7 @@ class ColorSlidersHSL : public ColorSliders
 {
   public:
     ColorSlidersHSL(bool with_alpha = true);
-    virtual ColorRGBd getColor() const;
+    virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 };
 
@@ -291,7 +293,7 @@ class ColorSlidersCMY : public ColorSliders
 {
   public:
     ColorSlidersCMY(bool with_alpha = true);
-    virtual ColorRGBd getColor() const;
+    virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 };
 
@@ -299,7 +301,7 @@ class ColorSlidersCMYK : public ColorSliders
 {
   public:
     ColorSlidersCMYK(bool with_alpha = true);
-    virtual ColorRGBd getColor() const;
+    virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 };
 
@@ -307,7 +309,7 @@ class ColorSlidersCIEXYZ : public ColorSliders
 {
   public:
     ColorSlidersCIEXYZ(bool with_alpha = true);
-    virtual ColorRGBd getColor() const;
+    virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 };
 
@@ -315,7 +317,7 @@ class ColorSlidersCIELab : public ColorSliders
 {
   public:
     ColorSlidersCIELab(bool with_alpha = true);
-    virtual ColorRGBd getColor() const;
+    virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 };
 
@@ -323,7 +325,7 @@ class ColorSlidersYPbPr : public ColorSliders
 {
   public:
     ColorSlidersYPbPr(bool with_alpha = true);
-    virtual ColorRGBd getColor() const;
+    virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 };
 
@@ -331,7 +333,7 @@ class ColorSlidersYCbCr : public ColorSliders
 {
   public:
     ColorSlidersYCbCr(bool with_alpha = true);
-    virtual ColorRGBd getColor() const;
+    virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 };
 
@@ -466,9 +468,11 @@ class HueDiskEditor : public ColorEditor, public ElementComposite
       if(circle->hasChanged()) setChanged();
       if(sliderc->hasChanged()) setChanged();
       if(slidera->hasChanged()) setChanged();
-      circle->setAdaptiveColor(getColor());
-      sliderc->setAdaptiveColor(getColor());
-      slidera->setAdaptiveColor(getColor());
+      ColorRGBd adaptive;
+      getColor(adaptive);
+      circle->setAdaptiveColor(adaptive);
+      sliderc->setAdaptiveColor(adaptive);
+      slidera->setAdaptiveColor(adaptive);
     }
 };
 
@@ -483,9 +487,9 @@ class HueDiskEditor_HSV_HS : public HueDiskEditor
       init();
     }
     
-    virtual ColorRGBd getColor() const
+    virtual void getColor(ColorRGBd& color) const
     {
-      return HSVtoRGB(ColorHSVd(circle->getValueAngle(), circle->getValueAxial(), sliderc->getValue(), slidera->getValue()));
+      color = HSVtoRGB(ColorHSVd(circle->getValueAngle(), circle->getValueAxial(), sliderc->getValue(), slidera->getValue()));
     }
     
     virtual void setColor(const ColorRGBd& color)
@@ -509,9 +513,9 @@ class HueDiskEditor_HSV_HV : public HueDiskEditor
       init();
     }
 
-    virtual ColorRGBd getColor() const
+    virtual void getColor(ColorRGBd& color) const
     {
-      return HSVtoRGB(ColorHSVd(circle->getValueAngle(), sliderc->getValue(), circle->getValueAxial(), slidera->getValue()));
+      color = HSVtoRGB(ColorHSVd(circle->getValueAngle(), sliderc->getValue(), circle->getValueAxial(), slidera->getValue()));
     }
 
     virtual void setColor(const ColorRGBd& color)
@@ -535,9 +539,9 @@ class HueDiskEditor_HSL_HS : public HueDiskEditor
       init();
     }
 
-    virtual ColorRGBd getColor() const
+    virtual void getColor(ColorRGBd& color) const
     {
-      return HSLtoRGB(ColorHSLd(circle->getValueAngle(), circle->getValueAxial(), sliderc->getValue(), slidera->getValue()));
+      color = HSLtoRGB(ColorHSLd(circle->getValueAngle(), circle->getValueAxial(), sliderc->getValue(), slidera->getValue()));
     }
 
     virtual void setColor(const ColorRGBd& color)
@@ -561,9 +565,9 @@ class HueDiskEditor_HSL_HL : public HueDiskEditor
       init();
     }
 
-    virtual ColorRGBd getColor() const
+    virtual void getColor(ColorRGBd& color) const
     {
-      return HSLtoRGB(ColorHSLd(circle->getValueAngle(), sliderc->getValue(), circle->getValueAxial(), slidera->getValue()));
+      color = HSLtoRGB(ColorHSLd(circle->getValueAngle(), sliderc->getValue(), circle->getValueAxial(), slidera->getValue()));
     }
 
     virtual void setColor(const ColorRGBd& color)
@@ -602,7 +606,7 @@ class PColorPlaned : public Element, public ColorEditor
     PColorPlaned(ColorRGBd* color);
     virtual void drawImpl(IGUIDrawer& drawer) const;
     
-    virtual ColorRGBd getColor() const;
+    virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 };
 
@@ -693,15 +697,14 @@ class FGBGColor : public ColorEditor, public ElementComposite
     void setSelectable(bool selectable) { this->selectable = selectable; } //see explanation at field "bool selectable"
     
     //these are from the ColorEditor interface, returns the currently selected color
-    virtual ColorRGBd getColor() const;
+    virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
     
     bool isMultiColorGettable(Plane plane) const { return plane == FG || plane == BG; }
-    virtual ColorRGBd getMultiColor(Plane plane) const
+    virtual void getMultiColor(ColorRGBd& color, Plane plane) const
     {
-      if(plane == FG) return fg.color;
-      else if(plane == BG) return bg.color;
-      else return RGBd_Black;
+      if(plane == FG) color = fg.color;
+      else if(plane == BG) color = bg.color;
     }
     virtual void setMultiColor(Plane plane, const ColorRGBd& color)
     {
@@ -790,7 +793,7 @@ class ColorPalette : public AColorPalette
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
     //these are from the ColorEditor interface, returns the currently selected color
-    virtual ColorRGBd getColor() const;
+    virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 };
 
@@ -828,12 +831,77 @@ class MultiColorPalette : public AColorPalette
     virtual void setColor(int i, const ColorRGBd& color);
     virtual void handleImpl(const IInput& input);
     //these are from the ColorEditor interface, returns the currently selected color
-    virtual ColorRGBd getColor() const;
+    virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
     virtual bool isMainColorGettable() const;
     bool isMultiColorGettable(Plane plane) const;
-    virtual ColorRGBd getMultiColor(Plane plane) const;
+    virtual void getMultiColor(ColorRGBd& color, Plane plane) const;
     virtual void setMultiColor(Plane plane, const ColorRGBd& color);
+};
+
+
+class ColorHTML : public ColorEditor, public InputLine
+{
+  private:
+  
+    static int charToHex(char c)
+    {
+      if(c >= '0' && c <= '9') return c - '0';
+      else if( c >= 'a' && c <= 'z') return c - 'a' + 10;
+      else return c - 'A' + 10;
+    }
+
+    static char hexToChar(int i)
+    {
+      if(i < 10) return '0' + i;
+      else return 'A' + i - 10;
+    }
+
+    static void TwoHexToString(std::string& s, int i)
+    {
+      s += hexToChar(i / 16);
+      s += hexToChar(i % 16);
+    }
+
+    static int StringToTwoHex(const std::string& s, int index)
+    {
+      int result = 0;
+      result += 16 * charToHex(s[index]);
+      result += charToHex(s[index + 1]);
+      return result;
+    }
+    
+  public:
+
+  
+  ColorHTML()
+  {
+    setTitle("#");
+    l = 6;
+  }
+  
+  virtual void getColor(ColorRGBd& color) const
+  {
+    std::string s = getText();
+    if(s.size() >= 2) color.r = StringToTwoHex(s, 0) / 255.0;
+    if(s.size() >= 4) color.g = StringToTwoHex(s, 2) / 255.0;
+    if(s.size() >= 6) color.b = StringToTwoHex(s, 4) / 255.0;
+  }
+  
+  virtual void setColor(const ColorRGBd& color)
+  {
+    std::string s;
+    TwoHexToString(s, (int)(color.r * 255));
+    TwoHexToString(s, (int)(color.g * 255));
+    TwoHexToString(s, (int)(color.b * 255));
+    setText(s);
+  }
+  
+  virtual void handleImpl(const IInput& input)
+  {
+    InputLine::handleImpl(input);
+    if(enteringDone()) setChanged();
+  }
 };
 
 class ColorEditorSynchronizer
@@ -874,7 +942,7 @@ class ColorDialogSmall : public AColorDialog
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual bool pressedOk(const IInput& input);
     
-    virtual ColorRGBd getColor() const;
+    virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 
 };
@@ -893,6 +961,7 @@ class ColorDialog : public AColorDialog
     ColorPalette palette;
     //TODO: HTML code color controller
     ColorEditorSynchronizer synchronizer;
+    ColorHTML html;
     
     //second tab
     Button ok2;
@@ -912,7 +981,7 @@ class ColorDialog : public AColorDialog
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual bool pressedOk(const IInput& input);
     
-    virtual ColorRGBd getColor() const;
+    virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 
 };

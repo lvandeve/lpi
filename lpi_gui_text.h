@@ -51,13 +51,12 @@ class InputLine : public Element //input text line
     size_t sel0; //selection start
     size_t sel1; //selection end
     
-    int mouseToCursor(int mouseX) const; //absolute mouse position to cursor position
-    
-  public:
+  protected:
     unsigned long l; //max length
+
     Font font;
     Font titleFont;
-    ColorRGB cursorColor;
+    
     /*
     types:
     0: normal text line
@@ -67,6 +66,11 @@ class InputLine : public Element //input text line
     int type;
     std::string title;
     std::string text;
+    
+    int mouseToCursor(int mouseX) const; //absolute mouse position to cursor position
+    
+  public:
+    ColorRGB cursorColor; //todo: make private, make setter
         
     InputLine();
     void make(int x, int y, unsigned long l,
