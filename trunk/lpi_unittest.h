@@ -18,8 +18,9 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef LPI_UNITTEST_H_INCLUDED
-#define LPI_UNITTEST_H_INCLUDED
+#pragma once
+
+#include <sstream>
 
 /*
 simple unit testing functionality
@@ -61,7 +62,7 @@ for example for a test on a GUI where I wanted the mouse to be controlled, the r
   
 #define LUT_SUB \
   subError = false;\
-  if(subCheck) { std::cout << "\nbad sub!\n"; return; } subCheck = true;\
+  if(subCheck) { std::cout << "\nbad sub!\n"; } subCheck = true;\
 
 
 #define LUT_SUB_ERROR \
@@ -69,12 +70,12 @@ for example for a test on a GUI where I wanted the mouse to be controlled, the r
   _TOTAL_ERRORS_TRIGGERED++;\
   _LOCAL_ERRORS_TRIGGERED++;\
   subError = true;\
-  if(!subCheck) { std::cout << "\nbad sub!\n"; return; }\
+  if(!subCheck) { std::cout << "\nbad sub!\n"; }\
 }
 
 #define LUT_SUB_END \
   if(subError) _ERROR_SIGNATURE += "-"; else _ERROR_SIGNATURE += "+";\
-  if(!subCheck) { std::cout << "\nbad sub!\n"; return; } subCheck = false;\
+  if(!subCheck) { std::cout << "\nbad sub!\n"; } subCheck = false;\
   
 #define LUT_SUB_ASSERT_FALSE(x) \
   LUT_SUB\
@@ -104,4 +105,3 @@ for example for a test on a GUI where I wanted the mouse to be controlled, the r
 #define LUT_END_UNIT_TEST \
   std::cout << "\ncases ran: " << _TEST_INDEX + 1 << "\ncases failed: " << _TESTS_FAILED << "\ntotal errors: " << _TOTAL_ERRORS_TRIGGERED << "\n";
  
-#endif

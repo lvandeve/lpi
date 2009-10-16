@@ -835,6 +835,61 @@ The size of that element isn't affected by this ScrollElement.
 The position of that element is completely controlled by this ScrollElement or its scrollbars
 */
 
+ScrollElement::ScrollElement()
+: element(0)
+{
+}
+
+void ScrollElement::make(int x, int y, int sizex, int sizey, Element* element, const IGUIPartGeom& geom)
+{
+  ic.getElements().clear();
+  
+  this->x0 = x;
+  this->y0 = y;
+  this->setSizeX(sizex);
+  this->setSizeY(sizey);
+  
+  bars.make(x, y, sizex, sizey, 100.0, 100.0, geom);
+  bars.disableV();
+  bars.disableH();
+  addSubElement(&bars, Sticky(0.0, 0, 0.0, 0, 1.0, 0, 1.0, 0));
+  
+  this->element = element;
+
+  initBars();
+}
+
+void ScrollElement::initBars()
+{
+  if(!element) return;
+  
+  toggleBars();
+
+  bars.vbar.scrollSize = element->getSizeY() - getVisibleSizeY();
+  bars.hbar.scrollSize = element->getSizeX() - getVisibleSizeX();
+  bars.vbar.scrollPos = y0 - element->getY0();
+  bars.hbar.scrollPos = x0 - element->getX0();
+}
+
+void ScrollElement::updateBars()
+{
+  if(!element) return;
+  
+  toggleBars();
+  
+    
+  bars.hbar.scrollSize = element->getSizeX() - getVisibleSizeX();
+  bars.vbar.scrollSize = element->getSizeY() - getVisibleSizeY();
+  bars.vbar.scrollPos = y0 - element->getY0();
+  bars.hbar.scrollPos = x0 - element->getX0();
+  if(bars.hbar.scrollSize < 0) bars.hbar.scrollSize = 0;
+  if(bars.vbar.scrollSize < 0) bars.vbar.scrollSize = 0;
+  if(bars.hbar.scrollPos < 0) bars.hbar.scrollPos = 0;
+  if(bars.vbar.scrollPos < 0) bars.vbar.scrollPos = 0;
+  if(bars.hbar.scrollPos > bars.hbar.scrollSize) bars.hbar.scrollPos = bars.hbar.scrollSize;
+  if(bars.vbar.scrollPos > bars.vbar.scrollSize) bars.vbar.scrollPos = bars.vbar.scrollSize;
+}
+
 void ScrollElement::drawImpl(IGUIDrawer& drawer) const
 {
   drawer.pushSmallestScissor(getVisibleX0(), getVisibleY0(), getVisibleX1(), getVisibleY1()); //TODO: currently does same as pushScissor (because otherwise there's weird bug, to reproduce: resize the red window and look at smiley in the small grey window), so elements from container in container are still drawn outside container. DEBUG THIS ASAP!!!
@@ -916,65 +971,11 @@ void ScrollElement::setElementOver(bool state)
   element->setElementOver(state);
 }
 
-ScrollElement::ScrollElement()
-{
-  element = 0;
-}
-
-void ScrollElement::make(int x, int y, int sizex, int sizey, Element* element, const IGUIPartGeom& geom)
-{
-  ic.getElements().clear();
-  
-  this->x0 = x;
-  this->y0 = y;
-  this->setSizeX(sizex);
-  this->setSizeY(sizey);
-  
-  bars.make(x, y, sizex, sizey, 100.0, 100.0, geom);
-  bars.disableV();
-  bars.disableH();
-  addSubElement(&bars, Sticky(0.0, 0, 0.0, 0, 1.0, 0, 1.0, 0));
-  
-
-  this->element = element;
-
-  initBars();
-}
-
 void ScrollElement::moveAreaTo(int x, int y)
 {
   if(element) element->moveTo(x, y);
 }
 
-void ScrollElement::initBars()
-{
-  if(!element) return;
-  
-  toggleBars();
-
-  bars.vbar.scrollSize = element->getSizeY() - getVisibleSizeY();
-  bars.hbar.scrollSize = element->getSizeX() - getVisibleSizeX();
-  bars.vbar.scrollPos = y0 - element->getY0();
-  bars.hbar.scrollPos = x0 - element->getX0();
-}
-
-void ScrollElement::updateBars()
-{
-  if(!element) return;
-  
-  toggleBars();
-
-  bars.hbar.scrollSize = element->getSizeX() - getVisibleSizeX();
-  bars.vbar.scrollSize = element->getSizeY() - getVisibleSizeY();
-  bars.vbar.scrollPos = y0 - element->getY0();
-  bars.hbar.scrollPos = x0 - element->getX0();
-  if(bars.hbar.scrollSize < 0) bars.hbar.scrollSize = 0;
-  if(bars.vbar.scrollSize < 0) bars.vbar.scrollSize = 0;
-  if(bars.hbar.scrollPos < 0) bars.hbar.scrollPos = 0;
-  if(bars.vbar.scrollPos < 0) bars.vbar.scrollPos = 0;
-  if(bars.hbar.scrollPos > bars.hbar.scrollSize) bars.hbar.scrollPos = bars.hbar.scrollSize;
-  if(bars.vbar.scrollPos > bars.vbar.scrollSize) bars.vbar.scrollPos = bars.vbar.scrollSize;
-}
 
 int ScrollElement::getVisibleX0() const
 {
@@ -1903,19 +1904,11 @@ void ScrollbarPair::make(int x, int y, int sizex, int sizey, double scrollSizeH,
 
 void ScrollbarPair::resizeImpl(const Pos<int>& newPos)
 {
-  if(henabled && venabled)
-  {
-    vbar.resize(newPos.x1 - vbar.getSizeX(), newPos.y0, newPos.x1, newPos.y1 - hbar.getSizeY());
-    hbar.resize(newPos.x0, newPos.y1 - hbar.getSizeY(), newPos.x1 - vbar.getSizeX(), newPos.y1);
-  }
-  else if(venabled)
-  {
-    vbar.resize(newPos.x1 - vbar.getSizeX(), newPos.y0, newPos.x1, newPos.y1 - hbar.getSizeY() * conserveCorner);
-  }
-  else if(henabled)
-  {
-    hbar.resize(newPos.x0, newPos.y1 - hbar.getSizeY(), newPos.x1 - vbar.getSizeX() * conserveCorner, newPos.y1);
-  }
+  if(venabled) hbar.resize(newPos.x0, newPos.y1 - hbar.getSizeY(), newPos.x1 - vbar.getSizeX(), newPos.y1);
+  else hbar.resize(newPos.x0, newPos.y1 - hbar.getSizeY(), newPos.x1 - vbar.getSizeX() * conserveCorner, newPos.y1);
+  
+  if(henabled) vbar.resize(newPos.x1 - vbar.getSizeX(), newPos.y0, newPos.x1, newPos.y1 - hbar.getSizeY());
+  else vbar.resize(newPos.x1 - vbar.getSizeX(), newPos.y0, newPos.x1, newPos.y1 - hbar.getSizeY() * conserveCorner);
 }
 
 void ScrollbarPair::disableV()

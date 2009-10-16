@@ -36,6 +36,129 @@ namespace lpi
 namespace gui
 {
 
+InternalList::InternalList()
+: allowMultiSelection(false)
+, selectedItem(0)
+{
+  setEnabled(true);
+}
+
+size_t InternalList::getNumItems() const
+{
+  return items.size();
+}
+
+size_t InternalList::getSelectedItem() const
+{
+  return selectedItem;
+}
+
+bool InternalList::isSelected(size_t i) const
+{
+  if(allowMultiSelection) return selection[i];
+  else return i == selectedItem;
+}
+
+void InternalList::setSelected(size_t i, bool selected)
+{
+  if(allowMultiSelection) selection[i] = selected;
+  else selectedItem = selected ? i : getNumItems();
+}
+
+const std::string& InternalList::getValue(size_t i) const
+{
+  return items[i];
+}
+
+void InternalList::setValue(size_t i, const std::string& value)
+{
+  items[i] = value;
+}
+
+void InternalList::addItem(const std::string& value)
+{
+  if(selectedItem >= getNumItems()) selectedItem++;
+  items.push_back(value);
+  selection.push_back(false);
+}
+
+void InternalList::insertItem(size_t i, const std::string& value)
+{
+  if(i <= selectedItem) selectedItem++;
+  items.insert(items.begin() + i, value);
+  selection.insert(selection.begin() + i, false);
+}
+
+void InternalList::removeItem(size_t i)
+{
+  if(i < selectedItem) selectedItem--;
+  else if(i == selectedItem) selectedItem = getNumItems();
+  items.erase(items.begin() + i);
+  selection.erase(selection.begin() + i);
+}
+
+void InternalList::setAllowMultiSelection(bool set)
+{
+  allowMultiSelection = set;
+}
+
+void InternalList::handleImpl(const IInput& input)
+{
+  static const int H = 16; //height of one item
+  int sizey = getNumItems() * H;
+  if(sizey != getSizeY()) resize(x0, y0, x1, y0 + sizey);
+  
+  if(pressed(input))
+  {
+    size_t index = (input.mouseY() - y0) / H;
+    selectedItem = index;
+  }
+}
+
+void InternalList::drawImpl(IGUIDrawer& drawer) const
+{
+  static const int H = 16; //height of one item
+  
+  for(size_t i = 0; i < items.size(); i++)
+  {
+    if(selectedItem == i) drawer.drawText(items[i], x0, y0 + H * i, FONT_Red);
+    else drawer.drawText(items[i], x0, y0 + H * i, FONT_Black);
+  }
+}
+
+void InternalList::clear()
+{
+  items.clear();
+  selection.clear();
+  selectedItem = 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+List::List(const IGUIPartGeom& geom)
+{
+  make(0, 0, 64, 64, &list, geom);
+}
+
+void List::resizeImpl(const Pos<int>& newPos)
+{
+  ScrollElement::resizeImpl(newPos);
+  
+  list.resize(newPos.x0, newPos.y0, newPos.x1, newPos.y0 + list.getSizeY());
+}
+
+size_t List::getNumItems() const { return list.getNumItems(); }
+size_t List::getSelectedItem() const { return list.getSelectedItem(); }
+bool List::isSelected(size_t i) const { return list.isSelected(i); }
+void List::setSelected(size_t i, bool selected) { list.setSelected(i, selected); }
+const std::string& List::getValue(size_t i) const { return list.getValue(i); }
+void List::setValue(size_t i, const std::string& value) { list.setValue(i, value); }
+void List::addItem(const std::string& value) { list.addItem(value); }
+void List::insertItem(size_t i, const std::string& value) { list.insertItem(i, value); }
+void List::removeItem(size_t i) { list.removeItem(i); }
+void List::setAllowMultiSelection(bool set) { list.setAllowMultiSelection(set); }
+void List::clear() { list.clear(); }
+
 //////////////////////////////////////////////////////////////////////////////////
 ////DropMenu/////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////

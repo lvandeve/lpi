@@ -38,6 +38,60 @@ namespace lpi
 namespace gui
 {
 
+class InternalList : public Element
+{
+  private:
+    bool allowMultiSelection;
+    
+    std::vector<std::string> items;
+    std::vector<bool> selection; //used if allowMultiSelection is true
+    size_t selectedItem; //used if allowMultiSelection is false
+    
+  protected:
+    virtual void handleImpl(const IInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    
+  public:
+  
+    InternalList();
+    size_t getNumItems() const;
+    size_t getSelectedItem() const; //works only correctly if allowMultiSelection is false. Returns value larger than getNumItems if no item at all is selected.
+    bool isSelected(size_t i) const; //works both if allowMultiSelection is true or false
+    void setSelected(size_t i, bool selected = true); //selects this item. Others get deselected if allowMultiSelection is false.
+    const std::string& getValue(size_t i) const; //the value is tje display name of the item
+    void setValue(size_t i, const std::string& value);
+    void addItem(const std::string& value);
+    void insertItem(size_t i, const std::string& value);
+    void removeItem(size_t i);
+    void setAllowMultiSelection(bool set);
+    void clear();
+};
+
+class List : public ScrollElement
+{
+  private:
+    InternalList list;
+    
+  public:
+    
+    List(const IGUIPartGeom& geom);
+    
+    //wrapped from InternalList
+    size_t getNumItems() const;
+    size_t getSelectedItem() const; //works only correctly if allowMultiSelection is false. Returns value larger than getNumItems if no item at all is selected.
+    bool isSelected(size_t i) const; //works both if allowMultiSelection is true or false
+    void setSelected(size_t i, bool selected = true); //selects this item. Others get deselected if allowMultiSelection is false.
+    const std::string& getValue(size_t i) const; //the value is tje display name of the item
+    void setValue(size_t i, const std::string& value);
+    void addItem(const std::string& value);
+    void insertItem(size_t i, const std::string& value);
+    void removeItem(size_t i);
+    void setAllowMultiSelection(bool set);
+    void clear();
+    
+    virtual void resizeImpl(const Pos<int>& newPos);
+};
+
 //class DropMenu : public ElementComposite
 //{
   //private:

@@ -99,6 +99,11 @@ struct Font
 extern const Font FONT_Default; //the default lpi font
 extern const Font FONT_Black;
 extern const Font FONT_White;
+extern const Font FONT_Grey;
+extern const Font FONT_Gray;
+extern const Font FONT_Red;
+extern const Font FONT_Green;
+extern const Font FONT_Blue;
 extern const Font FONT_Shadow; //white letters with black shadow
 extern const Font FONT_ShadowInverted; //black letters with white shadow
 

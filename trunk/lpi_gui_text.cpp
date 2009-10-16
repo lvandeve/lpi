@@ -189,6 +189,11 @@ void InputLine::handleImpl(const IInput& input) //both check if you pressed ente
   autoActivate(input, auto_activate_mouse_state, control_active);
   if(control_active)
   {
+    if(input.keyDown(13))
+    {
+      control_active = false;
+      entered = true;
+    }
     draw_time = input.getSeconds();
     
     if(cursor >= text.length()) cursor = text.length();
@@ -210,8 +215,10 @@ void InputLine::handleImpl(const IInput& input) //both check if you pressed ente
           }
           break;
         case 13: //enter
-          entered = 1;
-          control_active = false;
+          //COMMENTED OUT!!!! UNICODEKEY DOES NOT RELIABLE SAY THAT THIS KEY IS DOWN, IT MAY MISS THE UP EVENT. SO FOR THIS ENTER FEATURE, I USE THE SIMPLE KEY INPUT WAY INSTEAD.
+          //So, do NOTHING with enter
+          /*entered = 1;
+          control_active = false;*/
           break;
         case 127: //delete
           if(sel0 == sel1 && cursor <= text.size())
