@@ -89,6 +89,11 @@ const Font FONT_Black(RGB_Black);
 const Font FONT_White(RGB_White);
 const Font FONT_Shadow = createShadowFont("lpi8", RGB_White, RGB_Black);
 const Font FONT_ShadowInverted = createShadowFont("lpi8", RGB_Black, RGB_White);
+const Font FONT_Grey(RGB_Grey);
+const Font FONT_Gray(RGB_Gray);
+const Font FONT_Red(RGB_Red);
+const Font FONT_Green(RGB_Green);
+const Font FONT_Blue(RGB_Blue);
 
 
 

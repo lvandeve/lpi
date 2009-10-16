@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2009 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -18,8 +18,14 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef LPI_FILE_H_INCLUDED
-#define LPI_FILE_H_INCLUDED
+#pragma once
+
+/*
+This file is for simple file support, it can't browse directories or see
+which files exist, only read or write a file with a given path name.
+
+It also has some utilities for easier working with path and filenames.
+*/
 
 #include <vector>
 #include <iostream>
@@ -27,14 +33,26 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 namespace lpi
 {
-
+//file saving and loading
 
 void saveFile(std::vector<unsigned char>& buffer, const std::string& filename);
 void saveFile(std::string& buffer, const std::string& filename);
 int loadFile(std::vector<unsigned char>& buffer, const std::string& filename);
 int loadFile(std::string& buffer, const std::string& filename);
 int getFilesize(const std::string& filename);
+bool fileExists(const std::string& filename);
+
+//filename utilities
+
+std::string getFileNamePathPart(const std::string& filename, bool include_end_slash = true); //e.g. "/mnt/D/main.cpp" gives "/mnt/D/" 
+std::string getFileNameFilePart(const std::string& filename); //e.g. "/mnt/D/main.cpp" gives "main" 
+std::string getFileNameExtPart(const std::string& filename, bool include_dot = true); //e.g. "/mnt/D/main.cpp" gives ".cpp" 
+std::string getFileNameFileExtPart(const std::string& filename); //e.g. "/mnt/D/main.cpp" gives "main.cpp" 
+void giveFilenameSlashes(std::string& filename); //gives forward slashes to the filename (for linux and mac)
+void giveFilenameBackwardSlashes(std::string& filename); //gives backward slashes to the filename (for windows)
+void ensureDirectoryEndSlash(std::string& filename); //ensures that one ending slash is at the end (to indicate the path is a directory)
+void ensureDirectoryEndBackslash(std::string& filename); //ensures that one ending slash is at the end (to indicate the path is a directory, for windows)
 
 } //namespace lpi
 
-#endif
+

@@ -30,6 +30,7 @@ g++ *.cpp -lSDL -lGL
 g++ *.cpp -lSDL -lGL -ansi -pedantic
 g++ *.cpp -lSDL -lGL -Wall -Wextra -pedantic -ansi
 g++ *.cpp -lSDL -lGL -Wall -Wextra -pedantic -ansi -O3
+-lboost_filesystem
 
 ./a.out
 -g3
@@ -67,6 +68,7 @@ gprof > gprof.txt
 #include "lpi_gui_color.h"
 #include "lpi_guipartdraw_int.h"
 #include "lodepng.h"
+#include "lpi_filebrowse_boost.h"
 
 #include <vector>
 #include <iostream>
@@ -176,7 +178,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   c.pushTop(&w1);
 
   lpi::gui::Window w2;
-  w2.resize(50, 50, 300, 300);
+  w2.resize(50, 50, 400, 300);
   w2.addTop(guidrawer);
   w2.addTitle("Window 2");
   w2.addCloseButton(guidrawer);
@@ -294,6 +296,19 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   lpi::gui::ColorDialogSmall colordialog(guidrawer);
   palette.setColorChoosingDialog(&colordialog);
   
+  lpi::gui::InputLine filenameline;
+  filenameline.make(0, 0, 256);
+  tabs.getTabContent(3).pushTopAt(&filenameline, 10, 8);
+  
+  lpi::gui::List list(guidrawer);
+  list.resize(0, 0, 200, 200);
+  list.addItem("pear");
+  list.addItem("apple");
+  list.addItem("banana");
+  list.addItem("medlar");
+  tabs.getTabContent(3).pushTopAt(&list, 10, 24);
+  
+  
   lpi::gui::Checkbox wcb;
   wcb.make(0, 0);
   w1.pushTopAt(&wcb, 20, 20);
@@ -321,6 +336,8 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   fgbg.setBG(lpi::RGBd_White);
   colorSynchronizer.setColor(fgbg.getFG()); //make synchronizer update the above change
   
+  lpi::FileBrowseBoost filebrowser;
+  
   while(lpi::frame(true, true))
   {
     gametime.update();
@@ -340,6 +357,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     //dyn.valueToControl();
     
     c.draw(guidrawer);
+    //lpi::graphicalKeyBoardNumberTest(guidrawer);
     c.handle(lpi::gSDLInput);
     colorSynchronizer.handle();
     
@@ -348,6 +366,14 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     
     spawns.draw();
     spawns.handle();
+    
+    if(filenameline.enteringDone() && !filenameline.getText().empty())
+    {
+      std::vector<std::string> filenames;
+      filebrowser.getFiles(filenames, filenameline.getText());
+      list.clear();
+      for(size_t i = 0; i < filenames.size(); i++) list.addItem(filenames[i]);
+    }
     
     if(wcb.isChecked()) w1.addScrollbars(guidrawer);
     else w1.removeScrollbars();

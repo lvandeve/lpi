@@ -89,4 +89,184 @@ int loadFile(std::string& buffer, const std::string& filename)
   return size;
 }
 
+bool fileExists(const std::string& filename)
+{
+  return getFilesize(filename) > 0; //TODO: use a better implementation, now it returns false for a file that exists but has size 0...
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+//filename utilities
+
+std::string getFileNamePathPart(const std::string& filename, bool include_end_slash)
+{
+  if(filename.empty()) return "";
+  
+  //find last backwards or forwards slash
+  int last = -1;
+  for(size_t i = 0; i < filename.size(); i++)
+  {
+    if(filename[i] == '/' || filename[i] == '\\') last = i;
+  }
+  
+  return last < 0 ? std::string("") : filename.substr(0, include_end_slash ? last + 1 : last);
+}
+
+std::string getFileNameFilePart(const std::string& filename)
+{
+  //find last backwards or forwards slash
+  int lastslash = -1;
+  for(size_t i = 0; i < filename.size(); i++)
+  {
+    if(filename[i] == '/' || filename[i] == '\\') lastslash = i;
+  }
+  
+  //find the last dot
+  int lastdot = -1;
+  for(size_t i = 0; i < filename.size(); i++)
+  {
+    if(filename[i] == '.') lastdot = i;
+  }
+  
+  /*
+  ALL of these examples should return "main"
+  *) main.cpp
+  *) /mnt/D/main.cpp
+  *) /mnt/D/main
+  *) /mnt/dir.d/main
+  *) D:\main.cpp
+  
+  The following examples should NOT return "main", but an empty string
+  *) .main
+  *) /mnt/D/main/
+  *) /mnt/D/.main
+  
+  */
+  
+  std::string result = filename;
+  if(lastdot >= 0 && !(lastslash >= 0 && lastdot < lastslash)) result = result.substr(0, lastdot);
+  if(lastslash == (int)result.size() - 1) result = "";
+  else if(lastslash >= 0) result = result.substr(lastslash + 1, result.size() - lastslash);
+  
+  return result;
+}
+
+std::string getFileNameExtPart(const std::string& filename, bool include_dot)
+{
+  std::string result = getFileNameFileExtPart(filename);
+  
+  //find the last dot
+  int last = -1;
+  for(size_t i = 0; i < filename.size(); i++)
+  {
+    if(filename[i] == '.') last = i;
+  }
+  
+  if(last < 0) return "";
+  else if(include_dot) return filename.substr(last, filename.size() - last);
+  else return filename.substr(last + 1, filename.size() - last - 1);
+}
+
+std::string getFileNameFileExtPart(const std::string& filename)
+{
+  //return getFileNameFilePart(filename) + getFileNameExtPart(filename, true);
+  
+  //find last backwards or forwards slash
+  int last = -1;
+  for(size_t i = 0; i < filename.size(); i++)
+  {
+    if(filename[i] == '/' || filename[i] == '\\') last = i;
+  }
+  
+  return last < 0 ? filename : filename.substr(last + 1, filename.size() - last - 1);
+}
+
+void giveFilenameSlashes(std::string& filename)
+{
+  for(size_t i = 0; i < filename.size(); i++)
+  {
+    if(filename[i] == '\\') filename[i] = '/';
+  }
+}
+
+void giveFilenameBackwardSlashes(std::string& filename)
+{
+  for(size_t i = 0; i < filename.size(); i++)
+  {
+    if(filename[i] == '/') filename[i] = '\\';
+  }
+}
+
+void ensureDirectoryEndSlash(std::string& filename)
+{
+  if(filename.empty() || filename[filename.size() - 1] != '/') filename += '/';
+}
+
+void ensureDirectoryEndBackslash(std::string& filename)
+{
+  if(filename.empty() || filename[filename.size() - 1] != '\\') filename += '\\';
+}
+
+
 } //namespace lpi
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+#if 0
+
+#include "lpi_unittest.h"
+
+#define LUT_MY_RESET \
+{\
+}
+
+int main()
+{
+
+  LUT_START_UNIT_TEST
+  
+  LUT_CASE("filename parts linux")
+    std::string filename = "/mnt/D/main.cpp";
+    
+    std::cout<<lpi::getFileNamePathPart(filename)<<" "<<lpi::getFileNamePathPart(filename, false) <<std::endl;
+    
+    LUT_SUB_ASSERT_TRUE((lpi::getFileNamePathPart(filename) == "/mnt/D/"))
+    LUT_SUB_ASSERT_TRUE((lpi::getFileNamePathPart(filename, false) == "/mnt/D"))
+    LUT_SUB_ASSERT_TRUE((lpi::getFileNameFilePart(filename) == "main"))
+    LUT_SUB_ASSERT_TRUE((lpi::getFileNameExtPart(filename) == ".cpp"))
+    LUT_SUB_ASSERT_TRUE((lpi::getFileNameExtPart(filename, false) == "cpp"))
+    LUT_SUB_ASSERT_TRUE((lpi::getFileNameFileExtPart(filename) == "main.cpp"))
+
+  LUT_CASE_END
+  
+  LUT_CASE("filename parts windows")
+    std::string filename = "D:\\folder\\main.cpp";
+    
+    std::cout<<lpi::getFileNamePathPart(filename)<<" "<<lpi::getFileNamePathPart(filename, false) <<std::endl;
+    
+    LUT_SUB_ASSERT_TRUE((lpi::getFileNamePathPart(filename) == "D:\\folder\\"))
+    LUT_SUB_ASSERT_TRUE((lpi::getFileNamePathPart(filename, false) == "D:\\folder"))
+    LUT_SUB_ASSERT_TRUE((lpi::getFileNameFilePart(filename) == "main"))
+    LUT_SUB_ASSERT_TRUE((lpi::getFileNameExtPart(filename) == ".cpp"))
+    LUT_SUB_ASSERT_TRUE((lpi::getFileNameExtPart(filename, false) == "cpp"))
+    LUT_SUB_ASSERT_TRUE((lpi::getFileNameFileExtPart(filename) == "main.cpp"))
+
+  LUT_CASE_END
+  
+  
+  LUT_END_UNIT_TEST
+
+}
+
+
+#endif

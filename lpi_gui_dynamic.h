@@ -269,7 +269,7 @@ class DynamicColor : public TDymamicPageControl<ColorRGB>
   private:
     PColorPlane box;
 
-    ColorDialogSmall edit;
+    ColorDialog edit;
     
     void ctor();
     
