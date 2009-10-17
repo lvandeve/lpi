@@ -38,6 +38,7 @@ namespace gui
 
 InternalList::InternalList()
 : allowMultiSelection(false)
+, hasIcons(false)
 , selectedItem(0)
 , lastClickedItem(0)
 {
@@ -82,11 +83,24 @@ void InternalList::setValue(size_t i, const std::string& value)
   items[i] = value;
 }
 
+void InternalList::setIcon(size_t i, HTexture* icon)
+{
+  hasIcons = true;
+  icons[i] = icon;
+}
+
 void InternalList::addItem(const std::string& value)
 {
   if(selectedItem >= getNumItems()) selectedItem++;
   items.push_back(value);
   selection.push_back(false);
+  icons.push_back(0);
+}
+
+void InternalList::addItem(const std::string& value, HTexture* icon)
+{
+  addItem(value);
+  setIcon(icons.size() - 1, icon);
 }
 
 void InternalList::insertItem(size_t i, const std::string& value)
@@ -150,8 +164,15 @@ void InternalList::drawImpl(IGUIDrawer& drawer) const
 {
   for(size_t i = 0; i < items.size(); i++)
   {
-    if(isSelected(i)) drawer.drawText(items[i], x0, y0 + getItemHeight() * i, FONT_Red);
-    else drawer.drawText(items[i], x0, y0 + getItemHeight() * i, FONT_Black);
+    const Font& font = isSelected(i) ? FONT_Red : FONT_Black;
+    drawer.drawText(items[i], x0 + (hasIcons ? 16 : 0), y0 + getItemHeight() * i + getItemHeight() / 2, font, TextAlign(HA_LEFT, VA_CENTER));
+    
+    HTexture* icon = icons[i];
+    if(icon && icon->texture)
+    {
+      drawer.convertTextureIfNeeded(icon->texture);
+      drawer.drawTexture(icon->texture, x0, y0 + getItemHeight() * i);
+    }
   }
 }
 
@@ -159,7 +180,9 @@ void InternalList::clear()
 {
   items.clear();
   selection.clear();
+  icons.clear();
   selectedItem = lastClickedItem = 0;
+  hasIcons = false;
 }
 
 size_t InternalList::getMouseItem(const IInput& input) const
@@ -184,7 +207,18 @@ void List::resizeImpl(const Pos<int>& newPos)
 {
   ScrollElement::resizeImpl(newPos);
   
-  list.resize(newPos.x0, newPos.y0, newPos.x1, newPos.y0 + list.getSizeY());
+  list.resize(newPos.x0, list.getY0(), newPos.x1 - (bars.venabled ? bars.vbar.getSizeX() : 0), list.getY1());
+}
+
+void List::handleImpl(const IInput& input)
+{
+  ScrollElement::handleImpl(input);
+  
+  if(!bars.vbar.mouseOver(input))
+  {
+    if(mouseScrollUp(input)) forwardScrollToVerticalScrollbar(-1);
+    if(mouseScrollDown(input)) forwardScrollToVerticalScrollbar(1);
+  }
 }
 
 size_t List::getNumItems() const { return list.getNumItems(); }
@@ -193,7 +227,9 @@ bool List::isSelected(size_t i) const { return list.isSelected(i); }
 void List::setSelected(size_t i, bool selected) { list.setSelected(i, selected); }
 const std::string& List::getValue(size_t i) const { return list.getValue(i); }
 void List::setValue(size_t i, const std::string& value) { list.setValue(i, value); }
+void List::setIcon(size_t i, HTexture* icon) { list.setIcon(i, icon); }
 void List::addItem(const std::string& value) { list.addItem(value); }
+void List::addItem(const std::string& value, HTexture* icon) { list.addItem(value, icon); }
 void List::insertItem(size_t i, const std::string& value) { list.insertItem(i, value); }
 void List::removeItem(size_t i) { list.removeItem(i); }
 void List::setAllowMultiSelection(bool set) { list.setAllowMultiSelection(set); }
@@ -1009,15 +1045,14 @@ void OkWindow::make(int x, int y, int sizex, int sizey, const std::string& text)
 Canvas: allows you to draw on it with the mouse
 */
 
-Canvas::Canvas(IGUIDrawer& drawer) : canvas(new ITexture*)
+Canvas::Canvas(IGUIDrawer& drawer) : canvas(new HTexture)
 {
-  (*canvas) = drawer.createTexture();
+  canvas->texture = drawer.createTexture();
   this->enabled = 0;
 }
 
 Canvas::~Canvas()
 {
-  delete *canvas;
   delete canvas;
 }
 
@@ -1062,9 +1097,9 @@ void Canvas::handleImpl(const IInput& input)
 
     if(validOldMousePos == true)
     {
-      Drawer2DTexture drawer(*canvas);
+      Drawer2DTexture drawer(canvas->texture);
       drawer.drawLine(oldMouseX, oldMouseY, drawx, drawy, drawColor);
-      (*canvas)->update();
+      canvas->texture->update();
     }
     oldMouseX = drawx;
     oldMouseY = drawy;
@@ -1075,13 +1110,13 @@ void Canvas::handleImpl(const IInput& input)
 
 void Canvas::drawImpl(IGUIDrawer& drawer) const
 {
-  drawer.convertTextureIfNeeded((*canvas));
-  drawer.drawTexture((*canvas), x0, y0);
+  drawer.convertTextureIfNeeded(canvas->texture);
+  drawer.drawTexture(canvas->texture, x0, y0);
 }
 
 void Canvas::clear()
 {
-  makeTextureSolid((*canvas), backColor, getSizeX(), getSizeY());
+  if(canvas->texture) makeTextureSolid(canvas->texture, backColor, getSizeX(), getSizeY());
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -189,7 +189,6 @@ class ElementShape //describes the shape and mouse handling in this shape
     bool mouseJustDownElsewhere(const IInput& input, MouseButton button = LMB); //mouse is just down and not over, returns true if you click mouse button while mouse isn't over, does NOT return true if mouse button is already down while on the element and then you move away from the element. AKA "antipressed"
 
 
-    //these use info from IInput that isn't remembered by each element, so you need to pass the IInput when calling these
     bool mouseScrollUp(const IInput& input) const; //scrolled up while on this element
     bool mouseScrollDown(const IInput& input) const; //scrolled down while on this element
     bool mouseDoubleClicked(const IInput& input, MouseButton button = LMB) const;

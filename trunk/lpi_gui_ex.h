@@ -47,8 +47,10 @@ class InternalList : public Element
   
   private:
     bool allowMultiSelection;
+    bool hasIcons; //is false initially and after using clear, but becomes true once any item is given a valid icon
     
     std::vector<std::string> items;
+    std::vector<HTexture*> icons;
     std::vector<bool> selection; //used if allowMultiSelection is true
     size_t selectedItem; //used if allowMultiSelection is false
     size_t lastClickedItem; //used for multiselection with shift key
@@ -71,7 +73,9 @@ class InternalList : public Element
     void setSelected(size_t i, bool selected = true); //selects this item. Others get deselected if allowMultiSelection is false.
     const std::string& getValue(size_t i) const; //the value is tje display name of the item
     void setValue(size_t i, const std::string& value);
+    void setIcon(size_t i, HTexture* icon);
     void addItem(const std::string& value);
+    void addItem(const std::string& value, HTexture* icon);
     void insertItem(size_t i, const std::string& value);
     void removeItem(size_t i);
     void setAllowMultiSelection(bool set);
@@ -91,6 +95,7 @@ class List : public ScrollElement
   protected:
   
     virtual void resizeImpl(const Pos<int>& newPos);
+    virtual void handleImpl(const IInput& input);
     
   public:
     
@@ -103,7 +108,9 @@ class List : public ScrollElement
     void setSelected(size_t i, bool selected = true); //selects this item. Others get deselected if allowMultiSelection is false.
     const std::string& getValue(size_t i) const; //the value is tje display name of the item
     void setValue(size_t i, const std::string& value);
+    void setIcon(size_t i, HTexture* icon);
     void addItem(const std::string& value);
+    void addItem(const std::string& value, HTexture* icon);
     void insertItem(size_t i, const std::string& value);
     void removeItem(size_t i);
     void setAllowMultiSelection(bool set);
@@ -342,7 +349,7 @@ class Canvas : public Element
     int oldMouseX;
     int oldMouseY;
     bool validOldMousePos;
-    ITexture** canvas; //the canvas texture (gets updated with canvasData all the time) (double pointer due to a const-correctness situation)
+    HTexture* canvas; //the canvas texture (gets updated with canvasData all the time)
     
   public:
     ColorRGB leftColor; //color of the brush for left mouse button

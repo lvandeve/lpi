@@ -20,7 +20,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include "lpi_filebrowse_boost.h"
 
-#if 1 //set to 1 if you have boost::filesystem, 0 otherwise (but then file listing with this isn't supported)
+#if 0 //set to 1 if you have boost::filesystem, 0 otherwise (but then file listing with this isn't supported)
 
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/path.hpp"

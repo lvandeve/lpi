@@ -75,6 +75,56 @@ class ITexture
 };
 
 /*
+HTexture is a utility for the following situation:
+GUI elements cannot contain a texture implementation directly, because depending
+on the drawer given to its draw function, a different type of texture is supported
+and the ITexture* pointer may be assigned to a new texture created by the drawer.
+So for icons and such in GUI, in GUI elements that use the icon, use a HTexture*
+inside the element (not a HTexture but a HTexture*).
+*/
+class HTexture
+{
+  public:
+
+  ITexture* texture;
+  
+  HTexture() : texture(0) {};
+  ~HTexture() { if(texture) delete texture; }
+};
+
+/*
+Texture implemented with a simple buffer.
+Maybe the name is confusing, but this is NOT a buffer of textures!
+
+TextureBuffer is also the class you should use to initialize a texture with
+data while you don't yet know what drawer will draw it, since this texture class
+can contain the complete data but doesn't have any dependencies.
+*/
+class TextureBuffer : public ITexture
+{
+  private:
+    std::vector<unsigned char> buffer;
+    size_t u;
+    size_t v;
+
+  public:
+
+    TextureBuffer();
+
+    virtual void setSize(size_t u, size_t v);
+    virtual size_t getU() const;
+    virtual size_t getV() const;
+
+    virtual size_t getU2() const;
+    virtual size_t getV2() const;
+
+    virtual unsigned char* getBuffer();
+    virtual const unsigned char* getBuffer() const;
+
+    virtual void update();
+};
+
+/*
 ITextureFactory: used to create textures of some type, for generic things
 */
 class ITextureFactory
@@ -144,6 +194,7 @@ void loadTextures(const std::string& filename, std::vector<ITexture*>& textures,
 void loadTexturesAlpha(std::vector<unsigned char>& buffer, std::vector<ITexture>& textures, int widths, int heights, int w, int h);
 void loadTexturesAlpha(const std::string& filename, std::vector<ITexture>& textures, int widths, int heights);
 void loadTexturesFromBase64PNG(std::vector<ITexture*>& textures, const ITextureFactory* factory, const std::string& base64, int widths, int heights, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
+void loadTextureFromBase64PNG(ITexture* texture, const std::string& base64, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
 
 extern ITexture* emptyTexture; //default texture for initializing pointers
 

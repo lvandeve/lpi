@@ -1636,7 +1636,7 @@ void ColorPalette::setColor(const ColorRGBd& color)
 ////////////////////////////////////////////////////////////////////////////////
 
 MultiColorPalette::MultiColorPalette()
-: texture(new ITexture*)
+: texture(new HTexture)
 , m(0)
 , n(0)
 , textureuptodate(false)
@@ -1648,12 +1648,10 @@ MultiColorPalette::MultiColorPalette()
 , validbg(false)
 , selectedEditing(-1)
 {
-  *texture = 0;
 }
 
 MultiColorPalette::~MultiColorPalette()
 {
-  delete *texture;
   delete texture;
 }
 
@@ -1670,10 +1668,10 @@ void MultiColorPalette::clear()
 
 void MultiColorPalette::drawImpl(IGUIDrawer& drawer) const
 {
-  if(*texture == 0) (*texture) = drawer.createTexture();
+  if(texture->texture == 0) (texture->texture) = drawer.createTexture();
   if(!textureuptodate) generateTexture();
-  drawer.convertTextureIfNeeded((*texture));
-  drawer.drawTextureSized(*texture, x0, y0, x1 - x0, y1 - y0);
+  drawer.convertTextureIfNeeded(texture->texture);
+  drawer.drawTextureSized(texture->texture, x0, y0, x1 - x0, y1 - y0);
   if(n > 0 && m > 0 && getSizeX() / n > 4 && getSizeY() / m > 4)
   {
     for(size_t x = 0; x <= n; x++) drawer.drawLine(x0 + (getSizeX() * x) / n, y0, x0 + (getSizeX() * x) / n, y1, RGB_Grey);
@@ -1683,17 +1681,17 @@ void MultiColorPalette::drawImpl(IGUIDrawer& drawer) const
 
 void MultiColorPalette::generateTexture() const
 {
-  if(!(*texture)) return;
+  if(!texture->texture) return;
 
-  (*texture)->setSize(n, m);
+  texture->texture->setSize(n, m);
   for(size_t y = 0; y < m; y++)
   for(size_t x = 0; x < n; x++)
   {
     size_t i = y * n + x;
     ColorRGB rgb = RGBdtoRGB(colors[i]);
-    setPixel(*texture, x, y, rgb);
+    setPixel(texture->texture, x, y, rgb);
   }
-  (*texture)->update();
+  texture->texture->update();
   textureuptodate = true;
 }
 

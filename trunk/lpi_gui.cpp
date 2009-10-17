@@ -876,7 +876,6 @@ void ScrollElement::updateBars()
   if(!element) return;
   
   toggleBars();
-  
     
   bars.hbar.scrollSize = element->getSizeX() - getVisibleSizeX();
   bars.vbar.scrollSize = element->getSizeY() - getVisibleSizeY();
