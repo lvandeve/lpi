@@ -1794,6 +1794,70 @@ void MultiColorPalette::setMultiColor(Plane plane, const ColorRGBd& color)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+int ColorHTML::charToHex(char c)
+{
+  if(c >= '0' && c <= '9') return c - '0';
+  else if( c >= 'a' && c <= 'z') return c - 'a' + 10;
+  else if( c >= 'A' && c <= 'Z') return c - 'A' + 10;
+  else return 0;
+}
+
+char ColorHTML::hexToChar(int i)
+{
+  if(i >= 0 && i < 10) return '0' + i;
+  else if(i >= 10 && i < 16) return 'A' + i - 10;
+  else return '?';
+}
+
+int ColorHTML::StringToTwoHex(const std::string& s, int index)
+{
+  int result = 0;
+  result += 16 * charToHex(s[index]);
+  result += charToHex(s[index + 1]);
+  return result;
+}
+
+void ColorHTML::TwoHexToString(std::string& s, int i)
+{
+  if(i < 0 || i > 255) s += "??";
+  else
+  {
+    s += hexToChar(i / 16);
+    s += hexToChar(i % 16);
+  }
+}
+  
+ColorHTML::ColorHTML()
+{
+  setTitle("#");
+  l = 6;
+}
+
+void ColorHTML::getColor(ColorRGBd& color) const
+{
+  std::string s = getText();
+  if(s.size() >= 2) color.r = StringToTwoHex(s, 0) / 255.0;
+  if(s.size() >= 4) color.g = StringToTwoHex(s, 2) / 255.0;
+  if(s.size() >= 6) color.b = StringToTwoHex(s, 4) / 255.0;
+}
+
+void ColorHTML::setColor(const ColorRGBd& color)
+{
+  std::string s;
+  TwoHexToString(s, (int)(color.r * 255));
+  TwoHexToString(s, (int)(color.g * 255));
+  TwoHexToString(s, (int)(color.b * 255));
+  setText(s);
+}
+
+void ColorHTML::handleImpl(const IInput& input)
+{
+  InputLine::handleImpl(input);
+  if(enteringDone()) setChanged();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 ColorDialogSmall::ColorDialogSmall(const IGUIPartGeom& geom)
 {
   addTop(geom);
