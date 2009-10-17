@@ -69,6 +69,7 @@ gprof > gprof.txt
 #include "lpi_guipartdraw_int.h"
 #include "lodepng.h"
 #include "lpi_filebrowse_boost.h"
+#include "lpi_filebrowse_win32.h"
 
 #include <vector>
 #include <iostream>
@@ -254,7 +255,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   dyn.addControl("slider", new lpi::gui::DynamicSlider<float>(&dyn_value5, 0, 100, guidrawer));
   //dyn.resize(0,0,200,100);
   tabs.getTabContent(1).pushTopAt(&dyn, 10, 20);
-  tabs.selectTab(1);
+  tabs.selectTab(3);
 
   lpi::gui::PVariable<int> tval1;
   tval1.make(0, 0, &dyn_value1);
@@ -306,10 +307,20 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   list.addItem("pear");
   list.addItem("apple");
   list.addItem("banana");
+  list.addItem("pinda");
+  list.addItem("blueberry");
+  list.addItem("blackberry");
+  list.addItem("cherry");
   list.addItem("medlar");
   list.addItem("strawberry");
   list.addItem("fig");
-  list.addItem("abricot");
+  list.addItem("apricot");
+  list.addItem("peach");
+  list.addItem("grape");
+  list.addItem("pineapple");
+  list.addItem("dragon fruit");
+  list.addItem("orange");
+  list.addItem("lemon");
   tabs.getTabContent(3).pushTopAt(&list, 10, 24);
   
   
@@ -340,7 +351,25 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   fgbg.setBG(lpi::RGBd_White);
   colorSynchronizer.setColor(fgbg.getFG()); //make synchronizer update the above change
   
+#ifdef WIN32
+  lpi::FileBrowseWin32 filebrowser;
+#else
   lpi::FileBrowseBoost filebrowser;
+#endif
+
+  std::string icon_file64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAWElEQVR42mP8z/CfgRTARJJqIGCB\n\
+sxiBEBX8x2Y5C4qK/wgVjEDAwIipB5+TgPoxrSXgB0w9LHhUgxwF8x7cbTg1oPmHWCdhguGgASWU\n\
+kEMDF2D8T+vUCgAm3xYpZF64CAAAAABJRU5ErkJggg==";
+  lpi::HTexture icon_file;
+  icon_file.texture = guidrawer.createTexture();
+  lpi::loadTextureFromBase64PNG(icon_file.texture, icon_file64, lpi::AE_PinkKey);
+
+  std::string icon_dir64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAR0lEQVR42mP8z/CfgRTARJJqumhg\n\
+gVCMQIgK/uPwGwuc9eCGHpytoHEJlxEsWI1B1gw3YtCG0iDUwAgJXcxQxwRQlf9pnVoBz+cSHrEY\n\
+KNQAAAAASUVORK5CYII=";
+  lpi::HTexture icon_dir;
+  icon_dir.texture = guidrawer.createTexture();
+  lpi::loadTextureFromBase64PNG(icon_dir.texture, icon_dir64, lpi::AE_PinkKey);
   
   while(lpi::frame(true, true))
   {
@@ -373,10 +402,15 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     
     if(filenameline.enteringDone() && !filenameline.getText().empty())
     {
+      list.clear();
+      
+      std::vector<std::string> dirs;
+      filebrowser.getDirectories(dirs, filenameline.getText());
+      for(size_t i = 0; i < dirs.size(); i++) list.addItem(dirs[i], &icon_dir);
+
       std::vector<std::string> filenames;
       filebrowser.getFiles(filenames, filenameline.getText());
-      list.clear();
-      for(size_t i = 0; i < filenames.size(); i++) list.addItem(filenames[i]);
+      for(size_t i = 0; i < filenames.size(); i++) list.addItem(filenames[i], &icon_file);
     }
     
     if(wcb.isChecked()) w1.addScrollbars(guidrawer);
@@ -399,28 +433,15 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     
     if(tb.clicked(lpi::gSDLInput))
     {
-      lpi::xml::XMLTree tree;
-      tree.parse(lpi::gui::builtInGuiData);
-      
-      for(size_t i = 0; i < tree.children.size(); i++)
-      {
-        if(tree.children[i]->content.name == "textures_small")
-        {
-          lpi::base64StringToBinaryFile("textures_small.png", tree.children[i]->content.value);
-        }
-        else if(tree.children[i]->content.name == "icons_small")
-        {
-          lpi::base64StringToBinaryFile("icons_small.png", tree.children[i]->content.value);
-        }
-      }
+      lpi::base64StringToBinaryFile("builtInGuiTextures.png", lpi::gui::builtInGuiData);
     }
 
     if(tb2.clicked(lpi::gSDLInput))
     {
-      lpi::binaryFileToBase64File("textures_small_new.txt", "textures_small_new.png", true);
-      lpi::binaryFileToBase64File("icons_small_new.txt", "icons_small_new.png", true);
-      lpi::binaryFileToBase64File("textures_small.txt", "textures_small.png", true);
-      lpi::binaryFileToBase64File("icons_small.txt", "icons_small.png", true);
+      lpi::binaryFileToBase64File("builtInGuiTextures_new.txt", "builtInGuiTextures_new.png", true);
+      lpi::binaryFileToBase64File("builtInGuiTextures.txt", "builtInGuiTextures.png", true);
+      lpi::binaryFileToBase64File("1.txt", "1.png", true);
+      lpi::binaryFileToBase64File("2.txt", "2.png", true);
     }
     
     if(wb.mouseJustOver(lpi::gSDLInput)) spawns.addSpawn("just over", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::RGB_Gray);

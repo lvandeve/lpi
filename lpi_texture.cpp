@@ -542,6 +542,18 @@ void loadTexturesFromBase64PNG(std::vector<ITexture*>& textures, const ITextureF
   loadTextures(pixels, textures, factory, widths, heights, pngdec.getWidth(), pngdec.getHeight(), effect);
 }
 
+void loadTextureFromBase64PNG(ITexture* texture, const std::string& base64, const AlphaEffect& effect)
+{
+  LodePNG::Decoder pngdec;
+  std::vector<unsigned char> decoded64, pixels;
+
+  decodeBase64(decoded64, base64);
+  pngdec.decode(pixels, decoded64);
+  createImageAlpha(pixels.empty() ? 0 : &pixels[0], pngdec.getWidth(), pngdec.getHeight(), effect);
+  texture->setSize(pngdec.getWidth(), pngdec.getHeight());
+  setAlignedBuffer(texture, pixels.empty() ? 0 : &pixels[0]);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -726,6 +738,7 @@ void setAlignedBuffer(ITexture* texture, const unsigned char* buffer)
   {
     texture->getBuffer()[y * u2 * 4 + x * 4 + c] = buffer[y * u * 4 + x * 4 + c];
   }
+  texture->update();
 }
 
 void createTexture(ITexture* texture, size_t w, size_t h, const ColorRGB& color)
@@ -765,5 +778,58 @@ ColorRGB getPixel(ITexture* texture, int x, int y)
   return result;
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+TextureBuffer::TextureBuffer()
+: u(0)
+, v(0)
+{
+}
+
+void TextureBuffer::setSize(size_t u, size_t v)
+{
+  buffer.resize(u * v * 4);
+  this->u = u;
+  this->v = v;
+}
+
+size_t TextureBuffer::getU() const
+{
+  return u;
+}
+
+size_t TextureBuffer::getV() const
+{
+  return v;
+}
+
+size_t TextureBuffer::getU2() const
+{
+  return u;
+}
+
+size_t TextureBuffer::getV2() const
+{
+  return v;
+}
+
+unsigned char* TextureBuffer::getBuffer()
+{
+  return buffer.empty() ? 0 : &buffer[0];
+}
+
+const unsigned char* TextureBuffer::getBuffer() const
+{
+  return buffer.empty() ? 0 : &buffer[0];
+}
+
+void TextureBuffer::update()
+{
+ //nothing to do :)
+}
 
 } //namespace lpi

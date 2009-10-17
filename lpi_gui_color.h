@@ -44,6 +44,8 @@ class ColorChangeable
     void setChanged() { changed = true; }
   public:
     bool hasChanged() { bool temp = changed; changed = false; return temp; }
+    
+    ColorChangeable() : changed(false) {};
 };
 
 //base class for all color editing classes that edit a full color (not just a few channels of it), to make them work together
@@ -806,7 +808,7 @@ class MultiColorPalette : public AColorPalette
 {
   private:
 
-    ITexture** texture; //for speed, palette is presented on a texture (double pointer due to a const-correctness situation)
+    HTexture* texture; //for speed, palette is presented on a texture (double pointer due to a const-correctness situation)
     std::vector<ColorRGBd> colors;
     size_t m;
     size_t n;

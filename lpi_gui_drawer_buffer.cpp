@@ -21,7 +21,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include <iostream>
 
 #include "lpi_gui_drawer_buffer.h"
-#include "lpi_texture_buffer.h"
+#include "lpi_texture.h"
 
 namespace lpi
 {

@@ -201,13 +201,9 @@ class GUIPartDrawerInternal : public IGUIPartDrawer
     GuiSet builtInGuiSet;
     
     void initBuiltInGui(const ITextureFactory& factory);
-    void initBuiltInGui(const ITextureFactory& factory, const std::string& xmlgui);
     void initBuiltInGuiTexturesSmall64(const ITextureFactory& factory, const std::string& png_base64);
-    void initBuiltInGuiIconsSmall64(const ITextureFactory& factory, const std::string& png_base64);
     void initBuiltInGuiTexturesSmall(const ITextureFactory& factory, const std::vector<unsigned char>& png);
-    void initBuiltInGuiIconsSmall(const ITextureFactory& factory, const std::vector<unsigned char>& png);
     void initBuiltInGuiTexturesSmall(const ITextureFactory& factory, const std::string& png_file_name);
-    void initBuiltInGuiIconsSmall(const ITextureFactory& factory, const std::string& png_file_name);
 
     
   public:

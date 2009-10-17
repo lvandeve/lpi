@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2009 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -20,40 +20,28 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #pragma once
 
-#include "lpi_color.h"
-#include "lpi_texture.h"
+/*
+This file is for simple file support, it can't browse directories or see
+which files exist, only read or write a file with a given path name.
+*/
 
+#include <vector>
+#include <iostream>
+
+#include "lpi_filebrowse.h"
 
 namespace lpi
 {
 
-/*
-Texture implemented with a simple buffer.
-Maybe the name is confusing, but this is NOT a buffer of textures!
-*/
-class TextureBuffer : public ITexture
+class FileBrowseWin32
 {
-  private:
-    std::vector<unsigned char> buffer;
-    size_t u;
-    size_t v;
-    
   public:
+  virtual bool isDirectory(const std::string& filename);
   
-  virtual void setSize(size_t u, size_t v);
-  virtual size_t getU() const;
-  virtual size_t getV() const;
-  
-  virtual size_t getU2() const;
-  virtual size_t getV2() const;
-  
-  virtual unsigned char* getBuffer();
-  virtual const unsigned char* getBuffer() const;
-  
-  virtual void update();
+  virtual void getFiles(std::vector<std::string>& files, const std::string& directory);
+  virtual void getDirectories(std::vector<std::string>& dirs, const std::string& directory);
 };
 
-
-
 } //namespace lpi
+
 

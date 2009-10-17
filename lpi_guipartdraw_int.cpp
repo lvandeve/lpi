@@ -49,9 +49,6 @@ Then use the function LodePNG::Decoder::decode
 And you get the pixels in a buffer
 */
 const std::string builtInGuiData = "\
-<gui>\n\
-\n\
-  <textures_small>\n\
 iVBORw0KGgoAAAANSUhEUgAAAIAAAACwCAIAAABIJvExAAAOHElEQVR4nO1drY/dxhb/zepGzUMl\n\
 IUsCQkJC+hfYIKRPqqonbcE+EBDwQiI9VZVepKaSx1K3UkFVVVqyBQuWBDRkVaklBb5/QUlISEDJ\n\
 kpDFiToPHN/xeL48c3PH9l3PT1eJffzb4/E5nq8zH2ZCCEgwBgBeCSMJAICk3blNAu9Vm0S5+wKw\n\
@@ -117,57 +114,11 @@ QxETIztgYmQHTIzsgImRHTAxsgMmRvwSJbXVShEeIVwSPUoztEYM/Vk6IWvEYvXHbiWQHFrHjHM+\n\
 gnYLSyxI5gNtxU/OHylgD8apdbKsmdtrvYZoK3JJas5rzsP5EGLdNEqLd3NHh6TVH8xfT7ca0gVn\n\
 NFRrF42XooXBF44mu2frJ8VAONq0fl3X4PIqMLRbOaCUNEP9MPT3zajkHaV+QwJlp+yif2qVzA3/\n\
 B2KkKmkPBP//AAAAAElFTkSuQmCC\n\
-  </textures_small>\n\
-\n\
-  <icons_small>\n\
-iVBORw0KGgoAAAANSUhEUgAAAIAAAABACAMAAADlCI9NAAABaFBMVEX/AP8AAADnyQD////YuQAA\n\
-tJHd2gAA011ojutmi+lfheXVAAAAGQoAAgAAAgEAAwEABAEAAQCaAACkAADGAAABAQECAgIEBAQF\n\
-BQUGBgYDAwMHBwcODg4UFBQXFxcTExMNDQ0LCwsYGBgmJiY0NDQ8PDwlJSUPDw8MDAwcHBxRUVFr\n\
-a2t4eHhqampQUFAfHx9BQUFHR0dCQkIxMTFNTU0hISEICAhcXFyIiIirq6u+vr4jIyNDQ0NwcHCX\n\
-l5d6enp7e3thYWHg4ODu7u7t7e12dnbIyMi7u7uLi4u2trZ3d3ff39/39/f9/f01NTWqqqq/v7+5\n\
-ubmzs7PExMR9fX3+/v69vb0+Pj5xcXHAwMDX19fR0dGdnZ1KSkoSEhI6OjqcnJzJycnNzc1fX19k\n\
-ZGQQEBAuLi58fHyfn5+goKCFhYVGRkZZWVmWlpaDg4ONjY1/f39ISEgREREVFRUtLS07OztFRUUZ\n\
-GRlOIfSlAAADCklEQVRo3u2Xi1NSQRTGOSJSUJnYXt4gcAF5+lYulhag5oNSQbMs097vt/Xvt6/L\n\
-Xaecrsy424x84z16hmG+3+45Z/fqcDCBQ62gDxT796klUA2A/UEpAe4AUNkFZPWgcgtUA5AO7GPh\n\
-YgJQay5Q5w/KCJQDKC8BJrDkuKByOnsAat2dPFxUgF4P/A8APfXUU0/8pegc83/a9xN1vgLgIhLy\n\
-ASIhdxMJ+aXLHo9HyL1EthGYPUVgucsUzwdM8dxtiufY20MfnmNvL33gjP6MAMjaXSzACX9GAGTt\n\
-QB9KwP07BHT54GW/bALQGpDAAIgzDxSAIOAIJoC5BcABmD8h4ABA/MHmFpjePAgFYEWg7tSc/iUU\n\
-gBWB7r4V6AaAFc5WAQYg/J/AAcQa2AGw1B2A04l/yGMXwJIUgCsd+6unAdDtsw9gMsApACYD8B24\n\
-hjV4fXBoqLMD1NAC4OeA13YXguVPp4ADmFPACTpT4Hb7hm8M+9ynjaFZBbA9hv10BeI5QACEc4B+\n\
-bp0DmMDnc1sAQgUcJ5oAuj0J2QjYPwkFf5EApN0FzL7bu0D9baj+VQBp/kDQH0LwF8kA0MKRaCwW\n\
-HwlrAgJC0gBCiWRKT6f1TCzBXBHKIi2iseT8AdBoTs8XisVSWc8lGMDY+MTk1Pj0zKgUgNmkPlcx\n\
-qlWjMqcnZwnB/M1bhYXC4u07Y0gCgJZN5SvVWr1Rq1bKmWwIYGR8yVheubu6sJYbRecPEIjqJWN9\n\
-o9ncqBklPe7HHXCvcH9za7tltCeRBIBgMl2sNpo7O836bjGdDOKZfLD3cPvR/uPWwpMIyAHYrROA\n\
-RpUCwMHTtcOj/e1nrfa0jB7wx3EJaqQE67gE0QAuwfMXxtbm0dZqe0pGCULZTBk3YaOOmzCfymqA\n\
-Xr56/WZ5ZeXw7bv3BxJ2AJ0cQ3IMzH9Y+rj36fOXrzNyDqJETi+XisVCXidjh/Xt+4+J45/Hx7+Q\n\
-HACUiGXIUZxKJkLmPaBFEIoiOQB47sIj8VgsGglrf1xFcm5DQCF/MODXlFzHvwEO+F56+iRSPQAA\n\
-AABJRU5ErkJggg==\n\
-  </icons_small>\n\
-\n\
-</gui>\n\
 ";
 
 void GUIPartDrawerInternal::initBuiltInGui(const ITextureFactory& factory)
 {
-  initBuiltInGui(factory, builtInGuiData);
-}
-
-void GUIPartDrawerInternal::initBuiltInGui(const ITextureFactory& factory, const std::string& xmlgui)
-{
-  xml::XMLTree tree;
-  tree.parse(xmlgui);
-  
-  for(size_t i = 0; i < tree.children.size(); i++)
-  {
-    if(tree.children[i]->content.name == "textures_small")
-    {
-      initBuiltInGuiTexturesSmall64(factory, tree.children[i]->content.value);
-    }
-    else if(tree.children[i]->content.name == "icons_small")
-    {
-      initBuiltInGuiIconsSmall64(factory, tree.children[i]->content.value);
-    }
-  }
+  initBuiltInGuiTexturesSmall64(factory, builtInGuiData);
 }
 
 
@@ -495,53 +446,6 @@ void GUIPartDrawerInternal::initBuiltInGuiTexturesSmall(const ITextureFactory& f
   builtInGuiSet.windowTopFont.shadowColor = RGB_Black;
   builtInGuiSet.tooltipFont = Font("lpi6", RGB_Black);
 }
-
-
-
-void GUIPartDrawerInternal::initBuiltInGuiIconsSmall(const ITextureFactory& factory, const std::string& png_file_name)
-{
-  std::vector<unsigned char> png;
-  loadFile(png, png_file_name);
-  if(!png.empty())
-    initBuiltInGuiIconsSmall(factory, png);
-}
-
-void GUIPartDrawerInternal::initBuiltInGuiIconsSmall64(const ITextureFactory& factory, const std::string& png_base64)
-{
-  std::vector<unsigned char> decoded64;
-  decodeBase64(decoded64, png_base64);
-  initBuiltInGuiIconsSmall(factory, decoded64);
-}
-
-void GUIPartDrawerInternal::initBuiltInGuiIconsSmall(const ITextureFactory& factory, const std::vector<unsigned char>& png)
-{
-  (void)factory;
-  LodePNG::Decoder pngdec;
-  std::vector<unsigned char> dataBuffer;
-  pngdec.decode(dataBuffer, png);
-  
-  const int GDW = pngdec.getWidth(); //width of the gui data
-  const int GDH = pngdec.getHeight(); //height of the gui data
-
-  //image (smiley :D)
-  makeTextureFromBuffer(builtInTexture[37], &dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 32, 32, 48);
-  builtInGuiSet.smiley = builtInTexture[37];
-  
-  //crosshair
-  makeTextureFromBuffer(builtInTexture[50], &dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 16, 16, 32);
-  builtInGuiSet.crossHair = builtInTexture[50];
-  
-  //particle 1
-  makeTextureFromBuffer(builtInTexture[52], &dataBuffer[0], GDW, GDH, AE_PinkKey, 0, 48, 16, 64);
-  
-  //particle 2
-  makeTextureFromBuffer(builtInTexture[53], &dataBuffer[0], GDW, GDH, AE_PinkKey, 16, 48, 32, 64);
-
-
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
 //BACKPANEL/////////////////////////////////////////////////////////////////////
