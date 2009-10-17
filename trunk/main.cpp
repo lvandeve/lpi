@@ -70,6 +70,7 @@ gprof > gprof.txt
 #include "lodepng.h"
 #include "lpi_filebrowse_boost.h"
 #include "lpi_filebrowse_win32.h"
+#include "lpi_gui_file.h"
 
 #include <vector>
 #include <iostream>
@@ -323,6 +324,11 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   list.addItem("lemon");
   tabs.getTabContent(3).pushTopAt(&list, 10, 24);
   
+  lpi::gui::FileList filelist(guidrawer);
+  filelist.setAllowMultiSelection(true);
+  filelist.resize(0, 0, 200, 200);
+  tabs.getTabContent(3).pushTopAt(&filelist, 224, 24);
+  
   
   lpi::gui::Checkbox wcb;
   wcb.make(0, 0);
@@ -357,20 +363,6 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   lpi::FileBrowseBoost filebrowser;
 #endif
 
-  std::string icon_file64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAWElEQVR42mP8z/CfgRTARJJqIGCB\n\
-sxiBEBX8x2Y5C4qK/wgVjEDAwIipB5+TgPoxrSXgB0w9LHhUgxwF8x7cbTg1oPmHWCdhguGgASWU\n\
-kEMDF2D8T+vUCgAm3xYpZF64CAAAAABJRU5ErkJggg==";
-  lpi::HTexture icon_file;
-  icon_file.texture = guidrawer.createTexture();
-  lpi::loadTextureFromBase64PNG(icon_file.texture, icon_file64, lpi::AE_PinkKey);
-
-  std::string icon_dir64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAR0lEQVR42mP8z/CfgRTARJJqumhg\n\
-gVCMQIgK/uPwGwuc9eCGHpytoHEJlxEsWI1B1gw3YtCG0iDUwAgJXcxQxwRQlf9pnVoBz+cSHrEY\n\
-KNQAAAAASUVORK5CYII=";
-  lpi::HTexture icon_dir;
-  icon_dir.texture = guidrawer.createTexture();
-  lpi::loadTextureFromBase64PNG(icon_dir.texture, icon_dir64, lpi::AE_PinkKey);
-  
   while(lpi::frame(true, true))
   {
     gametime.update();
@@ -402,15 +394,23 @@ KNQAAAAASUVORK5CYII=";
     
     if(filenameline.enteringDone() && !filenameline.getText().empty())
     {
-      list.clear();
-      
-      std::vector<std::string> dirs;
-      filebrowser.getDirectories(dirs, filenameline.getText());
-      for(size_t i = 0; i < dirs.size(); i++) list.addItem(dirs[i], &icon_dir);
-
-      std::vector<std::string> filenames;
-      filebrowser.getFiles(filenames, filenameline.getText());
-      for(size_t i = 0; i < filenames.size(); i++) list.addItem(filenames[i], &icon_file);
+      filelist.generateListForDir(filenameline.getText(), filebrowser);
+    }
+    if(filelist.mouseDoubleClicked(lpi::gSDLInput))
+    {
+      size_t i = filelist.getMouseItem(lpi::gSDLInput);
+      if(i < filelist.getNumItems())
+      {
+        lpi::gui::FileList::ItemType type = filelist.getType(i);
+        if(type == lpi::gui::FileList::IT_DIR)
+        {
+          std::string dir = filenameline.getText();
+          lpi::ensureDirectoryEndSlash(dir);
+          dir += filelist.getValue(i);
+          filenameline.setText(dir);
+          filelist.generateListForDir(dir, filebrowser);
+        }
+      }
     }
     
     if(wcb.isChecked()) w1.addScrollbars(guidrawer);

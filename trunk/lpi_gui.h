@@ -238,17 +238,33 @@ class ElementComposite : public Element //element with "internal container" to a
 {
   protected:
     InternalContainer ic;
-    
+
   protected:
     void addSubElement(Element* element, const Sticky& sticky = STICKYDEFAULT); //only used for INTERNAL parts of the gui element, such as the buttons in a scrollbar, hence this function is protected
     void clearSubElements();
-    
+
   public:
     virtual void move(int x, int y);
     virtual void setElementOver(bool state);
     virtual void resize(int x0, int y0, int x1, int y1);
     virtual void manageHoverImpl(IHoverManager& hover);
     //virtual const Element* hitTest(const IInput& input);
+};
+
+class ElementWrapper : public Element //element with "internal container" to automatically handle child elements for you
+{
+  protected:
+    Element* wrapped;
+
+  public:
+    ElementWrapper(Element* wrapped) : wrapped(wrapped) {};
+    virtual void move(int x, int y) { Element::move(x, y); wrapped->move(x, y); }
+    virtual void setElementOver(bool state) { Element::setElementOver(state); wrapped->setElementOver(state); }
+    virtual void resize(int x0, int y0, int x1, int y1) { Element::resize(x0, y0, x1, y1); wrapped->resize(x0, y0, x1, y1); }
+    virtual void manageHoverImpl(IHoverManager& hover) { Element::manageHoverImpl(hover); wrapped->manageHover(hover); }
+    virtual Element* hitTest(const IInput& input) { return wrapped->hitTest(input); }
+    virtual void drawImpl(IGUIDrawer& drawer) const { if(enabled) wrapped->draw(drawer); }
+    virtual void handleImpl(const IInput& input) { if(enabled) wrapped->handle(input); }
 };
 
 class Label //convenience class: elements that want an optional label (e.g. checkboxes) can inherit from this and use drawLabel(this) in their drawWidget function

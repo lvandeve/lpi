@@ -35,12 +35,12 @@ namespace lpi
 {
 
 
-bool FileBrowseWin32::isDirectory(const std::string& filename)
+bool FileBrowseWin32::isDirectory(const std::string& filename) const
 {
   return (GetFileAttributes(filename.c_str()) & FILE_ATTRIBUTE_DIRECTORY);
 }
 
-void FileBrowseWin32::getFiles(std::vector<std::string>& files, const std::string& directory)
+void FileBrowseWin32::getFiles(std::vector<std::string>& files, const std::string& directory) const
 {
    WIN32_FIND_DATA ffd;
    LARGE_INTEGER filesize;
@@ -66,7 +66,7 @@ void FileBrowseWin32::getFiles(std::vector<std::string>& files, const std::strin
    FindClose(hFind);
 }
 
-void FileBrowseWin32::getDirectories(std::vector<std::string>& dirs, const std::string& directory)
+void FileBrowseWin32::getDirectories(std::vector<std::string>& dirs, const std::string& directory) const
 {
    WIN32_FIND_DATA ffd;
    LARGE_INTEGER filesize;

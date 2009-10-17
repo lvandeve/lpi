@@ -33,13 +33,13 @@ which files exist, only read or write a file with a given path name.
 namespace lpi
 {
 
-class FileBrowseBoost
+class FileBrowseBoost : public IFileBrowse
 {
   public:
-  virtual bool isDirectory(const std::string& filename);
+  virtual bool isDirectory(const std::string& filename) const;
   
-  virtual void getFiles(std::vector<std::string>& files, const std::string& directory);
-  virtual void getDirectories(std::vector<std::string>& dirs, const std::string& directory);
+  virtual void getFiles(std::vector<std::string>& files, const std::string& directory) const;
+  virtual void getDirectories(std::vector<std::string>& dirs, const std::string& directory) const;
 };
 
 } //namespace lpi
