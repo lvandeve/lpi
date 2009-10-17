@@ -23,13 +23,13 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
-bool FileBrowseNotSupported::isDirectory(const std::string& filename)
+bool FileBrowseNotSupported::isDirectory(const std::string& filename) const
 {
   (void)filename;
   return false;
 }
 
-void FileBrowseNotSupported::getFiles(std::vector<std::string>& files, const std::string& directory)
+void FileBrowseNotSupported::getFiles(std::vector<std::string>& files, const std::string& directory) const
 {
   (void)directory;
   files.push_back("file browsing not supported");
@@ -37,7 +37,7 @@ void FileBrowseNotSupported::getFiles(std::vector<std::string>& files, const std
   files.push_back("sorry...");
 }
 
-void FileBrowseNotSupported::getDirectories(std::vector<std::string>& dirs, const std::string& directory)
+void FileBrowseNotSupported::getDirectories(std::vector<std::string>& dirs, const std::string& directory) const
 {
   (void)directory;
   (void)dirs;

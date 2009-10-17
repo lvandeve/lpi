@@ -32,24 +32,24 @@ namespace lpi
 class IFileBrowse
 {
   public:
-  virtual bool isDirectory(const std::string& filename) = 0;
+  virtual bool isDirectory(const std::string& filename) const = 0;
   
   //gets all the files in the given directory (only files, not directories inside the directory)
   //directory must have endslash
   //the returned files are not the full path, but directory + the file gives the full path.
-  virtual void getFiles(std::vector<std::string>& files, const std::string& directory) = 0;
+  virtual void getFiles(std::vector<std::string>& files, const std::string& directory) const = 0;
   //gets all the subdirectories in the given directory
   //directory must have endslash
   //the returned dirs are not the full path, but directory + the dir gives the full path.
-  virtual void getDirectories(std::vector<std::string>& dirs, const std::string& directory) = 0;
+  virtual void getDirectories(std::vector<std::string>& dirs, const std::string& directory) const = 0;
 };
 
 class FileBrowseNotSupported : public IFileBrowse
 {
   public:
-  virtual bool isDirectory(const std::string& filename);
-  virtual void getFiles(std::vector<std::string>& files, const std::string& directory);
-  virtual void getDirectories(std::vector<std::string>& dirs, const std::string& directory);
+  virtual bool isDirectory(const std::string& filename) const;
+  virtual void getFiles(std::vector<std::string>& files, const std::string& directory) const;
+  virtual void getDirectories(std::vector<std::string>& dirs, const std::string& directory) const;
 };
 
 } //namespace lpi

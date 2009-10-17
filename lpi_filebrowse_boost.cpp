@@ -33,14 +33,14 @@ namespace lpi
 {
 
 
-bool FileBrowseBoost::isDirectory(const std::string& filename)
+bool FileBrowseBoost::isDirectory(const std::string& filename) const
 {
   fs::path p(fs::initial_path());
   p = fs::system_complete(fs::path(filename.c_str(), fs::native));
   return fs::is_directory(p);
 }
 
-void FileBrowseBoost::getFiles(std::vector<std::string>& files, const std::string& directory)
+void FileBrowseBoost::getFiles(std::vector<std::string>& files, const std::string& directory) const
 {
   fs::path full_path(fs::initial_path());
 
@@ -61,7 +61,7 @@ void FileBrowseBoost::getFiles(std::vector<std::string>& files, const std::strin
   }
 }
 
-void FileBrowseBoost::getDirectories(std::vector<std::string>& dirs, const std::string& directory)
+void FileBrowseBoost::getDirectories(std::vector<std::string>& dirs, const std::string& directory) const
 {
   fs::path full_path(fs::initial_path());
 
@@ -91,13 +91,13 @@ namespace lpi
 {
 
 
-bool FileBrowseBoost::isDirectory(const std::string& filename)
+bool FileBrowseBoost::isDirectory(const std::string& filename) const
 {
   (void)filename;
   return false;
 }
 
-void FileBrowseBoost::getFiles(std::vector<std::string>& files, const std::string& directory)
+void FileBrowseBoost::getFiles(std::vector<std::string>& files, const std::string& directory) const
 {
   (void)directory;
   files.push_back("boost::filesystem");
@@ -106,7 +106,7 @@ void FileBrowseBoost::getFiles(std::vector<std::string>& files, const std::strin
   files.push_back("Sorry...");
 }
 
-void FileBrowseBoost::getDirectories(std::vector<std::string>& dirs, const std::string& directory)
+void FileBrowseBoost::getDirectories(std::vector<std::string>& dirs, const std::string& directory) const
 {
   (void)dirs;
   (void)directory;
