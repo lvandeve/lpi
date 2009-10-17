@@ -301,11 +301,15 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   tabs.getTabContent(3).pushTopAt(&filenameline, 10, 8);
   
   lpi::gui::List list(guidrawer);
+  list.setAllowMultiSelection(true);
   list.resize(0, 0, 200, 200);
   list.addItem("pear");
   list.addItem("apple");
   list.addItem("banana");
   list.addItem("medlar");
+  list.addItem("strawberry");
+  list.addItem("fig");
+  list.addItem("abricot");
   tabs.getTabContent(3).pushTopAt(&list, 10, 24);
   
   

@@ -40,16 +40,27 @@ namespace gui
 
 class InternalList : public Element
 {
+  /*
+  TODO: ability to set an icon (ITexture) for every separate item
+  TODO: ability to set a custom font for every separate item
+  */
+  
   private:
     bool allowMultiSelection;
     
     std::vector<std::string> items;
     std::vector<bool> selection; //used if allowMultiSelection is true
     size_t selectedItem; //used if allowMultiSelection is false
+    size_t lastClickedItem; //used for multiselection with shift key
+    
+    MouseState mouse_state_for_selection;
     
   protected:
     virtual void handleImpl(const IInput& input);
     virtual void drawImpl(IGUIDrawer& drawer) const;
+    size_t getItemHeight() const;
+        
+    void deselectAll();
     
   public:
   
@@ -65,12 +76,21 @@ class InternalList : public Element
     void removeItem(size_t i);
     void setAllowMultiSelection(bool set);
     void clear();
+    size_t getMouseItem(const IInput& input) const; //this returns the item over which the mouse is, which you can use together with checks like "doubleclicked" to determine if a certain item is being doubleclicked or whatever else you check. Returns invalid index if mouse is not over this list.
 };
 
 class List : public ScrollElement
 {
+  /*
+  TODO: forward scrollwheel on the internallist, to the scrollbar
+  */
+  
   private:
     InternalList list;
+    
+  protected:
+  
+    virtual void resizeImpl(const Pos<int>& newPos);
     
   public:
     
@@ -88,8 +108,7 @@ class List : public ScrollElement
     void removeItem(size_t i);
     void setAllowMultiSelection(bool set);
     void clear();
-    
-    virtual void resizeImpl(const Pos<int>& newPos);
+    size_t getMouseItem(const IInput& input) const; //this returns the item over which the mouse is, which you can use together with checks like "doubleclicked" to determine if a certain item is being doubleclicked or whatever else you check. Returns invalid index if mouse is not over this list.
 };
 
 //class DropMenu : public ElementComposite

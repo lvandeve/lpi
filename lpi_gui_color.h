@@ -844,64 +844,18 @@ class ColorHTML : public ColorEditor, public InputLine
 {
   private:
   
-    static int charToHex(char c)
-    {
-      if(c >= '0' && c <= '9') return c - '0';
-      else if( c >= 'a' && c <= 'z') return c - 'a' + 10;
-      else return c - 'A' + 10;
-    }
-
-    static char hexToChar(int i)
-    {
-      if(i < 10) return '0' + i;
-      else return 'A' + i - 10;
-    }
-
-    static void TwoHexToString(std::string& s, int i)
-    {
-      s += hexToChar(i / 16);
-      s += hexToChar(i % 16);
-    }
-
-    static int StringToTwoHex(const std::string& s, int index)
-    {
-      int result = 0;
-      result += 16 * charToHex(s[index]);
-      result += charToHex(s[index + 1]);
-      return result;
-    }
+    static int charToHex(char c);
+    static char hexToChar(int i);
+    static int StringToTwoHex(const std::string& s, int index);
+    static void TwoHexToString(std::string& s, int i);
     
   public:
 
   
-  ColorHTML()
-  {
-    setTitle("#");
-    l = 6;
-  }
-  
-  virtual void getColor(ColorRGBd& color) const
-  {
-    std::string s = getText();
-    if(s.size() >= 2) color.r = StringToTwoHex(s, 0) / 255.0;
-    if(s.size() >= 4) color.g = StringToTwoHex(s, 2) / 255.0;
-    if(s.size() >= 6) color.b = StringToTwoHex(s, 4) / 255.0;
-  }
-  
-  virtual void setColor(const ColorRGBd& color)
-  {
-    std::string s;
-    TwoHexToString(s, (int)(color.r * 255));
-    TwoHexToString(s, (int)(color.g * 255));
-    TwoHexToString(s, (int)(color.b * 255));
-    setText(s);
-  }
-  
-  virtual void handleImpl(const IInput& input)
-  {
-    InputLine::handleImpl(input);
-    if(enteringDone()) setChanged();
-  }
+  ColorHTML();
+  virtual void getColor(ColorRGBd& color) const;
+  virtual void setColor(const ColorRGBd& color);
+  virtual void handleImpl(const IInput& input);
 };
 
 class ColorEditorSynchronizer

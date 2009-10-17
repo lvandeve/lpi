@@ -39,8 +39,15 @@ namespace gui
 InternalList::InternalList()
 : allowMultiSelection(false)
 , selectedItem(0)
+, lastClickedItem(0)
 {
   setEnabled(true);
+}
+
+void InternalList::deselectAll()
+{
+  for(size_t i = 0; i < selection.size(); i++) selection[i] = false;
+  selectedItem = lastClickedItem = getNumItems();
 }
 
 size_t InternalList::getNumItems() const
@@ -104,25 +111,47 @@ void InternalList::setAllowMultiSelection(bool set)
 
 void InternalList::handleImpl(const IInput& input)
 {
-  static const int H = 16; //height of one item
-  int sizey = getNumItems() * H;
+  int sizey = getNumItems() * getItemHeight();
   if(sizey != getSizeY()) resize(x0, y0, x1, y0 + sizey);
   
-  if(pressed(input))
+  //if(pressed(input))
+  if(mouse_state_for_selection.mouseJustDownHere(mouseOver(input), input.mouseButtonDown(LMB)))
   {
-    size_t index = (input.mouseY() - y0) / H;
-    selectedItem = index;
+    size_t index = (input.mouseY() - y0) / getItemHeight();
+    if(index >= getNumItems()) return;
+    
+    if(allowMultiSelection && input.keyDown(SDLK_LSHIFT) && lastClickedItem < getNumItems())
+    {
+      if(lastClickedItem < index)
+      {
+        for(size_t i = lastClickedItem; i <= index; i++) setSelected(i);
+      }
+      else
+      {
+        for(size_t i = index; i <= lastClickedItem; i++) setSelected(i);
+      }
+    }
+    else if(input.keyDown(SDLK_LCTRL))
+    {
+      if(isSelected(index)) setSelected(index, false);
+      else setSelected(index, true);
+      lastClickedItem = index;
+    }
+    else
+    {
+      deselectAll();
+      setSelected(index);
+      lastClickedItem = index;
+    }
   }
 }
 
 void InternalList::drawImpl(IGUIDrawer& drawer) const
 {
-  static const int H = 16; //height of one item
-  
   for(size_t i = 0; i < items.size(); i++)
   {
-    if(selectedItem == i) drawer.drawText(items[i], x0, y0 + H * i, FONT_Red);
-    else drawer.drawText(items[i], x0, y0 + H * i, FONT_Black);
+    if(isSelected(i)) drawer.drawText(items[i], x0, y0 + getItemHeight() * i, FONT_Red);
+    else drawer.drawText(items[i], x0, y0 + getItemHeight() * i, FONT_Black);
   }
 }
 
@@ -130,7 +159,18 @@ void InternalList::clear()
 {
   items.clear();
   selection.clear();
-  selectedItem = 0;
+  selectedItem = lastClickedItem = 0;
+}
+
+size_t InternalList::getMouseItem(const IInput& input) const
+{
+  if(mouseOver(input)) return (input.mouseY() - y0) / getItemHeight();
+  else return getNumItems();
+}
+
+size_t InternalList::getItemHeight() const
+{
+  return 16;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -158,6 +198,7 @@ void List::insertItem(size_t i, const std::string& value) { list.insertItem(i, v
 void List::removeItem(size_t i) { list.removeItem(i); }
 void List::setAllowMultiSelection(bool set) { list.setAllowMultiSelection(set); }
 void List::clear() { list.clear(); }
+size_t List::getMouseItem(const IInput& input) const { return list.getMouseItem(input); }
 
 //////////////////////////////////////////////////////////////////////////////////
 ////DropMenu/////////////////////////////////////////////////////////////////////
