@@ -42,6 +42,9 @@ class IFileBrowse
   //directory must have endslash
   //the returned dirs are not the full path, but directory + the dir gives the full path.
   virtual void getDirectories(std::vector<std::string>& dirs, const std::string& directory) const = 0;
+  
+  virtual std::string getParent(const std::string& path) const; //e.g. /mnt/D/folder/ gives /mnt/D/. Has default implementation for convenience.
+  virtual std::string getChild(const std::string& path, const std::string& child) const; //child can be subdir or file
 };
 
 class FileBrowseNotSupported : public IFileBrowse

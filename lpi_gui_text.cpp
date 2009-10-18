@@ -110,30 +110,30 @@ bool InputLine::enteringDone() const
 void InputLine::drawImpl(IGUIDrawer& drawer) const
 {
   static const int FONTSIZE = 8; //TODO: use drawer to find out cursor position in text and such
-  drawer.drawText(title, x0, y0, titleFont);
+  drawer.drawText(title, x0, (y0 + y1) / 2, titleFont, TextAlign(HA_LEFT, VA_CENTER));
   
   int titlew, titleh;
   drawer.calcTextRectSize(titlew, titleh, title, titleFont);
 
   int inputX = x0 + titlew;
-  int inputY = y0/*inputPos % h*/;
-  if(type == 0) drawer.drawText(text, inputX, inputY, font);
+  int inputY = (y0 + y1) / 2;
+  if(type == 0) drawer.drawText(text, inputX, inputY, font, TextAlign(HA_LEFT, VA_CENTER));
   else if(type == 1) //password
   {
     unsigned long p = 0;
     while(p < text.length() && p < l)
     {
-      drawer.drawText("*", inputX + p * FONTSIZE, inputY, font);
+      drawer.drawText("*", inputX + p * FONTSIZE, inputY, font, TextAlign(HA_LEFT, VA_CENTER));
       p++;
     }
   }
-  else if(type == 2) drawer.print(getInteger(), inputX, inputY, font);
+  else if(type == 2) drawer.print(getInteger(), inputX, inputY, font, TextAlign(HA_LEFT, VA_CENTER));
   
   //draw the cursor if active
   if(control_active && (int(draw_time * 2.0) % 2 == 0 || mouseDown(drawer.getInput())))
   {
     int cursorXDraw = inputX + cursor * FONTSIZE;
-    drawer.drawLine(cursorXDraw, inputY, cursorXDraw, inputY + FONTSIZE, cursorColor);
+    drawer.drawLine(cursorXDraw, inputY - FONTSIZE / 2, cursorXDraw, inputY + FONTSIZE / 2, cursorColor);
   }
   
   //draw selection, if any
@@ -141,7 +141,7 @@ void InputLine::drawImpl(IGUIDrawer& drawer) const
   {
     int start = inputX + sel0 * FONTSIZE;
     int end = inputX + sel1 * FONTSIZE;
-    drawer.drawRectangle(start, inputY, end, inputY + FONTSIZE, ColorRGB(128, 128, 255, 96), true);
+    drawer.drawRectangle(start, inputY - FONTSIZE / 2, end, inputY + FONTSIZE / 2, ColorRGB(128, 128, 255, 96), true);
   }
 }
 
@@ -201,34 +201,24 @@ void InputLine::handleImpl(const IInput& input) //both check if you pressed ente
     int ascii = input.unicodeKey(0.5, 0.025);
     if(ascii)
     {
+std::cout<<ascii<<std::endl;
       switch(ascii)
       {
         case 8: //backspace
-          if(sel0 == sel1 && cursor > 0)
-          {
-            cursor--;
-            text.erase(cursor, 1);
-          }
-          else if(sel0 != sel1)
-          {
-            deleteSelectedText();
-          }
+          //COMMENTED OUT!! For same reason as case 127, except that this one actually worked in both linux and windows, but you know, the fact that 127 doesn't reliably work everywhere doesn't give the feeling that backspase will. Handled with input.keyPressedTime instead.
+          /*if(sel0 == sel1 && cursor > 0) text.erase(--cursor, 1);
+          else if(sel0 != sel1) deleteSelectedText();*/
           break;
         case 13: //enter
-          //COMMENTED OUT!!!! UNICODEKEY DOES NOT RELIABLE SAY THAT THIS KEY IS DOWN, IT MAY MISS THE UP EVENT. SO FOR THIS ENTER FEATURE, I USE THE SIMPLE KEY INPUT WAY INSTEAD.
+          //COMMENTED OUT!!!! UNICODEKEY DOES NOT RELIABLY SAY THAT THIS KEY IS DOWN, IT MAY MISS THE UP EVENT. SO FOR THIS ENTER FEATURE, I USE THE SIMPLE KEY INPUT WAY INSTEAD.
           //So, do NOTHING with enter
           /*entered = 1;
           control_active = false;*/
           break;
         case 127: //delete
-          if(sel0 == sel1 && cursor <= text.size())
-          {
-            text.erase(cursor, 1);
-          }
-          else if(sel0 != sel1)
-          {
-            deleteSelectedText();
-          }
+          //COMMENTED OUT!!! works with this in linux, but not in windows, so I check with keyPressedTime instead below
+          /*if(sel0 == sel1 && cursor <= text.size()) text.erase(cursor, 1);
+          else if(sel0 != sel1) deleteSelectedText();*/
           break;
         //a few certainly not meant to be printed ones
         case 0:
@@ -262,6 +252,16 @@ void InputLine::handleImpl(const IInput& input) //both check if you pressed ente
         {if(cursor < text.length()) cursor++;}
       else
         cursor = sel0 = sel1 = (sel1 < sel0 ? sel0 : sel1);
+    }
+    if(input.keyPressedTime(SDLK_DELETE, 0.5, 0.025))
+    {
+      if(sel0 == sel1 && cursor <= text.size()) text.erase(cursor, 1);
+      else if(sel0 != sel1) deleteSelectedText();
+    }
+    if(input.keyPressedTime(SDLK_BACKSPACE, 0.5, 0.025))
+    {
+      if(sel0 == sel1 && cursor > 0) text.erase(--cursor, 1);
+      else if(sel0 != sel1) deleteSelectedText();
     }
 
   }

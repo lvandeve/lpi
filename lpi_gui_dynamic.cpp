@@ -32,7 +32,7 @@ void DynamicColor::ctor()
   this->resize(0, 0, 20, 20);
   box.resize(0, 0, 12, 12);
   box.move(1, 1);
-  this->addSubElement(&box, Sticky(0.0, 0, 0.5, -box.getSizeY() / 2, 0.0, box.getSizeX(), 0.5, box.getSizeY() / 2));
+  this->addSubElement(&box, Sticky(0.0,0, 0.5,-box.getSizeY() / 2, 0.0,box.getSizeX(), 0.5,box.getSizeY() / 2));
   edit.setEnabled(false);
 }
 
@@ -88,6 +88,68 @@ void DynamicColor::manageHoverImpl(IHoverManager& hover)
 }
 ////////////////////////////////////////////////////////////////////////////////
 
+void DynamicFile::ctor()
+{
+  this->resize(0, 0, 20, 20);
+  pick.resize(0, 0, 12, 12);
+  this->addSubElement(&pick, Sticky(1.0,-pick.getSizeX(), 0.5,-pick.getSizeY() / 2, 1.0,0, 0.5,pick.getSizeY() / 2));
+  edit.setEnabled(false);
+  line.make(this->x0, this->y0, 256);
+  line.move(0, (this->getSizeY() - line.getSizeY()) / 2);
+  this->addSubElement(&line, Sticky(0.0,0, 0.5,-line.getSizeY() / 2, 1.0,0, 0.5,line.getSizeY() / 2));
+}
+
+DynamicFile::DynamicFile(std::string* value, const IGUIPartGeom& geom, IFileBrowse* browser)
+: edit(geom, browser)
+{
+  this->bind = value;
+  ctor();
+}
+
+void DynamicFile::getValue(std::string* value)
+{
+  *value = line.getText();
+}
+
+void DynamicFile::setValue(std::string* value)
+{
+  line.setText(*value);
+}
+
+void DynamicFile::handleImpl(const IInput& input)
+{
+  line.handle(input);
+  
+  if(pick.clicked(input)) edit.setEnabled(true);
+  else if(edit.isEnabled() && edit.mouseJustDownElsewhere(input)) edit.setEnabled(false);
+  else if(edit.pressedOk(input))
+  {
+    edit.setEnabled(false);
+    if(edit.getNumFiles() > 0)
+    {
+      std::string value = edit.getFileName(0);
+      setValue(&value);
+    }
+  }
+  else if(edit.pressedCancel(input)) edit.setEnabled(false);
+}
+
+void DynamicFile::drawImpl(IGUIDrawer& drawer) const
+{
+  line.draw(drawer);
+  //pick.drawDebugBorder(drawer);
+  drawer.drawRectangle(pick.getX0(), pick.getY0(), pick.getX1(), pick.getY1(), RGB_Grey, true);
+  drawer.drawRectangle(pick.getX0(), pick.getY0(), pick.getX1(), pick.getY1(), RGB_Black, false);
+  drawer.drawText("...", pick.getCenterX(), pick.getCenterY(), FONT_Black4, TextAlign(HA_CENTER, VA_CENTER));
+}
+
+void DynamicFile::manageHoverImpl(IHoverManager& hover)
+{
+  if(edit.isEnabled())
+    hover.addHoverElement(&edit);
+}
+////////////////////////////////////////////////////////////////////////////////
+
 DynamicPage::DynamicPage()
 : enableTitle(false)
 , title_width(0.5)
@@ -123,7 +185,7 @@ void DynamicPage::addControl(const std::string& name, IDynamicControl* control)
   int xb = (int)(getSizeX() * title_width);
   int titleheight = (enableTitle ? TITLEHEIGHT : 0);
   control->resize(x0 + xb + 1, y0 + titleheight + i * CONTROLHEIGHT + 1, x1, y0 + titleheight + (i + 1) * CONTROLHEIGHT);
-  addSubElement(control, Sticky(0.0, x0 + xb + 1, 0.0, titleheight + i * CONTROLHEIGHT + 1, 1.0, 0, 0.0, titleheight + (i + 1) * CONTROLHEIGHT));
+  addSubElement(control, Sticky(title_width,1, 0.0,titleheight + i * CONTROLHEIGHT + 1, 1.0,0, 0.0,titleheight + (i + 1) * CONTROLHEIGHT));
 }
 
 void DynamicPage::drawImpl(IGUIDrawer& drawer) const

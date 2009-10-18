@@ -23,6 +23,28 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
+std::string IFileBrowse::getParent(const std::string& path) const
+{
+  int lastslash = 0; //last slash or backslash in the string, except if it's completely at the end
+  
+  for(int i = 0; i < ((int)path.size()) - 1; i++)
+  {
+    if(path[i] == '/' || path[i] == '\\') lastslash = i;
+  }
+  
+  return path.substr(0, lastslash);
+}
+
+std::string IFileBrowse::getChild(const std::string& path, const std::string& child) const
+{
+  std::string result = path;
+  ensureDirectoryEndOSSlash(result);
+  result += child;
+  return result;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 bool FileBrowseNotSupported::isDirectory(const std::string& filename) const
 {
   (void)filename;

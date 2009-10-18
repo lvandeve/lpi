@@ -75,7 +75,7 @@ class InputLine : public Element //input text line
     InputLine();
     void make(int x, int y, unsigned long l,
               const Font& font = FONT_Default,
-              int type = 0, const std::string& title = "", const Font& titleFont = FONT_Default, const ColorRGB& cursorColor = RGB_White);
+              int type = 0, const std::string& title = "", const Font& titleFont = FONT_Default, const ColorRGB& cursorColor = RGB_Black);
     
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);

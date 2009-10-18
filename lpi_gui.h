@@ -251,7 +251,12 @@ class ElementComposite : public Element //element with "internal container" to a
     //virtual const Element* hitTest(const IInput& input);
 };
 
-class ElementWrapper : public Element //element with "internal container" to automatically handle child elements for you
+/*
+ElementWrapper can be used (by inheritance) if your element contains one element in it that should have the same
+size and so on, as if it's your element, but you want to wrap it to add some functionality
+without inheriting from it directly.
+*/
+class ElementWrapper : public Element
 {
   protected:
     Element* wrapped;
@@ -670,14 +675,16 @@ class Window : public ElementComposite
     ColorRGB colorMod;
     Dummy closeButton;
     Dummy resizer;
-    
+    bool enableTop; //enable the top bar of the window (then you can drag it with this instead of everywhere on the window)
+    bool closeEnabled; //close button is enabled
+    bool enableResizer;
+    bool resizerOverContainer;
+
     virtual int getMinSizeX() { return 64; }
     virtual int getMinSizeY() { return 64; }
     
-  public:
+  protected:
   
-    Window();
-    
     ////container
     int getContainerLowest() const;
     int getContainerHighest() const;
@@ -693,6 +700,17 @@ class Window : public ElementComposite
     int getContainerSizeX() const { return container.getSizeX(); }
     int getContainerSizeY() const { return container.getSizeY(); }
     
+    int getRelContainerStart() const { return container.getY0() - y0; }
+    int getRelContentStart() const;
+    
+    //the drawImpl call will first do drawWindow, then drawElements. You can override drawImpl and call these function too and do something else between them if needed.
+    void drawWindow(IGUIDrawer& drawer) const;
+    void drawElements(IGUIDrawer& drawer) const;
+
+    
+  public:
+
+    Window();
     //push the element without affecting absolute position
     void pushTop(Element* element, const Sticky& sticky = STICKYDEFAULT);
     void pushBottom(Element* element, const Sticky& sticky = STICKYDEFAULT);
@@ -719,11 +737,9 @@ class Window : public ElementComposite
     void removeScrollbars();
     void updateScroll(); //call this after elements inside window changed size or position. It updates size of container to elements inside it, then updates scroll (updateBars()). I've had this work very well together with a zoomable and movable image inside a window with scrollbars!!
     
-    ////optional part "top"
-    Dummy top;
     void addTop(const IGUIPartGeom& geom);
-    bool enableTop; //enable the top bar of the window (then you can drag it with this instead of everywhere on the window)
-
+    Dummy top; //todo make this private or protected (currently used by the unittest)
+    
     ////optional part "title"
     std::string title;
     Font titleFont;
@@ -733,17 +749,9 @@ class Window : public ElementComposite
     ////optional part "close button"
     bool closed;
     void addCloseButton(const IGUIPartGeom& geom); //ofsset from top *right* corner, choose style of close button by making it, it's the built in texture by default
-    bool closeEnabled; //close button is enabled
     
     ////optional part "resizer" = draggable bottom right corner with diagonally striped image
-    bool enableResizer;
     void addResizer(const IGUIPartGeom& geom, bool overContainer = false);
-    bool resizerOverContainer;
-         
-    int getRelContainerStart() const { return container.getY0() - y0; }
-    
-    int getRelContentStart() const;
-    
 
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void manageHoverImpl(IHoverManager& hover);
