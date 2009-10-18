@@ -20,7 +20,8 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include "lpi_filebrowse_boost.h"
 
-#if 0 //set to 1 if you have boost::filesystem, 0 otherwise (but then file listing with this isn't supported)
+//#if 0 //set to 1 if you have boost::filesystem, 0 otherwise (but then file listing with this isn't supported)
+#ifndef WIN32 //easy if you have boost installed on linux but not on windows
 
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/path.hpp"
@@ -35,51 +36,80 @@ namespace lpi
 
 bool FileBrowseBoost::isDirectory(const std::string& filename) const
 {
-  fs::path p(fs::initial_path());
-  p = fs::system_complete(fs::path(filename.c_str(), fs::native));
-  return fs::is_directory(p);
+  try
+  {
+    fs::path p(fs::initial_path());
+    p = fs::system_complete(fs::path(filename.c_str(), fs::native));
+    return fs::is_directory(p);
+  }
+  catch(...)
+  {
+    return false;
+  }
 }
 
 void FileBrowseBoost::getFiles(std::vector<std::string>& files, const std::string& directory) const
 {
-  fs::path full_path(fs::initial_path());
-
-  full_path = fs::system_complete(fs::path(directory.c_str(), fs::native));
-
-  if(!fs::exists(full_path)) return;
-  if(!fs::is_directory(full_path)) return;
-  
-  fs::directory_iterator end_iter;
-  for(fs::directory_iterator dir_itr(full_path); dir_itr != end_iter; ++dir_itr)
+  try
   {
-    if(!fs::is_directory(*dir_itr))
+    fs::path full_path(fs::initial_path());
+
+    full_path = fs::system_complete(fs::path(directory.c_str(), fs::native));
+
+    if(!fs::exists(full_path)) return;
+    if(!fs::is_directory(full_path)) return;
+    
+    fs::directory_iterator end_iter;
+    for(fs::directory_iterator dir_itr(full_path); dir_itr != end_iter; ++dir_itr)
     {
-      std::ostringstream ss;
-      ss << dir_itr->leaf();
-      files.push_back(ss.str());
+      if(!fs::is_directory(*dir_itr))
+      {
+        std::ostringstream ss;
+        ss << dir_itr->leaf();
+        files.push_back(ss.str());
+      }
     }
+  }
+  catch(...)
+  {
+    files.push_back("Error. No permission?");
+    files.push_back("Note: this are not files.");
   }
 }
 
 void FileBrowseBoost::getDirectories(std::vector<std::string>& dirs, const std::string& directory) const
 {
-  fs::path full_path(fs::initial_path());
-
-  full_path = fs::system_complete(fs::path(directory.c_str(), fs::native));
-
-  if(!fs::exists(full_path)) return;
-  if(!fs::is_directory(full_path)) return;
-  
-  fs::directory_iterator end_iter;
-  for(fs::directory_iterator dir_itr(full_path); dir_itr != end_iter; ++dir_itr)
+  try
   {
-    if(fs::is_directory(*dir_itr))
+    fs::path full_path(fs::initial_path());
+
+    full_path = fs::system_complete(fs::path(directory.c_str(), fs::native));
+
+    if(!fs::exists(full_path)) return;
+    if(!fs::is_directory(full_path)) return;
+    
+    fs::directory_iterator end_iter;
+    for(fs::directory_iterator dir_itr(full_path); dir_itr != end_iter; ++dir_itr)
     {
-      std::ostringstream ss;
-      ss << dir_itr->leaf();
-      dirs.push_back(ss.str());
+      if(fs::is_directory(*dir_itr))
+      {
+        std::ostringstream ss;
+        ss << dir_itr->leaf();
+        dirs.push_back(ss.str());
+      }
     }
   }
+  catch(...)
+  {
+    dirs.push_back("Error. No permission?");
+    dirs.push_back("Note: this are not directories.");
+    dirs.push_back("..");
+  }
+}
+
+std::string FileBrowseBoost::getParent(const std::string& path) const
+{
+  return IFileBrowse::getParent(path);
 }
 
 
