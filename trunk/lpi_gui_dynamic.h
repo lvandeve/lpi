@@ -23,6 +23,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_gui.h"
 #include "lpi_gui_text.h"
 #include "lpi_gui_color.h"
+#include "lpi_gui_file.h"
 #include "lpi_parse.h"
 #include <iostream>
 
@@ -278,6 +279,25 @@ class DynamicColor : public TDymamicPageControl<ColorRGB>
     DynamicColor(ColorRGB* value, const IGUIPartGeom& geom);
     virtual void getValue(ColorRGB* value);
     virtual void setValue(ColorRGB* value);
+    virtual void handleImpl(const IInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void manageHoverImpl(IHoverManager& hover);
+};
+
+class DynamicFile : public TDymamicPageControl<std::string>
+{
+  private:
+    InputLine line;
+    Dummy pick;
+    FileDialog edit;
+
+    void ctor();
+
+  public:
+
+    DynamicFile(std::string* value, const IGUIPartGeom& geom, IFileBrowse* browser);
+    virtual void getValue(std::string* value);
+    virtual void setValue(std::string* value);
     virtual void handleImpl(const IInput& input);
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void manageHoverImpl(IHoverManager& hover);

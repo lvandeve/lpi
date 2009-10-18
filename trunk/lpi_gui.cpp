@@ -1249,7 +1249,7 @@ void Window::handleImpl(const IInput& input)
   scroll.bars.conserveCorner = resizerOverContainer;
 }
 
-void Window::drawImpl(IGUIDrawer& drawer) const
+void Window::drawWindow(IGUIDrawer& drawer) const
 {
   drawer.drawGUIPartColor(GPC_WINDOW_PANEL, colorMod, x0, y0, x1, y1);
   if(enableTop)
@@ -1257,13 +1257,22 @@ void Window::drawImpl(IGUIDrawer& drawer) const
     drawer.drawGUIPart(GP_WINDOW_TOP, top.getX0(), top.getY0(), top.getX1(), top.getY1()); //draw top bar before the elements, or it'll appear above windows relative to the current window
     drawer.drawGUIPartText(GPT_WINDOW_TITLE, title, top.getX0(), top.getY0(), top.getX1(), top.getY1());
   }
-  
+
   if(closeEnabled) drawGUIPart(drawer, &closeButton, GP_WINDOW_CLOSE);
 
+  if(enableResizer) drawer.drawGUIPart(GP_WINDOW_RESIZER, resizer.getX0(), resizer.getY0(), resizer.getX1(), resizer.getY1()); //draw this after the container so the resizer is drawn over scrollbars if that is needed
+}
+
+void Window::drawElements(IGUIDrawer& drawer) const
+{
   if(scroll.element) scroll.draw(drawer);
   else container.draw(drawer);
+}
 
-  if(enableResizer) drawer.drawGUIPart(GP_WINDOW_RESIZER, resizer.getX0(), resizer.getY0(), resizer.getX1(), resizer.getY1()); //draw this after the container so the resizer is drawn over scrollbars if that is needed
+void Window::drawImpl(IGUIDrawer& drawer) const
+{
+  drawWindow(drawer);
+  drawElements(drawer);
 }
 
 void Window::manageHoverImpl(IHoverManager& hover)

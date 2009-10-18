@@ -141,12 +141,9 @@ enum GUIPart
   GP_RULER_V,
   //fgbgcolor
   GP_FG_BG_COLOR_ARROWS, //those arrows to swap colors at a FG-BG color selector
-  //built-in extra's
-  GP_SMILEY,
-  GP_CROSSHAIR,
   //tooltip background
   GP_TOOLTIP_BACKGROUND, //background of tooltip, as big as you want. No need to use this if you use GPT_TOOLTIP
-  
+
   ///Colored Parts
   GPC_WINDOW_PANEL, //colored windows
   GPC_WHITE_PANEL, //panel which can be given any color

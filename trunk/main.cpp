@@ -153,6 +153,12 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   lpi::ScreenGL screen(width, height, false, false, "lpi GUI demo");
   lpi::gui::GUIDrawerGL guidrawer(&screen);
   
+#ifdef WIN32
+  lpi::FileBrowseWin32WithDrives filebrowser;
+#else
+  lpi::FileBrowseBoost filebrowser;
+#endif
+  
   lpi::gui::MainContainer c(guidrawer);
   
   lpi::gui::Button tb;
@@ -180,7 +186,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   c.pushTop(&w1);
 
   lpi::gui::Window w2;
-  w2.resize(50, 50, 400, 300);
+  w2.resize(50, 50, 500, 400);
   w2.addTop(guidrawer);
   w2.addTitle("Window 2");
   w2.addCloseButton(guidrawer);
@@ -195,6 +201,11 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   tabs.addTab("tab 3");
   tabs.addTab("tab 4");
   w2.pushTopAt(&tabs, 0, 0, lpi::gui::Sticky(0.0, 0, 0.0, 0, 1.0, 0, 1.0, 0));
+
+
+  /*lpi::gui::FileDialog fileWindow(guidrawer, &filebrowser);
+  fileWindow.moveTo(150, 150);
+  c.pushTop(&fileWindow);*/
 
 
   lpi::gui::Button sound_button;
@@ -244,6 +255,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   bool dyn_value3 = true;
   double dyn_value4 = 1.5;
   float dyn_value5 = 60.5;
+  std::string dyn_value6 = "/";
   lpi::gui::DynamicPage dyn;
   //dyn.setSizeXY(200, 20);
   dyn.resize(0,0,280,100);
@@ -254,26 +266,30 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   dyn.addControl("boolean", new lpi::gui::DynamicCheckbox(&dyn_value3));
   dyn.addControl("double", new lpi::gui::DynamicValue<double>(&dyn_value4));
   dyn.addControl("slider", new lpi::gui::DynamicSlider<float>(&dyn_value5, 0, 100, guidrawer));
+  dyn.addControl("filename", new lpi::gui::DynamicFile(&dyn_value6, guidrawer, &filebrowser));
   //dyn.resize(0,0,200,100);
-  tabs.getTabContent(1).pushTopAt(&dyn, 10, 20);
-  tabs.selectTab(3);
+  tabs.getTabContent(1).pushTop(&dyn, lpi::gui::Sticky(0.0,8, 0.0,8, 1.0, -8, 0.0,8+dyn.getSizeY()));
+  tabs.selectTab(1);
 
   lpi::gui::PVariable<int> tval1;
   tval1.make(0, 0, &dyn_value1);
-  tabs.getTabContent(1).pushTopAt(&tval1, 10, 140);
+  tabs.getTabContent(1).pushTopAt(&tval1, 10, 160);
   lpi::gui::PVariable<std::string> tval2;
   tval2.make(0, 0, &dyn_value2);
-  tabs.getTabContent(1).pushTopAt(&tval2, 10, 148);
+  tabs.getTabContent(1).pushTopAt(&tval2, 10, 168);
   lpi::gui::PVariable<bool> tval3;
   tval3.make(0, 0, &dyn_value3);
-  tabs.getTabContent(1).pushTopAt(&tval3, 10, 156);
+  tabs.getTabContent(1).pushTopAt(&tval3, 10, 176);
   lpi::gui::PVariable<double> tval4;
   tval4.make(0, 0, &dyn_value4);
-  tabs.getTabContent(1).pushTopAt(&tval4, 10, 164);
+  tabs.getTabContent(1).pushTopAt(&tval4, 10, 184);
   lpi::gui::PVariable<float> tval5;
   tval5.make(0, 0, &dyn_value5);
-  tabs.getTabContent(1).pushTopAt(&tval5, 10, 172);
-  
+  tabs.getTabContent(1).pushTopAt(&tval5, 10, 192);
+  lpi::gui::PVariable<std::string> tval6;
+  tval6.make(0, 0, &dyn_value6);
+  tabs.getTabContent(1).pushTopAt(&tval6, 10, 200);
+
   lpi::gui::HueDiskEditor_HSL_HS huecircle;
   huecircle.resize(0,0,120,120);
   tabs.getTabContent(2).pushTopAt(&huecircle, 20, 20, lpi::gui::Sticky(0.01,0, 0.0,0, 0.45,0, 0.45,0));
@@ -297,11 +313,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   tabs.getTabContent(2).pushTopAt(&palette, 200, 4, lpi::gui::Sticky(0.55,0, 0.0,0, 1.0,0, 0.45,0));
   lpi::gui::ColorDialogSmall colordialog(guidrawer);
   palette.setColorChoosingDialog(&colordialog);
-  
-  lpi::gui::InputLine filenameline;
-  filenameline.make(0, 0, 256);
-  tabs.getTabContent(3).pushTopAt(&filenameline, 10, 8);
-  
+
   lpi::gui::List list(guidrawer);
   list.setAllowMultiSelection(true);
   list.resize(0, 0, 200, 200);
@@ -323,12 +335,6 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   list.addItem("orange");
   list.addItem("lemon");
   tabs.getTabContent(3).pushTopAt(&list, 10, 24);
-  
-  lpi::gui::FileList filelist(guidrawer);
-  filelist.setAllowMultiSelection(true);
-  filelist.resize(0, 0, 200, 200);
-  tabs.getTabContent(3).pushTopAt(&filelist, 224, 24);
-  
   
   lpi::gui::Checkbox wcb;
   wcb.make(0, 0);
@@ -357,12 +363,6 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   fgbg.setBG(lpi::RGBd_White);
   colorSynchronizer.setColor(fgbg.getFG()); //make synchronizer update the above change
   
-#ifdef WIN32
-  lpi::FileBrowseWin32 filebrowser;
-#else
-  lpi::FileBrowseBoost filebrowser;
-#endif
-
   while(lpi::frame(true, true))
   {
     gametime.update();
@@ -392,26 +392,6 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     spawns.draw();
     spawns.handle();
     
-    if(filenameline.enteringDone() && !filenameline.getText().empty())
-    {
-      filelist.generateListForDir(filenameline.getText(), filebrowser);
-    }
-    if(filelist.mouseDoubleClicked(lpi::gSDLInput))
-    {
-      size_t i = filelist.getMouseItem(lpi::gSDLInput);
-      if(i < filelist.getNumItems())
-      {
-        lpi::gui::FileList::ItemType type = filelist.getType(i);
-        if(type == lpi::gui::FileList::IT_DIR)
-        {
-          std::string dir = filenameline.getText();
-          lpi::ensureDirectoryEndSlash(dir);
-          dir += filelist.getValue(i);
-          filenameline.setText(dir);
-          filelist.generateListForDir(dir, filebrowser);
-        }
-      }
-    }
     
     if(wcb.isChecked()) w1.addScrollbars(guidrawer);
     else w1.removeScrollbars();

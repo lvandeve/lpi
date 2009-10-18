@@ -51,7 +51,7 @@ void FileBrowseWin32::getFiles(std::vector<std::string>& files, const std::strin
    if(directory.size() > (MAX_PATH - 3)) return;
    
    std::string szDir = directory;
-   giveFilenameBackwardSlashes(szDir);
+   giveFilenameBackslashes(szDir);
    szDir += "\\*";
    
    hFind = FindFirstFile(szDir.c_str(), &ffd);// Find the first file in the directory.
@@ -68,30 +68,41 @@ void FileBrowseWin32::getFiles(std::vector<std::string>& files, const std::strin
 
 void FileBrowseWin32::getDirectories(std::vector<std::string>& dirs, const std::string& directory) const
 {
-   WIN32_FIND_DATA ffd;
-   LARGE_INTEGER filesize;
-   size_t length_of_arg;
-   HANDLE hFind = INVALID_HANDLE_VALUE;
-   DWORD dwError=0;
+  WIN32_FIND_DATA ffd;
+  LARGE_INTEGER filesize;
+  size_t length_of_arg;
+  HANDLE hFind = INVALID_HANDLE_VALUE;
+  DWORD dwError=0;
 
-   if(directory.size() > (MAX_PATH - 3)) return;
+  if(directory.size() > (MAX_PATH - 3)) return;
 
-   std::string szDir = directory;
-   giveFilenameBackwardSlashes(szDir);
-   szDir += "\\*";
+  std::string szDir = directory;
+  giveFilenameBackslashes(szDir);
+  szDir += "\\*";
 
-   hFind = FindFirstFile(szDir.c_str(), &ffd);// Find the first file in the directory.
-   if (INVALID_HANDLE_VALUE == hFind) return;
+  hFind = FindFirstFile(szDir.c_str(), &ffd);// Find the first file in the directory.
+  if (INVALID_HANDLE_VALUE == hFind) return;
 
-   do
-   {
+  do
+  {
+    //if(std::string("..") == ffd.cFileName || std::string(".") == ffd.cFileName) continue; //I don't want these in the list.
     if(ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) dirs.push_back(ffd.cFileName);
-   }
-   while(FindNextFile(hFind, &ffd) != 0);
+  }
+  while(FindNextFile(hFind, &ffd) != 0);
 
-   FindClose(hFind);
+  FindClose(hFind);
 }
 
+std::string FileBrowseWin32::getParent(const std::string& path) const
+{
+  std::string result = IFileBrowse::getParent(path);
+  if(path.size() > 1 && path[1] == ':')
+  {
+    char c = path[0];
+    if(result.size() < 2) result = std::string() + c + ':' + result;
+  }
+  return result;
+}
 
 } //namespace lpi
 
@@ -101,13 +112,13 @@ namespace lpi
 {
 
 
-bool FileBrowseBoost::isDirectory(const std::string& filename)
+bool FileBrowseWin32::isDirectory(const std::string& filename) const
 {
   (void)filename;
   return false;
 }
 
-void FileBrowseBoost::getFiles(std::vector<std::string>& files, const std::string& directory)
+void FileBrowseWin32::getFiles(std::vector<std::string>& files, const std::string& directory) const
 {
   (void)directory;
   files.push_back("win32 filesystem");
@@ -116,12 +127,71 @@ void FileBrowseBoost::getFiles(std::vector<std::string>& files, const std::strin
   files.push_back("Sorry...");
 }
 
-void FileBrowseBoost::getDirectories(std::vector<std::string>& dirs, const std::string& directory)
+void FileBrowseWin32::getDirectories(std::vector<std::string>& dirs, const std::string& directory) const
 {
   (void)dirs;
   (void)directory;
 }
 
+std::string FileBrowseWin32::getParent(const std::string& path) const
+{
+  std::string result = IFileBrowse::getParent(path);
+  if(path.size() > 1 && path[1] == ':')
+  {
+    char c = path[0];
+    if(result.size() < 2) result = std::string() + c + ':' + result;
+  }
+  return result;
+}
+
 } //namespace lpi
 
 #endif
+
+namespace lpi
+{
+
+bool FileBrowseWin32WithDrives::isDirectory(const std::string& filename) const
+{
+  return browser.isDirectory(filename);
+}
+
+void FileBrowseWin32WithDrives::getFiles(std::vector<std::string>& files, const std::string& directory) const
+{
+  if(directory.empty())
+  {
+    //no files
+  }
+  else browser.getFiles(files, directory);
+}
+
+void FileBrowseWin32WithDrives::getDirectories(std::vector<std::string>& dirs, const std::string& directory) const
+{
+  if(directory.empty())
+  {
+    for(char c = 'A'; c <= 'Z'; c++)
+    {
+      dirs.push_back(std::string() + c + ':' + '\\');
+    }
+  }
+  else browser.getDirectories(dirs, directory);
+}
+
+std::string FileBrowseWin32WithDrives::getParent(const std::string& path) const
+{
+  if((path.size() == 2 && path[1] == ':')
+  || (path.size() == 3 && path[1] == ':' && (path[2] == '\\' || path[2] == '/'))
+  || path.size() < 2)
+  return "";
+  else return browser.getParent(path);
+}
+
+std::string FileBrowseWin32WithDrives::getChild(const std::string& path, const std::string& child) const
+{
+  std::string result = path;
+  if(!path.empty()) ensureDirectoryEndOSSlash(result);
+  result += child;
+  return result;
+}
+
+}

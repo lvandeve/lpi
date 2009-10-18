@@ -112,6 +112,11 @@ void FileBrowseBoost::getDirectories(std::vector<std::string>& dirs, const std::
   (void)directory;
 }
 
+std::string FileBrowseBoost::getParent(const std::string& path) const
+{
+  return IFileBrowse::getParent(path);
+}
+
 } //namespace lpi
 
 #endif

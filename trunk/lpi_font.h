@@ -107,4 +107,26 @@ extern const Font FONT_Blue;
 extern const Font FONT_Shadow; //white letters with black shadow
 extern const Font FONT_ShadowInverted; //black letters with white shadow
 
+extern const Font FONT_Default6; //the default lpi font, size 6
+extern const Font FONT_Black6;
+extern const Font FONT_White6;
+extern const Font FONT_Grey6;
+extern const Font FONT_Gray6;
+extern const Font FONT_Red6;
+extern const Font FONT_Green6;
+extern const Font FONT_Blue6;
+extern const Font FONT_Shadow6; //white letters with black shadow
+extern const Font FONT_ShadowInverted6; //black letters with white shadow
+
+extern const Font FONT_Default4; //the default lpi font, size 4
+extern const Font FONT_Black4;
+extern const Font FONT_White4;
+extern const Font FONT_Grey4;
+extern const Font FONT_Gray4;
+extern const Font FONT_Red4;
+extern const Font FONT_Green4;
+extern const Font FONT_Blue4;
+extern const Font FONT_Shadow4; //white letters with black shadow
+extern const Font FONT_ShadowInverted4; //black letters with white shadow
+
 } // namespace lpi

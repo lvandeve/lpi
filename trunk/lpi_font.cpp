@@ -73,6 +73,14 @@ Font::Font(const std::string& typeface, const ColorRGB& color)
 
 namespace
 {
+  Font createFont(const std::string& typeface, const ColorRGB& color)
+  {
+    Font font;
+    font.typeface = typeface;
+    font.color = color;
+    return font;
+  }
+  
   Font createShadowFont(const std::string& typeface, const ColorRGB& color, const ColorRGB& shadowColor)
   {
     Font font;
@@ -94,6 +102,28 @@ const Font FONT_Gray(RGB_Gray);
 const Font FONT_Red(RGB_Red);
 const Font FONT_Green(RGB_Green);
 const Font FONT_Blue(RGB_Blue);
+
+const Font FONT_Default6(createFont("lpi6", RGB_Black));
+const Font FONT_Black6(createFont("lpi6", RGB_Black));
+const Font FONT_White6(createFont("lpi6", RGB_White));
+const Font FONT_Shadow6 = createShadowFont("lpi6", RGB_White, RGB_Black);
+const Font FONT_ShadowInverted6 = createShadowFont("lpi6", RGB_Black, RGB_White);
+const Font FONT_Grey6(createFont("lpi6", RGB_Grey));
+const Font FONT_Gray6(createFont("lpi6", RGB_Gray));
+const Font FONT_Red6(createFont("lpi6", RGB_Red));
+const Font FONT_Green6(createFont("lpi6", RGB_Green));
+const Font FONT_Blue6(createFont("lpi6", RGB_Blue));
+
+const Font FONT_Default4(createFont("lpi4", RGB_Black));
+const Font FONT_Black4(createFont("lpi4", RGB_Black));
+const Font FONT_White4(createFont("lpi4", RGB_White));
+const Font FONT_Shadow4 = createShadowFont("lpi4", RGB_White, RGB_Black);
+const Font FONT_ShadowInverted4 = createShadowFont("lpi4", RGB_Black, RGB_White);
+const Font FONT_Grey4(createFont("lpi4", RGB_Grey));
+const Font FONT_Gray4(createFont("lpi4", RGB_Gray));
+const Font FONT_Red4(createFont("lpi4", RGB_Red));
+const Font FONT_Green4(createFont("lpi4", RGB_Green));
+const Font FONT_Blue4(createFont("lpi4", RGB_Blue));
 
 
 
