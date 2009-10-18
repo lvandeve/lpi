@@ -1086,10 +1086,10 @@ window and not something behind it, you'll have to do yourself...
 Window::Window()
 : colorMod(RGB_Grey)
 , enableTop(false)
-, closed(false)
 , closeEnabled(false)
 , enableResizer(false)
 , resizerOverContainer(false)
+, closed(false)
 {
   setEnabled(true);
 

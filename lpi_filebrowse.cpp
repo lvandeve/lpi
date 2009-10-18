@@ -25,6 +25,8 @@ namespace lpi
 
 std::string IFileBrowse::getParent(const std::string& path) const
 {
+  if(path.empty()) return path;
+  
   int lastslash = 0; //last slash or backslash in the string, except if it's completely at the end
   
   for(int i = 0; i < ((int)path.size()) - 1; i++)
@@ -32,7 +34,7 @@ std::string IFileBrowse::getParent(const std::string& path) const
     if(path[i] == '/' || path[i] == '\\') lastslash = i;
   }
   
-  return path.substr(0, lastslash);
+  return path.substr(0, lastslash + 1);
 }
 
 std::string IFileBrowse::getChild(const std::string& path, const std::string& child) const

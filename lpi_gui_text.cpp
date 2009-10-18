@@ -201,7 +201,6 @@ void InputLine::handleImpl(const IInput& input) //both check if you pressed ente
     int ascii = input.unicodeKey(0.5, 0.025);
     if(ascii)
     {
-std::cout<<ascii<<std::endl;
       switch(ascii)
       {
         case 8: //backspace

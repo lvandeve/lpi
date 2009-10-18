@@ -140,7 +140,10 @@ void DynamicFile::drawImpl(IGUIDrawer& drawer) const
   //pick.drawDebugBorder(drawer);
   drawer.drawRectangle(pick.getX0(), pick.getY0(), pick.getX1(), pick.getY1(), RGB_Grey, true);
   drawer.drawRectangle(pick.getX0(), pick.getY0(), pick.getX1(), pick.getY1(), RGB_Black, false);
-  drawer.drawText("...", pick.getCenterX(), pick.getCenterY(), FONT_Black4, TextAlign(HA_CENTER, VA_CENTER));
+  //drawer.drawText("...", pick.getCenterX(), pick.getCenterY(), FONT_Black4, TextAlign(HA_CENTER, VA_CENTER));
+  drawer.drawPoint(pick.getCenterX(), pick.getY1() - 4, RGB_Black);
+  drawer.drawPoint(pick.getCenterX() - 2, pick.getY1() - 4, RGB_Black);
+  drawer.drawPoint(pick.getCenterX() + 2, pick.getY1() - 4, RGB_Black);
 }
 
 void DynamicFile::manageHoverImpl(IHoverManager& hover)
