@@ -121,10 +121,7 @@ bool FileBrowseWin32::isDirectory(const std::string& filename) const
 void FileBrowseWin32::getFiles(std::vector<std::string>& files, const std::string& directory) const
 {
   (void)directory;
-  files.push_back("win32 filesystem");
-  files.push_back("not supported.");
-  files.push_back("This are not files.");
-  files.push_back("Sorry...");
+  files.push_back("Error: win32 filesystem not supported.");
 }
 
 void FileBrowseWin32::getDirectories(std::vector<std::string>& dirs, const std::string& directory) const

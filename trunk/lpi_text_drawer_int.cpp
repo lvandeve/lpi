@@ -69,7 +69,7 @@ void InternalTextDrawer::drawLetter(unsigned char n, int x, int y, const Interna
   }
 }
 
-InternalGlyphs::Glyphs* InternalTextDrawer::getGlyphsForFont(const Font& font)
+const InternalGlyphs::Glyphs* InternalTextDrawer::getGlyphsForFont(const Font& font) const
 {
   if(font.typeface == "lpi8") return &glyphs.glyphs8x8;
   else if(font.typeface == "lpi6") return &glyphs.glyphs6x6;
@@ -81,7 +81,7 @@ InternalGlyphs::Glyphs* InternalTextDrawer::getGlyphsForFont(const Font& font)
 //Other control characters (ascii value < 32) are ignored and have no effect.
 void InternalTextDrawer::printText(const std::string& text, int x, int y, const Font& font, unsigned long forceLength)
 {
-  InternalGlyphs::Glyphs* glyphs = getGlyphsForFont(font);
+  const InternalGlyphs::Glyphs* glyphs = getGlyphsForFont(font);
   unsigned long pos = 0;
   int drawX = x;
   int drawY = y;
@@ -345,9 +345,9 @@ void InternalTextDrawer::printText(const std::string& text, int x, int y, const 
   //}
 //}
 
-void InternalTextDrawer::calcTextRectSize(int& w, int& h, const std::string& text, const Font& font)
+void InternalTextDrawer::calcTextRectSize(int& w, int& h, const std::string& text, const Font& font) const
 {
-  InternalGlyphs::Glyphs* glyphs = getGlyphsForFont(font);
+  const InternalGlyphs::Glyphs* glyphs = getGlyphsForFont(font);
   //w = glyphs->width * text.size();
   //h = glyphs->height;
   
@@ -371,14 +371,14 @@ void InternalTextDrawer::calcTextRectSize(int& w, int& h, const std::string& tex
 
 
 
-size_t InternalTextDrawer::calcTextPosToChar(int x, int y, const std::string& text, const Font& font, const TextAlign& align)
+size_t InternalTextDrawer::calcTextPosToChar(int x, int y, const std::string& text, const Font& font, const TextAlign& align) const
 {
   (void)x;(void)y;(void)font;(void)text;(void)align;
   //TODO!
   return 0;
 }
 
-void InternalTextDrawer::calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font, const TextAlign& align)
+void InternalTextDrawer::calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font, const TextAlign& align) const
 {
   (void)x;(void)y;(void)font;(void)text;(void)align;(void)index;
   //TODO!

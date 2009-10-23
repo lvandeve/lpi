@@ -56,6 +56,8 @@ namespace lpi
   
     public:
     
+    //TODO: make functions that calculate a size, const
+    
     
     /*
     drawText: the most basic text printing function.
@@ -71,7 +73,7 @@ namespace lpi
     There are no alignment parameters because it has no effect on the rectangle size, but note that
     alignment will affect the position of the rectangle.
     */
-    virtual void calcTextRectSize(int& w, int& h, const std::string& text, const Font& font = FONT_Default) = 0;
+    virtual void calcTextRectSize(int& w, int& h, const std::string& text, const Font& font = FONT_Default) const = 0;
     
     /*
     calcTextPosToChar: gives the index of the character in the string text, that will be drawn at
@@ -81,14 +83,14 @@ namespace lpi
     The index returned is a char in the string which will always be the first char of
     a glyph (if a glyph exists out of multiple char's, like can happen with UTF-8).
     */
-    virtual size_t calcTextPosToChar(int x, int y, const std::string& text, const Font& font = FONT_Default, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP)) = 0;
+    virtual size_t calcTextPosToChar(int x, int y, const std::string& text, const Font& font = FONT_Default, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP)) const = 0;
     
     /*
     calcTextCharToPos: this does the opposite of calcTextPosToChar. Given the index of the character in the text,
     it returns the relative position to the (x, y) of the drawTextFunction of that character's top left corner.
     x and y are output parameters.
     */
-    virtual void calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font = FONT_Default, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP)) = 0;
+    virtual void calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font = FONT_Default, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP)) const = 0;
     
     
     //templatized version for convenience. Different name than drawText because otherwise overriding drawText hides this function.

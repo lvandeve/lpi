@@ -25,7 +25,7 @@ namespace lpi
 namespace gui
 {
 
-FileList::FileList(const IGUIPartGeom& geom)
+FileList::FileList(const IGUIDrawer& geom)
 : ElementWrapper(&list)
 , list(geom)
 {
@@ -94,7 +94,7 @@ FileList::ItemType FileList::getType(size_t i)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-FileDialog::FileDialog(const IGUIPartGeom& geom, IFileBrowse* browser)
+FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser)
 : list(geom)
 , browser(browser)
 {

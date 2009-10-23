@@ -383,7 +383,7 @@ class Scrollbar : public ElementComposite
 {
   private:
     double oldTime; //in seconds
-    void init(const IGUIPartGeom& geom);
+    void init(const IGUIDrawer& geom);
     
     //buttons of the scrollbar
     Dummy buttonUp;
@@ -415,12 +415,12 @@ class Scrollbar : public ElementComposite
     Scrollbar();
     void makeVertical(int x, int y, int length,
                       double scrollSize,
-                      const IGUIPartGeom& geom,
+                      const IGUIDrawer& geom,
                       double scrollPos = 0, double offset = 0, double scrollSpeed = 1,
                       int speedMode = 1);
     void makeHorizontal(int x, int y, int length,
                         double scrollSize,
-                        const IGUIPartGeom& geom,
+                        const IGUIDrawer& geom,
                         double scrollPos = 0, double offset = 0, double scrollSpeed = 1,
                         int speedMode = 1);
     
@@ -443,7 +443,7 @@ class ScrollbarPair : public ElementComposite
 {
   public:
     ScrollbarPair();
-    void make(int x, int y, int sizex, int sizey, double scrollSizeH, double scrollSizeV, const IGUIPartGeom& geom);
+    void make(int x, int y, int sizex, int sizey, double scrollSizeH, double scrollSizeV, const IGUIDrawer& geom);
         
     Scrollbar vbar;
     Scrollbar hbar;
@@ -491,9 +491,9 @@ class Slider : public ElementComposite
     double scrollSize;
     double scrollPos;
 
-    void makeHorizontal(int x, int y, int length, double scrollSize, const IGUIPartGeom& geom);
-    void makeVertical(int x, int y, int length, double scrollSize, const IGUIPartGeom& geom);
-    void makeSmallHorizontal(int x, int y, int length, double scrollSize, const IGUIPartGeom& geom);
+    void makeHorizontal(int x, int y, int length, double scrollSize, const IGUIDrawer& geom);
+    void makeVertical(int x, int y, int length, double scrollSize, const IGUIDrawer& geom);
+    void makeSmallHorizontal(int x, int y, int length, double scrollSize, const IGUIDrawer& geom);
     
     double screenPosToScrollPos(int screenPos);
     int scrollPosToScreenPos(double scrollPos);
@@ -633,7 +633,7 @@ class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
     virtual void setElementOver(bool state);
     virtual const Element* hitTest(const IInput& input) const;
 
-    void make(int x, int y, int sizex, int sizey, Element* element, const IGUIPartGeom& geom);
+    void make(int x, int y, int sizex, int sizey, Element* element, const IGUIDrawer& geom);
     
     ////everything concerning the scrollability
     ScrollbarPair bars;
@@ -733,11 +733,11 @@ class Window : public ElementComposite
     void putInside(int i);
     
     //these scrollbars will be part of the container
-    void addScrollbars(const IGUIPartGeom& geom);
+    void addScrollbars(const IGUIDrawer& geom);
     void removeScrollbars();
     void updateScroll(); //call this after elements inside window changed size or position. It updates size of container to elements inside it, then updates scroll (updateBars()). I've had this work very well together with a zoomable and movable image inside a window with scrollbars!!
     
-    void addTop(const IGUIPartGeom& geom);
+    void addTop(const IGUIDrawer& geom);
     Dummy top; //todo make this private or protected (currently used by the unittest)
     
     ////optional part "title"
@@ -748,10 +748,10 @@ class Window : public ElementComposite
     
     ////optional part "close button"
     bool closed;
-    void addCloseButton(const IGUIPartGeom& geom); //ofsset from top *right* corner, choose style of close button by making it, it's the built in texture by default
+    void addCloseButton(const IGUIDrawer& geom); //ofsset from top *right* corner, choose style of close button by making it, it's the built in texture by default
     
     ////optional part "resizer" = draggable bottom right corner with diagonally striped image
-    void addResizer(const IGUIPartGeom& geom, bool overContainer = false);
+    void addResizer(const IGUIDrawer& geom, bool overContainer = false);
 
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void manageHoverImpl(IHoverManager& hover);

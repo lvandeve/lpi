@@ -161,6 +161,11 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   
   lpi::gui::MainContainer c(guidrawer);
   
+  lpi::gui::MenuHorizontal menu;
+  menu.addCommand("File", guidrawer);
+  menu.addCommand("Edit", guidrawer);
+  c.pushTop(&menu);
+  
   lpi::gui::Button tb;
   tb.makeText(20, 530, "Save Built In GUI To PNGs", guidrawer);
   c.pushTop(&tb);
@@ -369,8 +374,8 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     
     guidrawer.frameStart();
     
-    guidrawer.drawText("lpi GUI demo", 0, 0);
-    guidrawer.print(gametime.fps(), 0, 8);
+    guidrawer.drawText("lpi GUI demo", 0, 16);
+    guidrawer.print(gametime.fps(), 0, 24);
     
     guidrawer.drawEllipseCentered(600, 400, 100, 50, lpi::ColorRGB(128, 255, 128, 128), true);
     guidrawer.drawBezier(600,100, 700,100, 750,200, 550,150, lpi::RGB_Lightred);

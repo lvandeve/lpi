@@ -177,17 +177,17 @@ void AGUIDrawer::drawTextureSizedRepeated(const ITexture* texture, int x0, int y
   getDrawer().drawTextureSizedRepeated(texture, x0, y0, x1, y1, sizex, sizey, colorMod);
 }
 
-void AGUIDrawer::calcTextRectSize(int& w, int& h, const std::string& text, const Font& font)
+void AGUIDrawer::calcTextRectSize(int& w, int& h, const std::string& text, const Font& font) const
 {
   return getTextDrawer().calcTextRectSize(w, h, text, font);
 }
 
-size_t AGUIDrawer::calcTextPosToChar(int x, int y, const std::string& text, const Font& font, const TextAlign& align)
+size_t AGUIDrawer::calcTextPosToChar(int x, int y, const std::string& text, const Font& font, const TextAlign& align) const
 {
   return getTextDrawer().calcTextPosToChar(x, y, text, font, align);
 }
 
-void AGUIDrawer::calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font, const TextAlign& align)
+void AGUIDrawer::calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font, const TextAlign& align) const
 {
   getTextDrawer().calcTextCharToPos(x, y, index, text, font, align);
 }

@@ -1856,7 +1856,7 @@ void ColorHTML::handleImpl(const IInput& input)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-ColorDialogSmall::ColorDialogSmall(const IGUIPartGeom& geom)
+ColorDialogSmall::ColorDialogSmall(const IGUIDrawer& geom)
 {
   addTop(geom);
   addTitle("Color");
@@ -1898,7 +1898,7 @@ void ColorDialogSmall::setColor(const ColorRGBd& color)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-ColorDialog::ColorDialog(const IGUIPartGeom& geom)
+ColorDialog::ColorDialog(const IGUIDrawer& geom)
 {
   addTop(geom);
   addTitle("Color");

@@ -840,7 +840,7 @@ ScrollElement::ScrollElement()
 {
 }
 
-void ScrollElement::make(int x, int y, int sizex, int sizey, Element* element, const IGUIPartGeom& geom)
+void ScrollElement::make(int x, int y, int sizex, int sizey, Element* element, const IGUIDrawer& geom)
 {
   ic.getElements().clear();
   
@@ -1119,7 +1119,7 @@ int Window::getRelContentStart() const
   return result;
 }
 
-void Window::addCloseButton(const IGUIPartGeom& geom)
+void Window::addCloseButton(const IGUIDrawer& geom)
 {
   int closeX = x1 - geom.getGUIPartSizeX(GP_WINDOW_CLOSE); //TODO: give IGUIPartDrawer functions to get hte width and height of some GUI components like this one and use that here.
   int closeY = y0;
@@ -1131,7 +1131,7 @@ void Window::addCloseButton(const IGUIPartGeom& geom)
   ic.setSticky(&closeButton, Sticky(1.0, -closeButton.getSizeX(), 0.0, 0, 1.0, 0, 0.0, closeButton.getSizeY()), this);
 }
 
-void Window::addResizer(const IGUIPartGeom& geom, bool overContainer)
+void Window::addResizer(const IGUIDrawer& geom, bool overContainer)
 {
   int resizerX = x1 - geom.getGUIPartSizeX(GP_WINDOW_RESIZER);
   int resizerY = y1 - geom.getGUIPartSizeY(GP_WINDOW_RESIZER);
@@ -1150,7 +1150,7 @@ void Window::addResizer(const IGUIPartGeom& geom, bool overContainer)
 }
 
 
-void Window::addTop(const IGUIPartGeom& geom)
+void Window::addTop(const IGUIDrawer& geom)
 {
   top.resize(x0, y0, x1, y0 + geom.getGUIPartSizeY(GP_WINDOW_TOP));
   this->enableTop = 1;
@@ -1194,7 +1194,7 @@ bool Window::isFloating() const
 }
 
 //to let the scrollbars work properly, call this AFTER using setContainerBorders, addTop, addResizer and such of the window
-void Window::addScrollbars(const IGUIPartGeom& geom)
+void Window::addScrollbars(const IGUIDrawer& geom)
 {
   if(scroll.element) return;
   
@@ -1647,7 +1647,7 @@ int Scrollbar::getSliderEnd() const
   }
 }
 
-void Scrollbar::init(const IGUIPartGeom& geom)
+void Scrollbar::init(const IGUIDrawer& geom)
 {
   if(scrollSize == 0) scrollSize = 1;
 
@@ -1713,7 +1713,7 @@ void Scrollbar::forwardScroll(int scroll)
 }
 
 void Scrollbar::makeVertical(int x, int y, int length,
-                double scrollSize, const IGUIPartGeom& geom,
+                double scrollSize, const IGUIDrawer& geom,
                 double scrollPos, double offset, double scrollSpeed,
                 int speedMode)
 {
@@ -1738,7 +1738,7 @@ void Scrollbar::makeVertical(int x, int y, int length,
 }
 
 void Scrollbar::makeHorizontal(int x, int y, int length,
-                  double scrollSize, const IGUIPartGeom& geom,
+                  double scrollSize, const IGUIDrawer& geom,
                   double scrollPos, double offset, double scrollSpeed,
                   int speedMode)
 {
@@ -1889,7 +1889,7 @@ int ScrollbarPair::getVisibley() const
   else return y1 - y0;
 }
 
-void ScrollbarPair::make(int x, int y, int sizex, int sizey, double scrollSizeH, double scrollSizeV, const IGUIPartGeom& geom)
+void ScrollbarPair::make(int x, int y, int sizex, int sizey, double scrollSizeH, double scrollSizeV, const IGUIDrawer& geom)
 {
   this->setEnabled(true);
   this->x0 = x;
@@ -1991,7 +1991,7 @@ Slider::Slider()
   addSubElement(&slider);
 }
 
-void Slider::makeSmallHorizontal(int x, int y, int length, double scrollSize, const IGUIPartGeom& geom)
+void Slider::makeSmallHorizontal(int x, int y, int length, double scrollSize, const IGUIDrawer& geom)
 {
   this->setEnabled(true);
   
@@ -2016,7 +2016,7 @@ void Slider::makeSmallHorizontal(int x, int y, int length, double scrollSize, co
   this->setSizeY(sliderh);
 }
 
-void Slider::makeHorizontal(int x, int y, int length, double scrollSize, const IGUIPartGeom& geom)
+void Slider::makeHorizontal(int x, int y, int length, double scrollSize, const IGUIDrawer& geom)
 {
   this->setEnabled(true);
   
@@ -2041,7 +2041,7 @@ void Slider::makeHorizontal(int x, int y, int length, double scrollSize, const I
   this->setSizeY(sliderh);
 }
 
-void Slider::makeVertical(int x, int y, int length, double scrollSize, const IGUIPartGeom& geom)
+void Slider::makeVertical(int x, int y, int length, double scrollSize, const IGUIDrawer& geom)
 {
   this->setEnabled(true);
   

@@ -102,16 +102,16 @@ class InternalTextDrawer : public ITextDrawer //uses InternalGlyphs
   
   void drawLetter(unsigned char n, int x, int y, const InternalGlyphs::Glyphs* glyphs, const Font& font);
   
-  InternalGlyphs::Glyphs* getGlyphsForFont(const Font& font);
+  const InternalGlyphs::Glyphs* getGlyphsForFont(const Font& font) const;
   
   public: //todo: make more things private and remove many old things
   
   InternalTextDrawer(const ITextureFactory& factory, IDrawer2D* drawer);
   
   virtual void drawText(const std::string& text, int x, int y, const Font& font = FONT_Default, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP));
-  virtual void calcTextRectSize(int& w, int& h, const std::string& text, const Font& font);
-  virtual size_t calcTextPosToChar(int x, int y, const std::string& text, const Font& font, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP));
-  virtual void calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP));
+  virtual void calcTextRectSize(int& w, int& h, const std::string& text, const Font& font) const;
+  virtual size_t calcTextPosToChar(int x, int y, const std::string& text, const Font& font, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP)) const;
+  virtual void calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP)) const;
   
   private:
   

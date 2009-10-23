@@ -36,7 +36,7 @@ void DynamicColor::ctor()
   edit.setEnabled(false);
 }
 
-DynamicColor::DynamicColor(ColorRGB* value, const IGUIPartGeom& geom)
+DynamicColor::DynamicColor(ColorRGB* value, const IGUIDrawer& geom)
 : box(value)
 , edit(geom)
 {
@@ -99,7 +99,7 @@ void DynamicFile::ctor()
   this->addSubElement(&line, Sticky(0.0,0, 0.5,-line.getSizeY() / 2, 1.0,0, 0.5,line.getSizeY() / 2));
 }
 
-DynamicFile::DynamicFile(std::string* value, const IGUIPartGeom& geom, IFileBrowse* browser)
+DynamicFile::DynamicFile(std::string* value, const IGUIDrawer& geom, IFileBrowse* browser)
 : edit(geom, browser)
 {
   this->bind = value;
