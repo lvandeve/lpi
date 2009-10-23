@@ -143,6 +143,7 @@ struct GuiSet //GuiSet is a bit of a LEGACY lpi concept. Currently it's just use
   const ITexture* resizer; //the resizer at bottom right of a window
   const ITexture* crossHair; //for example to indicate a 2D location on a map, color picker, ...
   const ITexture* fgBgColorArrows;
+  const ITexture* subMenuIndicator;
   const ITexture* tabUnSelected[9];
   const ITexture* tabSelected[9];
   const ITexture* borderPanelTextures[9];

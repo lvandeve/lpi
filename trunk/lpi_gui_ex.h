@@ -542,6 +542,7 @@ class AMenu : public Element
     virtual void onAddItem(const IGUIDrawer& geom) = 0;
     virtual void onClear() = 0;
     virtual void manageHoverImpl(IHoverManager& hover);
+    virtual void onOpenSubMenu(const IInput& input, size_t index) = 0;
     
   public:
     AMenu();
@@ -562,12 +563,14 @@ class MenuHorizontal : public AMenu
   protected:
   
     std::vector<int> sizes;
+    std::vector<int> positions;
   
   protected:
   
     virtual size_t getMouseIndex(const IInput& input) const;
     virtual void onAddItem(const IGUIDrawer& geom);
     virtual void onClear();
+    virtual void onOpenSubMenu(const IInput& input, size_t index);
 
     virtual void drawImpl(IGUIDrawer& drawer) const;
     
@@ -581,12 +584,14 @@ class MenuVertical : public AMenu
   protected:
   
     std::vector<int> sizes;
+    std::vector<int> positions;
   
   protected:
   
     virtual size_t getMouseIndex(const IInput& input) const;
     virtual void onAddItem(const IGUIDrawer& geom);
     virtual void onClear();
+    virtual void onOpenSubMenu(const IInput& input, size_t index);
   
     virtual void drawImpl(IGUIDrawer& drawer) const;
     

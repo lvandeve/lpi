@@ -147,6 +147,7 @@ enum GUIPart
   GP_HMENU_SEPARATOR, //separator of a horizontal menu (the separator itself is a vertical line)
   GP_VMENU_PANEL, //the panel behind the complete menu
   GP_VMENU_SEPARATOR, //separator of a vertical menu (the separator itself is a horizontal line)
+  GP_VMENU_SUBMENUINDICATOR, //the arrow
 
   ///Colored Parts //todo: just give everything a color parameter instead
   GPC_WINDOW_PANEL, //colored windows
