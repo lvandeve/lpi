@@ -73,7 +73,6 @@ void FileBrowseBoost::getFiles(std::vector<std::string>& files, const std::strin
   catch(...)
   {
     files.push_back("Error. No permission?");
-    files.push_back("Note: this are not files.");
   }
 }
 
@@ -101,8 +100,6 @@ void FileBrowseBoost::getDirectories(std::vector<std::string>& dirs, const std::
   }
   catch(...)
   {
-    dirs.push_back("Error. No permission?");
-    dirs.push_back("Note: this are not directories.");
     dirs.push_back("..");
   }
 }
@@ -130,10 +127,7 @@ bool FileBrowseBoost::isDirectory(const std::string& filename) const
 void FileBrowseBoost::getFiles(std::vector<std::string>& files, const std::string& directory) const
 {
   (void)directory;
-  files.push_back("boost::filesystem");
-  files.push_back("not supported.");
-  files.push_back("This are not files.");
-  files.push_back("Sorry...");
+  files.push_back("Error: boost::filesystem not supported.");
 }
 
 void FileBrowseBoost::getDirectories(std::vector<std::string>& dirs, const std::string& directory) const

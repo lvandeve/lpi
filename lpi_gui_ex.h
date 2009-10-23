@@ -41,7 +41,6 @@ namespace gui
 class InternalList : public Element
 {
   /*
-  TODO: ability to set an icon (ITexture) for every separate item
   TODO: ability to set a custom font for every separate item
   */
   
@@ -85,10 +84,6 @@ class InternalList : public Element
 
 class List : public ScrollElement
 {
-  /*
-  TODO: forward scrollwheel on the internallist, to the scrollbar
-  */
-  
   private:
     InternalList list;
     
@@ -99,7 +94,7 @@ class List : public ScrollElement
     
   public:
     
-    List(const IGUIPartGeom& geom);
+    List(const IGUIDrawer& geom);
     
     //wrapped from InternalList
     size_t getNumItems() const;
@@ -503,6 +498,97 @@ class NState : public Element, public Label
     void addState(ITexture* texture, const ColorRGB& colorMod = RGB_White, const std::string& text = "", const Font& font = FONT_Default);
     virtual void drawImpl(IGUIDrawer& drawer) const; //also handles it by calling handle(): toggles when mouse down or not
     virtual void handleImpl(const IInput& input);
+};
+
+/*
+Menu which can contain commands, submenu's and/or separators.
+It does not keep any data or anything with commands, the user of this menu
+is responsible for bookkeeping what items he hadded at which index.
+Note: submenu's and separators get an index too. Everything you add has a
+successive index. If you add command A, separator, command B, submenu, command C,
+then A has index 0, B index 2 and C index 4.
+To recreate the menu to change it, use clear and build everything again.
+*/
+class AMenu : public Element
+{
+  /*
+  TODO: Icons in menus
+  TODO: checkboxes in menu (maybe with the icons)
+  */
+  protected:
+    
+    enum Type
+    {
+      COMMAND,
+      SUBMENU,
+      SEPARATOR
+    };
+    
+    struct Item
+    {
+      Type type;
+      std::string name;
+      AMenu* submenu;
+    };
+  
+  protected:
+    std::vector<Item> items;
+    mutable size_t lastItem; //last item clicked on, if any
+    bool stay; //if true, menu stays no matter where you click, if false the menu disappears again if you choose command or click outside of it (typically true for horizontal, false for vertical)
+    
+  protected:
+  
+    virtual size_t getMouseIndex(const IInput& input) const = 0; //index of item over which the mouse is (depends on implementation, horizontal or vertical menu...)
+    virtual void onAddItem(const IGUIDrawer& geom) = 0;
+    virtual void onClear() = 0;
+    virtual void manageHoverImpl(IHoverManager& hover);
+    
+  public:
+    AMenu();
+    
+    void addCommand(const std::string& name, const IGUIDrawer& geom);
+    void addSubMenu(AMenu* submenu, const std::string& name, const IGUIDrawer& geom);
+    void addSeparator(const IGUIDrawer& geom);
+    void clear();
+    
+    size_t getNumItems() const;
+    bool itemClicked(size_t i, const IInput& input) const;
+    
+    virtual void handleImpl(const IInput& input);
+};
+
+class MenuHorizontal : public AMenu
+{
+  protected:
+  
+    std::vector<int> sizes;
+  
+  protected:
+  
+    virtual size_t getMouseIndex(const IInput& input) const;
+    virtual void onAddItem(const IGUIDrawer& geom);
+    virtual void onClear();
+
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    
+  public:
+
+    MenuHorizontal();
+};
+
+class MenuVertical : public AMenu
+{
+  protected:
+  
+    std::vector<int> sizes;
+  
+  protected:
+  
+    virtual size_t getMouseIndex(const IInput& input) const;
+    virtual void onAddItem(const IGUIDrawer& geom);
+    virtual void onClear();
+  
+    virtual void drawImpl(IGUIDrawer& drawer) const;
 };
 
 } //namespace gui

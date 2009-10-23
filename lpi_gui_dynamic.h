@@ -143,7 +143,7 @@ class DynamicSlider : public TDymamicPageControl<T>
     T valmax;
     T valmin;
     
-    void ctor(T valmin, T valmax, const IGUIPartGeom& geom)
+    void ctor(T valmin, T valmax, const IGUIDrawer& geom)
     {
       this->valmin = valmin;
       this->valmax = valmax;
@@ -175,12 +175,12 @@ class DynamicSlider : public TDymamicPageControl<T>
   
   public:
   
-    DynamicSlider(const IGUIPartGeom& geom)
+    DynamicSlider(const IGUIDrawer& geom)
     {
       ctor(0.0, 1.0, geom);
     }
     
-    DynamicSlider(T* value, T valmin, T valmax, const IGUIPartGeom& geom)
+    DynamicSlider(T* value, T valmin, T valmax, const IGUIDrawer& geom)
     {
       TDymamicPageControl<T>::bind = value;
       ctor(valmin, valmax, geom);
@@ -276,7 +276,7 @@ class DynamicColor : public TDymamicPageControl<ColorRGB>
     
   public:
   
-    DynamicColor(ColorRGB* value, const IGUIPartGeom& geom);
+    DynamicColor(ColorRGB* value, const IGUIDrawer& geom);
     virtual void getValue(ColorRGB* value);
     virtual void setValue(ColorRGB* value);
     virtual void handleImpl(const IInput& input);
@@ -295,7 +295,7 @@ class DynamicFile : public TDymamicPageControl<std::string>
 
   public:
 
-    DynamicFile(std::string* value, const IGUIPartGeom& geom, IFileBrowse* browser);
+    DynamicFile(std::string* value, const IGUIDrawer& geom, IFileBrowse* browser);
     virtual void getValue(std::string* value);
     virtual void setValue(std::string* value);
     virtual void handleImpl(const IInput& input);

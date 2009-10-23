@@ -180,23 +180,8 @@ struct GUIPartMod
 
 extern const GUIPartMod GPM_Default;
 
-class IGUIPartGeom //returns geometrical info about how the drawer will draw these GUI parts, sometimes needed to build up elements.
-{
-  public:
-    /*
-    Getting the size of GUI parts only returns a usable result for non-variable parts.
-    For example, the size of a window panel is variable, so don't use that here.
-    But, the size of the button of a slider is fixed, and which it is for this drawer,
-    can be returned here.
-    Sometimes only X or only Y makes sense, e.g. the scrollbar backgrounf of a horizontal
-    scroller has a fixed Y size but a variable X size.
-    */
-    virtual size_t getGUIPartSizeX(GUIPart part) const = 0;
-    virtual size_t getGUIPartSizeY(GUIPart part) const = 0;
-};
 
-
-class IGUIPartDrawer : public IGUIPartGeom
+class IGUIPartDrawer
 {
   public:
     /*
@@ -210,6 +195,17 @@ class IGUIPartDrawer : public IGUIPartGeom
     virtual void drawGUIPart(GUIPart part, int x0, int y0, int x1, int y1, const GUIPartMod& mod = GPM_Default) = 0;
     virtual void drawGUIPartColor(GUIPart part, const ColorRGB& color, int x0, int y0, int x1, int y1, const GUIPartMod& mod = GPM_Default) = 0;
     virtual void drawGUIPartText(GUIPart part, const std::string& text, int x0, int y0, int x1, int y1, const GUIPartMod& mod = GPM_Default) = 0;
+    
+    /*
+    Getting the size of GUI parts only returns a usable result for non-variable parts.
+    For example, the size of a window panel is variable, so don't use that here.
+    But, the size of the button of a slider is fixed, and which it is for this drawer,
+    can be returned here.
+    Sometimes only X or only Y makes sense, e.g. the scrollbar backgrounf of a horizontal
+    scroller has a fixed Y size but a variable X size.
+    */
+    virtual size_t getGUIPartSizeX(GUIPart part) const = 0;
+    virtual size_t getGUIPartSizeY(GUIPart part) const = 0;
 };
 
 /*
@@ -275,9 +271,9 @@ class AGUIDrawer : public IGUIDrawer //abstract GUI drawer which already wraps a
     virtual void pushSmallestScissor(int x0, int y0, int x1, int y1);
     virtual void popScissor();
     
-    virtual void calcTextRectSize(int& w, int& h, const std::string& text, const Font& font = FONT_Default);
-    virtual size_t calcTextPosToChar(int x, int y, const std::string& text, const Font& font = FONT_Default, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP));
-    virtual void calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font = FONT_Default, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP));
+    virtual void calcTextRectSize(int& w, int& h, const std::string& text, const Font& font = FONT_Default) const;
+    virtual size_t calcTextPosToChar(int x, int y, const std::string& text, const Font& font = FONT_Default, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP)) const;
+    virtual void calcTextCharToPos(int& x, int& y, size_t index, const std::string& text, const Font& font = FONT_Default, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP)) const;
     virtual void drawText(const std::string& text, int x, int y, const Font& font = FONT_Default, const TextAlign& align = TextAlign(HA_LEFT, VA_TOP));
 
     //not all GUI parts use all input parameters! only x0 and y0 are always used.

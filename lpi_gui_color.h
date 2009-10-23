@@ -893,7 +893,7 @@ class ColorDialogSmall : public AColorDialog
     Button ok;
 
   public:
-    ColorDialogSmall(const IGUIPartGeom& geom);
+    ColorDialogSmall(const IGUIDrawer& geom);
     virtual void handleImpl(const IInput& input);
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual bool pressedOk(const IInput& input);
@@ -932,7 +932,7 @@ class ColorDialog : public AColorDialog
     ColorSlidersCIEXYZ ciexyz2;
     
   public:
-    ColorDialog(const IGUIPartGeom& geom);
+    ColorDialog(const IGUIDrawer& geom);
     virtual void handleImpl(const IInput& input);
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual bool pressedOk(const IInput& input);

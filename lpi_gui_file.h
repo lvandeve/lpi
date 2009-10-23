@@ -51,7 +51,7 @@ class FileList : public ElementWrapper
     void generateIcons();
 
   public:
-    FileList(const IGUIPartGeom& geom);
+    FileList(const IGUIDrawer& geom);
     
     void generateListForDir(const std::string& dir, const IFileBrowse& filebrowser);
     
@@ -90,7 +90,7 @@ class FileDialog : public Window
     
   public:
 
-    FileDialog(const IGUIPartGeom& geom, IFileBrowse* browser);
+    FileDialog(const IGUIDrawer& geom, IFileBrowse* browser);
 
     bool pressedOk(const IInput& input) { return ok.clicked(input); }
     bool pressedCancel(const IInput& input) { return cancel.clicked(input); }

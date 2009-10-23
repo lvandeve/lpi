@@ -198,7 +198,7 @@ size_t InternalList::getItemHeight() const
 
 ////////////////////////////////////////////////////////////////////////////////
 
-List::List(const IGUIPartGeom& geom)
+List::List(const IGUIDrawer& geom)
 {
   make(0, 0, 64, 64, &list, geom);
 }
@@ -1299,6 +1299,146 @@ void NState::drawImpl(IGUIDrawer& drawer) const
   if(s.enableText) drawer.drawText(s.text, x0 + s.textOffsetX, y0 + s.textOffsetY, s.font);
   
   drawLabel(drawer, this);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+AMenu::AMenu()
+: lastItem(-1)
+, stay(false)
+{
+  setEnabled(true);
+}
+
+void AMenu::addCommand(const std::string& name, const IGUIDrawer& geom)
+{
+  items.resize(items.size() + 1);
+  items.back().type = COMMAND;
+  items.back().name = name;
+  items.back().submenu = 0;
+  onAddItem(geom);
+}
+
+void AMenu::addSubMenu(AMenu* submenu, const std::string& name, const IGUIDrawer& geom)
+{
+  items.resize(items.size() + 1);
+  items.back().type = SUBMENU;
+  items.back().name = name;
+  items.back().submenu = submenu;
+  onAddItem(geom);
+}
+
+void AMenu::addSeparator(const IGUIDrawer& geom)
+{
+  items.resize(items.size() + 1);
+  items.back().type = SEPARATOR;
+  items.back().submenu = 0;
+  onAddItem(geom);
+}
+
+void AMenu::clear()
+{
+  onClear();
+  items.clear();
+}
+
+size_t AMenu::getNumItems() const
+{
+  return items.size();
+}
+
+bool AMenu::itemClicked(size_t i, const IInput& input) const
+{
+  (void)input;
+  
+  if(lastItem == i)
+  {
+    lastItem = -1;
+    return true;
+  }
+  return false;
+}
+
+void AMenu::handleImpl(const IInput& input)
+{
+  if(clicked(input))
+  {
+    lastItem = getMouseIndex(input);
+  }
+  
+  if(!stay && mouseJustDownElsewhere(input))
+  {
+    setEnabled(false);
+  }
+}
+
+void AMenu::manageHoverImpl(IHoverManager& hover)
+{
+  for(size_t i = 0; i < items.size(); i++)
+  {
+    if(items[i].type == SUBMENU && items[i].submenu->isEnabled())
+    {
+      hover.addHoverElement(items[i].submenu);
+    }
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+MenuHorizontal::MenuHorizontal()
+{
+  stay = true;
+}
+
+size_t MenuHorizontal::getMouseIndex(const IInput& input) const
+{
+  if(!mouseOver(input)) return -1;
+  
+  int mousePos = mouseGetRelPosX(input);
+  
+  int totalSize = 0;
+  
+  for(size_t i = 0; i < sizes.size(); i++)
+  {
+    totalSize += sizes[i];
+    if(mousePos < totalSize) return i;
+  }
+  
+  return -1;
+}
+
+void MenuHorizontal::onAddItem(const IGUIDrawer& geom)
+{
+  Item& item = items.back();
+  int size = 0;
+  
+  if(item.type == COMMAND || item.type == SUBMENU)
+  {
+    int w, h;
+    geom.calcTextRectSize(w, h, item.name);
+    size = w;
+  }
+  else size = 8;
+  
+  sizes.push_back(size);
+  
+  resize(x0, y0, x1 + size, y0 + 16);
+}
+
+void MenuHorizontal::onClear()
+{
+  sizes.clear();
+}
+
+void MenuHorizontal::drawImpl(IGUIDrawer& drawer) const
+{
+  int totalSize = 0;
+  
+  for(size_t i = 0; i < items.size(); i++)
+  {
+    drawer.drawText(items[i].name, x0 + totalSize, y0);
+    totalSize += sizes[i];
+  }
 }
 
 } //namespace gui
