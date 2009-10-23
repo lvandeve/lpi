@@ -121,7 +121,6 @@ void DynamicFile::handleImpl(const IInput& input)
   line.handle(input);
   
   if(pick.clicked(input)) edit.setEnabled(true);
-  else if(edit.isEnabled() && edit.mouseJustDownElsewhere(input)) edit.setEnabled(false);
   else if(edit.pressedOk(input))
   {
     edit.setEnabled(false);

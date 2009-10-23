@@ -161,9 +161,17 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   
   lpi::gui::MainContainer c(guidrawer);
   
+  lpi::gui::MenuVertical submenu1;
+  submenu1.addCommand("Open...", guidrawer);
+  submenu1.addCommand("Save...", guidrawer);
+  submenu1.addSeparator(guidrawer);
+  submenu1.addCommand("Exit", guidrawer);
+  
   lpi::gui::MenuHorizontal menu;
-  menu.addCommand("File", guidrawer);
+  menu.addSubMenu(&submenu1, "File", guidrawer);
   menu.addCommand("Edit", guidrawer);
+  menu.addSeparator(guidrawer);
+  menu.addCommand("Help", guidrawer);
   c.pushTop(&menu);
   
   lpi::gui::Button tb;

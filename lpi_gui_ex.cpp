@@ -1304,10 +1304,9 @@ void NState::drawImpl(IGUIDrawer& drawer) const
 ////////////////////////////////////////////////////////////////////////////////
 
 AMenu::AMenu()
-: lastItem(-1)
+: lastItem((size_t)(-1))
 , stay(false)
 {
-  setEnabled(true);
 }
 
 void AMenu::addCommand(const std::string& name, const IGUIDrawer& geom)
@@ -1353,7 +1352,7 @@ bool AMenu::itemClicked(size_t i, const IInput& input) const
   
   if(lastItem == i)
   {
-    lastItem = -1;
+    lastItem = (size_t)(-1);
     return true;
   }
   return false;
@@ -1364,6 +1363,15 @@ void AMenu::handleImpl(const IInput& input)
   if(clicked(input))
   {
     lastItem = getMouseIndex(input);
+    if(lastItem < items.size())
+    {
+      Item& item = items[lastItem];
+      if(item.type == SUBMENU)
+      {
+        item.submenu->setEnabled(true);
+        item.submenu->moveTo(input.mouseX(), input.mouseY());
+      }
+    }
   }
   
   if(!stay && mouseJustDownElsewhere(input))
@@ -1388,11 +1396,13 @@ void AMenu::manageHoverImpl(IHoverManager& hover)
 MenuHorizontal::MenuHorizontal()
 {
   stay = true;
+  clear();
+  setEnabled(true);
 }
 
 size_t MenuHorizontal::getMouseIndex(const IInput& input) const
 {
-  if(!mouseOver(input)) return -1;
+  if(!mouseOver(input)) return (size_t)(-1);
   
   int mousePos = mouseGetRelPosX(input);
   
@@ -1404,7 +1414,7 @@ size_t MenuHorizontal::getMouseIndex(const IInput& input) const
     if(mousePos < totalSize) return i;
   }
   
-  return -1;
+  return (size_t)(-1);
 }
 
 void MenuHorizontal::onAddItem(const IGUIDrawer& geom)
@@ -1416,30 +1426,113 @@ void MenuHorizontal::onAddItem(const IGUIDrawer& geom)
   {
     int w, h;
     geom.calcTextRectSize(w, h, item.name);
-    size = w;
+    size = w + 8;
   }
   else size = 8;
   
   sizes.push_back(size);
   
-  resize(x0, y0, x1 + size, y0 + 16);
+  resize(x0, y0, x1 + size, y1);
 }
 
 void MenuHorizontal::onClear()
 {
   sizes.clear();
+  resize(0, 0, 1, 16);
 }
 
 void MenuHorizontal::drawImpl(IGUIDrawer& drawer) const
 {
   int totalSize = 0;
   
+  drawer.drawGUIPart(GP_HMENU_PANEL, x0, y0, x1, y1);
+  
   for(size_t i = 0; i < items.size(); i++)
   {
-    drawer.drawText(items[i].name, x0 + totalSize, y0);
+    if(items[i].type == COMMAND || items[i].type == SUBMENU)
+    {
+      drawer.drawGUIPartText(GPT_HMENU_TEXT, items[i].name, x0 + totalSize, y0, x0 + totalSize + sizes[i], y1);
+    }
+    else if(items[i].type == SEPARATOR)
+    {
+      drawer.drawGUIPart(GP_HMENU_SEPARATOR, x0 + totalSize, y0, x0 + totalSize + sizes[i], y1);
+    }
     totalSize += sizes[i];
   }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+MenuVertical::MenuVertical()
+{
+  stay = false;
+  clear();
+  setEnabled(false);
+}
+
+size_t MenuVertical::getMouseIndex(const IInput& input) const
+{
+  if(!mouseOver(input)) return (size_t)(-1);
+
+  int mousePos = mouseGetRelPosY(input);
+
+  int totalSize = 0;
+
+  for(size_t i = 0; i < sizes.size(); i++)
+  {
+    totalSize += sizes[i];
+    if(mousePos < totalSize) return i;
+  }
+
+  return (size_t)(-1);
+}
+
+void MenuVertical::onAddItem(const IGUIDrawer& geom)
+{
+  Item& item = items.back();
+  int size = 0;
+
+  if(item.type == COMMAND || item.type == SUBMENU)
+  {
+    int w, h;
+    geom.calcTextRectSize(w, h, item.name);
+    size = 16;
+    w += 8;
+    if(getSizeX() < w) resize(x0, y0, x0 + w, y1);
+  }
+  else size = 8;
+
+  sizes.push_back(size);
+
+  resize(x0, y0, x1, y1 + size);
+}
+
+void MenuVertical::onClear()
+{
+  sizes.clear();
+  resize(0, 0, 128, 1);
+}
+
+void MenuVertical::drawImpl(IGUIDrawer& drawer) const
+{
+  int totalSize = 0;
+
+  drawer.drawGUIPart(GP_VMENU_PANEL, x0, y0, x1, y1);
+
+  for(size_t i = 0; i < items.size(); i++)
+  {
+    if(items[i].type == COMMAND || items[i].type == SUBMENU)
+    {
+      drawer.drawGUIPartText(GPT_VMENU_TEXT, items[i].name, x0, y0 + totalSize, x1, y0 + totalSize + sizes[i]);
+    }
+    else if(items[i].type == SEPARATOR)
+    {
+      drawer.drawGUIPart(GP_VMENU_SEPARATOR, x0, y0 + totalSize, x1, y0 + totalSize + sizes[i]);
+    }
+    totalSize += sizes[i];
+  }
+}
+
 
 } //namespace gui
 } //namespace lpi

@@ -83,7 +83,7 @@ GUIPart: what part of the GUI is being drawn (e.g. a button of a scrollbar, ...)
 Parameters that affect how the part is drawn:
 -inactive? ==> greyed out
 -size (in x and y direction) --> some things have size determined by the Drawer, other things are determined by the element itself
--color: only for some things, e.g. the white button, not for most other things
+-color: only for some things
 */
 enum GUIPart
 {
@@ -133,7 +133,6 @@ enum GUIPart
   //image buttons with same size as scrollbar buttons
   GP_EMPTY_BUTTON,
   GP_EMPTY_BUTTON_ROUND,
-  GP_WHITE_PANEL,
   //other panels
   GP_PANEL_BORDER, //only border, the center is invisible
   //rulers / lines (to divide areas)
@@ -143,18 +142,15 @@ enum GUIPart
   GP_FG_BG_COLOR_ARROWS, //those arrows to swap colors at a FG-BG color selector
   //tooltip background
   GP_TOOLTIP_BACKGROUND, //background of tooltip, as big as you want. No need to use this if you use GPT_TOOLTIP
+  //menu's
+  GP_HMENU_PANEL, //the panel behind the complete menu
+  GP_HMENU_SEPARATOR, //separator of a horizontal menu (the separator itself is a vertical line)
+  GP_VMENU_PANEL, //the panel behind the complete menu
+  GP_VMENU_SEPARATOR, //separator of a vertical menu (the separator itself is a horizontal line)
 
-  ///Colored Parts
+  ///Colored Parts //todo: just give everything a color parameter instead
   GPC_WINDOW_PANEL, //colored windows
-  GPC_WHITE_PANEL, //panel which can be given any color
-  GPC_WHITE_BUTTON, //button with same size as scrollbar buttons
-  GPC_WHITE_BUTTON_PANEL,
-  GPC_WHITE_BUTTON_PANEL_UP,
-  GPC_WHITE_BUTTON_PANEL_DOWN, //not used for graphic of button down if mouse is down, but if you want one down without having mouse down over it
-  GPC_WHITE_BUTTON_ROUND, //button with same size as scrollbar buttons
-  
-  
-  
+
   ///Text Parts
   
   
@@ -162,6 +158,8 @@ enum GUIPart
   GPT_PANEL_BUTTON_TEXT,
   GPT_WINDOW_TITLE,
   GPT_TOOLTIP, //both the background and the text of the tooltip, fit to the text size
+  GPT_HMENU_TEXT, //the text as well as panel behind the text if any
+  GPT_VMENU_TEXT,
   
   
   GP_END_DONT_USE //don't use this, it's placed here to have an element without comma at the end of the enumarator list.
