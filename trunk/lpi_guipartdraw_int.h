@@ -115,9 +115,6 @@ class BackRule
   void makeVertical1(const ITexture* t0);
 };
 
-#define DEFAULTHRULE BackRule(1)
-#define DEFAULTVRULE BackRule(2)
-
 struct GuiSet //GuiSet is a bit of a LEGACY lpi concept. Currently it's just used as the container of the internal built in GUI textures.
 {
   const ITexture* windowTextures[9];
@@ -144,17 +141,11 @@ struct GuiSet //GuiSet is a bit of a LEGACY lpi concept. Currently it's just use
   const ITexture* windowTop[3];
   const ITexture* closeButton; //from a window
   const ITexture* resizer; //the resizer at bottom right of a window
-  const ITexture* whiteButton; //can easily be given any color with color mods
-  const ITexture* whiteRoundButton;
   const ITexture* crossHair; //for example to indicate a 2D location on a map, color picker, ...
   const ITexture* fgBgColorArrows;
   const ITexture* tabUnSelected[9];
   const ITexture* tabSelected[9];
   const ITexture* borderPanelTextures[9];
-  const ITexture* whitePanelTextures[9];
-  const ITexture* whiteButtonTextures[9];
-  const ITexture* whiteButtonOverTextures[9];
-  const ITexture* whiteButtonDownTextures[9];
   const ITexture* invisibleButtonTextures[9];
   const ITexture* invisibleButtonOverTextures[9];
   const ITexture* invisibleButtonDownTextures[9];
@@ -166,19 +157,19 @@ struct GuiSet //GuiSet is a bit of a LEGACY lpi concept. Currently it's just use
   const BackPanel* tabUnSelectedPanel;
   const BackPanel* tabSelectedPanel;
   const BackPanel* borderPanel;
-  const BackPanel* whitePanel;
-  const BackPanel* whiteButtonPanel;
-  const BackPanel* whiteButtonOverPanel;
-  const BackPanel* whiteButtonDownPanel;
   const BackPanel* invisibleButtonPanel;
   const BackPanel* invisibleButtonOverPanel;
   const BackPanel* invisibleButtonDownPanel;
+  const BackPanel* horMenuPanel;
+  const BackPanel* verMenuPanel;
 
   const BackRule* sliderHRule;
   const BackRule* sliderVRule;
   const BackRule* smallSliderHRule;
   const BackRule* windowTopRule;
-  
+  const BackRule* horMenuSeparator; //the separator itself is vertical
+  const BackRule* verMenuSeparator; //the separator itself is horizontal
+
   ColorRGB mainColor; //if the mouse is not over or down a button
   ColorRGB mouseOverColor; //this isn't for panel buttons, but for image buttons like the arrows of a scrollbar, ...
   ColorRGB mouseDownColor; //this isn't for panel buttons, but for image buttons like the arrows of a scrollbar, ...

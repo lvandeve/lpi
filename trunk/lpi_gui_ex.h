@@ -589,6 +589,10 @@ class MenuVertical : public AMenu
     virtual void onClear();
   
     virtual void drawImpl(IGUIDrawer& drawer) const;
+    
+  public:
+
+    MenuVertical();
 };
 
 } //namespace gui
