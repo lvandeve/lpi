@@ -1369,14 +1369,20 @@ void AMenu::handleImpl(const IInput& input)
       if(item.type == SUBMENU)
       {
         item.submenu->setEnabled(true);
-        item.submenu->moveTo(input.mouseX(), input.mouseY());
+        //item.submenu->moveTo(input.mouseX(), input.mouseY());
+        onOpenSubMenu(input, lastItem);
       }
     }
   }
   
   if(!stay && mouseJustDownElsewhere(input))
   {
-    setEnabled(false);
+    bool activeChildren = false;
+    for(size_t i = 0; i < items.size(); i++)
+    {
+      if(items[i].type == SUBMENU && items[i].submenu->isEnabled()) activeChildren = true;
+    }
+    if(!activeChildren) setEnabled(false);
   }
 }
 
@@ -1431,13 +1437,21 @@ void MenuHorizontal::onAddItem(const IGUIDrawer& geom)
   else size = 8;
   
   sizes.push_back(size);
+  positions.push_back(positions.empty() ? 0 : (positions.back() + sizes[sizes.size() - 2]));
   
   resize(x0, y0, x1 + size, y1);
+}
+
+void MenuHorizontal::onOpenSubMenu(const IInput& input, size_t index)
+{
+  Item& item = items[index];
+  item.submenu->moveTo(x0 + positions[index], y1);
 }
 
 void MenuHorizontal::onClear()
 {
   sizes.clear();
+  positions.clear();
   resize(0, 0, 1, 16);
 }
 
@@ -1503,13 +1517,21 @@ void MenuVertical::onAddItem(const IGUIDrawer& geom)
   else size = 8;
 
   sizes.push_back(size);
+  positions.push_back(positions.empty() ? 0 : (positions.back() + sizes[sizes.size() - 2]));
 
   resize(x0, y0, x1, y1 + size);
+}
+
+void MenuVertical::onOpenSubMenu(const IInput& input, size_t index)
+{
+  Item& item = items[index];
+  item.submenu->moveTo(x1, y0 + positions[index]);
 }
 
 void MenuVertical::onClear()
 {
   sizes.clear();
+  positions.clear();
   resize(0, 0, 128, 1);
 }
 
@@ -1524,6 +1546,7 @@ void MenuVertical::drawImpl(IGUIDrawer& drawer) const
     if(items[i].type == COMMAND || items[i].type == SUBMENU)
     {
       drawer.drawGUIPartText(GPT_VMENU_TEXT, items[i].name, x0, y0 + totalSize, x1, y0 + totalSize + sizes[i]);
+      if(items[i].type == SUBMENU) drawer.drawGUIPart(GP_VMENU_SUBMENUINDICATOR, x0, y0 + totalSize, x1, y0 + totalSize + sizes[i]);
     }
     else if(items[i].type == SEPARATOR)
     {

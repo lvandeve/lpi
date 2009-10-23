@@ -222,6 +222,7 @@ void MainContainer::ctor()
 void MainContainer::addHoverElement(Element* element)
 {
   h.pushTop(element);
+  element->manageHover(*this);
 }
 
 void MainContainer::handleImpl(const IInput& input)

@@ -148,6 +148,50 @@ struct SpawnTexts
 
 SpawnTexts spawns;
 
+/*
+SemiStandByTest: this adds some SDL Delay if the mouse didn't move for a while.
+This because normally every frame everything is redrawn and handled. If the user
+is away, this is a lot of resources being used up for nothing. So go a little
+slower then.
+*/
+class SemiStandByTest
+{
+  private:
+    int lastMouseX;
+    int lastMouseY;
+    double lastChangeTime;
+  public:
+    SemiStandByTest()
+    : lastChangeTime(-1)
+    {
+    }
+    
+    void handle(const lpi::IInput& input)
+    {
+      if(lastChangeTime < 0) lastChangeTime = input.getSeconds();
+      
+      int mouseX = input.mouseX();
+      int mouseY = input.mouseY();
+      
+      if(mouseX != lastMouseX || mouseY != lastMouseY)
+      {
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
+        lastChangeTime = input.getSeconds();
+      }
+      
+      if(isStandBy(input))
+      {
+        SDL_Delay(200);
+      }
+    }
+    
+    bool isStandBy(const lpi::IInput& input) const
+    {
+      return input.getSeconds() - lastChangeTime > 10;
+    }
+};
+
 int main(int, char*[]) //the arguments have to be given here, or DevC++ can't link to SDL for some reason
 {//std::cout<<sizeof(lpi::gui::Element)<<std::endl;
   lpi::ScreenGL screen(width, height, false, false, "lpi GUI demo");
@@ -161,17 +205,48 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   
   lpi::gui::MainContainer c(guidrawer);
   
+  lpi::gui::MenuVertical submenu1_1;
+  submenu1_1.addCommand("Item 1", guidrawer);
+  submenu1_1.addCommand("Item 2", guidrawer);
+  submenu1_1.addSeparator(guidrawer);
+  submenu1_1.addCommand("Item 3", guidrawer);
+  submenu1_1.addCommand("Item 4", guidrawer);
+  submenu1_1.addSeparator(guidrawer);
+  submenu1_1.addCommand("Item 5", guidrawer);
+
+  lpi::gui::MenuVertical submenu1_2;
+  submenu1_2.addCommand("Item 1", guidrawer);
+  submenu1_2.addCommand("Item 2", guidrawer);
+  submenu1_2.addSeparator(guidrawer);
+  submenu1_2.addCommand("Item 3", guidrawer);
+  submenu1_2.addCommand("Item 4", guidrawer);
+  submenu1_2.addSeparator(guidrawer);
+  submenu1_2.addCommand("Item 5", guidrawer);
+
   lpi::gui::MenuVertical submenu1;
   submenu1.addCommand("Open...", guidrawer);
   submenu1.addCommand("Save...", guidrawer);
   submenu1.addSeparator(guidrawer);
+  submenu1.addSubMenu(&submenu1_1, "Submenu 1", guidrawer);
+  submenu1.addSubMenu(&submenu1_2, "Submenu 2", guidrawer);
+  submenu1.addSeparator(guidrawer);
   submenu1.addCommand("Exit", guidrawer);
-  
+
+  lpi::gui::MenuVertical submenu2;
+  submenu2.addCommand("A", guidrawer);
+  submenu2.addCommand("B", guidrawer);
+  submenu2.addCommand("C", guidrawer);
+  submenu2.addCommand("D", guidrawer);
+
+  lpi::gui::MenuVertical submenu3;
+  submenu3.addCommand("Help", guidrawer);
+  submenu3.addCommand("About", guidrawer);
+
   lpi::gui::MenuHorizontal menu;
   menu.addSubMenu(&submenu1, "File", guidrawer);
-  menu.addCommand("Edit", guidrawer);
+  menu.addSubMenu(&submenu2, "Edit", guidrawer);
   menu.addSeparator(guidrawer);
-  menu.addCommand("Help", guidrawer);
+  menu.addSubMenu(&submenu3, "Help", guidrawer);
   c.pushTop(&menu);
   
   lpi::gui::Button tb;
@@ -376,6 +451,8 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   fgbg.setBG(lpi::RGBd_White);
   colorSynchronizer.setColor(fgbg.getFG()); //make synchronizer update the above change
   
+  SemiStandByTest standby;
+  
   while(lpi::frame(true, true))
   {
     gametime.update();
@@ -404,6 +481,10 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     
     spawns.draw();
     spawns.handle();
+    
+    standby.handle(lpi::gSDLInput);
+    
+    if(standby.isStandBy(lpi::gSDLInput)) guidrawer.drawText("STANDBY", width / 2 - 32, height / 2 - 4);
     
     
     if(wcb.isChecked()) w1.addScrollbars(guidrawer);
