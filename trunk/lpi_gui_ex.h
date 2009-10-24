@@ -535,6 +535,7 @@ class AMenu : public Element
     std::vector<Item> items;
     mutable size_t lastItem; //last item clicked on, if any
     bool stay; //if true, menu stays no matter where you click, if false the menu disappears again if you choose command or click outside of it (typically true for horizontal, false for vertical)
+    size_t openedsubmenu;
     
   protected:
   
@@ -556,6 +557,8 @@ class AMenu : public Element
     bool itemClicked(size_t i, const IInput& input) const;
     
     virtual void handleImpl(const IInput& input);
+    
+    void disableMenu();
 };
 
 class MenuHorizontal : public AMenu
