@@ -260,6 +260,21 @@ const ToolTipManager& MainContainer::getToolTipManager() const
   return tooltips;
 }
 
+bool MainContainer::doModalDialog(Dialog& dialog, IModalFrameHandler& frame)
+{
+  while(frame.doFrame())
+  {
+    dialog.handle(frame.getDrawer().getInput());
+    draw(frame.getDrawer());
+    frame.getDrawer().drawRectangle(x0, y0, x1, y1, ColorRGB(0,0,0,128), true); //"modal darkness"
+    dialog.draw(frame.getDrawer());
+    if(dialog.done()) return true;
+    
+  }
+  
+  return false;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //TOOLTIPMANAGER                                                              //
 ////////////////////////////////////////////////////////////////////////////////

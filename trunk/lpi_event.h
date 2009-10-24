@@ -93,10 +93,57 @@ having released the key resets the warmup
 */
 int unicodeKey(double time, double warmupTime = 0.5, double repTime = 0.025, KeyState* state = 0);
 
-//these were moved from general to input because they depend so much on input
 void sleep();
 bool frame(bool quit_if_esc, bool delay); //returns false when done, updates the event, should be called exactly once per frame
 void end();
+
+/*
+StandByUtil: this adds some SDL Delay if the mouse didn't move for a while.
+This because normally every frame everything is redrawn and handled. If the user
+is away, this is a lot of resources being used up for nothing. So go a little
+slower then.
+*/
+class StandByUtil
+{
+  private:
+    int lastMouseX;
+    int lastMouseY;
+    double lastChangeTime;
+  public:
+    StandByUtil()
+    : lastChangeTime(-1)
+    {
+    }
+
+    void handle(const lpi::IInput& input)
+    {
+      if(lastChangeTime < 0) lastChangeTime = input.getSeconds();
+
+      int mouseX = input.mouseX();
+      int mouseY = input.mouseY();
+
+      if(mouseX != lastMouseX
+      || mouseY != lastMouseY
+      || input.mouseButtonDown(lpi::LMB)
+      || input.mouseButtonDown(lpi::MMB)
+      || input.mouseButtonDown(lpi::RMB))
+      {
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
+        lastChangeTime = input.getSeconds();
+      }
+
+      if(isStandBy(input))
+      {
+        SDL_Delay(200);
+      }
+    }
+
+    bool isStandBy(const lpi::IInput& input) const
+    {
+      return input.getSeconds() - lastChangeTime > 10;
+    }
+};
 
 } //namespace lpi
 

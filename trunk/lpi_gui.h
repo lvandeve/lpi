@@ -565,6 +565,15 @@ class Group : public Container
     virtual void drawImpl(IGUIDrawer& drawer) const;
 };
 
+class IModalFrameHandler //functionality the MainContainer needs to do modal gameloops
+{
+  public:
+    virtual bool doFrame() = 0; //should do everything needed every frame, including clearing the screen and redrawing it if necessary (or even draw lots of extra stuff from a computer game in the background). Returns true normally, false if you need to force-quit.
+    virtual IGUIDrawer& getDrawer() = 0; //since GUIDrawer also has a getInput in it, this is also used for getting the IInput
+};
+
+class Dialog; //forward declaration of class Dialog for the doModalDialog function of MainContainer
+
 /*
 MainContainer has a system for handling hovering elements. Use this as the container spanning
 the whole screen in which every other element is contained, to make hovering (popups) work. Without
@@ -611,6 +620,8 @@ class MainContainer : public IHoverManager, public ElementComposite
     void insertAt(size_t pos, Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT){e.insertAt(pos, element, x, y, sticky);}
     
     virtual const Element* hitTest(const IInput& input) const;
+    
+    bool doModalDialog(Dialog& dialog, IModalFrameHandler& frame); //Blocking function call. Runs a gameloop where only the given dialog is handled. Returns true normally, false if the loop during modal dialog showing was force-quit. After running doModalDialog(), you should check for ok/cancel with dialog's getResult, and if it was OK, use the value if the dialog (if any).
 };
 
 class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
@@ -913,6 +924,31 @@ class Tabs : public ElementComposite
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void manageHoverImpl(IHoverManager& hover);
     virtual void handleImpl(const IInput& input);
+};
+
+//a Dialog can be done "Modal" by MainContainer
+class Dialog : public Window
+{
+  public:
+    enum Result
+    {
+      OK, //there's no "yes" or "no" results. A yes/no dialog has a boolean result for that, similar to how a color dialog has a ColorRGB result and so on.
+      CANCEL
+    };
+
+  private:
+
+    Result result;
+
+  public:
+
+    Dialog()
+    : result(CANCEL)
+    {
+    }
+
+    virtual bool done() = 0; //returns true if the dialog is closed by the user (by pressing ok, cancel, ...)
+    virtual Result getResult() = 0; //get this after done was true. This is NOT the value of the dialog (like the color of a color dialog or the yes/no boolean of a yesno dialog). Instead, this only indicates if the value is valid (if it's OK) or not (if it's CANCEL)
 };
 
 } //namespace gui
