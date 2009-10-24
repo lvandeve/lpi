@@ -1306,6 +1306,7 @@ void NState::drawImpl(IGUIDrawer& drawer) const
 AMenu::AMenu()
 : lastItem((size_t)(-1))
 , stay(false)
+, openedsubmenu((size_t)(-1))
 {
 }
 
@@ -1369,21 +1370,48 @@ void AMenu::handleImpl(const IInput& input)
       if(item.type == SUBMENU)
       {
         item.submenu->setEnabled(true);
-        //item.submenu->moveTo(input.mouseX(), input.mouseY());
+        if(openedsubmenu < getNumItems()) items[openedsubmenu].submenu->disableMenu();
+        openedsubmenu = lastItem;
         onOpenSubMenu(input, lastItem);
+      }
+    }
+  }
+  
+  if(openedsubmenu < getNumItems() || !stay)
+  {
+    size_t itemover = getMouseIndex(input);
+    if(itemover < getNumItems())
+    {
+      Item& item = items[itemover];
+      if(itemover != openedsubmenu && item.type == SUBMENU)
+      {
+        item.submenu->setEnabled(true);
+        if(openedsubmenu < getNumItems()) items[openedsubmenu].submenu->disableMenu();
+        openedsubmenu = itemover;
+        onOpenSubMenu(input, itemover);
       }
     }
   }
   
   if(!stay && mouseJustDownElsewhere(input))
   {
-    bool activeChildren = false;
-    for(size_t i = 0; i < items.size(); i++)
-    {
-      if(items[i].type == SUBMENU && items[i].submenu->isEnabled()) activeChildren = true;
-    }
-    if(!activeChildren) setEnabled(false);
+    if(openedsubmenu >= getNumItems()) setEnabled(false);
   }
+  
+  if(openedsubmenu < getNumItems() && !items[openedsubmenu].submenu->isEnabled())
+  {
+    openedsubmenu = (size_t)(-1);
+  }
+}
+
+void AMenu::disableMenu()
+{
+  if(openedsubmenu < getNumItems())
+  {
+    items[openedsubmenu].submenu->disableMenu();
+    openedsubmenu = (size_t)(-1);
+  }
+  setEnabled(false);
 }
 
 void AMenu::manageHoverImpl(IHoverManager& hover)
@@ -1461,15 +1489,23 @@ void MenuHorizontal::drawImpl(IGUIDrawer& drawer) const
   
   drawer.drawGUIPart(GP_HMENU_PANEL, x0, y0, x1, y1);
   
+  size_t mouseElement = getMouseIndex(drawer.getInput());
+  
   for(size_t i = 0; i < items.size(); i++)
   {
-    if(items[i].type == COMMAND || items[i].type == SUBMENU)
+    GUIPartMod mod(mouseElement == i, mouseElement == i && mouseDown(drawer.getInput()));
+    
+    if(items[i].type == COMMAND)
     {
-      drawer.drawGUIPartText(GPT_HMENU_TEXT, items[i].name, x0 + totalSize, y0, x0 + totalSize + sizes[i], y1);
+      drawer.drawGUIPartText(GPT_HMENU_TEXT, items[i].name, x0 + totalSize, y0, x0 + totalSize + sizes[i], y1, mod);
+    }
+    else if(items[i].type == SUBMENU)
+    {
+      drawer.drawGUIPartText(GPT_HMENU_SUBMENUTEXT, items[i].name, x0 + totalSize, y0, x0 + totalSize + sizes[i], y1, mod);
     }
     else if(items[i].type == SEPARATOR)
     {
-      drawer.drawGUIPart(GP_HMENU_SEPARATOR, x0 + totalSize, y0, x0 + totalSize + sizes[i], y1);
+      drawer.drawGUIPart(GP_HMENU_SEPARATOR, x0 + totalSize, y0, x0 + totalSize + sizes[i], y1, mod);
     }
     totalSize += sizes[i];
   }
@@ -1510,8 +1546,9 @@ void MenuVertical::onAddItem(const IGUIDrawer& geom)
   {
     int w, h;
     geom.calcTextRectSize(w, h, item.name);
-    size = 16;
+    size = 20;
     w += 8;
+    if(item.type == SUBMENU) w += 16; //space for the arrow icon
     if(getSizeX() < w) resize(x0, y0, x0 + w, y1);
   }
   else size = 8;
@@ -1532,7 +1569,7 @@ void MenuVertical::onClear()
 {
   sizes.clear();
   positions.clear();
-  resize(0, 0, 128, 1);
+  resize(0, 0, 64, 1);
 }
 
 void MenuVertical::drawImpl(IGUIDrawer& drawer) const
@@ -1540,17 +1577,24 @@ void MenuVertical::drawImpl(IGUIDrawer& drawer) const
   int totalSize = 0;
 
   drawer.drawGUIPart(GP_VMENU_PANEL, x0, y0, x1, y1);
+  
+  size_t mouseElement = getMouseIndex(drawer.getInput());
 
   for(size_t i = 0; i < items.size(); i++)
   {
-    if(items[i].type == COMMAND || items[i].type == SUBMENU)
+    GUIPartMod mod(mouseElement == i, mouseElement == i && mouseDown(drawer.getInput()));
+    
+    if(items[i].type == COMMAND)
     {
-      drawer.drawGUIPartText(GPT_VMENU_TEXT, items[i].name, x0, y0 + totalSize, x1, y0 + totalSize + sizes[i]);
-      if(items[i].type == SUBMENU) drawer.drawGUIPart(GP_VMENU_SUBMENUINDICATOR, x0, y0 + totalSize, x1, y0 + totalSize + sizes[i]);
+      drawer.drawGUIPartText(GPT_VMENU_TEXT, items[i].name, x0, y0 + totalSize, x1, y0 + totalSize + sizes[i], mod);
+    }
+    else if(items[i].type == SUBMENU)
+    {
+      drawer.drawGUIPartText(GPT_VMENU_SUBMENUTEXT, items[i].name, x0, y0 + totalSize, x1, y0 + totalSize + sizes[i], mod);
     }
     else if(items[i].type == SEPARATOR)
     {
-      drawer.drawGUIPart(GP_VMENU_SEPARATOR, x0, y0 + totalSize, x1, y0 + totalSize + sizes[i]);
+      drawer.drawGUIPart(GP_VMENU_SEPARATOR, x0, y0 + totalSize, x1, y0 + totalSize + sizes[i], mod);
     }
     totalSize += sizes[i];
   }

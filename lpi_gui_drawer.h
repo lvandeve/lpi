@@ -147,7 +147,6 @@ enum GUIPart
   GP_HMENU_SEPARATOR, //separator of a horizontal menu (the separator itself is a vertical line)
   GP_VMENU_PANEL, //the panel behind the complete menu
   GP_VMENU_SEPARATOR, //separator of a vertical menu (the separator itself is a horizontal line)
-  GP_VMENU_SUBMENUINDICATOR, //the arrow
 
   ///Colored Parts //todo: just give everything a color parameter instead
   GPC_WINDOW_PANEL, //colored windows
@@ -160,7 +159,9 @@ enum GUIPart
   GPT_WINDOW_TITLE,
   GPT_TOOLTIP, //both the background and the text of the tooltip, fit to the text size
   GPT_HMENU_TEXT, //the text as well as panel behind the text if any
+  GPT_HMENU_SUBMENUTEXT,
   GPT_VMENU_TEXT,
+  GPT_VMENU_SUBMENUTEXT,
   
   
   GP_END_DONT_USE //don't use this, it's placed here to have an element without comma at the end of the enumarator list.
