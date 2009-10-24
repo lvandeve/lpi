@@ -565,6 +565,7 @@ double ChannelSliderEx::getValue() const
 
 void ChannelSliderEx::setValue(double value)
 {
+//std::cout<<value<<" "<<valtostr((int)(0.49 + smallest + value * (largest - smallest)))<<std::endl;
   input.setText(valtostr((int)(0.49 + smallest + value * (largest - smallest)))); //the 0.49 is for rounding
   slider->setValue(value);
 }
@@ -1202,7 +1203,7 @@ FGBGColor::FGBGColor()
 {
   addSubElement(&fg, Sticky(0.0, 0, 0.0, 0, 1.0, -16, 1.0, -16));
   addSubElement(&bg, Sticky(0.0, 16, 0.0, 16, 1.0, 0, 1.0, 0));
-  addSubElement(&arrows, Sticky(0.66, 0, 0.0, 0, 1.0, 0, 0.33, 0));
+  addSubElement(&arrows, Sticky(1.0,-16, 0.0,0, 1.0,0, 0.0,16));
   fg.selected = true;
 }
 
@@ -1220,8 +1221,8 @@ void FGBGColor::handleImpl(const IInput& input)
     if(dialog->pressedOk(input))
     {
       dialog->setEnabled(false);
-      if(fg.selected)  dialog->getColor(fg.color);
-      else  dialog->getColor(bg.color);
+      if(fg.selected) dialog->getColor(fg.color);
+      else dialog->getColor(bg.color);
       setChanged();
     }
   }
@@ -1425,6 +1426,17 @@ void ColorEditorSynchronizer::setColor(const ColorRGBd& color)
   for(size_t i = 0; i < editors.size(); i++)
   {
     editors[i]->setColor(color);
+  }
+}
+
+void ColorEditorSynchronizer::setMultiColor(ColorEditor::Plane plane, const ColorRGBd& color)
+{
+  for(size_t i = 0; i < editors.size(); i++)
+  {
+    ColorEditor* editor = editors[i];
+    if(editor->isMultiColorGettable(plane))
+      editors[i]->setMultiColor(plane, color);
+    else if(mainColorLink == plane) editor->setColor(color);
   }
 }
 
@@ -1904,7 +1916,7 @@ ColorDialog::ColorDialog(const IGUIDrawer& geom)
   addTitle("Color");
   addResizer(geom);
   
-  palette.generateVibrant6x6();
+  palette.generateVibrant8x8();
   
   ok.makeTextPanel(0, 0, "Ok", 64, 24);
   ok2.makeTextPanel(0, 0, "Ok", 64, 24);

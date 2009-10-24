@@ -148,58 +148,34 @@ struct SpawnTexts
 
 SpawnTexts spawns;
 
-/*
-SemiStandByTest: this adds some SDL Delay if the mouse didn't move for a while.
-This because normally every frame everything is redrawn and handled. If the user
-is away, this is a lot of resources being used up for nothing. So go a little
-slower then.
-*/
-class SemiStandByTest
+lpi::ScreenGL screen(width, height, false, false, "lpi GUI demo");
+lpi::gui::GUIDrawerGL guidrawer(&screen);
+
+
+class MyModalFrameHandler : public lpi::gui::IModalFrameHandler //functionality the MainContainer needs to do modal gameloops
 {
-  private:
-    int lastMouseX;
-    int lastMouseY;
-    double lastChangeTime;
   public:
-    SemiStandByTest()
-    : lastChangeTime(-1)
+    virtual bool doFrame()
     {
+      if(!lpi::frame(true, true)) return false;
+      
+      screen.redraw();
+      screen.cls(lpi::RGB_Darkgreen);
+      guidrawer.frameEnd();
+      
+      guidrawer.frameStart();
+      return true;
     }
-    
-    void handle(const lpi::IInput& input)
+    virtual lpi::gui::IGUIDrawer& getDrawer()
     {
-      if(lastChangeTime < 0) lastChangeTime = input.getSeconds();
-      
-      int mouseX = input.mouseX();
-      int mouseY = input.mouseY();
-      
-      if(mouseX != lastMouseX
-      || mouseY != lastMouseY
-      || input.mouseButtonDown(lpi::LMB)
-      || input.mouseButtonDown(lpi::MMB)
-      || input.mouseButtonDown(lpi::RMB))
-      {
-        lastMouseX = mouseX;
-        lastMouseY = mouseY;
-        lastChangeTime = input.getSeconds();
-      }
-      
-      if(isStandBy(input))
-      {
-        SDL_Delay(200);
-      }
-    }
-    
-    bool isStandBy(const lpi::IInput& input) const
-    {
-      return input.getSeconds() - lastChangeTime > 10;
+      return guidrawer;
     }
 };
 
+MyModalFrameHandler modalFrameHandler;
+
 int main(int, char*[]) //the arguments have to be given here, or DevC++ can't link to SDL for some reason
 {//std::cout<<sizeof(lpi::gui::Element)<<std::endl;
-  lpi::ScreenGL screen(width, height, false, false, "lpi GUI demo");
-  lpi::gui::GUIDrawerGL guidrawer(&screen);
   
 #ifdef WIN32
   lpi::FileBrowseWin32WithDrives filebrowser;
@@ -455,7 +431,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   fgbg.setBG(lpi::RGBd_White);
   colorSynchronizer.setColor(fgbg.getFG()); //make synchronizer update the above change
   
-  SemiStandByTest standby;
+  lpi::StandByUtil standby;
   
   lpi::IInput& input = lpi::gSDLInput;
   
@@ -492,6 +468,12 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     if(standby.isStandBy(input)) guidrawer.drawText("STANDBY", width / 2 - 32, height / 2 - 4);
     
     if(menu1.itemClicked(menu1.getNumItems() - 1, input)) break;
+    if(menu2.itemClicked(0, input))
+    {
+      lpi::gui::MessageBox box("This is a message box", guidrawer);
+      box.moveCenterTo(width/2, height/2);
+      c.doModalDialog(box, modalFrameHandler);
+    }
     
     
     if(wcb.isChecked()) w1.addScrollbars(guidrawer);

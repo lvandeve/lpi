@@ -876,7 +876,8 @@ class ColorEditorSynchronizer
     
     void handle();
     
-    void setColor(const ColorRGBd& color); //set the color of everything
+    void setColor(const ColorRGBd& color); //set the color of everything/current (main color)
+    void setMultiColor(ColorEditor::Plane plane, const ColorRGBd& color); //set the color of certain plane
 };
 
 class AColorDialog : public ColorEditor, public Window

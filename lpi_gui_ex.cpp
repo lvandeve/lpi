@@ -1012,29 +1012,39 @@ void YesNoWindow::make(int x, int y, int sizex, int sizey, const std::string& te
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//OKWINDOW//////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-OkWindow::OkWindow()
+MessageBox::MessageBox(const std::string& text, const IGUIDrawer& geom)
 {
-  this->enabled = false;
-}
+  resize(0, 0 , 300, 150);
+  addTop(geom);
+  addCloseButton(geom);
 
-void OkWindow::make(int x, int y, int sizex, int sizey, const std::string& text)
-{
-  resize(x, y , sizex, sizey);
-  //addTop();
-  
   ok.makeTextPanel(0, 0, "Ok");
   //ok.autoTextSize();
-  
+
   message.make(0, 0, text);
-  
-  pushTopAt(&message, 16, 16);
-  int centerx = getSizeX() / 2;
-  pushTopAt(&ok, centerx - ok.getSizeX() / 2, getSizeY() - ok.getSizeY() - 8 - 16);
-  
-  this->enabled = 1;
+
+  pushTop(&message, Sticky(0.0,4, 0.0,4, 1.0,-4, 1.0,-40));
+  pushTop(&ok, Sticky(0.5,-40, 1.0,-36, 0.5,+40, 1.0,-4));
+
+  setEnabled(true);
+}
+
+bool MessageBox::done()
+{
+  return !isEnabled();
+}
+
+Dialog::Result MessageBox::getResult()
+{
+  return OK;
+}
+
+void MessageBox::handleImpl(const IInput& input)
+{
+  Dialog::handleImpl(input);
+  if(ok.clicked(input)) setEnabled(false);
 }
   
 ////////////////////////////////////////////////////////////////////////////////

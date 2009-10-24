@@ -313,7 +313,7 @@ class Painter : public Element
 };
 
 //message boxes
-class YesNoWindow : public Window
+class YesNoWindow : public Dialog
 {
   public:
   Button yes;
@@ -324,14 +324,23 @@ class YesNoWindow : public Window
   void make(int x, int y, int sizex, int sizey, const std::string& text);
 };
 
-class OkWindow : public Window
+class MessageBox : public Dialog
 {
+  protected:
+    Button ok;
+    Text message;
+
+  protected:
+    virtual void handleImpl(const IInput& input);
+
   public:
-  Button ok;
-  Text message;
-  
-  OkWindow();
-  void make(int x, int y, int sizex, int sizey, const std::string& text);
+
+    MessageBox(const std::string& text, const IGUIDrawer& geom);
+    void make(int x, int y, int sizex, int sizey, const std::string& text);
+
+    virtual bool done();
+    virtual Result getResult();
+
 };
 
 //a painting canvas that allows you to paint with the mouse
