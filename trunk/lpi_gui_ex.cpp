@@ -1235,7 +1235,7 @@ This class is used by NState
 
 NStateState::NStateState()
 {
-  this->texture = emptyTexture;
+  this->texture = getDefaultEmptyTexture();
   this->colorMod = RGB_White;
   this->enableText = 0;
   this->text = "";
@@ -1510,6 +1510,7 @@ void MenuHorizontal::onAddItem(const IGUIDrawer& geom)
 
 void MenuHorizontal::onOpenSubMenu(const IInput& input, size_t index)
 {
+  (void)input;
   Item& item = items[index];
   item.submenu->moveTo(x0 + positions[index], y1);
 }
@@ -1599,6 +1600,7 @@ void MenuVertical::onAddItem(const IGUIDrawer& geom)
 
 void MenuVertical::onOpenSubMenu(const IInput& input, size_t index)
 {
+  (void)input;
   Item& item = items[index];
   item.submenu->moveTo(x1, y0 + positions[index]);
 }

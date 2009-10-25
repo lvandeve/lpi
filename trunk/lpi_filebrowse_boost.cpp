@@ -106,14 +106,12 @@ void FileBrowseBoost::getDirectories(std::vector<std::string>& dirs, const std::
 
 bool FileBrowseBoost::fileExists(const std::string& filename) const
 {
-  return true; //TODO!!!
-  
   try
   {
     fs::path full_path(fs::initial_path());
-    full_path = fs::system_complete(fs::path(directory.c_str(), fs::native));
+    full_path = fs::system_complete(fs::path(filename.c_str(), fs::native));
 
-    return fs::exists(full_path));
+    return fs::exists(full_path);
   }
   catch(...)
   {

@@ -1466,33 +1466,6 @@ void Button::makeImage
   this->font[1].color = RGB_Black;
   this->font[2].color = RGB_Black;
   
-  /*this->panel1.t00 = &emptyTexture;
-  this->panel1.t01 = &emptyTexture;
-  this->panel1.t02 = &emptyTexture;
-  this->panel1.t10 = &emptyTexture;
-  this->panel1.t11 = &emptyTexture;
-  this->panel1.t12 = &emptyTexture;
-  this->panel1.t20 = &emptyTexture;
-  this->panel1.t21 = &emptyTexture;
-  this->panel1.t22 = &emptyTexture;
-  this->panel2.t00 = &emptyTexture;
-  this->panel2.t01 = &emptyTexture;
-  this->panel2.t02 = &emptyTexture;
-  this->panel2.t10 = &emptyTexture;
-  this->panel2.t11 = &emptyTexture;
-  this->panel2.t12 = &emptyTexture;
-  this->panel2.t20 = &emptyTexture;
-  this->panel2.t21 = &emptyTexture;
-  this->panel2.t22 = &emptyTexture;  
-  this->panelOffsetx = 0;
-  this->panelOffsety = 0;
-  this->panel1.colorMod = RGB_Black;
-  this->panel2.colorMod = RGB_Black;
-  this->panel1.enableSides = 0;
-  this->panel2.enableSides = 0;
-  this->panel1.enableCenter = 0;
-  this->panel2.enableCenter = 0;*/
-  
   this->setEnabled(true);
   
   this->mouseDownVisualStyle = 0;
@@ -2219,10 +2192,10 @@ Checkbox::Checkbox()
   //bad old code, must be fixed!
   this->enabled = 0;
   this->checked = 0;
-  this->texture[0] = emptyTexture;
-  this->texture[1] = emptyTexture;
-  this->texture[2] = emptyTexture;
-  this->texture[3] = emptyTexture;
+  this->texture[0] = getDefaultEmptyTexture();
+  this->texture[1] = getDefaultEmptyTexture();
+  this->texture[2] = getDefaultEmptyTexture();
+  this->texture[3] = getDefaultEmptyTexture();
   this->colorMod[0] = RGB_White;
   this->colorMod[1] = RGB_White;
   this->colorMod[2] = RGB_White;

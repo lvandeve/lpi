@@ -121,9 +121,9 @@ class Matrix3 //memory: exactly 9 doubles
   Matrix3& operator*=(const Matrix3& rhs);
 };
 
-#define Matrix3_identity Matrix3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
-#define Matrix3_unit Matrix3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
-#define Matrix3_invZ Matrix3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, -1.0)
+static const Matrix3 Matrix3_identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+static const Matrix3 Matrix3_unit(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+static const Matrix3 Matrix3_invZ(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, -1.0);
 
 Matrix3 transpose(const Matrix3& A);
 double determinant(const Matrix3& A);

@@ -96,37 +96,41 @@ struct Font
   //ColorRGB backgroundColor;
 };
 
-extern const Font FONT_Default; //the default lpi font
-extern const Font FONT_Black;
-extern const Font FONT_White;
-extern const Font FONT_Grey;
-extern const Font FONT_Gray;
-extern const Font FONT_Red;
-extern const Font FONT_Green;
-extern const Font FONT_Blue;
-extern const Font FONT_Shadow; //white letters with black shadow
-extern const Font FONT_ShadowInverted; //black letters with white shadow
 
-extern const Font FONT_Default6; //the default lpi font, size 6
-extern const Font FONT_Black6;
-extern const Font FONT_White6;
-extern const Font FONT_Grey6;
-extern const Font FONT_Gray6;
-extern const Font FONT_Red6;
-extern const Font FONT_Green6;
-extern const Font FONT_Blue6;
-extern const Font FONT_Shadow6; //white letters with black shadow
-extern const Font FONT_ShadowInverted6; //black letters with white shadow
+Font createFont(const std::string& typeface, const ColorRGB& color);
+Font createShadowFont(const std::string& typeface, const ColorRGB& color, const ColorRGB& shadowColor);
 
-extern const Font FONT_Default4; //the default lpi font, size 4
-extern const Font FONT_Black4;
-extern const Font FONT_White4;
-extern const Font FONT_Grey4;
-extern const Font FONT_Gray4;
-extern const Font FONT_Red4;
-extern const Font FONT_Green4;
-extern const Font FONT_Blue4;
-extern const Font FONT_Shadow4; //white letters with black shadow
-extern const Font FONT_ShadowInverted4; //black letters with white shadow
+static const Font FONT_Default(RGB_Black);
+static const Font FONT_Black(RGB_Black);
+static const Font FONT_White(RGB_White);
+static const Font FONT_Shadow = createShadowFont("lpi8", RGB_White, RGB_Black);
+static const Font FONT_ShadowInverted = createShadowFont("lpi8", RGB_Black, RGB_White);
+static const Font FONT_Grey(RGB_Grey);
+static const Font FONT_Gray(RGB_Gray);
+static const Font FONT_Red(RGB_Red);
+static const Font FONT_Green(RGB_Green);
+static const Font FONT_Blue(RGB_Blue);
+
+static const Font FONT_Default6(createFont("lpi6", RGB_Black));
+static const Font FONT_Black6(createFont("lpi6", RGB_Black));
+static const Font FONT_White6(createFont("lpi6", RGB_White));
+static const Font FONT_Shadow6 = createShadowFont("lpi6", RGB_White, RGB_Black);
+static const Font FONT_ShadowInverted6 = createShadowFont("lpi6", RGB_Black, RGB_White);
+static const Font FONT_Grey6(createFont("lpi6", RGB_Grey));
+static const Font FONT_Gray6(createFont("lpi6", RGB_Gray));
+static const Font FONT_Red6(createFont("lpi6", RGB_Red));
+static const Font FONT_Green6(createFont("lpi6", RGB_Green));
+static const Font FONT_Blue6(createFont("lpi6", RGB_Blue));
+
+static const Font FONT_Default4(createFont("lpi4", RGB_Black));
+static const Font FONT_Black4(createFont("lpi4", RGB_Black));
+static const Font FONT_White4(createFont("lpi4", RGB_White));
+static const Font FONT_Shadow4 = createShadowFont("lpi4", RGB_White, RGB_Black);
+static const Font FONT_ShadowInverted4 = createShadowFont("lpi4", RGB_Black, RGB_White);
+static const Font FONT_Grey4(createFont("lpi4", RGB_Grey));
+static const Font FONT_Gray4(createFont("lpi4", RGB_Gray));
+static const Font FONT_Red4(createFont("lpi4", RGB_Red));
+static const Font FONT_Green4(createFont("lpi4", RGB_Green));
+static const Font FONT_Blue4(createFont("lpi4", RGB_Blue));
 
 } // namespace lpi

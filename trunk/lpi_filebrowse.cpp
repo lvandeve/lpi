@@ -67,6 +67,7 @@ void FileBrowseNotSupported::getDirectories(std::vector<std::string>& dirs, cons
 
 bool FileBrowseNotSupported::fileExists(const std::string& filename) const
 {
+  (void)filename;
   return false;
 }
 

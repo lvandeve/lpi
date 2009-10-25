@@ -159,20 +159,20 @@ class AlphaEffect
   AlphaEffect(int style, unsigned char alpha = 0, const ColorRGB& alphaColor = RGB_Black);
 };
 
-#define AE_Opaque AlphaEffect(0, 255, lpi::RGB_Black) //no alpha effect
-#define AE_GreenKey AlphaEffect(128, 255, lpi::RGB_Green) //make the green color invisible
-#define AE_PinkKey AlphaEffect(128, 255, lpi::RGB_Magenta) //make the magenta color invisible
-#define AE_PinkKeyS AlphaEffect(3200, 255, lpi::RGB_Magenta) //make the magenta color invisible, dark magenta (128) will become shadow, slightly brighter magenta (192) becomes more translucent shadow
-#define AE_PinkKeyT25 AlphaEffect(3201, 64, lpi::RGB_Magenta) //make the magenta color invisible and the rest 25% visible + shadow effect
-#define AE_PinkKeyT50 AlphaEffect(3201, 128, lpi::RGB_Magenta) //make the magenta color invisible and the rest 50% visible + shadow effect
-#define AE_PinkKeyT75 AlphaEffect(3201, 192, lpi::RGB_Magenta) //make the magenta color invisible and the rest 75% visible + shadow effect
-#define AE_BlackKey AlphaEffect(128, 255, lpi::RGB_Black) //make the black color invisible
-#define AE_Translucent AlphaEffect(4, 255, lpi::RGB_Black) //Translucent: the darker, the more transparent
-#define AE_ITranslucent AlphaEffect(68, 255, lpi::RGB_Black) //Inverse Translucent: the brighter, the more transparent
-#define AE_Particle AlphaEffect(260, 255, lpi::RGB_White) //Use this for turning greyscale particles into 100% color where blackness is now translucency
-#define AE_ColorParticle AlphaEffect(516, 255, lpi::RGB_White) //Same as AE_Particle, but hue and saturation information is preserved. 
-#define AE_Modulated AlphaEffect(19, 255, lpi::RGB_White) //Modulated (special translucency, as in Unreal 1)
-#define AE_IModulated AlphaEffect(20, 255, lpi::RGB_White) //Inverse Modulated
+static const AlphaEffect AE_Opaque(0, 255, RGB_Black); //no alpha effect
+static const AlphaEffect AE_GreenKey(128, 255, RGB_Green); //make the green color invisible
+static const AlphaEffect AE_PinkKey(128, 255, RGB_Magenta); //make the magenta color invisible
+static const AlphaEffect AE_PinkKeyS(3200, 255, RGB_Magenta); //make the magenta color invisible, dark magenta (128) will become shadow, slightly brighter magenta (192) becomes more translucent shadow
+static const AlphaEffect AE_PinkKeyT25(3201, 64, RGB_Magenta); //make the magenta color invisible and the rest 25% visible + shadow effect
+static const AlphaEffect AE_PinkKeyT50(3201, 128, RGB_Magenta); //make the magenta color invisible and the rest 50% visible + shadow effect
+static const AlphaEffect AE_PinkKeyT75(3201, 192, RGB_Magenta); //make the magenta color invisible and the rest 75% visible + shadow effect
+static const AlphaEffect AE_BlackKey(128, 255, RGB_Black); //make the black color invisible
+static const AlphaEffect AE_Translucent(4, 255, RGB_Black); //Translucent: the darker, the more transparent
+static const AlphaEffect AE_ITranslucent(68, 255, RGB_Black); //Inverse Translucent: the brighter, the more transparent
+static const AlphaEffect AE_Particle(260, 255, RGB_White); //Use this for turning greyscale particles into 100% color where blackness is now translucency
+static const AlphaEffect AE_ColorParticle(516, 255, RGB_White); //Same as AE_Particle, but hue and saturation information is preserved. 
+static const AlphaEffect AE_Modulated(19, 255, RGB_White); //Modulated (special translucency, as in Unreal 1)
+static const AlphaEffect AE_IModulated(20, 255, RGB_White); //Inverse Modulated
 
 void createImageAlpha(unsigned char* image, int w, int h, const AlphaEffect& effect);
 
@@ -196,7 +196,7 @@ void loadTexturesAlpha(const std::string& filename, std::vector<ITexture>& textu
 void loadTexturesFromBase64PNG(std::vector<ITexture*>& textures, const ITextureFactory* factory, const std::string& base64, int widths, int heights, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
 void loadTextureFromBase64PNG(ITexture* texture, const std::string& base64, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
 
-extern ITexture* emptyTexture; //default texture for initializing pointers
+ITexture* getDefaultEmptyTexture();
 
 //aligned buffer = having the actual u*v size, instead of the u2*v2 size internally in the texture
 void getAlignedBuffer(std::vector<unsigned char>& buffer, const ITexture* texture);

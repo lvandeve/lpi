@@ -178,7 +178,7 @@ struct GUIPartMod
   bool mousedown;
 };
 
-extern const GUIPartMod GPM_Default;
+static const GUIPartMod GPM_Default;
 
 
 class IGUIPartDrawer

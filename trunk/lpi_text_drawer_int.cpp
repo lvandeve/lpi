@@ -26,6 +26,10 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
+////////////////////////////////////////////////////////////////////////////////
+//DATA//////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 InternalTextDrawer::InternalTextDrawer(const ITextureFactory& factory, IDrawer2D* drawer)
 : drawer(drawer)
 , glyphs(&factory)
@@ -400,31 +404,15 @@ InternalGlyphs::~InternalGlyphs()
 
 void InternalGlyphs::initBuiltInFontTextures(const ITextureFactory* factory)
 {
-  loadTexturesFromBase64PNG(glyphs8x8.texture, factory, font8x8string, 8, 8, AE_BlackKey);
-  glyphs8x8.width = 8;
-  glyphs8x8.height = 8;
-  loadTexturesFromBase64PNG(glyphs6x6.texture, factory, font6x6string, 6, 6, AE_BlackKey);
-  glyphs6x6.width = 6;
-  glyphs6x6.height = 6;
-  loadTexturesFromBase64PNG(glyphs4x5.texture, factory, font4x5string, 4, 5, AE_BlackKey);
-  glyphs4x5.width = 4;
-  glyphs4x5.height = 5;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-//DATA//////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-/*
-A PNG image, encoded in base64, containing the full extended ASCII character
-set, in the form 256 bitmap symbols of 8x8 pixels in one 128x128 PNG.
-First use the function decodeBase64
-Then use the function LodePNG::decodePNG32
-And you get the pixels in a buffer
-NOTE: the background color is black, not transparent, so may need conversion
-*/
-const std::string InternalGlyphs::font8x8string = "\
+  /*
+  A PNG image, encoded in base64, containing the full extended ASCII character
+  set, in the form 256 bitmap symbols of 8x8 pixels in one 128x128 PNG.
+  First use the function decodeBase64
+  Then use the function LodePNG::decodePNG32
+  And you get the pixels in a buffer
+  NOTE: the background color is black, not transparent, so may need conversion
+  */
+  static const std::string font8x8string = "\
 iVBORw0KGgoAAAANSUhEUgAAAIAAAACAAQMAAAD58POIAAAABlBMVEUAAAD///+l2Z/dAAAEtklE\n\
 QVRIiY1VP2scRxR/OKA0g6RyQIcFwR/ggcN5i0WCfIc0qQbZjF1Mcbi4PMhm5XQp8gEsMKRKkzpl\n\
 DAOCIcVD7sTBKeaqcyPMQYK8xTCb9/ZOUowS8Nzs7OzvfvP+zXszAG0bdqtd6KHfqQ+PTwB+6EvV\n\
@@ -450,15 +438,15 @@ Oei7GCx7yyU183lm+INjQAWklOfzDUPOGCtXlVx/KiPGUMhZrN4TuFoyJariKNcTbOZyJm5LjUu6\n\
 O9lUrLR/ABF/3H2EtBmWAAAAAElFTkSuQmCC\
 ";
 
-/*
-A PNG image, encoded in base64, containing the full extended ASCII character
-set, in the form 256 bitmap symbols of 6x6 pixels in one 96x96 PNG.
-First use the function decodeBase64
-Then use the function LodePNG::decodePNG32
-And you get the pixels in a buffer
-NOTE: the background color is black, not transparent, so may need conversion
-*/
-const std::string InternalGlyphs::font6x6string = "\
+  /*
+  A PNG image, encoded in base64, containing the full extended ASCII character
+  set, in the form 256 bitmap symbols of 6x6 pixels in one 96x96 PNG.
+  First use the function decodeBase64
+  Then use the function LodePNG::decodePNG32
+  And you get the pixels in a buffer
+  NOTE: the background color is black, not transparent, so may need conversion
+  */
+  static const std::string font6x6string = "\
 iVBORw0KGgoAAAANSUhEUgAAAGAAAABgAQMAAADYVuV7AAAABlBMVEUAAAD///+l2Z/dAAADo0lE\n\
 QVQ4jW1TTWjbZhh+ZCvtl6DZivex+WCKZCs/7XZwxg4uhETOcCzlMBx62Q5l7f5zs7pLGIwpih05\n\
 wympaCGHkEPo2NZLzrsU1zFVCWyjsPu6uKWBHRYGpRtL8N5PbrsF9iHE9+h53+d79b7PBySvax6O\n\
@@ -479,20 +467,34 @@ qA+Okr9o/tP4ck+A+BNMPuFHseneEnWjLi6k9n8gnPoTvOrL+ABYGOH2o3HdajidNK51eLbELhxs\n\
 eCWki3E3rce4tJL+r5AYwj/AsDX88LifHQAAAABJRU5ErkJggg==\
 ";
 
-/*
-A PNG image, encoded in base64, containing printable part of ASCII character
-set, in the form 256 bitmap symbols of 4x5 pixels in one 64x80 PNG.
-First use the function decodeBase64
-Then use the function LodePNG::decodePNG32
-And you get the pixels in a buffer
-NOTE: the background color is black, not transparent, so may need conversion
-*/
-const std::string InternalGlyphs::font4x5string = "\
+  /*
+  A PNG image, encoded in base64, containing printable part of ASCII character
+  set, in the form 256 bitmap symbols of 4x5 pixels in one 64x80 PNG.
+  First use the function decodeBase64
+  Then use the function LodePNG::decodePNG32
+  And you get the pixels in a buffer
+  NOTE: the background color is black, not transparent, so may need conversion
+  */
+  static const std::string font4x5string = "\
 iVBORw0KGgoAAAANSUhEUgAAAEAAAABQAQMAAACTceEGAAAABlBMVEUAAAD///+l2Z/dAAAAwklE\n\
 QVQokWNgoBlgWcDJpMLAwARkMLE4LWFgAYkxOPmpsQApTgaVJQ4eCMVO59z0nriouTEsU2txWsXg\n\
 oMSwyOnRkhAXNQcGp3cuLhUsQHPgwKXt3LMlWm0pDKtOrOh4otW9iuHcijWnlqzpXMXw6ti5tiWn\n\
 Xi5BKD527NXKVc/cHBhWrfFa6aKitAAo4rXaxUWJgaFpjZ/bimdi/FhM1oKZzAczmQuXySFQk4HO\n\
 Bpvs48wFNdmNj2aBO0gBPykMWgAArlFWRoV1udAAAAAASUVORK5CYII=\
 ";
+
+  AlphaEffect AE_BlackKey(128, 255, lpi::RGB_Black);
+
+  loadTexturesFromBase64PNG(glyphs8x8.texture, factory, font8x8string, 8, 8, AE_BlackKey);
+  glyphs8x8.width = 8;
+  glyphs8x8.height = 8;
+  loadTexturesFromBase64PNG(glyphs6x6.texture, factory, font6x6string, 6, 6, AE_BlackKey);
+  glyphs6x6.width = 6;
+  glyphs6x6.height = 6;
+  loadTexturesFromBase64PNG(glyphs4x5.texture, factory, font4x5string, 4, 5, AE_BlackKey);
+  glyphs4x5.width = 4;
+  glyphs4x5.height = 5;
+}
+
 
 } //namespace lpi

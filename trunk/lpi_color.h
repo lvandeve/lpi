@@ -18,8 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef LPI_COLOR_H_INCLUDED
-#define LPI_COLOR_H_INCLUDED
+#pragma once
 
 namespace lpi
 {
@@ -212,53 +211,11 @@ static const ColorRGB RGB_Brightblue   (192, 192, 255, 255);
 static const ColorRGB RGB_Brightcyan   (192, 255, 255, 255);
 static const ColorRGB RGB_Brightmagenta(255, 192, 255, 255);
 static const ColorRGB RGB_Brightyellow (255, 255, 192, 255);
-static const ColorRGB RGB_Whitered     (255, 224, 224, 255);
-static const ColorRGB RGB_Whitegreen   (224, 255, 224, 255);
-static const ColorRGB RGB_Whiteblue    (224, 224, 255, 255);
-static const ColorRGB RGB_Whitecyan    (224, 255, 255, 255);
-static const ColorRGB RGB_Whitemagenta (255, 224, 255, 255);
-static const ColorRGB RGB_Whiteyellow  (255, 255, 224, 255);
-static const ColorRGB RGB_Orange       (255, 165,   0, 255);
-static const ColorRGB RGB_Brown        (165,  42,  42, 255);
-static const ColorRGB RGB_Sandy        (244, 164,  96, 255);
-static const ColorRGB RGB_Pink         (255, 192, 203, 255);
 
 static const ColorRGB RGB_Alpha(255, 255, 255, 192);
 static const ColorRGB RGB_Translucent(255, 255, 255, 128);
 static const ColorRGB RGB_Ghost(255, 255, 255, 64);
 static const ColorRGB RGB_Invisible(  0,   0,   0,   0);
-
-#define RGBA_Black(a)        ColorRGB(  0,   0,   0, a)
-#define RGBA_Red(a)          ColorRGB(255,   0,   0, a)
-#define RGBA_Green(a)        ColorRGB(  0, 255,   0, a)
-#define RGBA_Blue(a)         ColorRGB(  0,   0, 255, a)
-#define RGBA_Cyan(a)         ColorRGB(  0, 255, 255, a)
-#define RGBA_Magenta(a)      ColorRGB(255,   0, 255, a)
-#define RGBA_Yellow(a)       ColorRGB(255, 255,   0, a)
-#define RGBA_White(a)        ColorRGB(255, 255, 255, a)
-#define RGBA_Gray(a)         ColorRGB(128, 128, 128, a)
-#define RGBA_Grey(a)         ColorRGB(192, 192, 192, a)
-#define RGBA_Darkred(a)      ColorRGB(128,   0,   0, a)
-#define RGBA_Darkgreen(a)    ColorRGB(  0, 128,   0, a)
-#define RGBA_Darkblue(a)     ColorRGB(  0,   0, 128, a)
-#define RGBA_Darkcyan(a)     ColorRGB(  0, 128, 128, a)
-#define RGBA_Darkmagenta(a)  ColorRGB(128,   0, 128, a)
-#define RGBA_Darkyellow(a)   ColorRGB(128, 128,   0, a)
-#define RGBA_Darkgray(a)     ColorRGB( 64,  64,  64, a)
-#define RGBA_Darkgrey(a)     ColorRGB( 96,  96,  96, a)
-#define RGBA_Lightred(a)     ColorRGB(255, 128, 128, a)
-#define RGBA_Lightgreen(a)   ColorRGB(128, 255, 128, a)
-#define RGBA_Lightblue(a)    ColorRGB(128, 128, 255, a)
-#define RGBA_Lightcyan(a)    ColorRGB(128, 255, 255, a)
-#define RGBA_Lightmagenta(a )ColorRGB(255, 128, 255, a)
-#define RGBA_Lightyellow(a)  ColorRGB(255, 255, 128, a)
-#define RGBA_Brightred(a)    ColorRGB(255, 192, 192, a)
-#define RGBA_Brightgreen(a)  ColorRGB(192, 255, 192, a)
-#define RGBA_Brightblue(a)   ColorRGB(192, 192, 255, a)
-#define RGBA_Brightcyan(a)   ColorRGB(192, 255, 255, a)
-#define RGBA_Brightmagenta(a)ColorRGB(255, 192, 255, a)
-#define RGBA_Brightyellow(a) ColorRGB(255, 255, 192, a)
-#define RGBA_Orange(a)       ColorRGB(255, 165,   0, a)
 
 static const ColorRGBd RGBd_Black        (  0,   0,   0, 1.0);
 static const ColorRGBd RGBd_Red          (1.0,   0,   0, 1.0);
@@ -1010,5 +967,3 @@ ColorRGB RGBdtoRGB(const ColorRGBd& color);
 ColorRGBd RGBtoRGBd(const ColorRGB& color);
 
 }
-
-#endif
