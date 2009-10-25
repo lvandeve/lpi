@@ -255,7 +255,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   w1.addTitle("Window 1");
   w1.addCloseButton(guidrawer);
   w1.addResizer(guidrawer);
-  w1.setColorMod(lpi::RGBA_Red(192));
+  w1.setColorMod(lpi::ColorRGB(255, 0, 0, 192));
   c.pushTop(&w1);
 
   lpi::gui::Window w2;
@@ -263,7 +263,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   w2.addTop(guidrawer);
   w2.addTitle("Window 2");
   w2.addCloseButton(guidrawer);
-  w2.setColorMod(lpi::RGBA_White(224));
+  w2.setColorMod(lpi::ColorRGB(255, 255, 255, 224));
   w2.addResizer(guidrawer);
   c.pushTop(&w2);
   
@@ -316,7 +316,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   tabs.getTabContent(0).pushTopAt(&wbcb, 20, 80);
 
   
-  lpi::ColorRGB dyn_value0 = lpi::RGBA_Lightblue(224);
+  lpi::ColorRGB dyn_value0 = lpi::ColorRGB(128, 128, 255, 224);
   int dyn_value1 = 12345;
   std::string dyn_value2 = "hello";
   bool dyn_value3 = true;
@@ -499,7 +499,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     
     if(tb.clicked(input))
     {
-      lpi::base64StringToBinaryFile("builtInGuiTextures.png", lpi::gui::builtInGuiData);
+      lpi::base64StringToBinaryFile("builtInGuiTextures.png", lpi::gui::getBuiltInGuiTextureData());
     }
 
     if(tb2.clicked(input))

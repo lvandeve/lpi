@@ -142,6 +142,7 @@ void FileBrowseWin32::getDirectories(std::vector<std::string>& dirs, const std::
 
 bool FileBrowseWin32::fileExists(const std::string& filename) const
 {
+  (void)filename;
   return false;
 }
 

@@ -696,7 +696,7 @@ void applyAlphaEffect(ITexture* texture, const AlphaEffect& effect)
   texture->update();
 }
 
-namespace
+ITexture* getDefaultEmptyTexture()
 {
   class EmptyTexture : public ITexture
   {
@@ -708,10 +708,12 @@ namespace
     virtual unsigned char* getBuffer() { return 0; }
     virtual const unsigned char* getBuffer() const { return 0; }
     virtual void update() {};
-  } empty;
-}
+  };
+  
+  static EmptyTexture empty;
 
-ITexture* emptyTexture = &empty;
+  return &empty;
+}
 
 void getAlignedBuffer(std::vector<unsigned char>& buffer, const ITexture* texture)
 {

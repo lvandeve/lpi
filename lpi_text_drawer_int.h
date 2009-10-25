@@ -80,9 +80,6 @@ class InternalGlyphs
   
   private:
     static const int NUMFONT = 256;
-    static const std::string font8x8string;
-    static const std::string font6x6string;
-    static const std::string font4x5string;
     
     Glyphs glyphs8x8;
     Glyphs glyphs6x6;

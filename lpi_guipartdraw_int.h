@@ -33,7 +33,7 @@ namespace lpi
 namespace gui
 {
 
-extern const std::string builtInGuiData;
+  const std::string& getBuiltInGuiTextureData();
 
 /*
 a BackPanel is a collection of 9 textures that should be tileable (except the corners)
@@ -76,8 +76,6 @@ class BackPanel
   //give 1 texture, the other 8 are assumed to have successive memory locations
   void makeTextured(const ITexture** t00);
 };
-
-#define DEFAULTPANEL BackPanel(1)
 
 /*
 a BackRule is a collection of 3 textures (the center one tileable) that

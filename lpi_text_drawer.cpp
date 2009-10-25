@@ -23,7 +23,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
-const TextAlign ALIGN_TopLeft(HA_LEFT, VA_TOP);
+
 
 
 

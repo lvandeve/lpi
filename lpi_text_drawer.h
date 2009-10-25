@@ -48,7 +48,7 @@ namespace lpi
     VTextAlign valign;
   };
   
-  extern const TextAlign ALIGN_TopLeft;
+  static const TextAlign ALIGN_TopLeft(HA_LEFT, VA_TOP);
 
 
   class ITextDrawer

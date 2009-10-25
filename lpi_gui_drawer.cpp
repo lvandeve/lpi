@@ -55,8 +55,6 @@ GUIPartMod::GUIPartMod(bool mouseover, bool mousedown, bool inactive)
 {
 }
 
-const GUIPartMod GPM_Default;
-
 void AGUIDrawer::frameStart()
 {
   getDrawer().frameStart();

@@ -38,17 +38,15 @@ namespace lpi
 namespace gui
 {
 
-////////////////////////////////////////////////////////////////////////////////
-//TEXTURESET////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-/*
-PNG image, encoded in base64, containing all the GUI images
-First use the function decodeBase64
-Then use the function LodePNG::Decoder::decode
-And you get the pixels in a buffer
-*/
-const std::string builtInGuiData = "\
+const std::string& getBuiltInGuiTextureData()
+{
+  /*
+  PNG image, encoded in base64, containing all the GUI images
+  First use the function decodeBase64
+  Then use the function LodePNG::Decoder::decode
+  And you get the pixels in a buffer
+  */
+  static const std::string builtInGuiData = "\
 iVBORw0KGgoAAAANSUhEUgAAAQAAAAIACAIAAADi+CWsAAAZa0lEQVR42u2dv6skRbvHuw8ramRi\n\
 YmKwySab+BfMCCZekOWCBt5AcIO7ycJFhCu8CmcG3BcURASTNdj3YrKBmyyCJoJzUpNNNtnEYBMT\n\
 k41fcW7N1Gyd6qrunqqu6ukfz+fDeuyu6Wdqpuf59lNVXU9XuSxWxYj5dXv+Zrke+lPAbDkr9k5m\n\
@@ -167,9 +165,12 @@ PM+x0pdn+8pdW3HtOzi2Ic0bmkCQwm4uEJ1gEMthMhzDoCATZoOCaLgTDKL5fy7sE7M5B+HKAAAA\n\
 AElFTkSuQmCC\n\
 ";
 
+  return builtInGuiData;
+}
+
 void GUIPartDrawerInternal::initBuiltInGui(const ITextureFactory& factory)
 {
-  initBuiltInGuiTexturesSmall64(factory, builtInGuiData);
+  initBuiltInGuiTexturesSmall64(factory, getBuiltInGuiTextureData());
 }
 
 
@@ -194,7 +195,16 @@ void GUIPartDrawerInternal::initBuiltInGuiTexturesSmall(const ITextureFactory& f
   (void)factory;
   
   LodePNG::Decoder pngdec;
-
+  
+  //these are normally defined as static const in headers, but if GUIDrawer is declared outside of any function, due to order of loading this may be called before ColorRGB's for this translation unit are initialized. So define copies here.
+  static const ColorRGB RGB_Black(  0,   0,   0, 255);
+  static const ColorRGB RGB_White        (255, 255, 255, 255);
+  static const ColorRGB RGB_Magenta      (255,   0, 255, 255);
+  static const ColorRGB RGB_Red          (255,   0,   0, 255);
+  static const ColorRGB RGB_Gray         (128, 128, 128, 255);
+  static const ColorRGB RGB_Brightred    (255, 192, 192, 255);
+  static const AlphaEffect AE_PinkKey(128, 255, RGB_Magenta);
+  
   
   std::vector<unsigned char> dataBuffer;
   
@@ -478,15 +488,15 @@ BackPanel::BackPanel()
 {
   this->enableSides = 0;
   this->enableCenter = 0;
-  this->t00 = emptyTexture;
-  this->t01 = emptyTexture;
-  this->t02 = emptyTexture;
-  this->t10 = emptyTexture;
-  this->t11 = emptyTexture;
-  this->t12 = emptyTexture;
-  this->t20 = emptyTexture;
-  this->t21 = emptyTexture;
-  this->t22 = emptyTexture;
+  this->t00 = getDefaultEmptyTexture();
+  this->t01 = getDefaultEmptyTexture();
+  this->t02 = getDefaultEmptyTexture();
+  this->t10 = getDefaultEmptyTexture();
+  this->t11 = getDefaultEmptyTexture();
+  this->t12 = getDefaultEmptyTexture();
+  this->t20 = getDefaultEmptyTexture();
+  this->t21 = getDefaultEmptyTexture();
+  this->t22 = getDefaultEmptyTexture();
 }
 
 
@@ -494,15 +504,15 @@ void BackPanel::makeUntextured()
 {
   this->enableSides = 0;
   this->enableCenter = 0;
-  this->t00 = emptyTexture;
-  this->t01 = emptyTexture;
-  this->t02 = emptyTexture;
-  this->t10 = emptyTexture;
-  this->t11 = emptyTexture;
-  this->t12 = emptyTexture;
-  this->t20 = emptyTexture;
-  this->t21 = emptyTexture;
-  this->t22 = emptyTexture;
+  this->t00 = getDefaultEmptyTexture();
+  this->t01 = getDefaultEmptyTexture();
+  this->t02 = getDefaultEmptyTexture();
+  this->t10 = getDefaultEmptyTexture();
+  this->t11 = getDefaultEmptyTexture();
+  this->t12 = getDefaultEmptyTexture();
+  this->t20 = getDefaultEmptyTexture();
+  this->t21 = getDefaultEmptyTexture();
+  this->t22 = getDefaultEmptyTexture();
 }
 
 void BackPanel::makeTextured9(const ITexture* t00, const ITexture* t01, const ITexture* t02, const ITexture* t10, const ITexture* t11, const ITexture* t12, const ITexture* t20, const ITexture* t21, const ITexture* t22)
@@ -583,9 +593,9 @@ can form a horizontal or vertical line
 BackRule::BackRule()
 {
   this->enableSides = 0;
-  this->t0 = emptyTexture;
-  this->t1 = emptyTexture;
-  this->t2 = emptyTexture;
+  this->t0 = getDefaultEmptyTexture();
+  this->t1 = getDefaultEmptyTexture();
+  this->t2 = getDefaultEmptyTexture();
 }
 
 
@@ -853,7 +863,7 @@ void GUIPartDrawerInternal::drawGUIPart(GUIPart part, int x0, int y0, int x1, in
     }
     case GP_TOOLTIP_BACKGROUND:
     {
-      drawer->drawRectangle(x0, y0, x1, y1, RGBA_Lightyellow(224), true);
+      drawer->drawRectangle(x0, y0, x1, y1, ColorRGB(255, 255, 128, 224), true);
       drawer->drawRectangle(x0, y0, x1, y1, RGB_Black, false);
       break;
     }
