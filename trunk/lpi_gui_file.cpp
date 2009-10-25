@@ -94,18 +94,22 @@ FileList::ItemType FileList::getType(size_t i)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+std::string FileDialog::REMEMBER_PATH;
+
 FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser, bool save, bool multi)
 : list(geom)
 , save(save)
 , multiselection(multi)
 , browser(browser)
+, overwriteQuestion(geom, "File exists. Overwrite?", "Confirm")
+, askingOverwrite(false)
 {
   addTop(geom);
   addTitle("File");
   addResizer(geom);
   addCloseButton(geom);
   
-  ok.makeTextPanel(0, 0, "ok");
+  ok.makeTextPanel(0, 0, save ? "save" : "open");
   cancel.makeTextPanel(0, 0, "cancel");
   up.makeTextPanel(0, 0, "up");
 
@@ -120,11 +124,23 @@ FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser, bool save, 
 
   resize(0, 0, 600, 400);
   
+  overwriteQuestion.setEnabled(false);
+  
+  if(REMEMBER_PATH.empty())
+  {
 #ifdef WIN32
-  setPath("C:\\");
+    setPath("C:\\");
 #else
-  setPath("/");
+    setPath("/");
 #endif
+  }
+  else setPath(REMEMBER_PATH);
+}
+
+FileDialog::~FileDialog()
+{
+  std::string temp = getPath();
+  if(!temp.empty()) REMEMBER_PATH = temp;
 }
 
 void FileDialog::drawImpl(IGUIDrawer& drawer) const
@@ -141,86 +157,131 @@ void FileDialog::drawImpl(IGUIDrawer& drawer) const
   drawElements(drawer);
 }
 
+void FileDialog::manageHoverImpl(IHoverManager& hover)
+{
+  if(overwriteQuestion.isEnabled())
+    hover.addHoverElement(&overwriteQuestion);
+}
+
 void FileDialog::handleImpl(const IInput& input)
 {
-  Window::handleImpl(input);
-  
-  if(path.enteringDone() && !path.getText().empty())
+  if(askingOverwrite)
   {
-    list.generateListForDir(path.getText(), *browser);
-  }
-  if(list.mouseDoubleClicked(input))
-  {
-    size_t i = list.getMouseItem(input);
-    if(i < list.getNumItems())
+    if(overwriteQuestion.done())
     {
-      lpi::gui::FileList::ItemType type = list.getType(i);
-      if(type == lpi::gui::FileList::IT_DIR)
+      askingOverwrite = false;
+      if(overwriteQuestion.getValue())
       {
-        std::string dir = path.getText();
-        std::string value = list.getValue(i);
-        if(value == ".")
-        {
-          //nothing; it's the same dir
-        }
-        else if(value == "..")
-        {
-          std::string parent = browser->getParent(dir);
-          setPath(parent);
-        }
-        else
-        {
-          dir = browser->getChild(dir, value);
-          path.setText(dir);
-          list.generateListForDir(dir, *browser);
-        }
+        setEnabled(false);
+        result = OK;
       }
     }
   }
-  
-  if(up.clicked(input))
+  else
   {
-    std::string parent = browser->getParent(path.getText());
-    setPath(parent);
+    Window::handleImpl(input);
+
+    if(path.enteringDone() && !path.getText().empty())
+    {
+      list.generateListForDir(path.getText(), *browser);
+    }
+    if(list.mouseDoubleClicked(input))
+    {
+      size_t i = list.getMouseItem(input);
+      if(i < list.getNumItems())
+      {
+        lpi::gui::FileList::ItemType type = list.getType(i);
+        if(type == lpi::gui::FileList::IT_DIR)
+        {
+          std::string dir = path.getText();
+          std::string value = list.getValue(i);
+          if(value == ".")
+          {
+            //nothing; it's the same dir
+          }
+          else if(value == "..")
+          {
+            std::string parent = browser->getParent(dir);
+            setPath(parent);
+          }
+          else
+          {
+            dir = browser->getChild(dir, value);
+            path.setText(dir);
+            list.generateListForDir(dir, *browser);
+          }
+        }
+      }
+    }
+
+    if(up.clicked(input))
+    {
+      std::string parent = browser->getParent(path.getText());
+      setPath(parent);
+    }
+
+    //std::string filename = list.getSelectedItem() < list.getNumItems() ? list.getValue(list.getSelectedItem()) : "";
+    selectedFiles.clear();
+    list.getSelectedFiles(selectedFiles);
+    if(file.isControlActive())
+    {
+      list.deselectAll();
+    }
+    else if(!selectedFiles.empty())
+    {
+      std::string filename;
+      for(size_t i = 0; i < selectedFiles.size(); i++)
+      {
+        if(i > 0) filename += ", ";
+        filename += selectedFiles[i];
+      }
+      file.setText(filename);
+    }
+
+    if(ok.clicked(input))
+    {
+      if(save && browser->fileExists(getFileName()))
+      {
+        overwriteQuestion.moveCenterTo(getCenterX(), getCenterY());
+        overwriteQuestion.setEnabled(true);
+        askingOverwrite = true;
+      }
+      else
+      {
+        setEnabled(false);
+        result = OK;
+      }
+    }
+    if(cancel.clicked(input))
+    {
+      setEnabled(false);
+      result = CANCEL;
+    }
   }
-  
-  //std::string filename = list.getSelectedItem() < list.getNumItems() ? list.getValue(list.getSelectedItem()) : "";
-  selectedFiles.clear();
-  list.getSelectedFiles(selectedFiles);
-  std::string filename;
-  for(size_t i = 0; i < selectedFiles.size(); i++)
-  {
-    if(i > 0) filename += ", ";
-    filename += selectedFiles[i];
-  }
-  file.setText(filename);
-  
-  if(ok.clicked(input))
-  {
-    setEnabled(false);
-    result = OK;
-  }
-  if(cancel.clicked(input))
-  {
-    setEnabled(false);
-    result = CANCEL;
-  }
+}
+
+std::string FileDialog::getPath()
+{
+  return path.getText();
 }
 
 void FileDialog::setPath(const std::string& path)
 {
+  std::string folder = getFileNamePathPart(path);
   this->path.setText(path);
   list.generateListForDir(path, *browser);
 }
 
 size_t FileDialog::getNumFiles() const
 {
-  return selectedFiles.size();
+  if(multiselection) return selectedFiles.size();
+  else return 1;
 }
 
 std::string FileDialog::getFileName(size_t i)
 {
-  return browser->getChild(path.getText(), selectedFiles[i]);
+  if(multiselection) return browser->getChild(path.getText(), selectedFiles[i]);
+  else return browser->getChild(path.getText(), file.getText());
 }
 
 std::string FileDialog::getFileName()

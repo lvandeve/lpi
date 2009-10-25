@@ -56,15 +56,18 @@ bool FileBrowseNotSupported::isDirectory(const std::string& filename) const
 void FileBrowseNotSupported::getFiles(std::vector<std::string>& files, const std::string& directory) const
 {
   (void)directory;
-  files.push_back("file browsing not supported");
-  files.push_back("this are not files");
-  files.push_back("sorry...");
+  files.push_back("Error: file browsing not supported");
 }
 
 void FileBrowseNotSupported::getDirectories(std::vector<std::string>& dirs, const std::string& directory) const
 {
   (void)directory;
   (void)dirs;
+}
+
+bool FileBrowseNotSupported::fileExists(const std::string& filename) const
+{
+  return false;
 }
 
 } //namespace lpi

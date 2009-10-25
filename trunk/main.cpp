@@ -150,6 +150,12 @@ SpawnTexts spawns;
 
 lpi::ScreenGL screen(width, height, false, false, "lpi GUI demo");
 lpi::gui::GUIDrawerGL guidrawer(&screen);
+#ifdef WIN32
+  lpi::FileBrowseWin32WithDrives filebrowser;
+#else
+  lpi::FileBrowseBoost filebrowser;
+#endif
+lpi::gui::MainContainer c(guidrawer);
 
 
 class MyModalFrameHandler : public lpi::gui::IModalFrameHandler //functionality the MainContainer needs to do modal gameloops
@@ -184,15 +190,6 @@ MyModalFrameHandler modalFrameHandler;
 
 int main(int, char*[]) //the arguments have to be given here, or DevC++ can't link to SDL for some reason
 {//std::cout<<sizeof(lpi::gui::Element)<<std::endl;
-  
-#ifdef WIN32
-  lpi::FileBrowseWin32WithDrives filebrowser;
-#else
-  lpi::FileBrowseBoost filebrowser;
-#endif
-  
-  lpi::gui::MainContainer c(guidrawer);
-  
   lpi::gui::MenuVertical submenu1_1;
   submenu1_1.addCommand("Item 1", guidrawer);
   submenu1_1.addCommand("Item 2", guidrawer);

@@ -41,6 +41,8 @@ class FileBrowseBoost : public IFileBrowse
   virtual void getFiles(std::vector<std::string>& files, const std::string& directory) const;
   virtual void getDirectories(std::vector<std::string>& dirs, const std::string& directory) const;
   
+  virtual bool fileExists(const std::string& filename) const;
+  
   virtual std::string getParent(const std::string& path) const;
 };
 

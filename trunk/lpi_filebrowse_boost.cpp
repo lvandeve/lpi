@@ -104,6 +104,23 @@ void FileBrowseBoost::getDirectories(std::vector<std::string>& dirs, const std::
   }
 }
 
+bool FileBrowseBoost::fileExists(const std::string& filename) const
+{
+  return true; //TODO!!!
+  
+  try
+  {
+    fs::path full_path(fs::initial_path());
+    full_path = fs::system_complete(fs::path(directory.c_str(), fs::native));
+
+    return fs::exists(full_path));
+  }
+  catch(...)
+  {
+    return true; //I return true instead of false because if file exists you get warning "do you want to overwrite?" which is safer than returning false.
+  }
+}
+
 std::string FileBrowseBoost::getParent(const std::string& path) const
 {
   return IFileBrowse::getParent(path);
@@ -139,6 +156,11 @@ void FileBrowseBoost::getDirectories(std::vector<std::string>& dirs, const std::
 std::string FileBrowseBoost::getParent(const std::string& path) const
 {
   return IFileBrowse::getParent(path);
+}
+
+bool FileBrowseBoost::fileExists(const std::string& filename) const
+{
+  return false;
 }
 
 } //namespace lpi

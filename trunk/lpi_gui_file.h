@@ -67,12 +67,24 @@ class FileList : public ElementWrapper
     size_t getSelectedItem() const { return list.getSelectedItem(); }
     bool isSelected(size_t i) const { return list.isSelected(i); }
     const std::string& getValue(size_t i) const { return list.getValue(i); }
+    void deselectAll() { list.deselectAll(); }
 };
 
 /*
 FileDialog is for selecting one or more files. It can be used both as "save" dialog and
 as "load" dialog. The dialog itself isn't what will overwrite or load the file, the dialog
 is there just to get a filename that the user selects.
+
+TODO's:
+[X] if it's a save dialog, ask confirmation if file exists
+[X] ensure getting and setting current folder works (for remembering folder to initially open)
+[ ] filtering by extension type (requires drop down list to choose from)
+[ ] sort files alphabetically
+[ ] show and sort files by date, size, ... (requires extensions to IFileBrowse and using a table instead of a simple List)
+[ ] show some links to default or bookmarked paths on the left
+[ ] double click on filename same functionality as pressing OK
+[ ]
+[ ]
 */
 class FileDialog : public Dialog
 {
@@ -87,15 +99,23 @@ class FileDialog : public Dialog
     bool multiselection; //if false, only one file can be selected, if true multiple
     IFileBrowse* browser;
     std::vector<std::string> selectedFiles;
+    YesNoWindow overwriteQuestion;
+    bool askingOverwrite;
+    
+    static std::string REMEMBER_PATH;
     
   public:
 
     FileDialog(const IGUIDrawer& geom, IFileBrowse* browser, bool save, bool multi);
+    ~FileDialog();
 
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
+    virtual void manageHoverImpl(IHoverManager& hover);
     
-    void setPath(const std::string& path);
+    //the path is the folder the dialog is currently showing
+    void setPath(const std::string& path); //it's allowed to give a path that includes a filename, only the folder part of it will be used.
+    std::string getPath();
     
     size_t getNumFiles() const;
     std::string getFileName(size_t i); //returns full path

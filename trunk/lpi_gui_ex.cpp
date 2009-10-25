@@ -228,6 +228,7 @@ size_t List::getNumItems() const { return list.getNumItems(); }
 size_t List::getSelectedItem() const { return list.getSelectedItem(); }
 bool List::isSelected(size_t i) const { return list.isSelected(i); }
 void List::setSelected(size_t i, bool selected) { list.setSelected(i, selected); }
+void List::deselectAll() { list.deselectAll(); }
 const std::string& List::getValue(size_t i) const { return list.getValue(i); }
 void List::setValue(size_t i, const std::string& value) { list.setValue(i, value); }
 void List::setIcon(size_t i, HTexture* icon) { list.setIcon(i, icon); }
@@ -986,35 +987,6 @@ void Painter::queueText(int x, int y, const std::string& text, const Font& font)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//YESNOWINDOW///////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-YesNoWindow::YesNoWindow()
-{
-  this->enabled = 0;
-}
-
-void YesNoWindow::make(int x, int y, int sizex, int sizey, const std::string& text)
-{
-  Window::resize(x, y , sizex, sizey);
-  //addTop();
-  
-  yes.makeTextPanel(0, 0, "Yes");
-  no.makeTextPanel(0, 0, "No");
-  //yes.autoTextSize();
-  //no.autoTextSize();
-  
-  message.make(0, 0, text);
-  
-  pushTopAt(&message, 16, 16);
-  int centerx = getSizeX() / 2;
-  pushTopAt(&yes, centerx - yes.getSizeX() - 16, getSizeY() - yes.getSizeY() - 8 - 16);
-  pushTopAt(&no, centerx + 16, getSizeY() - no.getSizeY() - 8 - 16);
-  
-  this->enabled = true;
-}
-
-////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 MessageBox::MessageBox(const IGUIDrawer& geom, const std::string& text, const std::string& title)
@@ -1035,12 +1007,12 @@ MessageBox::MessageBox(const IGUIDrawer& geom, const std::string& text, const st
   setEnabled(true);
 }
 
-bool MessageBox::done()
+bool MessageBox::done() const
 {
   return !isEnabled();
 }
 
-Dialog::Result MessageBox::getResult()
+Dialog::Result MessageBox::getResult() const
 {
   return OK;
 }
@@ -1051,6 +1023,51 @@ void MessageBox::handleImpl(const IInput& input)
   if(ok.clicked(input)) setEnabled(false);
 }
   
+////////////////////////////////////////////////////////////////////////////////
+//YESNOWINDOW///////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+YesNoWindow::YesNoWindow(const IGUIDrawer& geom, const std::string& text, const std::string& title)
+: value(false)
+{
+  resize(0, 0 , 300, 150);
+  addTop(geom);
+  if(!title.empty()) addTitle(title);
+  //addCloseButton(geom);
+
+  yes.makeTextPanel(0, 0, "Yes");
+  no.makeTextPanel(0, 0, "No");
+  message.make(0, 0, text);
+
+  pushTop(&message, Sticky(0.0,4, 0.0,4, 1.0,-4, 1.0,-36));
+  pushTop(&yes, Sticky(0.5,-82, 1.0,-32, 0.5,-2, 1.0,-4));
+  pushTop(&no, Sticky(0.5,+2, 1.0,-32, 0.5,+82, 1.0,-4));
+
+  setEnabled(true);
+}
+
+bool YesNoWindow::done() const
+{
+  return !isEnabled();
+}
+
+Dialog::Result YesNoWindow::getResult() const
+{
+  return OK;
+}
+
+void YesNoWindow::handleImpl(const IInput& input)
+{
+  Dialog::handleImpl(input);
+  if(yes.clicked(input)) { value = true; setEnabled(false); }
+  if(no.clicked(input)) { value = false; setEnabled(false); }
+}
+
+bool YesNoWindow::getValue() const
+{
+  return value;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //GUICANVAS/////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -1324,30 +1341,36 @@ AMenu::AMenu()
 {
 }
 
-void AMenu::addCommand(const std::string& name, const IGUIDrawer& geom)
+size_t AMenu::addCommand(const std::string& name, const IGUIDrawer& geom)
 {
   items.resize(items.size() + 1);
   items.back().type = COMMAND;
   items.back().name = name;
   items.back().submenu = 0;
   onAddItem(geom);
+  
+  return getNumItems() - 1;
 }
 
-void AMenu::addSubMenu(AMenu* submenu, const std::string& name, const IGUIDrawer& geom)
+size_t AMenu::addSubMenu(AMenu* submenu, const std::string& name, const IGUIDrawer& geom)
 {
   items.resize(items.size() + 1);
   items.back().type = SUBMENU;
   items.back().name = name;
   items.back().submenu = submenu;
   onAddItem(geom);
+  
+  return getNumItems() - 1;
 }
 
-void AMenu::addSeparator(const IGUIDrawer& geom)
+size_t AMenu::addSeparator(const IGUIDrawer& geom)
 {
   items.resize(items.size() + 1);
   items.back().type = SEPARATOR;
   items.back().submenu = 0;
   onAddItem(geom);
+  
+  return getNumItems() - 1;
 }
 
 void AMenu::clear()
@@ -1388,6 +1411,7 @@ void AMenu::handleImpl(const IInput& input)
         openedsubmenu = lastItem;
         onOpenSubMenu(input, lastItem);
       }
+      if(item.type == COMMAND && !stay) disableMenu();
     }
   }
   
