@@ -100,7 +100,7 @@ void DynamicFile::ctor()
 }
 
 DynamicFile::DynamicFile(std::string* value, const IGUIDrawer& geom, IFileBrowse* browser)
-: edit(geom, browser)
+: edit(geom, browser, false, false)
 {
   this->bind = value;
   ctor();
@@ -121,7 +121,7 @@ void DynamicFile::handleImpl(const IInput& input)
   line.handle(input);
   
   if(pick.clicked(input)) edit.setEnabled(true);
-  else if(edit.pressedOk(input))
+  else if(edit.done() && edit.getResult() == Dialog::OK)
   {
     edit.setEnabled(false);
     if(edit.getNumFiles() > 0)
@@ -130,7 +130,7 @@ void DynamicFile::handleImpl(const IInput& input)
       setValue(&value);
     }
   }
-  else if(edit.pressedCancel(input)) edit.setEnabled(false);
+  else if(edit.done() && edit.getResult() == Dialog::CANCEL) edit.setEnabled(false);
 }
 
 void DynamicFile::drawImpl(IGUIDrawer& drawer) const

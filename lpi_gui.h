@@ -570,6 +570,7 @@ class IModalFrameHandler //functionality the MainContainer needs to do modal gam
   public:
     virtual bool doFrame() = 0; //should do everything needed every frame, including clearing the screen and redrawing it if necessary (or even draw lots of extra stuff from a computer game in the background). Returns true normally, false if you need to force-quit.
     virtual IGUIDrawer& getDrawer() = 0; //since GUIDrawer also has a getInput in it, this is also used for getting the IInput
+    virtual void getScreenSize(int& x0, int& y0, int& x1, int& y1) = 0;
 };
 
 class Dialog; //forward declaration of class Dialog for the doModalDialog function of MainContainer
@@ -936,7 +937,7 @@ class Dialog : public Window
       CANCEL
     };
 
-  private:
+  protected:
 
     Result result;
 
@@ -947,8 +948,8 @@ class Dialog : public Window
     {
     }
 
-    virtual bool done() = 0; //returns true if the dialog is closed by the user (by pressing ok, cancel, ...)
-    virtual Result getResult() = 0; //get this after done was true. This is NOT the value of the dialog (like the color of a color dialog or the yes/no boolean of a yesno dialog). Instead, this only indicates if the value is valid (if it's OK) or not (if it's CANCEL)
+    virtual bool done(); //returns true if the dialog is closed by the user (by pressing ok, cancel, ...)
+    virtual Result getResult(); //get this after done was true. This is NOT the value of the dialog (like the color of a color dialog or the yes/no boolean of a yesno dialog). Instead, this only indicates if the value is valid (if it's OK) or not (if it's CANCEL)
 };
 
 } //namespace gui

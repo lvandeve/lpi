@@ -262,6 +262,8 @@ const ToolTipManager& MainContainer::getToolTipManager() const
 
 bool MainContainer::doModalDialog(Dialog& dialog, IModalFrameHandler& frame)
 {
+  int x0, y0, x1, y1;
+  frame.getScreenSize(x0, y0, x1, y1);
   while(frame.doFrame())
   {
     dialog.handle(frame.getDrawer().getInput());
@@ -269,7 +271,6 @@ bool MainContainer::doModalDialog(Dialog& dialog, IModalFrameHandler& frame)
     frame.getDrawer().drawRectangle(x0, y0, x1, y1, ColorRGB(0,0,0,128), true); //"modal darkness"
     dialog.draw(frame.getDrawer());
     if(dialog.done()) return true;
-    
   }
   
   return false;
@@ -2769,6 +2770,17 @@ void Tabs::handleImpl(const IInput& input)
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+bool Dialog::done()
+{
+  return !isEnabled();
+}
+
+lpi::gui::Dialog::Result Dialog::getResult()
+{
+  return result;
+}
 
 } //namespace gui
 } //namespace lpi

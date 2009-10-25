@@ -74,7 +74,7 @@ FileDialog is for selecting one or more files. It can be used both as "save" dia
 as "load" dialog. The dialog itself isn't what will overwrite or load the file, the dialog
 is there just to get a filename that the user selects.
 */
-class FileDialog : public Window
+class FileDialog : public Dialog
 {
   private:
     FileList list; //the list of files in the current directory
@@ -90,11 +90,8 @@ class FileDialog : public Window
     
   public:
 
-    FileDialog(const IGUIDrawer& geom, IFileBrowse* browser);
+    FileDialog(const IGUIDrawer& geom, IFileBrowse* browser, bool save, bool multi);
 
-    bool pressedOk(const IInput& input) { return ok.clicked(input); }
-    bool pressedCancel(const IInput& input) { return cancel.clicked(input); }
-    
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
     
@@ -102,6 +99,7 @@ class FileDialog : public Window
     
     size_t getNumFiles() const;
     std::string getFileName(size_t i); //returns full path
+    std::string getFileName(); //returns first file if getNumFiles() > 0, empty string otherwise. This is useful if it's not a multi-file dialog.
 
 };
 

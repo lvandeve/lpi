@@ -170,6 +170,14 @@ class MyModalFrameHandler : public lpi::gui::IModalFrameHandler //functionality 
     {
       return guidrawer;
     }
+    
+    virtual void getScreenSize(int& x0, int& y0, int& x1, int& y1)
+    {
+      x0 = 0;
+      y0 = 0;
+      x1 = width;
+      y1 = height;
+    }
 };
 
 MyModalFrameHandler modalFrameHandler;
@@ -269,12 +277,6 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   tabs.addTab("tab 3");
   tabs.addTab("tab 4");
   w2.pushTopAt(&tabs, 0, 0, lpi::gui::Sticky(0.0, 0, 0.0, 0, 1.0, 0, 1.0, 0));
-
-
-  /*lpi::gui::FileDialog fileWindow(guidrawer, &filebrowser);
-  fileWindow.moveTo(150, 150);
-  c.pushTop(&fileWindow);*/
-
 
   lpi::gui::Button sound_button;
   sound_button.makeTextPanel(20, 500, "sound", 64, 24);
@@ -467,12 +469,16 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     standby.handle(input);
     if(standby.isStandBy(input)) guidrawer.drawText("STANDBY", width / 2 - 32, height / 2 - 4);
     
-    if(menu1.itemClicked(menu1.getNumItems() - 1, input)) break;
+    if(menu1.itemClicked(menu1.getNumItems() - 1, input)) break; //exit
+    if(menu1.itemClicked(0, input))
+    {
+      std::string filename;
+      lpi::gui::Dialog::Result result = lpi::gui::getFileNameModal(c, modalFrameHandler, &filebrowser, filename, "", false);
+      if(result == lpi::gui::Dialog::OK) lpi::gui::showMessageBox(c, modalFrameHandler, filename, "Filename");
+    }
     if(menu2.itemClicked(0, input))
     {
-      lpi::gui::MessageBox box("This is a message box", guidrawer);
-      box.moveCenterTo(width/2, height/2);
-      c.doModalDialog(box, modalFrameHandler);
+      lpi::gui::showMessageBox(c, modalFrameHandler, "This is a message box", "Message Box");
     }
     
     
@@ -506,7 +512,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
       lpi::binaryFileToBase64File("1.txt", "1.png", true);
       lpi::binaryFileToBase64File("2.txt", "2.png", true);
     }
-    
+
     if(wb.mouseJustOver(input)) spawns.addSpawn("just over", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::RGB_Gray);
     if(wb.mouseJustLeft(input)) spawns.addSpawn("just left", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::RGB_White);
     if(wb.pressed(input)) spawns.addSpawn("pressed", lpi::globalMouseX, lpi::globalMouseY, &guidrawer, lpi::ColorRGB(255, 0, 0));

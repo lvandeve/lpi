@@ -35,6 +35,9 @@ TODO: fix menu and other such elements
 
 namespace lpi
 {
+
+class IFileBrowse;
+
 namespace gui
 {
 
@@ -335,7 +338,7 @@ class MessageBox : public Dialog
 
   public:
 
-    MessageBox(const std::string& text, const IGUIDrawer& geom);
+    MessageBox(const IGUIDrawer& geom, const std::string& text, const std::string& title = "");
     void make(int x, int y, int sizex, int sizey, const std::string& text);
 
     virtual bool done();
@@ -611,6 +614,13 @@ class MenuVertical : public AMenu
 
     MenuVertical();
 };
+
+//Utility functions to quickly show and use modal dialogs
+
+void showMessageBox(MainContainer& c, IModalFrameHandler& frame, const std::string& text, const std::string& title = "");
+//current_path is the folder the file dialog should show initially. If you give empty string, then something is chosen for you instead.
+lpi::gui::Dialog::Result getFileNameModal(MainContainer& c, IModalFrameHandler& frame, IFileBrowse* browser, std::string& filename, const std::string& current_path, bool save);
+lpi::gui::Dialog::Result getFileNamesModal(MainContainer& c, IModalFrameHandler& frame, IFileBrowse* browser, std::vector<std::string>& filenames, const std::string& current_path);
 
 } //namespace gui
 } //namespace lpi

@@ -94,8 +94,10 @@ FileList::ItemType FileList::getType(size_t i)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser)
+FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser, bool save, bool multi)
 : list(geom)
+, save(save)
+, multiselection(multi)
 , browser(browser)
 {
   addTop(geom);
@@ -103,6 +105,10 @@ FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser)
   addResizer(geom);
   addCloseButton(geom);
   
+  ok.makeTextPanel(0, 0, "ok");
+  cancel.makeTextPanel(0, 0, "cancel");
+  up.makeTextPanel(0, 0, "up");
+
   pushTop(&ok, Sticky(1.0,-84, 1.0,-28, 1.0,-4, 1.0,-4));
   pushTop(&cancel, Sticky(1.0,-172, 1.0,-28, 1.0,-88, 1.0,-4));
   pushTop(&up, Sticky(1.0,-24, 0.0,4, 1.0,-4, 0.0,24));
@@ -113,10 +119,6 @@ FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser)
   file.make(0, 0, 256);
 
   resize(0, 0, 600, 400);
-  
-  ok.makeTextPanel(0, 0, "ok");
-  cancel.makeTextPanel(0, 0, "cancel");
-  up.makeTextPanel(0, 0, "up");
   
 #ifdef WIN32
   setPath("C:\\");
@@ -192,6 +194,17 @@ void FileDialog::handleImpl(const IInput& input)
     filename += selectedFiles[i];
   }
   file.setText(filename);
+  
+  if(ok.clicked(input))
+  {
+    setEnabled(false);
+    result = OK;
+  }
+  if(cancel.clicked(input))
+  {
+    setEnabled(false);
+    result = CANCEL;
+  }
 }
 
 void FileDialog::setPath(const std::string& path)
@@ -208,6 +221,11 @@ size_t FileDialog::getNumFiles() const
 std::string FileDialog::getFileName(size_t i)
 {
   return browser->getChild(path.getText(), selectedFiles[i]);
+}
+
+std::string FileDialog::getFileName()
+{
+  return getNumFiles() > 0 ? getFileName(0) : "";
 }
 
 } //namespace gui
