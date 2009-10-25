@@ -28,6 +28,9 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_file.h"
 #include "lpi_base64.h"
 #include "lpi_xml.h"
+#include "lpi_gui_file.h"
+#include "lpi_gui_color.h"
+#include "lpi_gui_text.h"
 
 #include <iostream>
 
@@ -1014,10 +1017,11 @@ void YesNoWindow::make(int x, int y, int sizex, int sizey, const std::string& te
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-MessageBox::MessageBox(const std::string& text, const IGUIDrawer& geom)
+MessageBox::MessageBox(const IGUIDrawer& geom, const std::string& text, const std::string& title)
 {
   resize(0, 0 , 300, 150);
   addTop(geom);
+  if(!title.empty()) addTitle(title);
   addCloseButton(geom);
 
   ok.makeTextPanel(0, 0, "Ok");
@@ -1025,8 +1029,8 @@ MessageBox::MessageBox(const std::string& text, const IGUIDrawer& geom)
 
   message.make(0, 0, text);
 
-  pushTop(&message, Sticky(0.0,4, 0.0,4, 1.0,-4, 1.0,-40));
-  pushTop(&ok, Sticky(0.5,-40, 1.0,-36, 0.5,+40, 1.0,-4));
+  pushTop(&message, Sticky(0.0,4, 0.0,4, 1.0,-4, 1.0,-36));
+  pushTop(&ok, Sticky(0.5,-40, 1.0,-32, 0.5,+40, 1.0,-4));
 
   setEnabled(true);
 }
@@ -1608,6 +1612,50 @@ void MenuVertical::drawImpl(IGUIDrawer& drawer) const
     }
     totalSize += sizes[i];
   }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+void showMessageBox(MainContainer& c, IModalFrameHandler& frame, const std::string& text, const std::string& title)
+{
+  int x0, y0, x1, y1;
+  frame.getScreenSize(x0, y0, x1, y1);
+  
+  lpi::gui::MessageBox dialog(frame.getDrawer(), text, title);
+  dialog.moveCenterTo((x0+x1)/2, (y0+y1)/2);
+  c.doModalDialog(dialog, frame);
+}
+
+lpi::gui::Dialog::Result getFileNameModal(MainContainer& c, IModalFrameHandler& frame, IFileBrowse* browser, std::string& filename, const std::string& current_path, bool save)
+{
+  (void)current_path; //TODO
+  
+  int x0, y0, x1, y1;
+  frame.getScreenSize(x0, y0, x1, y1);
+
+  lpi::gui::FileDialog dialog(frame.getDrawer(), browser, save, false);
+  dialog.moveCenterTo((x0+x1)/2, (y0+y1)/2);
+  c.doModalDialog(dialog, frame);
+  filename = dialog.getFileName();
+  return dialog.getResult();
+}
+
+lpi::gui::Dialog::Result getFileNamesModal(MainContainer& c, IModalFrameHandler& frame, IFileBrowse* browser, std::vector<std::string>& filenames, const std::string& current_path)
+{
+  (void)current_path; //TODO
+  
+  int x0, y0, x1, y1;
+  frame.getScreenSize(x0, y0, x1, y1);
+
+  lpi::gui::FileDialog dialog(frame.getDrawer(), browser, false, true);
+  dialog.moveCenterTo((x0+x1)/2, (y0+y1)/2);
+  c.doModalDialog(dialog, frame);
+  for(size_t i = 0; i < dialog.getNumFiles(); i++)
+  {
+    filenames.push_back(dialog.getFileName(i));
+  }
+  return dialog.getResult();
 }
 
 
