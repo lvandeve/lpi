@@ -104,6 +104,16 @@ std::string FileBrowseWin32::getParent(const std::string& path) const
   return result;
 }
 
+bool FileBrowseWin32::fileExists(const std::string& filename) const
+{
+  DWORD fileAttr;
+
+  fileAttr = GetFileAttributes(filename.c_str());
+  if (0xFFFFFFFF == fileAttr)
+      return false;
+  return true;
+}
+
 } //namespace lpi
 
 #else
@@ -128,6 +138,11 @@ void FileBrowseWin32::getDirectories(std::vector<std::string>& dirs, const std::
 {
   (void)dirs;
   (void)directory;
+}
+
+bool FileBrowseWin32::fileExists(const std::string& filename) const
+{
+  return false;
 }
 
 std::string FileBrowseWin32::getParent(const std::string& path) const
@@ -189,6 +204,11 @@ std::string FileBrowseWin32WithDrives::getChild(const std::string& path, const s
   if(!path.empty()) ensureDirectoryEndOSSlash(result);
   result += child;
   return result;
+}
+
+bool FileBrowseWin32WithDrives::fileExists(const std::string& filename) const
+{
+  return browser.fileExists(filename);
 }
 
 }

@@ -948,8 +948,8 @@ class Dialog : public Window
     {
     }
 
-    virtual bool done(); //returns true if the dialog is closed by the user (by pressing ok, cancel, ...)
-    virtual Result getResult(); //get this after done was true. This is NOT the value of the dialog (like the color of a color dialog or the yes/no boolean of a yesno dialog). Instead, this only indicates if the value is valid (if it's OK) or not (if it's CANCEL)
+    virtual bool done() const; //returns true if the dialog is closed by the user (by pressing ok, cancel, ...)
+    virtual Result getResult() const; //get this after done was true. This is NOT the value of the dialog (like the color of a color dialog or the yes/no boolean of a yesno dialog). Instead, this only indicates if the value is valid (if it's OK) or not (if it's CANCEL)
 };
 
 } //namespace gui

@@ -63,8 +63,6 @@ class InternalList : public Element
     virtual void handleImpl(const IInput& input);
     virtual void drawImpl(IGUIDrawer& drawer) const;
     size_t getItemHeight() const;
-        
-    void deselectAll();
     
   public:
   
@@ -73,6 +71,7 @@ class InternalList : public Element
     size_t getSelectedItem() const; //works only correctly if allowMultiSelection is false. Returns value larger than getNumItems if no item at all is selected.
     bool isSelected(size_t i) const; //works both if allowMultiSelection is true or false
     void setSelected(size_t i, bool selected = true); //selects this item. Others get deselected if allowMultiSelection is false.
+    void deselectAll();
     const std::string& getValue(size_t i) const; //the value is tje display name of the item
     void setValue(size_t i, const std::string& value);
     void setIcon(size_t i, HTexture* icon);
@@ -104,6 +103,7 @@ class List : public ScrollElement
     size_t getSelectedItem() const; //works only correctly if allowMultiSelection is false. Returns value larger than getNumItems if no item at all is selected.
     bool isSelected(size_t i) const; //works both if allowMultiSelection is true or false
     void setSelected(size_t i, bool selected = true); //selects this item. Others get deselected if allowMultiSelection is false.
+    void deselectAll();
     const std::string& getValue(size_t i) const; //the value is tje display name of the item
     void setValue(size_t i, const std::string& value);
     void setIcon(size_t i, HTexture* icon);
@@ -116,66 +116,7 @@ class List : public ScrollElement
     size_t getMouseItem(const IInput& input) const; //this returns the item over which the mouse is, which you can use together with checks like "doubleclicked" to determine if a certain item is being doubleclicked or whatever else you check. Returns invalid index if mouse is not over this list.
 };
 
-//class DropMenu : public ElementComposite
-//{
-  //private:
-    //std::vector<Button> menuButton;
-    //std::vector<bool> separator;
-    
-    ///*
-    //identity:
-    //unique identifier (number) for each option, which can optionally be used to check options,
-    //for example in an rpg game with a drop menu for items in inventory, option "drop item" can
-    //always get number 5, option "use" can get number 7 for example, and then no matter at
-    //what location in the menu the "use" option is, or no matter what alternative name (e.g.
-    //"drink") the use option has, you can still check if it was pressed by using checkIdentity()
-    
-    //identities can only be set to useful values if you use the addOption function to add options
-    //one by one, the setOptions function doesn't fill in useful identity values but only 0
-    
-    //negative identities are most certainly allowed
-    //*/
-    //std::vector<int> identity;
-    
-  //public:
-    ////std::string text; //the menu texts, sorted, with | chars between them, and closed with a final NULL char
-    
-    //void setOptions(const std::string& text);
-    //void clearOptions();
-    
-    ////text styles
-    //Markup markup1;
-    //Markup markup2;
-    
-    //BackPanel panel;
-    //BackRule hrule; //for the separators
-    
-    //DropMenu();
-    //void makeColored(int x, int y, const std::string& text,
-                     //const Font* font1 = 0hite, const Font& font2 = 0hite,
-                     //const ColorRGB& menuColor = RGB_Grey, BackRule hrule = DEFAULTHRULE); //make with simple color panel
-    //void make(int x, int y, const std::string& text,
-              //const Font* font1 = 0hite, const Font& font2 = 0hite,
-              //BackPanel panel = DEFAULTPANEL, BackRule hrule = DEFAULTHRULE); //make with given panel    
-    //virtual void drawImpl(IGUIDrawer& drawer) const;
-    //virtual void handleImpl(const IInput& input);
-    //int check(const IInput& input);
-    //Button* getButton(int i);
-    //Button* getButton(const std::string& name);
-    //int getNumButtons() const { return menuButton.size(); }
-    //std::string checkText(const IInput& input);
-    ///*
-    //returns 0 if none, or a button where no identity was set, is pressed, or
-    //the identity of the button if one with an identity was pressed
-    //*/
-    //int checkIdentity(const IInput& input);
-    //void addOption(const std::string& text, int id = 0); //id is an optional identity
-    
-    //bool autoDisable; //if true, the menu will totallyDisable itself if you click anywhere not on the menu
-//};
-
-
-
+//TODO: recreate this, using "hover"
 //class Droplist : public ElementComposite
 //{
   //private:
@@ -316,17 +257,6 @@ class Painter : public Element
 };
 
 //message boxes
-class YesNoWindow : public Dialog
-{
-  public:
-  Button yes;
-  Button no;
-  Text message;
-  
-  YesNoWindow();
-  void make(int x, int y, int sizex, int sizey, const std::string& text);
-};
-
 class MessageBox : public Dialog
 {
   protected:
@@ -339,11 +269,27 @@ class MessageBox : public Dialog
   public:
 
     MessageBox(const IGUIDrawer& geom, const std::string& text, const std::string& title = "");
-    void make(int x, int y, int sizex, int sizey, const std::string& text);
+    virtual bool done() const;
+    virtual Result getResult() const;
 
-    virtual bool done();
-    virtual Result getResult();
+};
 
+class YesNoWindow : public Dialog
+{
+  protected:
+    Button yes;
+    Button no;
+    Text message;
+    bool value;
+
+  protected:
+    virtual void handleImpl(const IInput& input);
+
+  public:
+    YesNoWindow(const IGUIDrawer& geom, const std::string& text, const std::string& title = "");
+    virtual bool done() const;
+    virtual Result getResult() const; //returns OK or CANCEL (since there's no cancel button, it's always OK)
+    bool getValue() const; //returns true for yes, false for no
 };
 
 //a painting canvas that allows you to paint with the mouse
@@ -560,9 +506,9 @@ class AMenu : public Element
   public:
     AMenu();
     
-    void addCommand(const std::string& name, const IGUIDrawer& geom);
-    void addSubMenu(AMenu* submenu, const std::string& name, const IGUIDrawer& geom);
-    void addSeparator(const IGUIDrawer& geom);
+    size_t addCommand(const std::string& name, const IGUIDrawer& geom);
+    size_t addSubMenu(AMenu* submenu, const std::string& name, const IGUIDrawer& geom);
+    size_t addSeparator(const IGUIDrawer& geom);
     void clear();
     
     size_t getNumItems() const;

@@ -267,9 +267,14 @@ bool MainContainer::doModalDialog(Dialog& dialog, IModalFrameHandler& frame)
   while(frame.doFrame())
   {
     dialog.handle(frame.getDrawer().getInput());
+    h.clear();
+    dialog.manageHover(*this);
+    h.setElementOver(false);
+    h.handle(frame.getDrawer().getInput());
     draw(frame.getDrawer());
     frame.getDrawer().drawRectangle(x0, y0, x1, y1, ColorRGB(0,0,0,128), true); //"modal darkness"
     dialog.draw(frame.getDrawer());
+    h.draw(frame.getDrawer());
     if(dialog.done()) return true;
   }
   
@@ -2772,12 +2777,12 @@ void Tabs::handleImpl(const IInput& input)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool Dialog::done()
+bool Dialog::done() const
 {
   return !isEnabled();
 }
 
-lpi::gui::Dialog::Result Dialog::getResult()
+lpi::gui::Dialog::Result Dialog::getResult() const
 {
   return result;
 }
