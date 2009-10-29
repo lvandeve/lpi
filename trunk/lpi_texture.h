@@ -72,6 +72,13 @@ class ITexture
   call it after every pixel you change.
   */
   virtual void update() = 0;
+  
+  /*
+  indicate only the part in the given rectangular zone changed, some implementations
+  can perform this more efficiently than updating *everything* if  only a small part changed.
+  x1 and y1 are the end coordinates of the rectangular area and are *not* inclusive.
+  */
+  virtual void updatePartial(int x0, int y0, int x1, int y1) = 0;
 };
 
 /*
@@ -122,6 +129,7 @@ class TextureBuffer : public ITexture
     virtual const unsigned char* getBuffer() const;
 
     virtual void update();
+    virtual void updatePartial(int x0, int y0, int x1, int y1);
 };
 
 /*

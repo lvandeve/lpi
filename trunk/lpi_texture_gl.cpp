@@ -36,18 +36,6 @@ TextureGL::TextureGL()
   generated = false;
 }
 
-void TextureGL::operator*=(double a)
-{
-  for(size_t y = 0; y < v2; y++)
-  for(size_t x = 0; x < u2; x++)
-  for(size_t c = 0; c < 3; c++)
-  {
-    buffer[4 * u2 * y + 4 * x + c] = (unsigned char)(buffer[4 * u2 * y + 4 * x + c] * a);
-  }
-  
-  upload();
-}
-
 //make memory for the buffer of the texture
 void TextureGL::makeBuffer(int u, int v)
 {
@@ -71,6 +59,22 @@ void TextureGL::makeBuffer(int u, int v)
 void TextureGL::deleteBuffer()
 {
   buffer.clear();
+}
+
+void TextureGL::uploadPartial(int x0, int y0, int x1, int y1)
+{
+  //indicate how we'll read from buffer
+  glPixelStorei( GL_UNPACK_ROW_LENGTH, u2);
+  glPixelStorei( GL_UNPACK_SKIP_PIXELS, x0);
+  glPixelStorei( GL_UNPACK_SKIP_ROWS, y0);
+    
+  glTexSubImage2D(GL_TEXTURE_2D, 0, x0, y0, x1 - x0, y1 - y0, GL_RGBA, GL_UNSIGNED_BYTE, &buffer[0] );
+  
+  //set back to default so that the rest behaves normally
+  glPixelStorei( GL_UNPACK_ROW_LENGTH, 0);
+  glPixelStorei( GL_UNPACK_SKIP_PIXELS, 0);
+  glPixelStorei( GL_UNPACK_SKIP_ROWS, 0);
+
 }
 
 //This generates the OpenGL texture so that OpenGL can use it, also use after changing the texture buffer
@@ -107,125 +111,8 @@ void TextureGL::bind(bool smoothing) const
   }
 }
 
-////Draw the texture on screen
-//void TextureGL::draw(int x, int y, const ColorRGB& colorMod, int sizex, int sizey, int skewx, int skewy) const
-//{
-//  if(sizex < 0) sizex = u;
-//  if(sizey < 0) sizey = v;
-//  if(sizex == 0 || sizey == 0) return;
-//  glEnable(GL_TEXTURE_2D);
-//
-//  glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
-//  bind();
-//
-//  setOpenGLScissor(); //everything that draws something must always do this
-//
-//  //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
-//  glBegin(GL_QUADS);
-//    glTexCoord2d(0.0, 0.0); glVertex2d(x + 0     + skewx, y + 0     + 0    );
-//    glTexCoord2d(+u3, 0.0); glVertex2d(x + sizex + skewx, y + 0     + skewy);
-//    glTexCoord2d(+u3, +v3); glVertex2d(x + sizex + 0    , y + sizey + skewy);
-//    glTexCoord2d(0.0, +v3); glVertex2d(x + 0     + 0    , y + sizey + 0    );
-//  glEnd();
-//}
-//
-////Draw the texture on screen
-//void TextureGL::draw(int x1, int y1, int x2, int y2, const ColorRGB& colorMod) const
-//{
-//  if(x2 - x1 == 0 || y2 - y1 == 0) return;
-//  glEnable(GL_TEXTURE_2D);
-//
-//  glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
-//  bind();
-//
-//  setOpenGLScissor(); //everything that draws something must always do this
-//
-//  //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
-//  glBegin(GL_QUADS);
-//    glTexCoord2d(0.0, 0.0); glVertex3d(x1, y1, 1);
-//    glTexCoord2d(+u3, 0.0); glVertex3d(x2, y1, 1);
-//    glTexCoord2d(+u3, +v3); glVertex3d(x2, y2, 1);
-//    glTexCoord2d(0.0, +v3); glVertex3d(x1, y2 , 1);
-//  glEnd();
-//}
-//
-//void TextureGL::draw(int x, int y, double scalex, double scaley, const ColorRGB& colorMod) const
-//{
-//  double sizex = u * scalex;
-//  double sizey = v * scaley;
-//  if(sizex == 0.0 || sizey == 0.0) return;
-//  glEnable(GL_TEXTURE_2D);
-//
-//  glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
-//  bind();
-//
-//  setOpenGLScissor(); //everything that draws something must always do this
-//
-//  //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
-//  glBegin(GL_QUADS);
-//    glTexCoord2d(0.0, 0.0); glVertex3d(x + 0  , y + 0  , 1);
-//    glTexCoord2d(+u3, 0.0); glVertex3d(x + sizex, y + 0  , 1);
-//    glTexCoord2d(+u3, +v3); glVertex3d(x + sizex, y + sizey, 1);
-//    glTexCoord2d(0.0, +v3); glVertex3d(x + 0  , y + sizey, 1);
-//  glEnd();
-//}
-//
-//void TextureGL::draw(int x, int y, double scale, const ColorRGB& colorMod) const
-//{
-//  draw(x, y, scale, scale, colorMod);
-//}
-//
-////Draw the texture on screen where x and y are the center instead of the top left corner
-//void TextureGL::drawCentered(int x, int y, const ColorRGB& colorMod, int sizex, int sizey, int skewx, int skewy) const
-//{
-//  if(sizex < 0) sizex = u;
-//  if(sizey < 0) sizey = v;
-//  if(sizex == 0 || sizey == 0) return;
-//  draw(x - sizex / 2, y - sizey / 2, colorMod, sizex, sizey, skewx, skewy);
-//}
-//
-//void TextureGL::drawCentered(int x, int y, double scalex, double scaley, const ColorRGB& colorMod) const
-//{
-//  int sizex = int(u * scalex);
-//  int sizey = int(v * scaley);
-//  if(sizex == 0 || sizey == 0) return;
-//  draw(x - sizex / 2, y - sizey / 2, scalex, scaley, colorMod);
-//}
-//
-//void TextureGL::drawCentered(int x, int y, double scale, const ColorRGB& colorMod) const
-//{
-//  drawCentered(x, y, scale, scale, colorMod);
-//}
-//
-///*
-//draws the texture repeated, useful to fill something with a tilable texture
-//The texture size must be a power of 2, or you get ugly black things in between
-//scale is a scaling factor of the texture
-//*/
-//void TextureGL::drawRepeated(int x1, int y1, int x2, int y2, double scalex, double scaley, const ColorRGB& colorMod) const
-//{
-//  glEnable(GL_TEXTURE_2D);
-//
-//  glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
-//  bind();
-//
-//  setOpenGLScissor(); //everything that draws something must always do this
-//  
-//  double coorx = (double(x2 - x1) / u) / scalex;//(u3 * (x2 - x1)) / scalex;
-//  double coory = (double(y2 - y1) / v) / scaley; //(v3 * (y2 - y1)) / scaley;
-//
-//  //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
-//  glBegin(GL_QUADS);
-//    glTexCoord2d(0.0,       0.0); glVertex3d(x1, y1, 1);
-//    glTexCoord2d(0.0,    +coory); glVertex3d(x1, y2, 1);
-//    glTexCoord2d(+coorx, +coory); glVertex3d(x2, y2, 1);
-//    glTexCoord2d(+coorx,    0.0); glVertex3d(x2, y1, 1);
-//  glEnd();
-//}
-
 void TextureGL::getTextAlignedBuffer(std::vector<unsigned char>& out)
 {
-  //out = buffer;
   out.clear();
   for(size_t y = 0; y < v; y++)
   {
