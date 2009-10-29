@@ -51,6 +51,7 @@ class TextureGL : public ITexture
     virtual size_t getV2() const {return v2;}
     
     virtual void update() { upload(); }
+    virtual void updatePartial(int x0, int y0, int x1, int y1) { uploadPartial(x0, y0, x1, y1); }
     
     virtual unsigned char* getBuffer()
     {
@@ -68,6 +69,7 @@ class TextureGL : public ITexture
     void makeBuffer(int u, int v); //creates memory for the buffer
     void deleteBuffer(); //deletes memory of the buffer
 
+    void uploadPartial(int x0, int y0, int x1, int y1); //todo: make use of this for efficiency
     void upload(); //sets the texture to openGL with correct datatype and such. Everytime something changes in the data in the buffer, upload it again to let the videocard/API know the changes. Also, use upload AFTER a screen is already set! And when the screen changes resolution, everything has to be uploaded again.
     void reupload(); //call this after you changed the screen (causing the textures to be erased from the video card)
     
@@ -76,12 +78,10 @@ class TextureGL : public ITexture
     void setTextAlignedBuffer(const std::vector<unsigned char>& in);
     
     
-    void operator*=(double a);
-    
   private:
     std::vector<unsigned char> buffer; //the buffer containing the image data in pc memory, can also be altered: just upload() the texture again to make the new result visible
 
-    GLuint texture[1]; //the OpenGL texture datatype
+    GLuint texture[1]; //the unique OpenGL texture "name" to identify ourselves
     bool generated;
     //width and height of the texture
     size_t u;

@@ -708,6 +708,7 @@ ITexture* getDefaultEmptyTexture()
     virtual unsigned char* getBuffer() { return 0; }
     virtual const unsigned char* getBuffer() const { return 0; }
     virtual void update() {};
+    virtual void updatePartial(int,int,int,int) {};
   };
   
   static EmptyTexture empty;
@@ -831,7 +832,18 @@ const unsigned char* TextureBuffer::getBuffer() const
 
 void TextureBuffer::update()
 {
- //nothing to do :)
+  //nothing to do :)
+}
+
+void TextureBuffer::updatePartial(int x0, int y0, int x1, int y1)
+{
+  //standard way to suppress the warnings
+  (void)x0;
+  (void)y0;
+  (void)x1;
+  (void)y1;
+  
+  //nothing to do :)
 }
 
 } //namespace lpi

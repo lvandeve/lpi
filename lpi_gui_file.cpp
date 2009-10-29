@@ -180,6 +180,8 @@ void FileDialog::handleImpl(const IInput& input)
   else
   {
     Window::handleImpl(input);
+    
+    bool okThroughDoubleClickOnFile = false;
 
     if(path.enteringDone() && !path.getText().empty())
     {
@@ -211,6 +213,10 @@ void FileDialog::handleImpl(const IInput& input)
             list.generateListForDir(dir, *browser);
           }
         }
+        else if(type == lpi::gui::FileList::IT_FILE)
+        {
+          okThroughDoubleClickOnFile = true;
+        }
       }
     }
 
@@ -238,7 +244,7 @@ void FileDialog::handleImpl(const IInput& input)
       file.setText(filename);
     }
 
-    if(ok.clicked(input))
+    if(ok.clicked(input) || okThroughDoubleClickOnFile)
     {
       if(save && browser->fileExists(getFileName()))
       {
