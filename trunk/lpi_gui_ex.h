@@ -82,6 +82,7 @@ class InternalList : public Element
     void setAllowMultiSelection(bool set);
     void clear();
     size_t getMouseItem(const IInput& input) const; //this returns the item over which the mouse is, which you can use together with checks like "doubleclicked" to determine if a certain item is being doubleclicked or whatever else you check. Returns invalid index if mouse is not over this list.
+    void swap(size_t item1, size_t item2); //swapping location of two items, e.g. for sorting
 };
 
 class List : public ScrollElement
@@ -114,6 +115,7 @@ class List : public ScrollElement
     void setAllowMultiSelection(bool set);
     void clear();
     size_t getMouseItem(const IInput& input) const; //this returns the item over which the mouse is, which you can use together with checks like "doubleclicked" to determine if a certain item is being doubleclicked or whatever else you check. Returns invalid index if mouse is not over this list.
+    void swap(size_t item1, size_t item2);
 };
 
 //TODO: recreate this, using "hover"
@@ -512,7 +514,8 @@ class AMenu : public Element
     void clear();
     
     size_t getNumItems() const;
-    bool itemClicked(size_t i, const IInput& input) const;
+    bool itemClicked(size_t i, const IInput& input) const; //returns whether item with given index is clicked
+    size_t itemClicked(const IInput& input) const; //returns index of item that is clicked if some item is clicked, an invalid index (>= getNumItems()) otherwise.
     
     virtual void handleImpl(const IInput& input);
     
@@ -567,6 +570,9 @@ void showMessageBox(MainContainer& c, IModalFrameHandler& frame, const std::stri
 //current_path is the folder the file dialog should show initially. If you give empty string, then something is chosen for you instead.
 lpi::gui::Dialog::Result getFileNameModal(MainContainer& c, IModalFrameHandler& frame, IFileBrowse* browser, std::string& filename, const std::string& current_path, bool save);
 lpi::gui::Dialog::Result getFileNamesModal(MainContainer& c, IModalFrameHandler& frame, IFileBrowse* browser, std::vector<std::string>& filenames, const std::string& current_path);
+class FileDialog;
+lpi::gui::Dialog::Result getFileNameModal(MainContainer& c, IModalFrameHandler& frame, FileDialog& dialog, std::string& filename);
+lpi::gui::Dialog::Result getFileNamesModal(MainContainer& c, IModalFrameHandler& frame, FileDialog& dialog, std::vector<std::string>& filenames);
 
 } //namespace gui
 } //namespace lpi

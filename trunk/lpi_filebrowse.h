@@ -47,6 +47,8 @@ class IFileBrowse
   
   virtual std::string getParent(const std::string& path) const; //e.g. /mnt/D/folder/ gives /mnt/D/. Has default implementation for convenience.
   virtual std::string getChild(const std::string& path, const std::string& child) const; //child can be subdir or file
+  
+  virtual void createDirectory(const std::string& path) = 0; //the path is allowed to include a filename. It creates all directories and subdirectories needed to have the complete path (excluding the filename and extention part) created on disk. In fact, it does everything needed to make sure the file can be saved with a standard C++ ofstream afterwars.
 };
 
 class FileBrowseNotSupported : public IFileBrowse
@@ -56,6 +58,7 @@ class FileBrowseNotSupported : public IFileBrowse
   virtual void getFiles(std::vector<std::string>& files, const std::string& directory) const;
   virtual void getDirectories(std::vector<std::string>& dirs, const std::string& directory) const;
   virtual bool fileExists(const std::string& filename) const;
+  virtual void createDirectory(const std::string& path);
 };
 
 } //namespace lpi

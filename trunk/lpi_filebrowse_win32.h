@@ -33,6 +33,8 @@ which files exist, only read or write a file with a given path name.
 namespace lpi
 {
 
+#ifdef _WIN32
+
 class FileBrowseWin32 : public IFileBrowse
 {
   public:
@@ -44,22 +46,27 @@ class FileBrowseWin32 : public IFileBrowse
   virtual bool fileExists(const std::string& filename) const;
   
   virtual std::string getParent(const std::string& path) const;
+  
+  virtual void createDirectory(const std::string& path);
 };
 
-class FileBrowseWin32WithDrives : public IFileBrowse
+#else
+
+typedef FileBrowseNotSupported FileBrowseWin32;
+
+#endif
+
+class FileBrowseWin32WithDrives : public FileBrowseWin32
 {
-  FileBrowseWin32 browser;
   
   public:
-  virtual bool isDirectory(const std::string& filename) const;
 
   virtual void getFiles(std::vector<std::string>& files, const std::string& directory) const;
   virtual void getDirectories(std::vector<std::string>& dirs, const std::string& directory) const;
 
-  virtual bool fileExists(const std::string& filename) const;
-
   virtual std::string getParent(const std::string& path) const;
   virtual std::string getChild(const std::string& path, const std::string& child) const;
+  
 };
 
 } //namespace lpi

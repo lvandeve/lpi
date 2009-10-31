@@ -19,15 +19,15 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 */
 
 #include "lpi_filebrowse_win32.h"
+#include <iostream>
 
-#ifdef WIN32
+#ifdef _WIN32
 
 #include "lpi_file.h"
 
 #include <windows.h>
 #include <tchar.h>
 #include <stdio.h>
-
 
 #include <sstream>
 
@@ -114,47 +114,26 @@ bool FileBrowseWin32::fileExists(const std::string& filename) const
   return true;
 }
 
-} //namespace lpi
-
-#else
-
-namespace lpi
+void FileBrowseWin32::createDirectory(const std::string& path)
 {
+  std::string dir = getFileNamePathPart(path);
 
+  if(fileExists(dir)) return;
 
-bool FileBrowseWin32::isDirectory(const std::string& filename) const
-{
-  (void)filename;
-  return false;
-}
-
-void FileBrowseWin32::getFiles(std::vector<std::string>& files, const std::string& directory) const
-{
-  (void)directory;
-  files.push_back("Error: win32 filesystem not supported.");
-}
-
-void FileBrowseWin32::getDirectories(std::vector<std::string>& dirs, const std::string& directory) const
-{
-  (void)dirs;
-  (void)directory;
-}
-
-bool FileBrowseWin32::fileExists(const std::string& filename) const
-{
-  (void)filename;
-  return false;
-}
-
-std::string FileBrowseWin32::getParent(const std::string& path) const
-{
-  std::string result = IFileBrowse::getParent(path);
-  if(path.size() > 1 && path[1] == ':')
+  giveFilenameBackslashes(dir);
+  if(!dir.empty())
   {
-    char c = path[0];
-    if(result.size() < 2) result = std::string() + c + ':' + result;
+    if(dir[dir.size() - 1] == '\\')
+    {
+      std::string parent = getParent(dir);
+      createDirectory(parent); //recursive
+    }
+    
+    if(dir[dir.size() - 1] == '\\' && !(dir.size() > 2 && dir[dir.size() - 2] == ':'))
+    {
+      CreateDirectory(dir.c_str(), 0); //win32
+    }
   }
-  return result;
 }
 
 } //namespace lpi
@@ -164,10 +143,6 @@ std::string FileBrowseWin32::getParent(const std::string& path) const
 namespace lpi
 {
 
-bool FileBrowseWin32WithDrives::isDirectory(const std::string& filename) const
-{
-  return browser.isDirectory(filename);
-}
 
 void FileBrowseWin32WithDrives::getFiles(std::vector<std::string>& files, const std::string& directory) const
 {
@@ -175,7 +150,7 @@ void FileBrowseWin32WithDrives::getFiles(std::vector<std::string>& files, const 
   {
     //no files
   }
-  else browser.getFiles(files, directory);
+  else FileBrowseWin32::getFiles(files, directory);
 }
 
 void FileBrowseWin32WithDrives::getDirectories(std::vector<std::string>& dirs, const std::string& directory) const
@@ -187,7 +162,7 @@ void FileBrowseWin32WithDrives::getDirectories(std::vector<std::string>& dirs, c
       dirs.push_back(std::string() + c + ':' + '\\');
     }
   }
-  else browser.getDirectories(dirs, directory);
+  else FileBrowseWin32::getDirectories(dirs, directory);
 }
 
 std::string FileBrowseWin32WithDrives::getParent(const std::string& path) const
@@ -196,7 +171,7 @@ std::string FileBrowseWin32WithDrives::getParent(const std::string& path) const
   || (path.size() == 3 && path[1] == ':' && (path[2] == '\\' || path[2] == '/'))
   || path.size() < 2)
   return "";
-  else return browser.getParent(path);
+  else return FileBrowseWin32::getParent(path);
 }
 
 std::string FileBrowseWin32WithDrives::getChild(const std::string& path, const std::string& child) const
@@ -207,9 +182,5 @@ std::string FileBrowseWin32WithDrives::getChild(const std::string& path, const s
   return result;
 }
 
-bool FileBrowseWin32WithDrives::fileExists(const std::string& filename) const
-{
-  return browser.fileExists(filename);
-}
 
 }

@@ -42,7 +42,7 @@ int getFilesize(const std::string& filename)
 }
 
 //write given buffer to the file, overwriting the file, it doesn't append to it.
-void saveFile(std::vector<unsigned char>& buffer, const std::string& filename)
+void saveFile(const std::vector<unsigned char>& buffer, const std::string& filename)
 {
   ofstream file(filename.c_str(), ios::out|ios::binary);
   file.write((char*)&buffer[0], buffer.size());
@@ -50,7 +50,7 @@ void saveFile(std::vector<unsigned char>& buffer, const std::string& filename)
 }
 
 //write given buffer to the file, overwriting the file, it doesn't append to it.
-void saveFile(std::string& buffer, const std::string& filename)
+void saveFile(const std::string& buffer, const std::string& filename)
 {
   ofstream file(filename.c_str(), ios::out|ios::binary);
   file.write((char*)&buffer[0], buffer.size());

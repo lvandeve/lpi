@@ -24,6 +24,8 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_gui_text.h"
 #include "lpi_filebrowse.h"
 
+#include <iostream>
+
 namespace lpi
 {
 namespace gui
@@ -48,6 +50,8 @@ class FileList : public ElementWrapper
     HTexture icon_file;
     HTexture icon_dir;
     
+    std::vector<std::string> allowedExtensions; //if empty, all extensions are allowed
+    
     void generateIcons();
 
   public:
@@ -68,6 +72,11 @@ class FileList : public ElementWrapper
     bool isSelected(size_t i) const { return list.isSelected(i); }
     const std::string& getValue(size_t i) const { return list.getValue(i); }
     void deselectAll() { list.deselectAll(); }
+    
+    void swap(size_t item1, size_t item2); //swapping location of two items, e.g. for sorting
+    void sort();
+    
+    void setAllowedExtensions(const std::vector<std::string>& allowedExtensions);
 };
 
 /*
@@ -121,6 +130,42 @@ class FileDialog : public Dialog
     std::string getFileName(size_t i); //returns full path
     std::string getFileName(); //returns first file if getNumFiles() > 0, empty string otherwise. This is useful if it's not a multi-file dialog.
 
+    void setAllowedExtensions(const std::vector<std::string>& allowedExtensions);
+};
+
+class RecentFiles
+{
+  protected:
+    std::vector<std::string> files;
+    size_t maxnum;
+
+  public:
+
+    RecentFiles();
+    bool hasFile(const std::string& file) const;
+    size_t getNumFiles() const;
+    std::string getFile(size_t i) const;
+    std::string getFileDisplayName(size_t i) const;
+    void addFile(const std::string& file); //adds the file unless it is already in the list
+
+};
+
+class RecentFilesMenu : public lpi::gui::MenuVertical
+{
+  protected:
+    RecentFiles recent;
+    
+  public:
+
+    void regenerate(const lpi::gui::IGUIDrawer& geom);
+    
+    bool hasFile(const std::string& file) const;
+    size_t getNumFiles() const;
+    std::string getFile(size_t i) const;
+    void addFile(const std::string& file, const IGUIDrawer& geom); //adds the file unless it is already in the list
+    
+    RecentFiles& getRecent();
+    const RecentFiles& getRecent() const;
 };
 
 } //namespace gui

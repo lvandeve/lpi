@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2009 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -728,7 +728,7 @@ void RefRes::resolve() //store the new values in all the clients
 // 4.) XML parsing and generating with tree
 ////////////////////////////////////////////////////////////////////////////////
 
-XMLTree::XMLTree() : parent(0), outer(false)
+XMLTree::XMLTree() : parent(0), outer(false), type(ET_EMPTY)
 {
 }
 
@@ -933,6 +933,13 @@ void XMLTree::generateChildren(std::string& out) const
   }
 }
 
+XMLTree* XMLTree::createNewChild()
+{
+  XMLTree* result = new XMLTree;
+  children.push_back(result);
+  result->parent = this;
+  return result;
+}
 
 } //namespace xml
 } //namespace lpi

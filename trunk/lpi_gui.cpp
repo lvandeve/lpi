@@ -947,7 +947,7 @@ void ScrollElement::handleImpl(const IInput& input)
 {
   if(element)
   {
-    if(mouseOver(input))
+    if(mouseOver(input) && !bars.hbar.mouseOver(input) && !bars.vbar.mouseOver(input))
     {
       element->setElementOver(false);
       element->handle(input);
@@ -2392,13 +2392,11 @@ BulletList::BulletList()
   this->enabled = 0;
   this->lastChecked = -1;
   
-  this->prototype.make(0, 0, 0, 1);
+  this->prototype.make(0, 0, 0, 0);
 }
 
 void BulletList::make(int x, int y, unsigned long amount, int xDiff, int yDiff)
 {
-  this->prototype.make(0, 0, 0, 1);
-  
   this->x0 = x;
   this->y0 = y;
   this->xDiff = xDiff;
@@ -2423,7 +2421,7 @@ void BulletList::make(int x, int y, unsigned long amount, int xDiff, int yDiff)
 void BulletList::make(int x, int y, unsigned long amount, int xDiff, int yDiff, unsigned long amountx)
 {
   if(amountx < 1) amountx = 1;
-  this->prototype.make(0, 0, 0, 1);
+  
   //todo: use guidarwer to draw this
   //this->prototype.setTexturesAndColors(set->bullet[0], set->bullet[1], set->mainColor, set->mainColor);
   

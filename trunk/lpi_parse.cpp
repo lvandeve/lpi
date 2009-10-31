@@ -178,6 +178,14 @@ void searchAndReplace(std::string& io_text, const std::string& from, const std::
   io_text = result;
 }
 
-
+bool equalsIgnoreCase(const std::string& a, const std::string& b)
+{
+  if(a.size() != b.size()) return false;
+  for(size_t i = 0; i < a.size(); i++)
+  {
+    if(std::tolower(a[i]) != std::tolower(b[i])) return false;
+  }
+  return true;
+}
 
 } //namespace lpi

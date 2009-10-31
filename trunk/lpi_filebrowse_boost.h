@@ -33,6 +33,8 @@ which files exist, only read or write a file with a given path name.
 namespace lpi
 {
 
+#ifndef _WIN32 //easy if you have boost installed on linux but not on windows
+
 class FileBrowseBoost : public IFileBrowse
 {
   public:
@@ -44,7 +46,15 @@ class FileBrowseBoost : public IFileBrowse
   virtual bool fileExists(const std::string& filename) const;
   
   virtual std::string getParent(const std::string& path) const;
+  
+  virtual void createDirectory(const std::string& path);
 };
+
+#else
+
+typedef FileBrowseNotSupported FileBrowseBoost;
+
+#endif
 
 } //namespace lpi
 

@@ -20,8 +20,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include "lpi_filebrowse_boost.h"
 
-//#if 0 //set to 1 if you have boost::filesystem, 0 otherwise (but then file listing with this isn't supported)
-#ifndef WIN32 //easy if you have boost installed on linux but not on windows
+#ifndef _WIN32 //easy if you have boost installed on linux but not on windows
 
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/path.hpp"
@@ -124,41 +123,26 @@ std::string FileBrowseBoost::getParent(const std::string& path) const
   return IFileBrowse::getParent(path);
 }
 
-
-} //namespace lpi
-
-#else
-
-namespace lpi
+void FileBrowseBoost::createDirectory(const std::string& path)
 {
+  std::string dir = getFileNamePathPart(path);
 
+  if(fileExists(dir)) return;
 
-bool FileBrowseBoost::isDirectory(const std::string& filename) const
-{
-  (void)filename;
-  return false;
-}
+  giveFilenameSlashes(dir);
+  if(!dir.empty())
+  {
+    if(dir[dir.size() - 1] == '/')
+    {
+      std::string parent = getParent(dir);
+      createDirectory(parent); //recursive
+    }
 
-void FileBrowseBoost::getFiles(std::vector<std::string>& files, const std::string& directory) const
-{
-  (void)directory;
-  files.push_back("Error: boost::filesystem not supported.");
-}
-
-void FileBrowseBoost::getDirectories(std::vector<std::string>& dirs, const std::string& directory) const
-{
-  (void)dirs;
-  (void)directory;
-}
-
-std::string FileBrowseBoost::getParent(const std::string& path) const
-{
-  return IFileBrowse::getParent(path);
-}
-
-bool FileBrowseBoost::fileExists(const std::string& filename) const
-{
-  return false;
+    if(dir[dir.size() - 1] == '/' && !(dir.size() > 2 && dir[dir.size() - 2] == ':'))
+    {
+      fs::create_directory(dir.c_str());
+    }
+  }
 }
 
 } //namespace lpi

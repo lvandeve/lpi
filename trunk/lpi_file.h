@@ -35,8 +35,8 @@ namespace lpi
 {
 //file saving and loading
 
-void saveFile(std::vector<unsigned char>& buffer, const std::string& filename);
-void saveFile(std::string& buffer, const std::string& filename);
+void saveFile(const std::vector<unsigned char>& buffer, const std::string& filename); //this does NOT create directories if they don't exist yet
+void saveFile(const std::string& buffer, const std::string& filename);
 int loadFile(std::vector<unsigned char>& buffer, const std::string& filename);
 int loadFile(std::string& buffer, const std::string& filename);
 int getFilesize(const std::string& filename);

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2009 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -18,8 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef LPI_XML_H_INCLUDED
-#define LPI_XML_H_INCLUDED
+#pragma once
 
 #include <string>
 #include <vector>
@@ -28,9 +27,6 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include <iostream>
 
-/*
-Estimated Last Edit: 20071208 or later
-*/
 
 /*
 lpi_xml: Lode's XML system
@@ -681,7 +677,7 @@ class XMLTree //this is 1 node, all nodes together make up the tree
 {
   /*
   Unlike the above, where the parse functions only parse the attributes and content,
-  for XMLTree each node will parse it's own complete tag, including tag name.
+  for XMLTree each node will parse its own complete tag, including tag name.
   */
   public:
   
@@ -726,6 +722,7 @@ class XMLTree //this is 1 node, all nodes together make up the tree
   
   ///Helper functions
   
+  //For Parsing
   ElementType getType() const { return type; }
   bool isValueTag() const; //returns true if this node has no children
   bool isOuter() const; //returns true if this element has no name, only content (it's higher than the root element)
@@ -733,6 +730,9 @@ class XMLTree //this is 1 node, all nodes together make up the tree
   XMLTree* getParent() const { return parent; }
   size_t getLevel() const; //depth in the tree
   
+  //For Generating
+  void setType(ElementType type) { this->type = type; }
+  XMLTree* createNewChild();
   /*
   if this tag is a comment or XML declaration, then the name will include the !, -- and/or ? symbols,
   and the content will be empty
@@ -747,7 +747,6 @@ class XMLTree //this is 1 node, all nodes together make up the tree
 };
 
 
-} //namespace XML
+} //namespace xml
 } //namespace lpi
 
-#endif //lpi_xml_h_included
