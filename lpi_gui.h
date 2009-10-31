@@ -692,7 +692,7 @@ class Window : public ElementComposite
     bool enableResizer;
     bool resizerOverContainer;
 
-    virtual int getMinSizeX() { return 64; }
+    virtual int getMinSizeX() { return 128; }
     virtual int getMinSizeY() { return 64; }
     
   protected:

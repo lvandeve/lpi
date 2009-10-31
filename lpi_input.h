@@ -42,7 +42,7 @@ class IInput //TODO: move this interface in its own header file, and, make it ou
     
     ///Time
     
-    virtual double getSeconds() const = 0; //ticks in seconds
+    virtual double getSeconds() const = 0; //ticks in seconds, this is the time since the program started, NOT usable to get current date.
     
     ///Mouse
     
@@ -51,6 +51,7 @@ class IInput //TODO: move this interface in its own header file, and, make it ou
     virtual int mouseY() const = 0;
     //check the state of the 3 buttons of mouse
     virtual bool mouseButtonDown(MouseButton button) const = 0;
+    virtual bool mouseButtonDownTimed(MouseButton button, double warmupTime = 0.5, double repTime = 0.025) const = 0; //NOTE: only one thing can check this at the same time. It returns true only once per time interval, so if two things ask this during the same frame, only one will get "true" as result.
     
     virtual void setMousePos(int x, int y) const = 0;
     virtual void changeMousePos(int x, int y) const = 0;
@@ -71,7 +72,7 @@ class IInput //TODO: move this interface in its own header file, and, make it ou
     
     virtual bool keyDown(int key) const = 0;
     virtual bool keyPressed(int key) const = 0; //only returns true the first time the key is down and you check (can use mutable variable internally for this)
-    virtual bool keyPressedTime(int key, double warmupTime = 0.5, double repTime = 0.025) const = 0;
+    virtual bool keyPressedTime(int key, double warmupTime = 0.5, double repTime = 0.025) const = 0; //NOTE: only one thing can check this at the same time. It returns true only once per time interval, so if two things ask this during the same frame, only one will get "true" as result.
     virtual int unicodeKey(double warmupTime = 0.5, double repTime = 0.025) const = 0;
 };
 
@@ -99,6 +100,10 @@ class IInputClick : public IInput //this one already implements the double click
     mutable std::vector<double> mousePosXTimeHistory;
     mutable std::vector<double> mousePosYTimeHistory;
     
+    mutable bool keyReleased[NUM_MOUSE_BUTTONS]; //for mouseButtonDownTimed
+    mutable bool keyWarmedUp[NUM_MOUSE_BUTTONS]; //for mouseButtonDownTimed
+    mutable double lastTime[NUM_MOUSE_BUTTONS]; //for mouseButtonDownTimed; last time it returned true
+    
   private:
     double mouseSpeedImp(int pos, std::vector<int>& mousePosHistory, std::vector<double>& mousePosTimeHistory) const;
 
@@ -110,6 +115,8 @@ class IInputClick : public IInput //this one already implements the double click
     
     virtual double mouseSpeedX() const;
     virtual double mouseSpeedY() const;
+    
+    virtual bool mouseButtonDownTimed(MouseButton button, double warmupTime = 0.5, double repTime = 0.025) const;
 };
 
 } //namespace lpi

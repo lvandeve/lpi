@@ -519,7 +519,6 @@ ChannelSliderEx::ChannelSliderEx(ChannelSlider* slider, const std::string& label
   resize(0, 0, LABELSIZEX + EDITBOXSIZEX, EDITBOXSIZEY);
   input.make(0, 0, 5, FONT_Black);
   input.resize(LABELSIZEX + 6, 2, LABELSIZEX + EDITBOXSIZEX - 1, EDITBOXSIZEY - 1);
-  input.cursorColor = RGB_Black;
   slider->resize(LABELSIZEX, 0, LABELSIZEX, EDITBOXSIZEY);
   addSubElement(&this->label, Sticky(0.0, 0, 0.5, -this->label.getSizeY() / 2, 0.0, this->label.getSizeX(), 0.5, this->label.getSizeY() / 2));
   addSubElement(&input, Sticky(1.0, -input.getSizeX(), 0.5, -input.getSizeY() / 2, 1.0, 0, 0.5, input.getSizeY() / 2));

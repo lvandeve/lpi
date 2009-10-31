@@ -46,9 +46,9 @@ Class diagram of a typical scenario, where
 
            ____________________________________________________ 
           |                  _______________________________   |
-          |                 |      IGUIPartGeom  ________   |  |
-          |                 |             ^     |        |  |  |
-          v                 v             |     v        |  |  |
+          |                 |                    ________   |  |
+          |                 |                   |        |  |  |
+          v                 v                   v        |  |  |
      IDrawer2D       ITextDrawer     IGUIPartDrawer    IGUIDrawer
       ^ ^ ^ ^          ^ ^ ^              ^ ^                 ^
       | : : :          | : :              | :................ |
@@ -147,8 +147,11 @@ enum GUIPart
   GP_HMENU_SEPARATOR, //separator of a horizontal menu (the separator itself is a vertical line)
   GP_VMENU_PANEL, //the panel behind the complete menu
   GP_VMENU_SEPARATOR, //separator of a vertical menu (the separator itself is a horizontal line)
+  //spinner
+  GP_SPINNER_UP, //a spinner is a numerical input field in which value can be entered with keyboard and with a convenient up and down button to change the value. GP_SPINNER_UP is the up button.
+  GP_SPINNER_DOWN, //idem for down button
 
-  ///Colored Parts //todo: just give everything a color parameter instead
+  ///Colored Parts //todo: just give everything a color parameter instead if needed
   GPC_WINDOW_PANEL, //colored windows
 
   ///Text Parts

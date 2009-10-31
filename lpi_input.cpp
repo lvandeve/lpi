@@ -213,4 +213,40 @@ double IInputClick::mouseSpeedY() const
   return mouseSpeedImp(mouseY(), mousePosYHistory, mousePosYTimeHistory);
 }
 
+bool IInputClick::mouseButtonDownTimed(MouseButton button, double warmupTime, double repTime) const
+{
+  double time = getSeconds();
+  if(mouseButtonDown(button))
+  {
+    if(keyReleased[button])
+    {
+      keyReleased[button] = false;
+      keyWarmedUp[button] = false;
+      lastTime[button] = time;
+      return true;
+    }
+    else if(!keyWarmedUp[button])
+    {
+      if(time - lastTime[button] > warmupTime)
+      {
+        lastTime[button] = time;
+        keyWarmedUp[button] = true;
+        return true;
+      }
+      else return false;
+    }
+    else
+    {
+      if(time - lastTime[button] > repTime)
+      {
+        lastTime[button] = time;
+        return true;
+      }
+      else return false;
+    }
+  }
+  else keyReleased[button] = true;
+  return false;
+}
+
 } //namespace lpi
