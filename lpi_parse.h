@@ -101,4 +101,6 @@ void searchAndReplace(std::string& io_text, const std::string& from, const std::
 void searchAndReplace(std::string& o_text, const std::string& i_text, const std::string& from, const std::string& to, const std::vector<std::string>& exclude);
 void searchAndReplace(std::string& io_text, const std::string& from, const std::string& to, const std::vector<std::string>& exclude);
 
+bool equalsIgnoreCase(const std::string& a, const std::string& b);
+
 } //namespace lpi

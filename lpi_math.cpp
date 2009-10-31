@@ -28,7 +28,7 @@ namespace lpi
 {
 
 //this sorts objects based on their distance, and will at the same time also sort an ordered index
-void sort(std::vector<int> &order, std::vector<double> &dist)
+void sort(std::vector<int>& order, std::vector<double>& dist)
 {
   //implemented with combsort here
   

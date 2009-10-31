@@ -348,7 +348,7 @@ class DynamicSliderSpinner : public TDymamicPageControl<T>
     T getSliderValue() const
     {
       double val = slider.getRelValue();
-      return valmin + val * (valmax - valmin);
+      return (T)(valmin + val * (valmax - valmin));
     }
     
     void setSliderValue(T val)

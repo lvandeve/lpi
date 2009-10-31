@@ -71,4 +71,9 @@ bool FileBrowseNotSupported::fileExists(const std::string& filename) const
   return false;
 }
 
+void FileBrowseNotSupported::createDirectory(const std::string& path)
+{
+  (void)path;
+}
+
 } //namespace lpi

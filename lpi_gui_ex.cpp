@@ -199,6 +199,19 @@ size_t InternalList::getItemHeight() const
   return 16;
 }
 
+void InternalList::swap(size_t item1, size_t item2)
+{
+  std::swap(items[item1], items[item2]);
+  std::swap(icons[item1], icons[item2]);
+  bool temp = selection[item1]; //std::vector<bool> is special in C++, so std::swap won't work
+  selection[item1] = selection[item2];
+  selection[item2] = temp;
+  if(selectedItem == item1) selectedItem = item2;
+  else if(selectedItem == item2) selectedItem = item1;
+  if(lastClickedItem == item1) lastClickedItem = item2;
+  else if(lastClickedItem == item2) lastClickedItem = item1;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 List::List(const IGUIDrawer& geom)
@@ -239,6 +252,7 @@ void List::removeItem(size_t i) { list.removeItem(i); }
 void List::setAllowMultiSelection(bool set) { list.setAllowMultiSelection(set); }
 void List::clear() { list.clear(); }
 size_t List::getMouseItem(const IInput& input) const { return list.getMouseItem(input); }
+void List::swap(size_t item1, size_t item2) { list.swap(item1, item2); }
 
 //////////////////////////////////////////////////////////////////////////////////
 ////DropMenu/////////////////////////////////////////////////////////////////////
@@ -1396,6 +1410,13 @@ bool AMenu::itemClicked(size_t i, const IInput& input) const
   return false;
 }
 
+size_t AMenu::itemClicked(const IInput& input) const
+{
+  size_t result = lastItem;
+  lastItem = (size_t)(-1);
+  return result;
+}
+
 void AMenu::handleImpl(const IInput& input)
 {
   if(clicked(input))
@@ -1602,7 +1623,7 @@ void MenuVertical::onOpenSubMenu(const IInput& input, size_t index)
 {
   (void)input;
   Item& item = items[index];
-  item.submenu->moveTo(x1, y0 + positions[index]);
+  item.submenu->moveTo(x1, y0 + positions[index] + 1);
 }
 
 void MenuVertical::onClear()
@@ -1616,7 +1637,8 @@ void MenuVertical::drawImpl(IGUIDrawer& drawer) const
 {
   int totalSize = 0;
 
-  drawer.drawGUIPart(GP_VMENU_PANEL, x0, y0, x1, y1);
+  if(items.empty()) drawer.drawGUIPart(GP_VMENU_PANEL, x0, y0, x1, y0 + 16);
+  else drawer.drawGUIPart(GP_VMENU_PANEL, x0, y0, x1, y1);
   
   size_t mouseElement = getMouseIndex(drawer.getInput());
 
@@ -1683,6 +1705,32 @@ lpi::gui::Dialog::Result getFileNamesModal(MainContainer& c, IModalFrameHandler&
   }
   return dialog.getResult();
 }
+
+lpi::gui::Dialog::Result getFileNameModal(MainContainer& c, IModalFrameHandler& frame, FileDialog& dialog, std::string& filename)
+{
+  int x0, y0, x1, y1;
+  frame.getScreenSize(x0, y0, x1, y1);
+
+  dialog.moveCenterTo((x0+x1)/2, (y0+y1)/2);
+  c.doModalDialog(dialog, frame);
+  filename = dialog.getFileName();
+  return dialog.getResult();
+}
+
+lpi::gui::Dialog::Result getFileNamesModal(MainContainer& c, IModalFrameHandler& frame, FileDialog& dialog, std::vector<std::string>& filenames)
+{
+  int x0, y0, x1, y1;
+  frame.getScreenSize(x0, y0, x1, y1);
+
+  dialog.moveCenterTo((x0+x1)/2, (y0+y1)/2);
+  c.doModalDialog(dialog, frame);
+  for(size_t i = 0; i < dialog.getNumFiles(); i++)
+  {
+    filenames.push_back(dialog.getFileName(i));
+  }
+  return dialog.getResult();
+}
+
 
 
 } //namespace gui

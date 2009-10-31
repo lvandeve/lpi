@@ -61,14 +61,26 @@ void FileList::generateListForDir(const std::string& dir, const IFileBrowse& fil
     list.addItem(dirs[i], &icon_dir);
     types.push_back(IT_DIR);
   }
-
   std::vector<std::string> filenames;
   filebrowser.getFiles(filenames, dir);
   for(size_t i = 0; i < filenames.size(); i++)
   {
+    bool allow = false;
+    if(!allowedExtensions.empty())
+    {
+      std::string ext = getFileNameExtPart(filenames[i], false);
+      for(size_t j = 0; j < allowedExtensions.size(); j++)
+      {
+        if(equalsIgnoreCase(ext, allowedExtensions[j])) { allow = true; break; }
+      }
+    }
+    else allow = true;
+    if(!allow) continue;
     list.addItem(filenames[i], &icon_file);
     types.push_back(IT_FILE);
   }
+  
+  sort();
 }
 
 void FileList::getSelectedFiles(std::vector<std::string>& files)
@@ -90,6 +102,49 @@ void FileList::getSelectedDirectories(std::vector<std::string>& dirs)
 FileList::ItemType FileList::getType(size_t i)
 {
   return types[i];
+}
+
+void FileList::swap(size_t item1, size_t item2)
+{
+  list.swap(item1, item2);
+  std::swap(types[item1], types[item2]);
+}
+
+void FileList::sort()
+{
+  //implemented with combsort here
+
+  int amount = getNumItems();
+
+  int gap = amount;
+  bool swapped = false;
+  while(gap > 1 || swapped)
+  {
+    gap = (gap * 10) / 13; //shrink factor 1.3
+    if(gap == 9 || gap == 10) gap = 11;
+    if (gap < 1) gap = 1;
+    swapped = false;
+    for (int i = 0; i < amount - gap; i++)
+    {
+      int j = i + gap;
+      //check if item i < item j
+      bool smaller = false;
+      if(types[i] == IT_DIR && types[j] != IT_DIR) smaller = true;
+      else if(types[i] != IT_DIR && types[j] == IT_DIR) smaller = false;
+      else smaller = list.getValue(i) < list.getValue(j);
+      
+      if(!smaller)
+      {
+        swap(i, j);
+        swapped = true;
+      }
+    }
+  }
+}
+
+void FileList::setAllowedExtensions(const std::vector<std::string>& allowedExtensions)
+{
+  this->allowedExtensions = allowedExtensions;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -294,6 +349,84 @@ std::string FileDialog::getFileName()
 {
   return getNumFiles() > 0 ? getFileName(0) : "";
 }
+
+void FileDialog::setAllowedExtensions(const std::vector<std::string>& allowedExtensions)
+{
+  list.setAllowedExtensions(allowedExtensions);
+  list.generateListForDir(path.getText(), *browser); //regenerate the list
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+RecentFiles::RecentFiles()
+: maxnum(8)
+{
+}
+
+bool RecentFiles::hasFile(const std::string& file) const
+{
+  for(size_t i = 0; i < files.size(); i++) if(files[i] == file) return true;
+  return false;
+}
+
+size_t RecentFiles::getNumFiles() const
+{
+  return files.size();
+}
+
+std::string RecentFiles::getFile(size_t i) const
+{
+  return files[i];
+}
+
+std::string RecentFiles::getFileDisplayName(size_t i) const
+{
+  std::string result = files[i];
+  result = lpi::getFileNameFileExtPart(result);
+  return result;
+}
+
+void RecentFiles::addFile(const std::string& file) //adds the file unless it is already in the list
+{
+  if(!hasFile(file))
+  {
+    files.push_back(file);
+    if(files.size() > maxnum) files.erase(files.begin());
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void RecentFilesMenu::regenerate(const lpi::gui::IGUIDrawer& geom)
+{
+  clear();
+  for(size_t i = 0; i < recent.getNumFiles(); i++) addCommand(recent.getFileDisplayName(getNumFiles() - i - 1), geom);
+}
+
+bool RecentFilesMenu::hasFile(const std::string& file) const
+{
+  return recent.hasFile(file);
+}
+
+size_t RecentFilesMenu::getNumFiles() const
+{
+  return recent.getNumFiles();
+}
+
+std::string RecentFilesMenu::getFile(size_t i) const
+{
+  return recent.getFile(getNumFiles() - i - 1);
+}
+
+void RecentFilesMenu::addFile(const std::string& file, const IGUIDrawer& geom)
+{
+  recent.addFile(file);
+  regenerate(geom);
+}
+
+RecentFiles& RecentFilesMenu::getRecent() { return recent; }
+const RecentFiles& RecentFilesMenu::getRecent() const { return recent; }
 
 } //namespace gui
 } //namespace lpi

@@ -28,7 +28,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
-void sort(std::vector<int> &order, std::vector<double> &dist);
+void sort(std::vector<int>& order, std::vector<double>& dist);
 
 double getRandom();
 int getRandom(int first, int last); //get random number in the range of integers first-last (including last)
