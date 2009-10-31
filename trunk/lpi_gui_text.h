@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2009 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -23,15 +23,15 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 text related GUI elements for lpi_gui
 
 NOTE: some of these elements may currently be broken due to refactoring and will be fixed later
-
 TODO: fix possible broken elements
 */
 
-#ifndef LPI_GUI_TEXT_H_INCLUDED
-#define LPI_GUI_TEXT_H_INCLUDED
+#pragma once
 
 #include "lpi_gui.h"
+#include "lpi_parse.h"
 
+#include <iostream>
 
 namespace lpi
 {
@@ -70,12 +70,11 @@ class InputLine : public Element //input text line
     int mouseToCursor(int mouseX) const; //absolute mouse position to cursor position
     
   public:
-    ColorRGB cursorColor; //todo: make private, make setter
         
     InputLine();
     void make(int x, int y, unsigned long l,
               const Font& font = FONT_Default,
-              int type = 0, const std::string& title = "", const Font& titleFont = FONT_Default, const ColorRGB& cursorColor = RGB_Black);
+              int type = 0, const std::string& title = "", const Font& titleFont = FONT_Default);
     
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
@@ -99,6 +98,75 @@ class InputLine : public Element //input text line
     void deleteSelectedText();
     
     void activate(bool i_active = true);
+};
+
+class ISpinner : public ElementComposite
+{
+  protected:
+    InputLine line;
+    bool changed;
+    
+  protected:
+    virtual void increment() = 0;
+    virtual void decrement() = 0;
+    
+  public:
+    ISpinner();
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IInput& input);
+    
+    bool hasChanged();
+    
+
+};
+
+template<typename T>
+class SpinnerNumerical : public ISpinner
+{
+  protected:
+  
+    T step;
+    bool hasmin;
+    T minval;
+    bool hasmax;
+    T maxval;
+  
+  protected:
+  
+    virtual void increment()
+    {
+      T newval = getValue() + step;
+      if(hasmax && newval > maxval) newval = maxval;
+      setValue(newval);
+    }
+  
+    virtual void decrement()
+    {
+      T newval = getValue() - step;
+      if(hasmin && newval < minval) newval = minval;
+      setValue(newval);
+    }
+  
+  public:
+  
+    SpinnerNumerical(T step=(T)1, bool hasmin=false, T minval=(T)0, bool hasmax=false, T maxval=(T)1)
+    : step(step)
+    , hasmin(hasmin)
+    , minval(minval)
+    , hasmax(hasmax)
+    , maxval(maxval)
+    {
+    }
+  
+    T getValue()
+    {
+      return strtoval<T>(this->line.getText());
+    }
+
+    void setValue(T value)
+    {
+      this->line.setText(valtostr<T>(value));
+    }
 };
 
 ///*
@@ -304,4 +372,3 @@ class InputLine : public Element //input text line
 } //namespace gui
 } //namespace lpi
 
-#endif

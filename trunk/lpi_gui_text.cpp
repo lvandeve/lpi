@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2009 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -70,14 +70,13 @@ InputLine::InputLine()
   entered = 0;
 }
 
-void InputLine::make(int x, int y, unsigned long l, const Font& font, int type, const std::string& title, const Font& titleFont, const ColorRGB& cursorColor)
+void InputLine::make(int x, int y, unsigned long l, const Font& font, int type, const std::string& title, const Font& titleFont)
 {
   this->x0 = x;
   this->y0 = y;
   this->l = l;
   this->font = font;
   this->titleFont = titleFont;
-  this->cursorColor = cursorColor;
   this->type = type;
   this->title = title;
   
@@ -132,8 +131,8 @@ void InputLine::drawImpl(IGUIDrawer& drawer) const
   //draw the cursor if active
   if(control_active && (int(draw_time * 2.0) % 2 == 0 || mouseDown(drawer.getInput())))
   {
-    int cursorXDraw = inputX + cursor * FONTSIZE;
-    drawer.drawLine(cursorXDraw, inputY - FONTSIZE / 2, cursorXDraw, inputY + FONTSIZE / 2, cursorColor);
+    int cursorXDraw = inputX + cursor * FONTSIZE - 1;
+    drawer.drawLine(cursorXDraw, inputY - FONTSIZE / 2, cursorXDraw, inputY + FONTSIZE / 2, font.color);
   }
   
   //draw selection, if any
@@ -280,7 +279,7 @@ void InputLine::selectAll()
 int InputLine::mouseToCursor(int mouseX) const
 {
   static const int FONTSIZE = 8; //TODO: use drawer to find out cursor position in text and such
-  int relMouse = mouseX - x0;
+  int relMouse = mouseX - x0 + FONTSIZE / 2;
   relMouse -= title.length() * FONTSIZE;
   if(relMouse / FONTSIZE < int(text.length())) return relMouse / FONTSIZE;
   else return text.length();
@@ -319,6 +318,51 @@ int InputLine::getInteger() const
 {
   return std::atoi(text.c_str());
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+static const int SPINNERW = 16;
+
+ISpinner::ISpinner()
+: changed(false)
+{
+  setEnabled(true);
+  
+  addSubElement(&line, Sticky(0.0,0, 0.0,0, 1.0,-SPINNERW, 1.0,0));
+  
+  line.make(0, 0, 10);
+}
+
+void ISpinner::drawImpl(IGUIDrawer& drawer) const
+{
+  line.draw(drawer);
+  drawer.drawGUIPart(GP_SPINNER_UP, x1 - SPINNERW, y0, x1, (y0 + y1) / 2);
+  drawer.drawGUIPart(GP_SPINNER_DOWN, x1 - SPINNERW, (y0 + y1) / 2, x1, y1);
+}
+
+void ISpinner::handleImpl(const IInput& input)
+{
+  line.handle(input);
+  if(mouseOver(input) && input.mouseButtonDownTimed(LMB))
+  {
+    int x = input.mouseX();
+    int y = input.mouseY();
+    if(x >= x1 - SPINNERW && x < x1)
+    {
+      if(y < (y0 + y1) / 2) increment();
+      else decrement();
+      changed = true;
+    }
+  }
+}
+
+bool ISpinner::hasChanged()
+{
+  bool result = changed;
+  changed = false;
+  return result || line.enteringDone();
+}
+
 
 //////////////////////////////////////////////////////////////////////////////////
 ////MultiLineText class

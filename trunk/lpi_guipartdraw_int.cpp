@@ -896,6 +896,19 @@ void GUIPartDrawerInternal::drawGUIPart(GUIPart part, int x0, int y0, int x1, in
       guiset->horMenuSeparator->draw(*drawer, centerPos - rulerCenter, y0 + 2, y1 - y0 - 4);
       break;
     }
+    case GP_SPINNER_UP:
+    case GP_SPINNER_DOWN:
+    {
+      drawGUIPart(GP_BUTTON_PANEL, x0, y0, x1, y1, mod);
+      int tx0 = (x0 + x1) / 2 - 4;
+      int ty0 = (y0 + y1) / 2 - 2;
+      int tx1 = (x0 + x1) / 2 + 4;
+      int ty1 = (y0 + y1) / 2 + 2;
+      if(part == GP_SPINNER_UP) drawer->drawTriangle((tx0+tx1)/2, ty0+1, tx0, ty1, tx1, ty1, RGB_Black, true);
+      else drawer->drawTriangle((tx0+tx1)/2, ty1, tx1, ty0, tx0, ty0, RGB_Black, true);
+      
+      break;
+    }
 
     default:
       return;

@@ -63,6 +63,13 @@ void TextureGL::deleteBuffer()
 
 void TextureGL::uploadPartial(int x0, int y0, int x1, int y1)
 {
+  if(!generated)
+  {
+    upload();
+    return;
+  }
+  
+  bind(false);
   //indicate how we'll read from buffer
   glPixelStorei( GL_UNPACK_ROW_LENGTH, u2);
   glPixelStorei( GL_UNPACK_SKIP_PIXELS, x0);

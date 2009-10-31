@@ -265,6 +265,135 @@ class DynamicValue : public TDymamicPageControl<T>
     }
 };
 
+template<typename T>
+class DynamicSpinner : public TDymamicPageControl<T>
+{
+  private:
+    SpinnerNumerical<T> spinner;
+    
+    void ctor()
+    {
+      this->resize(0, 0, 20, 20);
+      spinner.move(0, (this->getSizeY() - spinner.getSizeY()) / 2);
+      this->addSubElement(&spinner, Sticky(0.0,0, 0.0,0, 1.0,0, 1.0,0));
+    }
+  
+  public:
+  
+    DynamicSpinner(T step=(T)1, bool hasmin=false, T minval=(T)0, bool hasmax=false, T maxval=(T)1)
+    : spinner(step, hasmin, minval, hasmax, maxval)
+    {
+      ctor();
+    }
+    
+    DynamicSpinner(T* value, T step=(T)1, bool hasmin=false, T minval=(T)0, bool hasmax=false, T maxval=(T)1)
+    : spinner(step, hasmin, minval, hasmax, maxval)
+    {
+      TDymamicPageControl<T>::bind = value;
+      ctor();
+      spinner.setValue(*value);
+    }
+  
+    virtual void getValue(T* value)
+    {
+      *value = spinner.getValue();
+    }
+    
+    virtual void setValue(T* value)
+    {
+      spinner.setValue(*value);
+    }
+    
+    virtual void handleImpl(const IInput& input)
+    {
+      spinner.handle(input);
+    }
+
+    virtual void drawImpl(IGUIDrawer& drawer) const
+    {
+      spinner.draw(drawer);
+    }
+};
+
+/*
+DynamicSliderSpinner: has slider, input box AND spinner, for extra deluxe convenience
+*/
+template<typename T>
+class DynamicSliderSpinner : public TDymamicPageControl<T>
+{
+  private:
+    SpinnerNumerical<T> spinner;
+    Slider slider;
+    T valmax;
+    T valmin;
+    
+    void ctor(T valmin, T valmax, const IGUIDrawer& geom)
+    {
+      this->valmin = valmin;
+      this->valmax = valmax;
+      static const int TEXTSIZE = 64;
+      this->resize(0, 0, TEXTSIZE * 2, 20);
+      
+      slider.makeSmallHorizontal(0, 0, this->getSizeX() - TEXTSIZE, 1.0, geom);
+      slider.move(0, (this->getSizeY() - slider.getSizeY()) / 2);
+      this->addSubElement(&slider, Sticky(0.0, 0, 0.5, -slider.getSizeY() / 2, 1.0, -TEXTSIZE, 0.5, slider.getSizeY() / 2));
+      
+      static const int H = 16;
+      spinner.resize(slider.getX1(), (this->getSizeY() - H) / 2, slider.getX1() + TEXTSIZE, (this->getSizeY() - H) / 2 + H);
+      this->addSubElement(&spinner, Sticky(1.0, -TEXTSIZE, 0.5, -spinner.getSizeY() / 2, 1.0, 0, 0.5, spinner.getSizeY() / 2));
+    }
+
+  protected:
+  
+    T getSliderValue() const
+    {
+      double val = slider.getRelValue();
+      return valmin + val * (valmax - valmin);
+    }
+    
+    void setSliderValue(T val)
+    {
+      slider.setRelValue((double)(val - valmin) / (double)(valmax - valmin));
+    }
+  
+  public:
+    
+    DynamicSliderSpinner(T* value, T valmin, T valmax, T step, const IGUIDrawer& geom)
+    : spinner(step, true, valmin, true, valmax)
+    {
+      TDymamicPageControl<T>::bind = value;
+      ctor(valmin, valmax, geom);
+      setValue(value);
+    }
+  
+    virtual void getValue(T* value)
+    {
+      *value = spinner.getValue();
+    }
+    
+    virtual void setValue(T* value)
+    {
+      spinner.setValue(*value);
+      setSliderValue(*value);
+    }
+    
+    virtual void handleImpl(const IInput& input)
+    {
+      spinner.handle(input);
+      slider.handle(input);
+      if(spinner.hasChanged())
+        setSliderValue(spinner.getValue());
+      if(slider.mouseGrabbed(input))
+        spinner.setValue(getSliderValue());
+    }
+    
+    virtual void drawImpl(IGUIDrawer& drawer) const
+    {
+      spinner.draw(drawer);
+      slider.draw(drawer);
+    }
+};
+
 class DynamicColor : public TDymamicPageControl<ColorRGB>
 {
   private:
