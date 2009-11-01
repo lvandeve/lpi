@@ -49,6 +49,15 @@ namespace lpi
   };
   
   static const TextAlign ALIGN_TopLeft(HA_LEFT, VA_TOP);
+  static const TextAlign ALIGN_00(HA_LEFT, VA_TOP);
+  static const TextAlign ALIGN_05(HA_LEFT, VA_CENTER);
+  static const TextAlign ALIGN_01(HA_LEFT, VA_BOTTOM);
+  static const TextAlign ALIGN_50(HA_CENTER, VA_TOP);
+  static const TextAlign ALIGN_55(HA_CENTER, VA_CENTER);
+  static const TextAlign ALIGN_51(HA_CENTER, VA_BOTTOM);
+  static const TextAlign ALIGN_10(HA_RIGHT, VA_TOP);
+  static const TextAlign ALIGN_15(HA_RIGHT, VA_CENTER);
+  static const TextAlign ALIGN_11(HA_RIGHT, VA_BOTTOM);
 
 
   class ITextDrawer

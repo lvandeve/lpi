@@ -28,6 +28,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include <iostream>
 
 #include <vector>
+#include <map>
 #include <string>
 
 namespace lpi
@@ -391,6 +392,51 @@ class DynamicSliderSpinner : public TDymamicPageControl<T>
     {
       spinner.draw(drawer);
       slider.draw(drawer);
+    }
+};
+
+template<typename T>
+class DynamicEnum : public TDymamicPageControl<T>
+{
+  protected:
+    DropDownList list;
+    std::map<T, size_t> enumtoindex;
+    std::map<size_t, T> indextoenum;
+
+  public:
+    DynamicEnum(T* value, const std::vector<std::string>& names, const std::vector<T> values, const IGUIDrawer& geom)
+    : list(geom)
+    {
+      TDymamicPageControl<T>::bind = value;
+      list.setItems(names);
+      for(size_t i = 0; i < values.size(); i++)
+      {
+        enumtoindex[values[i]] = i;
+        indextoenum[i] = values[i];
+      }
+      
+      list.resize(0, 0, 1, 16);
+      this->addSubElement(&list, Sticky(0.0, 0, 0.5,  -list.getSizeY() / 2, 1.0, 0, 0.5, list.getSizeY() / 2));
+    }
+    
+    virtual void getValue(T* value)
+    {
+      *value = indextoenum[list.getSelectedItem()];
+    }
+    
+    virtual void setValue(T* value)
+    {
+      list.setSelectedItem(enumtoindex[*value]);
+    }
+    
+    virtual void handleImpl(const IInput& input)
+    {
+      list.handle(input);
+    }
+
+    virtual void drawImpl(IGUIDrawer& drawer) const
+    {
+      list.draw(drawer);
     }
 };
 

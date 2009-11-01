@@ -150,6 +150,8 @@ enum GUIPart
   //spinner
   GP_SPINNER_UP, //a spinner is a numerical input field in which value can be entered with keyboard and with a convenient up and down button to change the value. GP_SPINNER_UP is the up button.
   GP_SPINNER_DOWN, //idem for down button
+  //dropdown list
+  GP_DROPDOWN_BUTTON,
 
   ///Colored Parts //todo: just give everything a color parameter instead if needed
   GPC_WINDOW_PANEL, //colored windows

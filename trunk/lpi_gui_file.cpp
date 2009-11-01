@@ -158,6 +158,7 @@ FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser, bool save, 
 , browser(browser)
 , overwriteQuestion(geom, "File exists. Overwrite?", "Confirm")
 , askingOverwrite(false)
+, extensionChooser(geom)
 {
   addTop(geom);
   addTitle("File");
@@ -168,12 +169,13 @@ FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser, bool save, 
   cancel.makeTextPanel(0, 0, "cancel");
   up.makeTextPanel(0, 0, "up");
 
-  pushTop(&ok, Sticky(1.0,-84, 1.0,-28, 1.0,-4, 1.0,-4));
-  pushTop(&cancel, Sticky(1.0,-172, 1.0,-28, 1.0,-88, 1.0,-4));
+  pushTop(&ok, Sticky(1.0,-84, 1.0,-50, 1.0,-4, 1.0,-30));
+  pushTop(&cancel, Sticky(1.0,-84, 1.0,-24, 1.0,-4, 1.0,-4));
   pushTop(&up, Sticky(1.0,-24, 0.0,4, 1.0,-4, 0.0,24));
-  pushTop(&list, Sticky(0.0,4, 0.0,40, 1.0,-4, 1.0,-56));
+  pushTop(&list, Sticky(0.0,4, 0.0,40, 1.0,-4, 1.0,-52));
   pushTop(&path, Sticky(0.0,4, 0.0,4, 1.0,-28, 0.0,24));
-  pushTop(&file, Sticky(0.0,4, 1.0,-52, 1.0,-4, 1.0,-32));
+  pushTop(&file, Sticky(0.0,4, 1.0,-50, 1.0,-88, 1.0,-30));
+  pushTop(&extensionChooser, Sticky(0.0,4, 1.0,-24, 1.0,-88, 1.0,-4));
   path.make(0, 0, 256);
   file.make(0, 0, 256);
 
@@ -216,6 +218,7 @@ void FileDialog::manageHoverImpl(IHoverManager& hover)
 {
   if(overwriteQuestion.isEnabled())
     hover.addHoverElement(&overwriteQuestion);
+  Dialog::manageHoverImpl(hover);
 }
 
 void FileDialog::handleImpl(const IInput& input)
@@ -318,6 +321,11 @@ void FileDialog::handleImpl(const IInput& input)
       setEnabled(false);
       result = CANCEL;
     }
+    
+    if(extensionChooser.hasChanged() && extensionChooser.getSelectedItem() < extensionChooser.getNumItems())
+    {
+      setAllowedExtensions(extensionSets[extensionChooser.getSelectedItem()]);
+    }
   }
 }
 
@@ -354,6 +362,12 @@ void FileDialog::setAllowedExtensions(const std::vector<std::string>& allowedExt
 {
   list.setAllowedExtensions(allowedExtensions);
   list.generateListForDir(path.getText(), *browser); //regenerate the list
+}
+
+void FileDialog::addExtensionSet(const std::string& name, const std::vector<std::string>& extensions)
+{
+  extensionChooser.addItem(name);
+  extensionSets.push_back(extensions);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

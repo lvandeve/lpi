@@ -229,7 +229,6 @@ void MainContainer::handleImpl(const IInput& input)
 {
   h.clear();
   e.manageHover(*this);
-
   c.handle(input);
 }
 

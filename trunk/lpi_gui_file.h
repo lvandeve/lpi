@@ -88,11 +88,15 @@ TODO's:
 [X] if it's a save dialog, ask confirmation if file exists
 [X] ensure getting and setting current folder works (for remembering folder to initially open)
 [ ] filtering by extension type (requires drop down list to choose from)
-[ ] sort files alphabetically
+[X] sort files alphabetically
 [ ] show and sort files by date, size, ... (requires extensions to IFileBrowse and using a table instead of a simple List)
-[ ] show some links to default or bookmarked paths on the left
-[ ] double click on filename same functionality as pressing OK
-[ ]
+[ ] show some links to default or bookmarked paths on the left (home folder of linux, my documents of windows, some remembered ones...)
+[X] double click on filename same functionality as pressing OK
+[ ] pressing enter after typing in file inputline same functionality as pressing OK
+[ ] ensure that it works with multiple file choosing
+[ ] add "create directory" button
+[ ] BUG: when using modal file dialog, and dropdown list is over ok button, you click ok through the list
+[ ] add some helpful text labels indicating what they are left of the "path", "file" and "extensionChooser"
 [ ]
 */
 class FileDialog : public Dialog
@@ -111,7 +115,10 @@ class FileDialog : public Dialog
     YesNoWindow overwriteQuestion;
     bool askingOverwrite;
     
-    static std::string REMEMBER_PATH;
+    std::vector<std::vector<std::string> > extensionSets; //each "set" represents a list of allowed extensions. To indicate any file ("*.*"), use an EMPTY std::vector<std::string>, do NOT use a vector containing "*" for it because it'll literally try to find for extensions "dot asterix". If there are no extension sets at all, simply anything is shown. If there are multiple sets, they are chooseable in a dropdown box.
+    DropDownList extensionChooser; //each extension set
+    
+    static std::string REMEMBER_PATH; //the least that can be done is automatically let all dialogs default to the last path if none is specified so that during one session of the application the user has to browse there max once. In programs using FileDialog I recommend remembering the path in a Persist and managing different dialogs for different file sources separatly instead of relying on this static behaviour.
     
   public:
 
@@ -131,9 +138,11 @@ class FileDialog : public Dialog
     std::string getFileName(); //returns first file if getNumFiles() > 0, empty string otherwise. This is useful if it's not a multi-file dialog.
 
     void setAllowedExtensions(const std::vector<std::string>& allowedExtensions);
+
+    void addExtensionSet(const std::string& name, const std::vector<std::string>& extensions); //give empty vector to mean "any"
 };
 
-class RecentFiles
+class RecentFiles //convenient helper class
 {
   protected:
     std::vector<std::string> files;
@@ -150,7 +159,7 @@ class RecentFiles
 
 };
 
-class RecentFilesMenu : public lpi::gui::MenuVertical
+class RecentFilesMenu : public lpi::gui::MenuVertical //convenient helper class
 {
   protected:
     RecentFiles recent;

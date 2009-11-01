@@ -116,6 +116,8 @@ class List : public ScrollElement
     void clear();
     size_t getMouseItem(const IInput& input) const; //this returns the item over which the mouse is, which you can use together with checks like "doubleclicked" to determine if a certain item is being doubleclicked or whatever else you check. Returns invalid index if mouse is not over this list.
     void swap(size_t item1, size_t item2);
+    
+    bool clickedOnItem(const IInput& input); //when clicked on an item in the list (but not clicking on the scrollbar or so)
 };
 
 //TODO: recreate this, using "hover"
@@ -562,6 +564,49 @@ class MenuVertical : public AMenu
   public:
 
     MenuVertical();
+};
+
+class DropDownList : public Element
+{
+  protected:
+    class MyList : public List
+    {
+      protected:
+        virtual void drawImpl(IGUIDrawer& drawer) const
+        {
+          drawer.drawRectangle(x0, y0, x1, y1, RGB_White, true);
+          drawer.drawRectangle(x0, y0, x1, y1, RGB_Black, false);
+          List::drawImpl(drawer);
+        }
+        
+      public:
+        MyList(const IGUIDrawer& geom)
+        : List(geom)
+        {
+        }
+    };
+    MyList list; //the hovering list when opened
+    
+    bool changed;
+
+  protected:
+    virtual void handleImpl(const IInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void manageHoverImpl(IHoverManager& hover);
+
+  public:
+    DropDownList(const IGUIDrawer& geom);
+    
+    void setItems(const std::vector<std::string>& items);
+    void addItem(const std::string& item);
+    size_t getSelectedItem() const;
+    void setSelectedItem(size_t i);
+    
+    size_t getNumItems() const;
+    const std::string& getValue(size_t i) const;
+    
+    bool hasChanged(); //the first one who calls this after the change gets true, then it resets back to false
+
 };
 
 //Utility functions to quickly show and use modal dialogs

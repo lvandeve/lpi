@@ -237,6 +237,11 @@ void List::handleImpl(const IInput& input)
   }
 }
 
+bool List::clickedOnItem(const IInput& input)
+{
+  return !bars.vbar.mouseDown(input) && clicked(input);
+}
+
 size_t List::getNumItems() const { return list.getNumItems(); }
 size_t List::getSelectedItem() const { return list.getSelectedItem(); }
 bool List::isSelected(size_t i) const { return list.isSelected(i); }
@@ -1662,6 +1667,90 @@ void MenuVertical::drawImpl(IGUIDrawer& drawer) const
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+void DropDownList::handleImpl(const IInput& input)
+{
+  if(pressed(input))
+  {
+    list.setEnabled(!list.isEnabled());
+    if(list.isEnabled())
+    {
+      list.resize(x0, list.getY0(), x1, list.getY0() + 64);
+    }
+  }
+  if(list.clickedOnItem(input))
+  {
+    list.setEnabled(false);
+    changed = true;
+  }
+}
+
+void DropDownList::drawImpl(IGUIDrawer& drawer) const
+{
+  drawer.drawRectangle(x0, y0, x1, y1, RGB_White, true);
+  drawer.drawRectangle(x0, y0, x1, y1, RGB_Black, false);
+  if(list.getSelectedItem() < list.getNumItems())
+    drawer.drawText(list.getValue(list.getSelectedItem()), x0, (y0 + y1) / 2, FONT_Default, ALIGN_05);
+  drawer.drawGUIPart(GP_DROPDOWN_BUTTON, x1 - 15, y0 + 1, x1 - 1, y1 - 1);
+}
+
+void DropDownList::manageHoverImpl(IHoverManager& hover)
+{
+  if(list.isEnabled())
+  {
+    list.moveTo(x0, y1);
+    hover.addHoverElement(&list);
+  }
+}
+
+DropDownList::DropDownList(const IGUIDrawer& geom)
+: list(geom)
+, changed(false)
+{
+  setEnabled(true);
+  list.setEnabled(false);
+}
+
+void DropDownList::setItems(const std::vector<std::string>& items)
+{
+  list.clear();
+  for(size_t i = 0; i < items.size(); i++) list.addItem(items[i]);
+  if(!items.empty()) { list.setSelected(0); changed = true; }
+}
+
+void DropDownList::addItem(const std::string& item)
+{
+  list.addItem(item);
+  if(list.getNumItems() == 1) { list.setSelected(0); changed = true; }
+}
+
+size_t DropDownList::getSelectedItem() const
+{
+  return list.getSelectedItem();
+}
+
+size_t DropDownList::getNumItems() const
+{
+  return list.getNumItems();
+}
+
+const std::string& DropDownList::getValue(size_t i) const
+{
+  return list.getValue(i);
+}
+
+void DropDownList::setSelectedItem(size_t i)
+{
+  list.setSelected(i);
+}
+
+bool DropDownList::hasChanged()
+{
+  bool result = changed;
+  changed = false;
+  return result;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
