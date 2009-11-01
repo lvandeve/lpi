@@ -898,6 +898,7 @@ void GUIPartDrawerInternal::drawGUIPart(GUIPart part, int x0, int y0, int x1, in
     }
     case GP_SPINNER_UP:
     case GP_SPINNER_DOWN:
+    case GP_DROPDOWN_BUTTON:
     {
       drawGUIPart(GP_BUTTON_PANEL, x0, y0, x1, y1, mod);
       int tx0 = (x0 + x1) / 2 - 4;

@@ -30,6 +30,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
+//TODO: graphics cards can't handle textures larger than ... * ... So divide a large texture into multiple 512*512 parts.
 class TextureGL : public ITexture
 {
   /*
