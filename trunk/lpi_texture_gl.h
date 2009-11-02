@@ -39,11 +39,52 @@ class TextureGL : public ITexture
   There is only one texture uploaded to the videocard per texture object.
   That means that assigning or copying texture objects should not be done, unless the original one will be destroyed and only the new one will be used.
   */
+  
   public:
+  
+    struct Part
+    {
+      bool generated;
+      GLuint texture; //the unique OpenGL texture "name" to identify ourselves
+      size_t u;
+      size_t v;
+      //width and height as powers of two (this will be the actual size of the buffer, because OpenGL only supports such textures)
+      size_t u2;
+      size_t v2;
+      
+      int shiftx; //shift compared to topleft of main texture
+      int shifty; //shift compared to topleft of main texture
+      
+      Part()
+      : generated(false)
+      {
+      }
+    };
+  
+  private:
+    std::vector<unsigned char> buffer; //the buffer containing the image data in pc memory, can also be altered: just upload() the texture again to make the new result visible
+    
+    //width and height of the texture
+    size_t u;
+    size_t v;
+    //width and height as powers of two (this will be the actual size of the buffer, because OpenGL only supports such textures)
+    size_t u2;
+    size_t v2;
+    
+    size_t partsx; //num parts in x direction
+    size_t partsy; //num parts in y direction
+    std::vector<Part> parts;
+    
+    
+  public:
+
+    //divide texture in multiple ones if size is larger than this so that all video hardware can support it
+    static const size_t MAXX = 1024;
+    static const size_t MAXY = 1024;
   
     TextureGL();
     
-    virtual void setSize(size_t u, size_t v) { makeBuffer(u, v); }
+    virtual void setSize(size_t u, size_t v) { this->u = u; this->v = v; makeBuffer(); }
     //width and height of the texture
     virtual size_t getU() const {return u;}
     virtual size_t getV() const {return v;}
@@ -64,10 +105,13 @@ class TextureGL : public ITexture
       return &buffer[0];
     }
     
-    void bind(bool smoothing) const; //set this texture for OpenGL
+    void bind(bool smoothing, size_t index) const; //set this texture for OpenGL
+    
+    size_t getNumParts() const { return parts.size(); }
+    const Part& getPart(size_t i) const { return parts[i]; }
   private:
     
-    void makeBuffer(int u, int v); //creates memory for the buffer
+    void makeBuffer(); //creates memory for the buffer
     void deleteBuffer(); //deletes memory of the buffer
 
     void uploadPartial(int x0, int y0, int x1, int y1); //todo: make use of this for efficiency
@@ -77,19 +121,6 @@ class TextureGL : public ITexture
     //get/set buffer that has the (possible non power of two) size of the wanted image (u * v RGBA pixels)
     void getTextAlignedBuffer(std::vector<unsigned char>& out);
     void setTextAlignedBuffer(const std::vector<unsigned char>& in);
-    
-    
-  private:
-    std::vector<unsigned char> buffer; //the buffer containing the image data in pc memory, can also be altered: just upload() the texture again to make the new result visible
-
-    GLuint texture[1]; //the unique OpenGL texture "name" to identify ourselves
-    bool generated;
-    //width and height of the texture
-    size_t u;
-    size_t v;
-    //width and height as powers of two (this will be the actual size of the buffer, because OpenGL only supports such textures)
-    size_t u2;
-    size_t v2;
 };
 
 } //namespace lpi

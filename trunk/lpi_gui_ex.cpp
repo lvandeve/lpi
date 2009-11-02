@@ -1417,6 +1417,7 @@ bool AMenu::itemClicked(size_t i, const IInput& input) const
 
 size_t AMenu::itemClicked(const IInput& input) const
 {
+  (void)input;
   size_t result = lastItem;
   lastItem = (size_t)(-1);
   return result;

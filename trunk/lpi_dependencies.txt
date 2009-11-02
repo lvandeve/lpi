@@ -36,6 +36,8 @@ lpi_draw2dgl: implementation of the 2D drawer using OpenGL
 lpi_draw3dgl: draw 3D primitives that aren't standard in OpenGL, e.g. a 3D linesegment-circle, and some GL related 3D math
 lpi_event: events, keyboard and mouse input with SDL
 lpi_file: load and save files through simpler interface
+lpi_filebrowse: interface for browsing files (that is, getting lists of files in a dir, subdirs, ...)
+lpi_filebrowse_boost: implementation of lpi_filebrowse using boost::filesystem
 lpi_gui: an OpenGL based gui with buttons, windows, scrollbars, ...
 lpi_gui_base: very general base classes for lpi GUI, it especially handles the mouse. No dependencies on anything in it.
 lpi_gui_color: GUI controls for selecting and viewing colors, like a HSV circle, RGB sliders, etc...

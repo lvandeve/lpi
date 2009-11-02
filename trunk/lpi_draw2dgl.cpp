@@ -439,20 +439,50 @@ void Drawer2DGL::drawTextureSized(const ITexture* texture, int x, int y, size_t 
   if(!texturegl) return;
 
   prepareDrawTextured();
-
   glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
-  texturegl->bind(screen->isSmoothingEnabled());
+  
+  if(texturegl->getNumParts() == 1)
+  {
+    texturegl->bind(screen->isSmoothingEnabled(), 0);
 
-  double u3 = (double)texturegl->getU() / (double)texturegl->getU2();
-  double v3 = (double)texturegl->getV() / (double)texturegl->getV2();
+    double u3 = (double)texturegl->getU() / (double)texturegl->getU2();
+    double v3 = (double)texturegl->getV() / (double)texturegl->getV2();
 
-  //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
-  glBegin(GL_QUADS);
-    glTexCoord2d(0.0, 0.0); glVertex2d(x +          0, y +          0);
-    glTexCoord2d(+u3, 0.0); glVertex2d(x + (int)sizex, y +          0);
-    glTexCoord2d(+u3, +v3); glVertex2d(x + (int)sizex, y + (int)sizey);
-    glTexCoord2d(0.0, +v3); glVertex2d(x +          0, y + (int)sizey);
-  glEnd();
+    //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
+    glBegin(GL_QUADS);
+      glTexCoord2d(0.0, 0.0); glVertex2d(x +          0, y +          0);
+      glTexCoord2d(+u3, 0.0); glVertex2d(x + (int)sizex, y +          0);
+      glTexCoord2d(+u3, +v3); glVertex2d(x + (int)sizex, y + (int)sizey);
+      glTexCoord2d(0.0, +v3); glVertex2d(x +          0, y + (int)sizey);
+    glEnd();
+  }
+  else
+  {
+    for(size_t i = 0; i < texturegl->getNumParts(); i++)
+    {
+      texturegl->bind(screen->isSmoothingEnabled(), i);
+      const TextureGL::Part& part = texturegl->getPart(i);
+      double u3 = (double)part.u / part.u2;
+      double v3 = (double)part.v / part.v2;
+      
+      double zoomx = (double)sizex / (double)texture->getU();
+      double zoomy = (double)sizey / (double)texture->getV();
+      
+      double px = x + zoomx * part.shiftx;
+      double py = y + zoomy * part.shifty;
+      double psizex = sizex * ((double)part.u / (double)texture->getU());
+      double psizey = sizey * ((double)part.v / (double)texture->getV());
+
+      //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
+      glBegin(GL_QUADS);
+        glTexCoord2d(0.0, 0.0); glVertex2d(px +      0, py +      0);
+        glTexCoord2d(+u3, 0.0); glVertex2d(px + psizex, py +      0);
+        glTexCoord2d(+u3, +v3); glVertex2d(px + psizex, py + psizey);
+        glTexCoord2d(0.0, +v3); glVertex2d(px +      0, py + psizey);
+      glEnd();
+
+    }
+  }
 }
 
 void Drawer2DGL::drawTextureRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, const ColorRGB& colorMod)
@@ -465,7 +495,7 @@ void Drawer2DGL::drawTextureRepeated(const ITexture* texture, int x0, int y0, in
   prepareDrawTextured();
 
   glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
-  texturegl->bind(screen->isSmoothingEnabled());
+  texturegl->bind(screen->isSmoothingEnabled(), 0);
   
   bool simple = true;
   if(x1 - x0 > (int)texture->getU() && texture->getU() != texture->getU2()) simple = false;
@@ -522,7 +552,7 @@ void Drawer2DGL::drawTextureSizedRepeated(const ITexture* texture, int x0, int y
   prepareDrawTextured();
 
   glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
-  texturegl->bind(screen->isSmoothingEnabled());
+  texturegl->bind(screen->isSmoothingEnabled(), 0);
 
   bool simple = true;
   if(x1 - x0 > (int)texture->getU() && texture->getU() != texture->getU2()) simple = false;

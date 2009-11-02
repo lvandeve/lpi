@@ -23,10 +23,14 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_file.h"
 #include <iostream>
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #include <windows.h>
 #include <Shlobj.h>
 #include "lpi_filebrowse_win32.h"
+#elif defined(linux) || defined(__linux) || defined(__linux__) || defined(__GNU__) || defined(__GLIBC__) 
+#include "lpi_filebrowse_boost.h"
+#include <cstdio>
+#include <cstdlib>
 #endif
 
 namespace lpi
@@ -167,7 +171,7 @@ void PersistWin32::load()
   }
 }
 
-#elif defined(linux)
+#elif defined(linux) || defined(__linux) || defined(__linux__) || defined(__GNU__) || defined(__GLIBC__) 
 
 PersistLinux::PersistLinux(const std::string& appuid, bool global)
 : APersist(appuid, global)
@@ -180,12 +184,48 @@ PersistLinux::~PersistLinux()
   save();
 }
 
+std::string PersistLinux::getPath() const
+{
+  if(global) return "/etc/lpi/" + appuid + "/settings.txt";
+  else
+  {
+    std::string path = std::getenv("XDG_CONFIG_HOME");
+    if(!path.empty()) lpi::ensureDirectoryEndSlash(path);
+    if(path.empty())
+    {
+      path = std::getenv("HOME");
+      if(!path.empty())
+      {
+        lpi::ensureDirectoryEndSlash(path);
+        path += ".config/";
+      }
+    }
+    return path + "lpi/" + appuid + "/settings.txt";
+  }
+}
+
 void PersistLinux::save() const
 {
+  std::string path = getPath();
+  if(!path.empty())
+  {
+    std::string xml;
+    writeToXML(xml);
+    FileBrowseBoost browse;
+    browse.createDirectory(path);
+    saveFile(xml, path);
+  }
 }
 
 void PersistLinux::load()
 {
+  std::string path = getPath();
+  if(!path.empty())
+  {
+    std::string xml;
+    loadFile(xml, path);
+    readFromXML(xml);
+  }
 }
 
 #endif

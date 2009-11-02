@@ -105,10 +105,13 @@ class PersistWin32 : public APersist
 
 typedef PersistWin32 Persist;
 
-#elif defined(linux)
+#elif defined(linux) || defined(__linux) || defined(__linux__) || defined(__GNU__) || defined(__GLIBC__) 
 
 class PersistLinux : public APersist
 {
+  protected:
+    std::string getPath() const;
+
   public:
     PersistLinux(const std::string& appuid, bool global);
     ~PersistLinux();

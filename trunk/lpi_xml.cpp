@@ -427,7 +427,7 @@ void parseTag(const std::string& in, size_t& pos, size_t end, std::string& name,
   <a >
   <a />
   */
-  
+
   name.clear();
   
   tagpos.ab = tagpos.ae = 0;
@@ -481,7 +481,13 @@ void parseTag(const std::string& in, size_t& pos, size_t end, std::string& name,
       skipWhiteSpace(in, pos, end);
     
       tagpos.ab = pos;
-      while(pos < end && in[pos] != '>' && in[pos] != '/') pos++; //while there are attributes
+      char quote = 0; //to skip attribute values containing / or > in them
+      while(pos < end && (quote != 0 || (in[pos] != '>' && in[pos] != '/')))
+      {
+        if(quote != 0 && in[pos] == quote) quote = 0;
+        else if(in[pos] == '\'' || in[pos] == '"') quote = in[pos];
+        pos++; //while there are attributes
+      }
       tagpos.ae = pos;
       
       if(in[pos] == '/') //singleton tag
@@ -546,7 +552,6 @@ void parseTag(const std::string& in, size_t& pos, size_t end, std::string& name,
 int parseElement(const std::string& in, size_t& pos, size_t end, std::string& name, ElementPos& elementpos, bool skipcomments) //the string is empty if it was a singleton tag or an empty tag (you can't see the difference)
 {
   skipWhiteSpace(in, pos, end);
-  
   
   TagPos tagpos;
   
@@ -640,6 +645,7 @@ int parseElement(const std::string& in, size_t& pos, size_t end, std::string& na
   return SUCCESS;
 }
 
+//TODO: support single quotes (') too instead of only double quotes (")
 int parseAttribute(const std::string& in, size_t& pos, size_t end, std::string& name, ElementPos& elementpos)
 {
   skipWhiteSpace(in, pos, end);
