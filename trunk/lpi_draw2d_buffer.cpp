@@ -681,12 +681,12 @@ bool ADrawer2DBuffer::supportsTexture(ITexture* texture)
   return dynamic_cast<TextureBuffer*>(texture);
 }
 
-ITexture* ADrawer2DBuffer::createTexture()
+ITexture* ADrawer2DBuffer::createTexture() const
 {
   return new TextureBuffer();
 }
 
-ITexture* ADrawer2DBuffer::createTexture(ITexture* texture)
+ITexture* ADrawer2DBuffer::createTexture(ITexture* texture) const
 {
   TextureBuffer* t = new TextureBuffer();
   makeTextureFromBuffer(t

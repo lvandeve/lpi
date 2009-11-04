@@ -21,7 +21,6 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_texture_gl.h"
 
 #include "lodepng.h"
-//#include "lpi_screen_gl.h"
 #include "lpi_base64.h"
 
 #include <algorithm>
@@ -67,6 +66,12 @@ void TextureGL::makeBuffer()
     partsx = (u + MAXX - 1) / MAXX;
     partsy = (v + MAXY - 1) / MAXY;
     
+    size_t newsize = partsx * partsy;
+    for(size_t i = newsize; i < parts.size(); i++)
+    {
+      glDeleteTextures(1, &parts[i].texture);
+    }
+
     parts.resize(partsx * partsy); //TODO: clean up old textures from the video card if some disappear
     for(size_t y = 0; y < partsy; y++)
     for(size_t x = 0; x < partsx; x++)

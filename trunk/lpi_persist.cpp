@@ -26,9 +26,9 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #if defined(_WIN32)
 #include <windows.h>
 #include <Shlobj.h>
-#include "lpi_filebrowse_win32.h"
-#elif defined(linux) || defined(__linux) || defined(__linux__) || defined(__GNU__) || defined(__GLIBC__) 
-#include "lpi_filebrowse_boost.h"
+#include "lpi_filebrowse.h"
+#elif defined(linux) || defined(__linux) || defined(__linux__) || defined(__GNU__) || defined(__GLIBC__)
+#include "lpi_filebrowse.h"
 #include <cstdio>
 #include <cstdlib>
 #endif
@@ -76,11 +76,11 @@ APersist::~APersist()
 void APersist::writeToXML(std::string& xml) const
 {
   using namespace xml;
-  
+
   XMLTree tree;
   tree.setType(ET_NESTED);
   tree.content.name = "settings";
-  
+
   Settings::const_iterator it = settings.begin();
   while(it != settings.end())
   {
@@ -93,7 +93,7 @@ void APersist::writeToXML(std::string& xml) const
     sub->attributes[1].value = it->second;
     it++;
   }
-  
+
   tree.generate(xml);
 }
 
@@ -129,7 +129,7 @@ PersistWin32::~PersistWin32()
 std::string PersistWin32::getPath() const
 {
   TCHAR szPath[MAX_PATH];
-  
+
   int csidl = global ? CSIDL_COMMON_APPDATA : CSIDL_APPDATA;
 
   if(SUCCEEDED(SHGetFolderPath(NULL,
@@ -154,7 +154,7 @@ void PersistWin32::save() const
   {
     std::string xml;
     writeToXML(xml);
-    FileBrowseWin32 browse;
+    FileBrowse browse;
     browse.createDirectory(path);
     saveFile(xml, path);
   }
@@ -171,7 +171,7 @@ void PersistWin32::load()
   }
 }
 
-#elif defined(linux) || defined(__linux) || defined(__linux__) || defined(__GNU__) || defined(__GLIBC__) 
+#elif defined(linux) || defined(__linux) || defined(__linux__) || defined(__GNU__) || defined(__GLIBC__)
 
 PersistLinux::PersistLinux(const std::string& appuid, bool global)
 : APersist(appuid, global)
@@ -189,11 +189,14 @@ std::string PersistLinux::getPath() const
   if(global) return "/etc/lpi/" + appuid + "/settings.txt";
   else
   {
-    std::string path = std::getenv("XDG_CONFIG_HOME");
+    std::string path;
+    char* c = std::getenv("XDG_CONFIG_HOME");
+    if(c != 0) path = c;
     if(!path.empty()) lpi::ensureDirectoryEndSlash(path);
     if(path.empty())
     {
-      path = std::getenv("HOME");
+      char* c = std::getenv("HOME");
+      if(c != 0) path = c;
       if(!path.empty())
       {
         lpi::ensureDirectoryEndSlash(path);
@@ -211,7 +214,7 @@ void PersistLinux::save() const
   {
     std::string xml;
     writeToXML(xml);
-    FileBrowseBoost browse;
+    FileBrowse browse;
     browse.createDirectory(path);
     saveFile(xml, path);
   }

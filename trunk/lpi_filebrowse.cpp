@@ -40,12 +40,440 @@ std::string IFileBrowse::getParent(const std::string& path) const
 std::string IFileBrowse::getChild(const std::string& path, const std::string& child) const
 {
   std::string result = path;
-  ensureDirectoryEndOSSlash(result);
+  ensureDirectoryEndSlash(result);
   result += child;
   return result;
 }
 
+} // namespace lpi
+
 ////////////////////////////////////////////////////////////////////////////////
+
+#if defined(_WIN32)
+
+#include "lpi_file.h"
+
+#include <windows.h>
+#include <tchar.h>
+#include <stdio.h>
+
+#include <sstream>
+
+namespace lpi
+{
+
+bool FileBrowseWin32::isDirectory(const std::string& filename) const
+{
+  return (GetFileAttributes(filename.c_str()) & FILE_ATTRIBUTE_DIRECTORY);
+}
+
+void FileBrowseWin32::getFiles(std::vector<std::string>& files, const std::string& directory) const
+{
+   WIN32_FIND_DATA ffd;
+   LARGE_INTEGER filesize;
+   size_t length_of_arg;
+   HANDLE hFind = INVALID_HANDLE_VALUE;
+   DWORD dwError=0;
+
+   if(directory.size() > (MAX_PATH - 3)) return;
+   
+   std::string szDir = directory;
+   giveFilenameBackslashes(szDir);
+   szDir += "\\*";
+   
+   hFind = FindFirstFile(szDir.c_str(), &ffd);// Find the first file in the directory.
+   if (INVALID_HANDLE_VALUE == hFind) return;
+
+   do
+   {
+    if(!(ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) files.push_back(ffd.cFileName);
+   }
+   while(FindNextFile(hFind, &ffd) != 0);
+
+   FindClose(hFind);
+}
+
+void FileBrowseWin32::getDirectories(std::vector<std::string>& dirs, const std::string& directory) const
+{
+  WIN32_FIND_DATA ffd;
+  LARGE_INTEGER filesize;
+  size_t length_of_arg;
+  HANDLE hFind = INVALID_HANDLE_VALUE;
+  DWORD dwError=0;
+
+  if(directory.size() > (MAX_PATH - 3)) return;
+
+  std::string szDir = directory;
+  giveFilenameBackslashes(szDir);
+  szDir += "\\*";
+
+  hFind = FindFirstFile(szDir.c_str(), &ffd);// Find the first file in the directory.
+  if (INVALID_HANDLE_VALUE == hFind) return;
+
+  do
+  {
+    //if(std::string("..") == ffd.cFileName || std::string(".") == ffd.cFileName) continue; //I don't want these in the list.
+    if(ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) dirs.push_back(ffd.cFileName);
+  }
+  while(FindNextFile(hFind, &ffd) != 0);
+
+  FindClose(hFind);
+}
+
+std::string FileBrowseWin32::getParent(const std::string& path) const
+{
+  std::string result = IFileBrowse::getParent(path);
+  if(path.size() > 1 && path[1] == ':')
+  {
+    char c = path[0];
+    if(result.size() < 2) result = std::string() + c + ':' + result;
+  }
+  return result;
+}
+
+bool FileBrowseWin32::fileExists(const std::string& filename) const
+{
+  DWORD fileAttr;
+
+  fileAttr = GetFileAttributes(filename.c_str());
+  if (0xFFFFFFFF == fileAttr)
+      return false;
+  return true;
+}
+
+void FileBrowseWin32::createDirectory(const std::string& path)
+{
+  std::string dir = getFileNamePathPart(path);
+
+  if(fileExists(dir)) return;
+
+  giveFilenameBackslashes(dir);
+  if(!dir.empty())
+  {
+    if(dir[dir.size() - 1] == '\\')
+    {
+      std::string parent = getParent(dir);
+      createDirectory(parent); //recursive
+    }
+    
+    if(dir[dir.size() - 1] == '\\' && !(dir.size() > 2 && dir[dir.size() - 2] == ':'))
+    {
+      CreateDirectory(dir.c_str(), 0); //win32
+    }
+  }
+}
+
+void FileBrowseWin32::fixSlashes(std::string& path) const
+{
+  giveFilenameBackslashes(path);
+}
+
+void FileBrowseWin32::ensureDirectoryEndSlash(std::string& path) const
+{
+  lpi::ensureDirectoryEndBackslash(path);
+}
+
+void FileBrowseWin32WithDrives::getFiles(std::vector<std::string>& files, const std::string& directory) const
+{
+  if(directory.empty())
+  {
+    //no files
+  }
+  else FileBrowseWin32::getFiles(files, directory);
+}
+
+void FileBrowseWin32WithDrives::getDirectories(std::vector<std::string>& dirs, const std::string& directory) const
+{
+  if(directory.empty())
+  {
+    for(char c = 'A'; c <= 'Z'; c++)
+    {
+      dirs.push_back(std::string() + c + ':' + '\\');
+    }
+  }
+  else FileBrowseWin32::getDirectories(dirs, directory);
+}
+
+std::string FileBrowseWin32WithDrives::getParent(const std::string& path) const
+{
+  if((path.size() == 2 && path[1] == ':')
+  || (path.size() == 3 && path[1] == ':' && (path[2] == '\\' || path[2] == '/'))
+  || path.size() < 2)
+  return "";
+  else return FileBrowseWin32::getParent(path);
+}
+
+std::string FileBrowseWin32WithDrives::getChild(const std::string& path, const std::string& child) const
+{
+  std::string result = path;
+  if(!path.empty()) ensureDirectoryEndOSSlash(result);
+  result += child;
+  return result;
+}
+
+} // namespace lpi
+
+////////////////////////////////////////////////////////////////////////////////
+
+#elif defined(linux) || defined(__linux) || defined(__linux__) || defined(__GNU__) || defined(__GLIBC__) 
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dirent.h>
+#include <sstream>
+
+
+namespace lpi
+{
+
+bool FileBrowseLinux::isDirectory(const std::string& filename) const
+{
+  struct stat _stat;
+  if(lstat(filename.c_str(), &_stat) == 0 )
+  {
+    return S_ISDIR(_stat.st_mode);
+  }
+  return false;
+}
+
+static bool isRegularFile(const std::string& filename)
+{
+  struct stat _stat;
+  if(lstat(filename.c_str(), &_stat) == 0 )
+  {
+    return S_ISREG(_stat.st_mode);
+  }
+  return false;
+}
+
+void FileBrowseLinux::getFiles(std::vector<std::string>& files, const std::string& directory) const
+{
+  DIR* d = opendir( directory.c_str() );
+  static struct dirent* dirp;
+  if (!d)
+  {
+    files.push_back("Error. No permission?");
+    return;
+  }
+  
+  while ( (dirp = readdir(d)) != NULL )
+  {
+    if( isRegularFile(directory + dirp->d_name))
+    {
+      files.push_back(dirp->d_name);
+    }
+  }
+  closedir(d);
+}
+
+void FileBrowseLinux::getDirectories(std::vector<std::string>& dirs, const std::string& directory) const
+{
+  DIR* d = opendir( directory.c_str() );
+  static struct dirent* dirp;
+  if (!d)
+  {
+    dirs.push_back("..");
+    return;
+  }
+  
+  while ( (dirp = readdir(d)) != NULL )
+  {
+    if( isDirectory(directory + dirp->d_name))
+    {
+      dirs.push_back(dirp->d_name);
+    }
+  }
+  closedir(d);
+}
+
+bool FileBrowseLinux::fileExists(const std::string& filename) const
+{
+  struct stat _stat;
+  return(stat(filename.c_str(),&_stat) == 0);
+}
+
+std::string FileBrowseLinux::getParent(const std::string& path) const
+{
+  return IFileBrowse::getParent(path);
+}
+
+void FileBrowseLinux::createDirectory(const std::string& path)
+{
+  std::string dir = getFileNamePathPart(path);
+
+  if(fileExists(dir)) return;
+
+  giveFilenameSlashes(dir);
+  if(!dir.empty())
+  {
+    if(dir[dir.size() - 1] == '/')
+    {
+      std::string parent = getParent(dir);
+      createDirectory(parent); //recursive
+    }
+
+    if(dir[dir.size() - 1] == '/' && !(dir.size() > 2 && dir[dir.size() - 2] == ':'))
+    {
+      mkdir(dir.c_str(), 0777);
+    }
+  }
+}
+
+void FileBrowseLinux::fixSlashes(std::string& path) const
+{
+  giveFilenameSlashes(path);
+}
+
+void FileBrowseLinux::ensureDirectoryEndSlash(std::string& path) const
+{
+  lpi::ensureDirectoryEndSlash(path);
+}
+
+} // namespace lpi
+
+////////////////////////////////////////////////////////////////////////////////
+
+#elif defined(HAVEGOTBOOSTFILESYSTEM)
+
+#include "boost/filesystem/operations.hpp"
+#include "boost/filesystem/path.hpp"
+
+#include <sstream>
+
+namespace fs = boost::filesystem;
+
+namespace lpi
+{
+
+bool FileBrowseBoost::isDirectory(const std::string& filename) const
+{
+  try
+  {
+    fs::path p(fs::initial_path());
+    p = fs::system_complete(fs::path(filename.c_str(), fs::native));
+    return fs::is_directory(p);
+  }
+  catch(...)
+  {
+    return false;
+  }
+}
+
+void FileBrowseBoost::getFiles(std::vector<std::string>& files, const std::string& directory) const
+{
+  try
+  {
+    fs::path full_path(fs::initial_path());
+
+    full_path = fs::system_complete(fs::path(directory.c_str(), fs::native));
+
+    if(!fs::exists(full_path)) return;
+    if(!fs::is_directory(full_path)) return;
+    
+    fs::directory_iterator end_iter;
+    for(fs::directory_iterator dir_itr(full_path); dir_itr != end_iter; ++dir_itr)
+    {
+      if(!fs::is_directory(*dir_itr))
+      {
+        std::ostringstream ss;
+        ss << dir_itr->leaf();
+        files.push_back(ss.str());
+      }
+    }
+  }
+  catch(...)
+  {
+    files.push_back("Error. No permission?");
+  }
+}
+
+void FileBrowseBoost::getDirectories(std::vector<std::string>& dirs, const std::string& directory) const
+{
+  try
+  {
+    fs::path full_path(fs::initial_path());
+
+    full_path = fs::system_complete(fs::path(directory.c_str(), fs::native));
+
+    if(!fs::exists(full_path)) return;
+    if(!fs::is_directory(full_path)) return;
+    
+    fs::directory_iterator end_iter;
+    for(fs::directory_iterator dir_itr(full_path); dir_itr != end_iter; ++dir_itr)
+    {
+      if(fs::is_directory(*dir_itr))
+      {
+        std::ostringstream ss;
+        ss << dir_itr->leaf();
+        dirs.push_back(ss.str());
+      }
+    }
+  }
+  catch(...)
+  {
+    dirs.push_back("..");
+  }
+}
+
+bool FileBrowseBoost::fileExists(const std::string& filename) const
+{
+  try
+  {
+    fs::path full_path(fs::initial_path());
+    full_path = fs::system_complete(fs::path(filename.c_str(), fs::native));
+
+    return fs::exists(full_path);
+  }
+  catch(...)
+  {
+    return true; //I return true instead of false because if file exists you get warning "do you want to overwrite?" which is safer than returning false.
+  }
+}
+
+std::string FileBrowseBoost::getParent(const std::string& path) const
+{
+  return IFileBrowse::getParent(path);
+}
+
+void FileBrowseBoost::createDirectory(const std::string& path)
+{
+  std::string dir = getFileNamePathPart(path);
+
+  if(fileExists(dir)) return;
+
+  giveFilenameSlashes(dir);
+  if(!dir.empty())
+  {
+    if(dir[dir.size() - 1] == '/' || (dir[dir.size() - 1] == '\\'))
+    {
+      std::string parent = getParent(dir);
+      createDirectory(parent); //recursive
+    }
+
+    if((dir[dir.size() - 1] == '/' || dir[dir.size() - 1] == '\\') && !(dir.size() > 2 && dir[dir.size() - 2] == ':'))
+    {
+      fs::create_directory(dir.c_str());
+    }
+  }
+}
+
+void FileBrowseBoost::fixSlashes(std::string& path) const
+{
+  giveFilenameSlashes(path);
+}
+
+void FileBrowseBoost::ensureDirectoryEndSlash(std::string& path) const
+{
+  lpi::ensureDirectoryEndSlash(path);
+}
+
+
+} // namespace lpi
+
+////////////////////////////////////////////////////////////////////////////////
+
+#else
 
 bool FileBrowseNotSupported::isDirectory(const std::string& filename) const
 {
@@ -76,4 +504,20 @@ void FileBrowseNotSupported::createDirectory(const std::string& path)
   (void)path;
 }
 
+void FileBrowseNotSupported::fixSlashes(std::string& path) const
+{
+  (void)path;
+}
+
+void FileBrowseNotSupported::ensureDirectoryEndSlash(std::string& path) const
+{
+  (void)path;
+}
+
 } //namespace lpi
+
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
+
+

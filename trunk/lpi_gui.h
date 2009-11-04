@@ -311,14 +311,14 @@ class Button : public Element
     
     ////part "back image"
     bool enableImage;
-    const ITexture* image[3]; //0=normal, 1=mouse over, 2=mouse down
+    HTexture* image[3]; //0=normal, 1=mouse over, 2=mouse down
     int imageOffsetx;
     int imageOffsety;
     ColorRGB imageColor[3]; //0=normal, 1=mouse over, 2=mouse down
     
     ////part "front image"
     bool enableImage2;
-    const ITexture* image2[3]; //0=normal, 1=mouse over, 2=mouse down
+    HTexture* image2[3]; //0=normal, 1=mouse over, 2=mouse down
     int imageOffsetx2;
     int imageOffsety2;
     ColorRGB imageColor2[3]; //0=normal, 1=mouse over, 2=mouse down
@@ -349,13 +349,13 @@ class Button : public Element
 
     //image only constructor (without offset)
     void makeImage(int x, int y,
-                   const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ColorRGB& imageColor1 = RGB_White, const ColorRGB& imageColor2 = RGB_Brightred, const ColorRGB& imageColor3 = RGB_Grey); //image
+                   HTexture* texture1, HTexture* texture2, HTexture* texture3, const ColorRGB& imageColor1 = RGB_White, const ColorRGB& imageColor2 = RGB_Brightred, const ColorRGB& imageColor3 = RGB_Grey); //image
     
-    void makeImage(int x, int y,  const ITexture* texture123, const ColorRGB& imageColor1 = RGB_White, const ColorRGB& imageColor2 = RGB_Brightred, const ColorRGB& imageColor3 = RGB_Grey);
+    void makeImage(int x, int y,  HTexture* texture123, const ColorRGB& imageColor1 = RGB_White, const ColorRGB& imageColor2 = RGB_Brightred, const ColorRGB& imageColor3 = RGB_Grey);
     
-    void addFrontImage(const ITexture* texture1, const ITexture* texture2, const ITexture* texture3,
+    void addFrontImage(HTexture* texture1, HTexture* texture2, HTexture* texture3,
                        const ColorRGB& imageColor1 = RGB_White, const ColorRGB& imageColor2 = RGB_Brightred, const ColorRGB& imageColor3 = RGB_Grey);
-    void addFrontImage(const ITexture* texture);
+    void addFrontImage(HTexture* texture);
     
     //text only constructor (without offset)
     void makeText(int x, int y, //basic properties
@@ -800,10 +800,10 @@ class Checkbox : public Element, public Label
 
     //for when using checkbox with custom image
     bool useCustomImages;
-    const ITexture* texture[4];
+    HTexture* texture[4];
     ColorRGB colorMod[4];
     bool useCustomImages2;
-    const ITexture* texture2[4];
+    HTexture* texture2[4];
     ColorRGB colorMod2[4];
     
   public:
@@ -825,14 +825,14 @@ class Checkbox : public Element, public Label
     
     //TODO: make the functions below more logical and clean
     //for giving it alternative textures. texture1 = not checked, mouse not over. Texture2 = not checked, mouse over. Texture3 = checked, mouse not over. Texture4 = checked, mouse over.
-    void setTexturesAndColors(const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ITexture* texture4, 
+    void setTexturesAndColors(HTexture* texture1, HTexture* texture2, HTexture* texture3, HTexture* texture4, 
                               const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3, const ColorRGB& color4);
     //without mouseOver effect
-    void setTexturesAndColors(const ITexture* texture1, const ITexture* texture2, 
+    void setTexturesAndColors(HTexture* texture1, HTexture* texture2, 
                               const ColorRGB& color1, const ColorRGB& color2);
-    void addFrontImage(const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ITexture* texture4,
+    void addFrontImage(HTexture* texture1, HTexture* texture2, HTexture* texture3, HTexture* texture4,
                        const ColorRGB& imageColor1 = RGB_White, const ColorRGB& imageColor2 = RGB_Grey, const ColorRGB& imageColor3 = RGB_White, const ColorRGB& imageColor4 = RGB_Grey);
-    void addFrontImage(const ITexture* texture);
+    void addFrontImage(HTexture* texture);
     void setCustomColor(const ColorRGB& color);
     void setCustomColor2(const ColorRGB& color); //for the front image
 

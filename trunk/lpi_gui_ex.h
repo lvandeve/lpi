@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2009 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -458,7 +458,7 @@ class NState : public Element, public Label
     NState();
     void make(int x, int y, int toggleOnMouseUp = 0);
     void addState(ITexture* texture, const ColorRGB& colorMod = RGB_White, const std::string& text = "", const Font& font = FONT_Default);
-    virtual void drawImpl(IGUIDrawer& drawer) const; //also handles it by calling handle(): toggles when mouse down or not
+    virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
 };
 
@@ -507,6 +507,8 @@ class AMenu : public Element
     virtual void manageHoverImpl(IHoverManager& hover);
     virtual void onOpenSubMenu(const IInput& input, size_t index) = 0;
     
+    virtual void handleImpl(const IInput& input);
+    
   public:
     AMenu();
     
@@ -519,7 +521,6 @@ class AMenu : public Element
     bool itemClicked(size_t i, const IInput& input) const; //returns whether item with given index is clicked
     size_t itemClicked(const IInput& input) const; //returns index of item that is clicked if some item is clicked, an invalid index (>= getNumItems()) otherwise.
     
-    virtual void handleImpl(const IInput& input);
     
     void disableMenu();
 };
@@ -564,6 +565,22 @@ class MenuVertical : public AMenu
   public:
 
     MenuVertical();
+};
+
+class ToolBar : public ElementComposite
+{
+  protected:
+  
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IInput& input);
+  
+  public:
+    size_t addCommand(const ITexture* icon, const std::string& tooltip);
+    void clear();
+    
+    size_t getNumItems() const;
+    bool itemClicked(size_t i, const IInput& input) const; //returns whether item with given index is clicked
+    size_t itemClicked(const IInput& input) const; //returns index of item that is clicked if some item is clicked, an invalid index (>= getNumItems()) otherwise.
 };
 
 class DropDownList : public Element

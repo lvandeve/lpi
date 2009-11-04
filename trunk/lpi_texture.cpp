@@ -78,6 +78,55 @@ void loadTextures(const std::string& filename, std::vector<ITexture*>& textures,
   loadTextures(image, textures, factory, widths, heights, pngdec.getWidth(), pngdec.getHeight(), effect);
 }
 
+void loadTextures(std::vector<unsigned char>& buffer, std::vector<HTexture>& textures, const ITextureFactory* factory, int widths, int heights, int w, int h, const AlphaEffect& effect)
+{
+  int numx, numy;
+   
+  if(widths > 0 && heights > 0)
+  {
+    numx = w / widths;
+    numy = h / heights;
+  }
+  else
+  {
+    numx = 1;
+    numy = 1;
+    widths = w;
+    heights = h;
+  }
+  
+  textures.resize(numx * numy);
+  
+  //the order is row per row, column per column
+  for(int y = 0; y < numy; y++)
+  for(int x = 0; x < numx; x++)
+  {
+    HTexture& tex = textures[y * numx + x];
+    tex.texture = factory->createNewTexture();
+    makeTextureFromBuffer(tex.texture, &buffer[0], w, h, effect, x * widths, y * heights, (x + 1) * widths, (y + 1) * heights);
+  }
+} 
+
+void loadTextures(const std::string& filename, std::vector<HTexture>& textures, const ITextureFactory* factory, int widths, int heights, const AlphaEffect& effect)
+{
+  LodePNG::Decoder pngdec;
+  
+  std::vector<unsigned char> file;
+  LodePNG::loadFile(file, filename);
+
+  std::vector<unsigned char> image;
+  
+  //load the png and if it gives an error return it
+  pngdec.decode(image, file);
+  if(pngdec.hasError())
+  {
+    std::cout << "\npng loading error " << pngdec.getError() << " in file " << filename;
+    return;
+  }
+  
+  loadTextures(image, textures, factory, widths, heights, pngdec.getWidth(), pngdec.getHeight(), effect);
+}
+
 void loadTexturesAlpha(std::vector<unsigned char>& buffer, std::vector<ITexture>& textures, int widths, int heights, int w, int h)
 {
   int numx, numy;

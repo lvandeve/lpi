@@ -168,33 +168,105 @@ AElFTkSuQmCC\n\
   return builtInGuiData;
 }
 
-void GUIPartDrawerInternal::initBuiltInGui(const ITextureFactory& factory)
+const std::string& getBuiltInIconData()
 {
-  initBuiltInGuiTexturesSmall64(factory, getBuiltInGuiTextureData());
+static const std::string builtInIconData = "\
+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\n\
+V7kW4NIGm60jD61egHPrAe/uoidgfe6BAQ7b2L0n4Nj9S/rwtT6wtF5eUg94pyegeuoF17vLnoDA\n\
+Nq7SExC4TVfpCQjcprvqCQhs66pnAg77AGzVw3+LWpBq8jDgnJ6AY7qPP/XPrfuXOFdrbV1ItHtP\n\
+wHow1h2BlvQInFMLmO9qPQH7jz/1z6XMG7j1lH+sFjDfVXoCltIe5GsGbus51vywzu49Ac+Zuwa3\n\
+poft7dYTsG/82cs1fxc8kofrCQjMd5WegMBt2r0nIHC77qIhCLCPrv/4UL0lPffOPXb4eOB2fc4A\n\
+zvXcOz6mNdBdNAT36Vcp06f5ttpx1az54T419wHUZwMOzTlRyFEFuA96AqqnXnA9RwEg2FUDwEU7\n\
+cFuuFgBd6UrfCwG4JTYBINhVAuC49i+lmAXADbnuPgDjHm7K7gEwXPsfmQXAbbAPAILtGgD12r/+\n\
+2SwAfpZ9ABBstwAY2/avl80C4Ofs9tFgfelLN2OVr4En/JxdPxvQ4Ibb5igABBMAEGzzfgDA/TAD\n\
+gGACAIIJAAi2+WHAW+t5pp566o0zA4BgAgCCCQAIJgAgmACAYAIAggkACCYAIJgAgGACAIIJAAgm\n\
+ACCYAIBgAgCCCQAIpicgBDMDgGACAIIJAAimJ6B66gXXMwOAYAIAggkACCYAIJgAgGACAIIJAAgm\n\
+ACCYAIBgAgCCCQAIJgAgmACAYAIAggkACKYnIAQzA4BgAgCCCQAIpiegeuoF1zMDgGACAIIJAAgm\n\
+ACCYAIBgAgCCCQAIJgAgmACAYAIAggkACCYAIJgAgGACAIIJAAimJyAEMwOAYAIAggkACKYnoHrq\n\
+BdczA4BgAgCCCQAIJgAgmACAYAIAggkACCYAIJgAgGACAIIJAAgmACCYAIBgAgCCCQAIpicgBDMD\n\
+gGACAIIJAAimJ6B66gXXMwOAYAIAggkACCYAIJgAgGACAIIJAAgmACCYAIBgAgCCCQAIJgAgmACA\n\
+YAIAggkACKYnIAQzA4BgAgCCCQAIpiegeuoF1zMDgGACAIIJAAgmACCYAIBgAgCCCQAIJgAgmACA\n\
+YAIAggkACCYAIJgAgGACAIIJAAimJyAEMwOAYAIAggkACKYnoHrqBdczA4BgAgCCCQAIJgAgmACA\n\
+YAIAggkACCYAIJgAgGACAIIJAAgmACCYAIBgAgCCCQAIpicgBDMDgGACAIIJAAimJ6B66gXXMwOA\n\
+YAIAggkACCYAIJgAgGACAIIJAAgmACCYAIBgAgCCCQAIJgAgmACAYAIAggkACKYnIAQzA4BgAgCC\n\
+CQAIpiegeuoF1zMDgGACAIIJAAgmACCYAIBgAgCCCQAIJgAgmACAYAIAggkACCYAIJgAgGACAIIJ\n\
+AAimJyAEMwOAYAIAggkACKYnoHrqBdczA4BgAgCCCQAIJgAgmACAYAIAggkACCYAIJgAgGACAIIJ\n\
+AAgmACCYAIBgAgCCCQAIpicgBDMDgGACAIIJAAimJ6B66gXXMwOAYAIAggkACCYAIJgAgGACAIIJ\n\
+AAgmACCYAIBgAgCCCQAIJgAgmACAYAIAggkACKYnIAQzA4BgAgCCCQAIpiegeuoF1zMDgGACAIIJ\n\
+AAgmACCYAIBgAgCCCQAIJgAgmACAYAIAggkACCYAIJgAgGACAIIJAAimJyAEMwOAYAIAggkACKYn\n\
+oHrqBdczA4BgAgCCCQAIJgAgmACAYAIAggkACCYAIJgAgGACAIIJAAgmACCYAIBgAgCCCQAIpicg\n\
+BDMDgGACAIIJAAimJ6B66gXXMwOAYAIAggkACCYAIJgAgGACAIIJAAgmACCYAIBgAgCCCQAIJgAg\n\
+mACAYAIAggkACKYnIAQzA4BgAgCCCQAIpiegeuoF1zMDgGACAIIJAAgmACCYAIBgAgCCCQAIJgAg\n\
+mACAYAIAggkACCYAIJgAgGACAIIJAAimJyAEMwOAYAIAggkACKYnoHrqBdczA4BgAgCCCQAIJgAg\n\
+mACAYAIAggkACCYAIJgAgGACAIIJAAgmACCYAIBgAgCCCQAIpicgBDMDgGACAIIJAAimJ6B66gXX\n\
+MwOAYAIAggkACCYAIJgAgGACAIIJAAgmACCYAIBgAgCCCQAIJgAgmACAYAIAggkACKYnIAQzA4Bg\n\
+AgCCCQAIpiegeuoF1zMDgGACAIIJAAgmACCYAIBgAgCCCQAIJgAgmACAYAIAggkACCYAIJgAgGAC\n\
+AIIJAAimJyAEMwOAYAIAggkACCYAIJgAgGCfXYHf+u/dRZ+712+3AY/jqZT3wd8a7GO3A4/hZBPg\n\
+rX/5/Kpvn3pc/ZxzderH1s87t1zXqV/Hudd17nVCim/7AJ6711lr/foxz93rt4F0rs5xhjF83rnl\n\
+OXWH929RDx7VbjsB5w6qpWvfJYN/i3rwyL4FwNiUuDV9ru8fDqZWnePat15DT5mq26q3dEpvE4Bk\n\
+3T/l0NsJCJk+LwZyGBDyuBoQgjkTEIL9Hx1vJSU16qibAAAAAElFTkSuQmCC";
+
+  return builtInIconData;
 }
 
+void GUIPartDrawerInternal::initBuiltInGui(const ITextureFactory& factory)
+{
+  initBuiltInGuiTextures64(factory, getBuiltInGuiTextureData());
+}
+void GUIPartDrawerInternal::initBuiltInIcons()
+{
+  initBuiltInIcons64(getBuiltInIconData());
+}
 
-void GUIPartDrawerInternal::initBuiltInGuiTexturesSmall(const ITextureFactory& factory, const std::string& png_file_name)
+void GUIPartDrawerInternal::initBuiltInGuiTextures(const ITextureFactory& factory, const std::string& png_file_name)
 {
   std::vector<unsigned char> png;
   loadFile(png, png_file_name);
   if(!png.empty())
-    initBuiltInGuiTexturesSmall(factory, png);
+    initBuiltInGuiTextures(factory, png);
 }
 
 
-void GUIPartDrawerInternal::initBuiltInGuiTexturesSmall64(const ITextureFactory& factory, const std::string& png_base64)
+void GUIPartDrawerInternal::initBuiltInGuiTextures64(const ITextureFactory& factory, const std::string& png_base64)
 {
   std::vector<unsigned char> decoded64;
   decodeBase64(decoded64, png_base64);
-  initBuiltInGuiTexturesSmall(factory, decoded64);
+  initBuiltInGuiTextures(factory, decoded64);
 }
 
-void GUIPartDrawerInternal::initBuiltInGuiTexturesSmall(const ITextureFactory& factory, const std::vector<unsigned char>& png)
+void GUIPartDrawerInternal::initBuiltInGuiTextures(const ITextureFactory& factory, const std::vector<unsigned char>& png)
 {
   (void)factory;
   
-  LodePNG::Decoder pngdec;
   
   //these are normally defined as static const in headers, but if GUIDrawer is declared outside of any function, due to order of loading this may be called before ColorRGB's for this translation unit are initialized. So define copies here.
   static const ColorRGB RGB_Black(  0,   0,   0, 255);
@@ -205,9 +277,8 @@ void GUIPartDrawerInternal::initBuiltInGuiTexturesSmall(const ITextureFactory& f
   static const ColorRGB RGB_Brightred    (255, 192, 192, 255);
   static const AlphaEffect AE_PinkKey(128, 255, RGB_Magenta);
   
-  
+  LodePNG::Decoder pngdec;
   std::vector<unsigned char> dataBuffer;
-  
   pngdec.decode(dataBuffer, png);
   
   const int GDW = pngdec.getWidth(); //width of the gui data
@@ -473,6 +544,40 @@ void GUIPartDrawerInternal::initBuiltInGuiTexturesSmall(const ITextureFactory& f
   builtInGuiSet.verMenuSeparator = builtInGuiSet.sliderHRule;
 }
 
+void GUIPartDrawerInternal::initBuiltInIcons64(const std::string& png_base64)
+{
+  std::vector<unsigned char> decoded64;
+  decodeBase64(decoded64, png_base64);
+  initBuiltInIcons(decoded64);
+}
+
+void GUIPartDrawerInternal::initBuiltInIcons(const std::vector<unsigned char>& png)
+{
+  static const ColorRGB RGB_Magenta      (255,   0, 255, 255);
+  static const AlphaEffect AE_PinkKey(128, 255, RGB_Magenta);
+  
+  LodePNG::Decoder pngdec;
+  std::vector<unsigned char> dataBuffer;
+  pngdec.decode(dataBuffer, png);
+  
+  const int GDW = pngdec.getWidth(); //width of the gui data
+  const int GDH = pngdec.getHeight(); //height of the gui data
+  
+  makeTextureFromBuffer(&icons.iconFile, &dataBuffer[0], GDW, GDH, AE_PinkKey, 40, 20, 56, 36);
+  makeTextureFromBuffer(&icons.iconFolder, &dataBuffer[0], GDW, GDH, AE_PinkKey, 20, 20, 36, 36);
+  makeTextureFromBuffer(&icons.iconNew, &dataBuffer[0], GDW, GDH, AE_PinkKey, 20, 60, 36, 86);
+  makeTextureFromBuffer(&icons.iconOpen, &dataBuffer[0], GDW, GDH, AE_PinkKey, 40, 60, 56, 86);
+  makeTextureFromBuffer(&icons.iconSave, &dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 60, 76, 86);
+  makeTextureFromBuffer(&icons.iconSaveAs, &dataBuffer[0], GDW, GDH, AE_PinkKey, 80, 60, 96, 86);
+  makeTextureFromBuffer(&icons.iconSaveAll, &dataBuffer[0], GDW, GDH, AE_PinkKey, 100, 60, 116, 86);
+  makeTextureFromBuffer(&icons.iconClose, &dataBuffer[0], GDW, GDH, AE_PinkKey, 120, 60, 136, 86);
+  makeTextureFromBuffer(&icons.iconCut, &dataBuffer[0], GDW, GDH, AE_PinkKey, 20, 80, 36, 96);
+  makeTextureFromBuffer(&icons.iconCopy, &dataBuffer[0], GDW, GDH, AE_PinkKey, 40, 80, 56, 96);
+  makeTextureFromBuffer(&icons.iconPaste, &dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 80, 76, 96);
+  makeTextureFromBuffer(&icons.iconUndo, &dataBuffer[0], GDW, GDH, AE_PinkKey, 20, 100, 36, 116);
+  makeTextureFromBuffer(&icons.iconRedo, &dataBuffer[0], GDW, GDH, AE_PinkKey, 40, 100, 56, 116);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //BACKPANEL/////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -674,6 +779,7 @@ GUIPartDrawerInternal::GUIPartDrawerInternal(const ITextureFactory& factory, IDr
   builtInTexture.resize(160);
   for(size_t i = 0; i < builtInTexture.size(); i++) builtInTexture[i] = factory.createNewTexture();
   initBuiltInGui(factory);
+  initBuiltInIcons();
   guiset = &builtInGuiSet;
 }
 
@@ -1057,6 +1163,45 @@ size_t GUIPartDrawerInternal::getGUIPartSizeY(GUIPart part) const
     case GP_SCROLLBARPAIR_CORNER: return guiset->scrollBarPairCorner->getV();
     case GP_FG_BG_COLOR_ARROWS: return guiset->fgBgColorArrows->getV();
     default: return 0;
+  }
+}
+
+void GUIPartDrawerInternal::createIcon(ITexture& texture, GUIIcon icon, int size) const
+{
+  (void)size; //only 16x16 supported for now
+  
+  const TextureBuffer* source = 0;
+  switch(icon)
+  {
+    case GI_FILE: source = &icons.iconFile; break;
+    case GI_FOLDER: source = &icons.iconFolder; break;
+    case GI_NEW: source = &icons.iconNew; break;
+    case GI_OPEN: source = &icons.iconOpen; break;
+    case GI_SAVE: source = &icons.iconSave; break;
+    case GI_SAVE_AS: source = &icons.iconSaveAs; break;
+    case GI_SAVE_ALL: source = &icons.iconSaveAll; break;
+    case GI_CLOSE: source = &icons.iconClose; break;
+    case GI_CUT: source = &icons.iconCut; break;
+    case GI_COPY: source = &icons.iconCopy; break;
+    case GI_PASTE: source = &icons.iconPaste; break;
+    case GI_UNDO: source = &icons.iconUndo; break;
+    case GI_REDO: source = &icons.iconRedo; break;
+    default: source = 0;
+  }
+
+  if(source != 0)
+  {
+    size_t u = source->getU();
+    size_t v = source->getV();
+
+    texture.setSize(u, v);
+    for(size_t y = 0; y < v; y++)
+    for(size_t x = 0; x < u; x++)
+    for(size_t c = 0; c < 4; c++)
+    {
+      texture.getBuffer()[u*y*4+x*4+c] = source->getBuffer()[u*y*4+x*4+c];
+      texture.update();
+    }
   }
 }
 

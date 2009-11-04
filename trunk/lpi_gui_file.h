@@ -52,11 +52,10 @@ class FileList : public ElementWrapper
     
     std::vector<std::string> allowedExtensions; //if empty, all extensions are allowed
     
-    void generateIcons();
 
   public:
     FileList(const IGUIDrawer& geom);
-    
+
     void generateListForDir(const std::string& dir, const IFileBrowse& filebrowser);
     
     ItemType getType(size_t i);
@@ -87,7 +86,7 @@ is there just to get a filename that the user selects.
 TODO's:
 [X] if it's a save dialog, ask confirmation if file exists
 [X] ensure getting and setting current folder works (for remembering folder to initially open)
-[ ] filtering by extension type (requires drop down list to choose from)
+[X] filtering by extension type (requires drop down list to choose from)
 [X] sort files alphabetically
 [ ] show and sort files by date, size, ... (requires extensions to IFileBrowse and using a table instead of a simple List)
 [ ] show some links to default or bookmarked paths on the left (home folder of linux, my documents of windows, some remembered ones...)
@@ -97,7 +96,9 @@ TODO's:
 [ ] add "create directory" button
 [ ] BUG: when using modal file dialog, and dropdown list is over ok button, you click ok through the list
 [ ] add some helpful text labels indicating what they are left of the "path", "file" and "extensionChooser"
-[ ]
+[ ] let the close button do the same as the cancel button
+[ ] also make a folder browsing dialog
+[ ] 
 */
 class FileDialog : public Dialog
 {

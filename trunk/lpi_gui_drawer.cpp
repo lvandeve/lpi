@@ -145,12 +145,12 @@ bool AGUIDrawer::supportsTexture(ITexture* texture)
   return getDrawer().supportsTexture(texture);
 }
 
-ITexture* AGUIDrawer::createTexture()
+ITexture* AGUIDrawer::createTexture() const
 {
   return getDrawer().createTexture();
 }
 
-ITexture* AGUIDrawer::createTexture(ITexture* texture)
+ITexture* AGUIDrawer::createTexture(ITexture* texture) const
 {
   return getDrawer().createTexture(texture);
 }
@@ -220,6 +220,11 @@ size_t AGUIDrawer::getGUIPartSizeX(GUIPart part) const
 size_t AGUIDrawer::getGUIPartSizeY(GUIPart part) const
 {
   return getGUIPartDrawer().getGUIPartSizeY(part);
+}
+
+void AGUIDrawer::createIcon(ITexture& texture, GUIIcon icon, int size) const
+{
+  getGUIPartDrawer().createIcon(texture, icon, size);
 }
 
 } //namespace gui

@@ -172,6 +172,26 @@ enum GUIPart
   GP_END_DONT_USE //don't use this, it's placed here to have an element without comma at the end of the enumarator list.
 };
 
+//The GUI has some standard icons that can be used in toolbars and other things (like file dialog) anywhere. Their names are in this enum.
+enum GUIIcon
+{
+  GI_FILE,
+  GI_FOLDER,
+  GI_NEW,
+  GI_OPEN,
+  GI_SAVE,
+  GI_SAVE_AS,
+  GI_SAVE_ALL,
+  GI_CLOSE,
+  GI_CUT,
+  GI_COPY,
+  GI_PASTE,
+  GI_UNDO,
+  GI_REDO,
+
+  GI_END_DONT_USE//don't use this, it's placed here to have an element without comma at the end of the enumarator list.
+};
+
 struct GUIPartMod
 {
   GUIPartMod();
@@ -211,6 +231,8 @@ class IGUIPartDrawer
     */
     virtual size_t getGUIPartSizeX(GUIPart part) const = 0;
     virtual size_t getGUIPartSizeY(GUIPart part) const = 0;
+    
+    virtual void createIcon(ITexture& texture, GUIIcon icon, int size = 16) const = 0; //size is just an indication of roughly the size you want it to be, it can be ignored by the drawer if it only supports a certain size
 };
 
 /*
@@ -264,8 +286,8 @@ class AGUIDrawer : public IGUIDrawer //abstract GUI drawer which already wraps a
     virtual void drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3);
     
     virtual bool supportsTexture(ITexture* texture); //if true, you can use it. If false, first use createTexture(texture) and then it'll be drawable by this drawer!
-    virtual ITexture* createTexture(); //creates a new texture of the type this drawer implementation supports best
-    virtual ITexture* createTexture(ITexture* texture); //creates a new texture from the given one, the type this drawer implementation supports best. May ruin/destroy/clear the input texture!!
+    virtual ITexture* createTexture() const; //creates a new texture of the type this drawer implementation supports best
+    virtual ITexture* createTexture(ITexture* texture) const; //creates a new texture from the given one, the type this drawer implementation supports best. May ruin/destroy/clear the input texture!!
     
     virtual void drawTexture(const ITexture* texture, int x, int y, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureSized(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White);
@@ -287,6 +309,8 @@ class AGUIDrawer : public IGUIDrawer //abstract GUI drawer which already wraps a
     virtual void drawGUIPartText(GUIPart part, const std::string& text, int x0, int y0, int x1, int y1, const GUIPartMod& mod = GPM_Default);
     virtual size_t getGUIPartSizeX(GUIPart part) const;
     virtual size_t getGUIPartSizeY(GUIPart part) const;
+    virtual void createIcon(ITexture& texture, GUIIcon icon, int size = 16) const;
+    
 };
 
 } //namespace gui

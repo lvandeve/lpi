@@ -410,12 +410,12 @@ bool Drawer2DGL::supportsTexture(ITexture* texture)
   return dynamic_cast<TextureGL*>(texture);
 }
 
-ITexture* Drawer2DGL::createTexture()
+ITexture* Drawer2DGL::createTexture() const
 {
   return new TextureGL();
 }
 
-ITexture* Drawer2DGL::createTexture(ITexture* texture)
+ITexture* Drawer2DGL::createTexture(ITexture* texture) const
 {
   TextureGL* gl = new TextureGL();
   makeTextureFromBuffer(gl
@@ -500,6 +500,7 @@ void Drawer2DGL::drawTextureRepeated(const ITexture* texture, int x0, int y0, in
   bool simple = true;
   if(x1 - x0 > (int)texture->getU() && texture->getU() != texture->getU2()) simple = false;
   if(y1 - y0 > (int)texture->getV() && texture->getV() != texture->getV2()) simple = false;
+  if(texturegl->getNumParts() != 1) simple = false;
   
   if(simple)
   {
@@ -514,7 +515,7 @@ void Drawer2DGL::drawTextureRepeated(const ITexture* texture, int x0, int y0, in
       glTexCoord2d(+coorx,    0.0); glVertex2f(x1, y0);
     glEnd();
   }
-  else //need to tile manually, slow!!
+  else if(texturegl->getNumParts() == 1) //need to tile manually, slow!!
   {
     int numx = (x1 - x0) / texture->getU();
     int numy = (y1 - y0) / texture->getV();
@@ -540,6 +541,10 @@ void Drawer2DGL::drawTextureRepeated(const ITexture* texture, int x0, int y0, in
       }
     }
   }
+  else
+  {
+    //TODO: larger than max size textures
+  }
 }
 
 void Drawer2DGL::drawTextureSizedRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, size_t sizex, size_t sizey, const ColorRGB& colorMod)
@@ -557,6 +562,7 @@ void Drawer2DGL::drawTextureSizedRepeated(const ITexture* texture, int x0, int y
   bool simple = true;
   if(x1 - x0 > (int)texture->getU() && texture->getU() != texture->getU2()) simple = false;
   if(y1 - y0 > (int)texture->getV() && texture->getV() != texture->getV2()) simple = false;
+  if(texturegl->getNumParts() != 1) simple = false;
 
   if(simple)
   {
@@ -573,7 +579,7 @@ void Drawer2DGL::drawTextureSizedRepeated(const ITexture* texture, int x0, int y
       glTexCoord2d(+coorx,    0.0); glVertex2f(x1, y0);
     glEnd();
   }
-  else //need to tile manually, slow!!
+  else if(texturegl->getNumParts() == 1) //need to tile manually, slow!!
   {
     int numx = (x1 - x0) / texture->getU();
     int numy = (y1 - y0) / texture->getV();
@@ -600,6 +606,11 @@ void Drawer2DGL::drawTextureSizedRepeated(const ITexture* texture, int x0, int y
       }
     }
   }
+  else
+  {
+    //TODO: larger than max size textures
+  }
+
 }
 
 

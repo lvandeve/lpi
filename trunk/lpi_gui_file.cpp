@@ -29,30 +29,20 @@ FileList::FileList(const IGUIDrawer& geom)
 : ElementWrapper(&list)
 , list(geom)
 {
-  generateIcons();
+  icon_file.texture = geom.createTexture();
+  icon_dir.texture = geom.createTexture();
+  geom.createIcon(*icon_file.texture, GI_FILE);
+  geom.createIcon(*icon_dir.texture, GI_FOLDER);
 }
 
-void FileList::generateIcons()
-{
-  const static std::string icon_file64 = "\
-iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAWElEQVR42mP8z/CfgRTARJJqIGCB\n\
-sxiBEBX8x2Y5C4qK/wgVjEDAwIipB5+TgPoxrSXgB0w9LHhUgxwF8x7cbTg1oPmHWCdhguGgASWU\n\
-kEMDF2D8T+vUCgAm3xYpZF64CAAAAABJRU5ErkJggg==";
-  icon_file.texture = new TextureBuffer;
-  lpi::loadTextureFromBase64PNG(icon_file.texture, icon_file64, lpi::AE_PinkKey);
-
-  const static std::string icon_dir64 = "\
-iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAR0lEQVR42mP8z/CfgRTARJJqumhg\n\
-gVCMQIgK/uPwGwuc9eCGHpytoHEJlxEsWI1B1gw3YtCG0iDUwAgJXcxQxwRQlf9pnVoBz+cSHrEY\n\
-KNQAAAAASUVORK5CYII=";
-  icon_dir.texture = new TextureBuffer;
-  lpi::loadTextureFromBase64PNG(icon_dir.texture, icon_dir64, lpi::AE_PinkKey);
-}
-
-void FileList::generateListForDir(const std::string& dir, const IFileBrowse& filebrowser)
+void FileList::generateListForDir(const std::string& _dir, const IFileBrowse& filebrowser)
 {
   list.clear();
   types.clear();
+  
+  std::string dir = _dir;
+  filebrowser.fixSlashes(dir);
+  filebrowser.ensureDirectoryEndSlash(dir);
   
   std::vector<std::string> dirs;
   filebrowser.getDirectories(dirs, dir);

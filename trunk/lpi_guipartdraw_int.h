@@ -179,11 +179,29 @@ struct GuiSet //GuiSet is a bit of a LEGACY lpi concept. Currently it's just use
   Font tooltipFont;
 };
 
+struct BuiltInIcons
+{
+  TextureBuffer iconFile;
+  TextureBuffer iconFolder;
+  TextureBuffer iconNew;
+  TextureBuffer iconOpen;
+  TextureBuffer iconSave;
+  TextureBuffer iconSaveAs;
+  TextureBuffer iconSaveAll;
+  TextureBuffer iconClose;
+  TextureBuffer iconCut;
+  TextureBuffer iconCopy;
+  TextureBuffer iconPaste;
+  TextureBuffer iconUndo;
+  TextureBuffer iconRedo;
+};
+
 class GUIPartDrawerInternal : public IGUIPartDrawer
 {
     IDrawer2D* drawer;
     ITextDrawer* textdrawer;
     GuiSet* guiset;
+    BuiltInIcons icons;
     
     std::vector<ITexture*> builtInTexture;
     BackPanel builtInPanel[14];
@@ -191,9 +209,12 @@ class GUIPartDrawerInternal : public IGUIPartDrawer
     GuiSet builtInGuiSet;
     
     void initBuiltInGui(const ITextureFactory& factory);
-    void initBuiltInGuiTexturesSmall64(const ITextureFactory& factory, const std::string& png_base64);
-    void initBuiltInGuiTexturesSmall(const ITextureFactory& factory, const std::vector<unsigned char>& png);
-    void initBuiltInGuiTexturesSmall(const ITextureFactory& factory, const std::string& png_file_name);
+    void initBuiltInGuiTextures64(const ITextureFactory& factory, const std::string& png_base64);
+    void initBuiltInGuiTextures(const ITextureFactory& factory, const std::vector<unsigned char>& png);
+    void initBuiltInGuiTextures(const ITextureFactory& factory, const std::string& png_file_name);
+    void initBuiltInIcons();
+    void initBuiltInIcons64(const std::string& png_base64);
+    void initBuiltInIcons(const std::vector<unsigned char>& png);
 
     
   public:
@@ -206,6 +227,8 @@ class GUIPartDrawerInternal : public IGUIPartDrawer
     virtual void drawGUIPartText(GUIPart part, const std::string& text, int x0, int y0, int x1, int y1, const GUIPartMod& mod = GPM_Default);
     virtual size_t getGUIPartSizeX(GUIPart part) const;
     virtual size_t getGUIPartSizeY(GUIPart part) const;
+    
+    virtual void createIcon(ITexture& texture, GUIIcon icon, int size = 16) const;
 
 };
 

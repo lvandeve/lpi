@@ -1415,7 +1415,7 @@ Button::Button()
 
 void Button::addFrontImage
 (
-  const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3
+  HTexture* texture1, HTexture* texture2, HTexture* texture3, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3
 )
 {
   this->enableImage2 = 1;
@@ -1430,7 +1430,7 @@ void Button::addFrontImage
   this->imageColor2[2] = imageColor3;
 }
 
-void Button::addFrontImage(const ITexture* texture)
+void Button::addFrontImage(HTexture* texture)
 {
   addFrontImage(texture, texture, texture, imageColor[0], imageColor[1], imageColor[2]);
 }
@@ -1439,13 +1439,13 @@ void Button::addFrontImage(const ITexture* texture)
 void Button::makeImage
 (
   int x, int y, //basic properties
-  const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3 //image
+  HTexture* texture1, HTexture* texture2, HTexture* texture3, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3 //image
 )
 {
   this->x0 = x;
   this->y0 = y;
-  this->setSizeX(texture1->getU());
-  this->setSizeY(texture1->getV());
+  this->setSizeX(texture1->texture->getU());
+  this->setSizeY(texture1->texture->getV());
   
   this->enableImage = 1;
   this->enableText = 0;
@@ -1559,10 +1559,17 @@ void Button::drawImpl(IGUIDrawer& drawer) const
   if(mouseOver(drawer.getInput())) style = 1;
   if(draw_mouse_button_down_style) style = 2;
   
-  
   if(enablePanel) drawGUIPart(drawer, this, GP_BUTTON_PANEL);
-  if(enableImage) drawer.drawTexture(image[style], x0 + imageOffsetx, y0 + imageOffsety, imageColor[style]);
-  if(enableImage2) drawer.drawTexture(image2[style], x0 + imageOffsetx2, y0 + imageOffsety2, imageColor2[style]);
+  if(enableImage)
+  {
+    drawer.convertTextureIfNeeded(image[style]->texture);
+    drawer.drawTexture(image[style]->texture, x0 + imageOffsetx, y0 + imageOffsety, imageColor[style]);
+  }
+  if(enableImage2)
+  {
+    drawer.convertTextureIfNeeded(image2[style]->texture);
+    drawer.drawTexture(image2[style]->texture, x0 + imageOffsetx2, y0 + imageOffsety2, imageColor2[style]);
+  }
   if(enableText && !enablePanel) drawGUIPartText(drawer, this, GPT_TEXT_BUTTON_TEXT, text);
   //TODO: write all button texts using the guipartdrawer
   else drawGUIPartText(drawer, this, GPT_PANEL_BUTTON_TEXT, text);
@@ -1584,7 +1591,7 @@ void Button::autoTextSize(ITextDrawer* drawer, int extrasize)
   y0 -= extrasize;
 }
 
-void Button::makeImage(int x, int y,  const ITexture* texture123, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3)
+void Button::makeImage(int x, int y,  HTexture* texture123, const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3)
 {
   makeImage(x, y, texture123, texture123, texture123, imageColor1, imageColor2, imageColor3);
 }
@@ -2191,10 +2198,6 @@ Checkbox::Checkbox()
   //bad old code, must be fixed!
   this->enabled = 0;
   this->checked = 0;
-  this->texture[0] = getDefaultEmptyTexture();
-  this->texture[1] = getDefaultEmptyTexture();
-  this->texture[2] = getDefaultEmptyTexture();
-  this->texture[3] = getDefaultEmptyTexture();
   this->colorMod[0] = RGB_White;
   this->colorMod[1] = RGB_White;
   this->colorMod[2] = RGB_White;
@@ -2249,7 +2252,7 @@ void Checkbox::makeSmall(int x, int y, bool checked, int toggleOnMouseUp)
   positionText();
 }
 
-void Checkbox::setTexturesAndColors(const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ITexture* texture4, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3, const ColorRGB& color4)
+void Checkbox::setTexturesAndColors(HTexture* texture1, HTexture* texture2, HTexture* texture3, HTexture* texture4, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3, const ColorRGB& color4)
 {
   useCustomImages = true;
   this->texture[0] = texture1;
@@ -2260,20 +2263,20 @@ void Checkbox::setTexturesAndColors(const ITexture* texture1, const ITexture* te
   this->colorMod[1] = color2;
   this->colorMod[2] = color3;
   this->colorMod[3] = color4;
-  this->setSizeX(texture[0]->getU());
-  this->setSizeY(texture[0]->getV());
+  this->setSizeX(texture[0]->texture->getU());
+  this->setSizeY(texture[0]->texture->getV());
   
   positionText();
 }
 
-void Checkbox::setTexturesAndColors(const ITexture* texture1, const ITexture* texture2, const ColorRGB& color1, const ColorRGB& color2)
+void Checkbox::setTexturesAndColors(HTexture* texture1, HTexture* texture2, const ColorRGB& color1, const ColorRGB& color2)
 {
   setTexturesAndColors(texture1, texture1, texture2, texture2, color1, color1, color2, color2);
 }
 
 void Checkbox::addFrontImage
 (
-  const ITexture* texture1, const ITexture* texture2, const ITexture* texture3, const ITexture* texture4,
+  HTexture* texture1, HTexture* texture2, HTexture* texture3, HTexture* texture4,
   const ColorRGB& imageColor1, const ColorRGB& imageColor2, const ColorRGB& imageColor3, const ColorRGB& imageColor4
 )
 {
@@ -2306,7 +2309,7 @@ void Checkbox::setCustomColor2(const ColorRGB& color)
 }
 
 
-void Checkbox::addFrontImage(const ITexture* texture)
+void Checkbox::addFrontImage(HTexture* texture)
 {
   addFrontImage(texture, texture, texture, texture, colorMod[0], colorMod[1], colorMod[2], colorMod[3]);
 }
@@ -2347,10 +2350,17 @@ void Checkbox::drawImpl(IGUIDrawer& drawer) const
   bool over = mouseOver(drawer.getInput());
   if(useCustomImages)
   {
-    if(!checked && !over) drawer.drawTexture(texture[0], x0, y0, colorMod[0]);
-    if(!checked && over) drawer.drawTexture(texture[1], x0, y0, colorMod[1]);
-    if(checked && !over) drawer.drawTexture(texture[2], x0, y0, colorMod[2]);
-    if(checked && over) drawer.drawTexture(texture[3], x0, y0, colorMod[3]);
+    size_t index = 0;
+    if(!checked && !over) index = 0;
+    if(!checked && over) index = 1;
+    if(checked && !over) index = 2;
+    if(checked && over) index = 3; 
+    
+    if(texture[index] && texture[index]->texture)
+    {
+      drawer.convertTextureIfNeeded(texture[index]->texture);
+      drawer.drawTexture(texture[index]->texture, x0, y0, colorMod[index]);
+    }
   }
   else
   {
@@ -2360,10 +2370,17 @@ void Checkbox::drawImpl(IGUIDrawer& drawer) const
 
   if(useCustomImages2)
   {
-    if(!checked && !over) drawer.drawTexture(texture2[0], x0, y0, colorMod2[0]);
-    if(!checked && over) drawer.drawTexture(texture2[1], x0, y0, colorMod2[1]);
-    if(checked && !over) drawer.drawTexture(texture2[2], x0, y0, colorMod2[2]);
-    if(checked && over) drawer.drawTexture(texture2[3], x0, y0, colorMod2[3]);
+    size_t index = 0;
+    if(!checked && !over) index = 0;
+    if(!checked && over) index = 1;
+    if(checked && !over) index = 2;
+    if(checked && over) index = 3; 
+    
+    if(texture2[index] && texture2[index]->texture)
+    {
+      drawer.convertTextureIfNeeded(texture2[index]->texture);
+      drawer.drawTexture(texture2[index]->texture, x0, y0, colorMod2[index]);
+    }
   }
 
 
