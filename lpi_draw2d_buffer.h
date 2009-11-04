@@ -122,8 +122,8 @@ class ADrawer2DBuffer : public ADrawer2D //draws on a buffer
     virtual void drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3);
     
     virtual bool supportsTexture(ITexture* texture);
-    virtual ITexture* createTexture();
-    virtual ITexture* createTexture(ITexture* texture);
+    virtual ITexture* createTexture() const;
+    virtual ITexture* createTexture(ITexture* texture) const;
     
     virtual void drawTexture(const ITexture* texture, int x, int y, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureSized(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White);

@@ -68,8 +68,7 @@ gprof > gprof.txt
 #include "lpi_gui_color.h"
 #include "lpi_guipartdraw_int.h"
 #include "lodepng.h"
-#include "lpi_filebrowse_boost.h"
-#include "lpi_filebrowse_win32.h"
+#include "lpi_filebrowse.h"
 #include "lpi_gui_file.h"
 
 #include <vector>
@@ -150,11 +149,9 @@ SpawnTexts spawns;
 
 lpi::ScreenGL screen(width, height, false, false, "lpi GUI demo");
 lpi::gui::GUIDrawerGL guidrawer(&screen);
-#ifdef WIN32
-  lpi::FileBrowseWin32WithDrives filebrowser;
-#else
-  lpi::FileBrowseBoost filebrowser;
-#endif
+
+lpi::FileBrowse filebrowser;
+
 lpi::gui::MainContainer c(guidrawer);
 
 

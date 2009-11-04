@@ -204,6 +204,11 @@ void loadTexturesAlpha(const std::string& filename, std::vector<ITexture>& textu
 void loadTexturesFromBase64PNG(std::vector<ITexture*>& textures, const ITextureFactory* factory, const std::string& base64, int widths, int heights, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
 void loadTextureFromBase64PNG(ITexture* texture, const std::string& base64, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
 
+//DANGER! these functions create an std::vector<HTexture>, where HTexture's are like auto_ptr's. Never resize the std::vectors after it was created in this function.
+void loadTextures(std::vector<unsigned char>& buffer, std::vector<HTexture>& textures, const ITextureFactory* factory, int widths, int heights, int w, int h, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
+void loadTextures(const std::string& filename, std::vector<HTexture>& textures, const ITextureFactory* factory, int widths, int heights, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
+
+
 ITexture* getDefaultEmptyTexture();
 
 //aligned buffer = having the actual u*v size, instead of the u2*v2 size internally in the texture

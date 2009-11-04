@@ -49,7 +49,90 @@ class IFileBrowse
   virtual std::string getChild(const std::string& path, const std::string& child) const; //child can be subdir or file
   
   virtual void createDirectory(const std::string& path) = 0; //the path is allowed to include a filename. It creates all directories and subdirectories needed to have the complete path (excluding the filename and extention part) created on disk. In fact, it does everything needed to make sure the file can be saved with a standard C++ ofstream afterwars.
+  
+  virtual void ensureDirectoryEndSlash(std::string& path) const = 0; //If you give a path without ending slash, it's added.
+  virtual void fixSlashes(std::string& path) const = 0; //makes sure the slashes of the path are the correct type for this platform.
 };
+
+#if defined(_WIN32)
+
+class FileBrowseWin32 : public IFileBrowse
+{
+  public:
+  virtual bool isDirectory(const std::string& filename) const;
+  
+  virtual void getFiles(std::vector<std::string>& files, const std::string& directory) const;
+  virtual void getDirectories(std::vector<std::string>& dirs, const std::string& directory) const;
+
+  virtual bool fileExists(const std::string& filename) const;
+  
+  virtual std::string getParent(const std::string& path) const;
+  
+  virtual void createDirectory(const std::string& path);
+  
+  virtual void ensureDirectoryEndSlash(std::string& path) const;
+  virtual void fixSlashes(std::string& path) const;
+};
+
+class FileBrowseWin32WithDrives : public FileBrowseWin32
+{
+  
+  public:
+
+  virtual void getFiles(std::vector<std::string>& files, const std::string& directory) const;
+  virtual void getDirectories(std::vector<std::string>& dirs, const std::string& directory) const;
+
+  virtual std::string getParent(const std::string& path) const;
+  virtual std::string getChild(const std::string& path, const std::string& child) const;
+};
+
+typedef FileBrowseWin32WithDrives FileBrowse;
+
+#elif defined(linux) || defined(__linux) || defined(__linux__) || defined(__GNU__) || defined(__GLIBC__) 
+
+class FileBrowseLinux : public IFileBrowse
+{
+  public:
+  virtual bool isDirectory(const std::string& filename) const;
+  
+  virtual void getFiles(std::vector<std::string>& files, const std::string& directory) const;
+  virtual void getDirectories(std::vector<std::string>& dirs, const std::string& directory) const;
+  
+  virtual bool fileExists(const std::string& filename) const;
+  
+  virtual std::string getParent(const std::string& path) const;
+  
+  virtual void createDirectory(const std::string& path);
+
+  virtual void ensureDirectoryEndSlash(std::string& path) const;
+  virtual void fixSlashes(std::string& path) const;
+};
+
+typedef FileBrowseLinux FileBrowse;
+
+#elif defined(HAVEGOTBOOSTFILESYSTEM)
+
+class FileBrowseBoost : public IFileBrowse
+{
+  public:
+  virtual bool isDirectory(const std::string& filename) const;
+  
+  virtual void getFiles(std::vector<std::string>& files, const std::string& directory) const;
+  virtual void getDirectories(std::vector<std::string>& dirs, const std::string& directory) const;
+  
+  virtual bool fileExists(const std::string& filename) const;
+  
+  virtual std::string getParent(const std::string& path) const;
+  
+  virtual void createDirectory(const std::string& path);
+
+  virtual void ensureDirectoryEndSlash(std::string& path) const;
+  virtual void fixSlashes(std::string& path) const;
+};
+
+typedef FileBrowseBoost FileBrowse;
+
+#else
 
 class FileBrowseNotSupported : public IFileBrowse
 {
@@ -59,7 +142,14 @@ class FileBrowseNotSupported : public IFileBrowse
   virtual void getDirectories(std::vector<std::string>& dirs, const std::string& directory) const;
   virtual bool fileExists(const std::string& filename) const;
   virtual void createDirectory(const std::string& path);
+
+  virtual void ensureDirectoryEndSlash(std::string& path) const;
+  virtual void fixSlashes(std::string& path) const;
 };
+
+typedef FileBrowseNotSupported FileBrowse;
+
+#endif
 
 } //namespace lpi
 

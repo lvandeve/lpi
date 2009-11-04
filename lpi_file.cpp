@@ -199,15 +199,6 @@ void giveFilenameBackslashes(std::string& filename)
   }
 }
 
-void giveFilenameOSSlashes(std::string& filename)
-{
-#ifdef WIN32
-  giveFilenameBackslashes(filename);
-#else
-  giveFilenameSlashes(filename);
-#endif
-}
-
 void ensureDirectoryEndSlash(std::string& filename)
 {
   if(filename.empty() || filename[filename.size() - 1] != '/') filename += '/';
@@ -218,14 +209,6 @@ void ensureDirectoryEndBackslash(std::string& filename)
   if(filename.empty() || filename[filename.size() - 1] != '\\') filename += '\\';
 }
 
-void ensureDirectoryEndOSSlash(std::string& filename)
-{
-#ifdef WIN32
-  ensureDirectoryEndBackslash(filename);
-#else
-  ensureDirectoryEndSlash(filename);
-#endif
-}
 
 } //namespace lpi
 

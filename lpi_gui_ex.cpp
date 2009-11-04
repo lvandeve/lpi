@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2009 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -1525,7 +1525,7 @@ void MenuHorizontal::onAddItem(const IGUIDrawer& geom)
   {
     int w, h;
     geom.calcTextRectSize(w, h, item.name);
-    size = w + 8;
+    size = w + 12;
   }
   else size = 8;
   

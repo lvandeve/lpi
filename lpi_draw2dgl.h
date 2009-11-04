@@ -77,8 +77,8 @@ class Drawer2DGL : public ADrawer2D
     virtual void drawGradientQuad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, const ColorRGB& color0, const ColorRGB& color1, const ColorRGB& color2, const ColorRGB& color3);
     
     virtual bool supportsTexture(ITexture* texture);
-    virtual ITexture* createTexture();
-    virtual ITexture* createTexture(ITexture* texture);
+    virtual ITexture* createTexture() const;
+    virtual ITexture* createTexture(ITexture* texture) const;
     
     /*
     Note: while this drawer uses OpenGL, the intention for the 2D drawer is that when
