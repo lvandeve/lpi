@@ -79,8 +79,8 @@ class TextureGL : public ITexture
   public:
 
     //divide texture in multiple ones if size is larger than this so that all video hardware can support it
-    static const size_t MAXX = 1024;
-    static const size_t MAXY = 1024;
+    static const size_t MAXX = 64;
+    static const size_t MAXY = 64;
   
     TextureGL();
     

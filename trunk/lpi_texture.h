@@ -57,7 +57,8 @@ class ITexture
   The buffer does NOT have size (getU(), getV()), but (getU2(), getV2()). This is
   because how the texture is put in memory is implementation dependent. For example
   in the OpenGL texture, the buffer sizes are powers of two.
-  You CAN change the contents of the line! This can be used to change colors,
+  So the size (in chars) of the buffer is: 4 * getU2() * getV2().
+  You CAN change the contents of the buffer. This can be used to change colors,
   shapes, the image, ... on the texture. BUT: you need to call "update" after
   done changing, or the effect MAY or MAY NOT be visible depending on the
   implementation, platform, etc...

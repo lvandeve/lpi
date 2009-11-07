@@ -363,8 +363,8 @@ void FileDialog::addExtensionSet(const std::string& name, const std::vector<std:
 ////////////////////////////////////////////////////////////////////////////////
 
 
-RecentFiles::RecentFiles()
-: maxnum(8)
+RecentFiles::RecentFiles(size_t maxnum)
+: maxnum(maxnum)
 {
 }
 

@@ -77,12 +77,12 @@ class ToolTipManager //this is made to draw the tooltip at the very end to avoid
   private:
     std::map<const Element*, std::string> elements;
     
-  private:
-    void drawToolTip(const std::string& tip, IGUIDrawer& drawer) const; //TODO: move this function to ToolTipManager
     
   public:
     void registerElement(Element* element, const std::string& tip); //doing this overrides the tooltip the element itself generates, but usually the element itself won't generate any tooltip at all on its own and using this function of the tooltipmanager is the only way to get a tooltip for that element
     void draw(const Element* root, IGUIDrawer& drawer) const;
+    
+    static void drawToolTip(const std::string& tip, IGUIDrawer& drawer);
 };
 
 /*
@@ -220,7 +220,7 @@ class Element : public ElementRectangular
     void growSizeY1(int sizey) { resize(x0        , y0        , x1        , y0 + sizey); }
     
     ////custom tooltip
-    virtual void drawToolTip(IGUIDrawer& drawer) const; //override if you can invent a fallback tooltip to draw for the element, but it's not required, the TooltipManager only uses this if no other tooltip was specified by the user
+    virtual void drawToolTip(IGUIDrawer& drawer) const; //override if you can invent a fallback tooltip to draw for the element, but it's not required, the TooltipManager only uses this if no other tooltip was specified by the user (use the static ToolTipManager::drawToolTip function if you want the default style)
     
     virtual void setElementOver(bool state); //ALL gui types that have gui elements inside of them, must set elementOver of all gui elements inside of them too! ==> override this virtual function for those. Override this if you have subelements, unless you use addSubElement in ElementComposite.
     bool hasElementOver() const;

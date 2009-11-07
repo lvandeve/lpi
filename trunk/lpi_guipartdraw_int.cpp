@@ -565,12 +565,12 @@ void GUIPartDrawerInternal::initBuiltInIcons(const std::vector<unsigned char>& p
   
   makeTextureFromBuffer(&icons.iconFile, &dataBuffer[0], GDW, GDH, AE_PinkKey, 40, 20, 56, 36);
   makeTextureFromBuffer(&icons.iconFolder, &dataBuffer[0], GDW, GDH, AE_PinkKey, 20, 20, 36, 36);
-  makeTextureFromBuffer(&icons.iconNew, &dataBuffer[0], GDW, GDH, AE_PinkKey, 20, 60, 36, 86);
-  makeTextureFromBuffer(&icons.iconOpen, &dataBuffer[0], GDW, GDH, AE_PinkKey, 40, 60, 56, 86);
-  makeTextureFromBuffer(&icons.iconSave, &dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 60, 76, 86);
-  makeTextureFromBuffer(&icons.iconSaveAs, &dataBuffer[0], GDW, GDH, AE_PinkKey, 80, 60, 96, 86);
-  makeTextureFromBuffer(&icons.iconSaveAll, &dataBuffer[0], GDW, GDH, AE_PinkKey, 100, 60, 116, 86);
-  makeTextureFromBuffer(&icons.iconClose, &dataBuffer[0], GDW, GDH, AE_PinkKey, 120, 60, 136, 86);
+  makeTextureFromBuffer(&icons.iconNew, &dataBuffer[0], GDW, GDH, AE_PinkKey, 20, 60, 36, 76);
+  makeTextureFromBuffer(&icons.iconOpen, &dataBuffer[0], GDW, GDH, AE_PinkKey, 40, 60, 56, 76);
+  makeTextureFromBuffer(&icons.iconSave, &dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 60, 76, 76);
+  makeTextureFromBuffer(&icons.iconSaveAs, &dataBuffer[0], GDW, GDH, AE_PinkKey, 80, 60, 96, 76);
+  makeTextureFromBuffer(&icons.iconSaveAll, &dataBuffer[0], GDW, GDH, AE_PinkKey, 100, 60, 116, 76);
+  makeTextureFromBuffer(&icons.iconClose, &dataBuffer[0], GDW, GDH, AE_PinkKey, 120, 60, 136, 76);
   makeTextureFromBuffer(&icons.iconCut, &dataBuffer[0], GDW, GDH, AE_PinkKey, 20, 80, 36, 96);
   makeTextureFromBuffer(&icons.iconCopy, &dataBuffer[0], GDW, GDH, AE_PinkKey, 40, 80, 56, 96);
   makeTextureFromBuffer(&icons.iconPaste, &dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 80, 76, 96);

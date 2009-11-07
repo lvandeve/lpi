@@ -135,8 +135,8 @@ class ADrawer2D : public IDrawer2D //abstract IDrawer2D already implements some 
     
     virtual void convertTextureIfNeeded(ITexture*& texture);
 
-    virtual void drawTextureCentered(const ITexture* texture, int x, int y, const ColorRGB& colorMod);
-    virtual void drawTextureSizedCentered(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod);
+    virtual void drawTextureCentered(const ITexture* texture, int x, int y, const ColorRGB& colorMod = RGB_White);
+    virtual void drawTextureSizedCentered(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White);
     //virtual void drawTextureTransformedCentered(const ITexture* texture, int x, int y, const double* matrix, const ColorRGB& colorMod);
 };
 

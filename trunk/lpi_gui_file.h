@@ -151,7 +151,7 @@ class RecentFiles //convenient helper class
 
   public:
 
-    RecentFiles();
+    RecentFiles(size_t maxnum = 8);
     bool hasFile(const std::string& file) const;
     size_t getNumFiles() const;
     std::string getFile(size_t i) const;
@@ -166,6 +166,8 @@ class RecentFilesMenu : public lpi::gui::MenuVertical //convenient helper class
     RecentFiles recent;
     
   public:
+  
+    RecentFilesMenu(size_t maxnum = 8) : recent(maxnum) {}
 
     void regenerate(const lpi::gui::IGUIDrawer& geom);
     
