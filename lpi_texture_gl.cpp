@@ -131,13 +131,10 @@ void TextureGL::uploadPartial(int x0, int y0, int x1, int y1)
     {
       Part& part = parts[i];
       
-      bool xoverlap = false;
-      if(x0 >= part.shiftx && x0 <= (int)(part.shiftx + part.u)) xoverlap = true;
-      if(x1 >= part.shiftx && x1 <= (int)(part.shiftx + part.u)) xoverlap = true;
-      bool yoverlap = false;
-      if(y0 >= part.shifty && y0 <= (int)(part.shifty + part.v)) yoverlap = true;
-      if(y1 >= part.shifty && y1 <= (int)(part.shifty + part.v)) yoverlap = true;
-
+      bool xoverlap = true;
+      if(x1 <= part.shiftx || x0 >= (int)(part.shiftx + part.u)) xoverlap = false;
+      bool yoverlap = true;
+      if(y1 <= part.shifty || y0 >= (int)(part.shifty + part.v)) yoverlap = false;
       if(xoverlap && yoverlap)
       {
         bind(false, i);

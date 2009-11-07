@@ -120,55 +120,6 @@ class List : public ScrollElement
     bool clickedOnItem(const IInput& input); //when clicked on an item in the list (but not clicking on the scrollbar or so)
 };
 
-//TODO: recreate this, using "hover"
-//class Droplist : public ElementComposite
-//{
-  //private:
-    //std::vector<Button> textButton;
-    //void init(const std::string& text, int numVisibleOptions);
-    
-    //int sizexc; //width when closed = width to be able to contain widest text in the list
-    //int sizexo; //width when open = width of widest text in the list
-    //int sizeyc; //height when closed
-    //int sizeyo; //height when open
-    
-    //void open();
-    //void close();
-  //public:
-    ////std::string text; //the menu texts, sorted, with | chars between them, and closed with a final NULL char
-    
-    ////text styles
-    //Markup markup1; //Markup for a textbutton of the selection list
-    //Markup markup2; //textbutton mouseOver
-    //Markup markup3; //the selected one on top (instead of in the list)
-    
-    //BackPanel topPanel; //color of the top where the selected text is
-    //BackPanel listPanel; //color of the selection list
-    
-    //int numVisibleOptions; //in the selectionlist
-    //bool opened; //true if the selectionlist is visible
-    
-    //Droplist();
-    //Scrollbar bar;
-    //Button listButton; //the button to open and close the list
-    
-    //void scroll();
-    
-    //int selected;//the selected option of the list (it's index)
-    
-    //void make(int x, int y, const std::string& text, int numVisibleOptions = -1,
-              //const Font* font1 = TS_Black, const Font& font2 = TS_Red, const Font& font3 = TS_Shadow,
-              ////BackPanel topPanel = COLORPANEL(RGB_Grey), BackPanel listPanel = COLORPANEL(RGB_White),
-              //Texture* buttonTexture = &builtInTexture[28]);
-    //void makeScrollbar(const GuiSet* set = &builtInGuiSet);
-    //virtual void drawImpl(IGUIDrawer& drawer) const;
-    //int check();
-    //std::string checkText();
-    //virtual void handleImpl(const IInput& input);
-
-    //void addOption(const std::string& text);
-//};
-
 /*
 An invisible grid of numx * numy rectangles, it can return over which square the mouse is (top left one has coordinates 0, 0)
 */
@@ -498,6 +449,7 @@ class AMenu : public Element
     mutable size_t lastItem; //last item clicked on, if any
     bool stay; //if true, menu stays no matter where you click, if false the menu disappears again if you choose command or click outside of it (typically true for horizontal, false for vertical)
     size_t openedsubmenu;
+    AMenu* parent;
     
   protected:
   
@@ -508,6 +460,10 @@ class AMenu : public Element
     virtual void onOpenSubMenu(const IInput& input, size_t index) = 0;
     
     virtual void handleImpl(const IInput& input);
+    
+    void setParent(AMenu* parent) { this->parent = parent; }
+    
+    void disableParents(); //disables all parents that have "stay" to false, it stops disabling once a parent with stay = true is reached
     
   public:
     AMenu();
@@ -567,20 +523,32 @@ class MenuVertical : public AMenu
     MenuVertical();
 };
 
+//TODO: separators
 class ToolBar : public ElementComposite
 {
   protected:
   
+    mutable size_t lastItem;
+  
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
+    
+    size_t getMouseIndex(const IInput& input) const; //index of item over which the mouse is
+    
+    std::vector<HTexture*> icons;
+    std::vector<std::string> tooltips;
   
   public:
-    size_t addCommand(const ITexture* icon, const std::string& tooltip);
+  
+    ToolBar();
+    size_t addCommand(HTexture* icon, const std::string& tooltip);
     void clear();
     
     size_t getNumItems() const;
     bool itemClicked(size_t i, const IInput& input) const; //returns whether item with given index is clicked
     size_t itemClicked(const IInput& input) const; //returns index of item that is clicked if some item is clicked, an invalid index (>= getNumItems()) otherwise.
+    
+    virtual void drawToolTip(IGUIDrawer& drawer) const;
 };
 
 class DropDownList : public Element

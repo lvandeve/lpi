@@ -296,7 +296,7 @@ void ToolTipManager::draw(const Element* root, IGUIDrawer& drawer) const
   std::map<const Element*, std::string>::const_iterator it = elements.find(element);
   if(it != elements.end())
   {
-    drawer.drawGUIPartText(GPT_TOOLTIP, it->second, drawer.getInput().mouseX(), drawer.getInput().mouseY(), drawer.getInput().mouseX(), drawer.getInput().mouseY());
+    drawToolTip(it->second, drawer);
   }
   else element->drawToolTip(drawer);
   
@@ -307,7 +307,10 @@ void ToolTipManager::draw(const Element* root, IGUIDrawer& drawer) const
   */
 }
 
-
+void ToolTipManager::drawToolTip(const std::string& tip, IGUIDrawer& drawer)
+{
+  drawer.drawGUIPartText(GPT_TOOLTIP, tip, drawer.getInput().mouseX(), drawer.getInput().mouseY(), drawer.getInput().mouseX(), drawer.getInput().mouseY());
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //GUIELEMENT////////////////////////////////////////////////////////////////////
