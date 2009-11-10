@@ -59,7 +59,8 @@ class IPersist
     virtual void removeSetting(const std::string& chapter, const std::string& name) = 0;
     virtual void clear() = 0;
     virtual bool hasSetting(const std::string& chapter, const std::string& name) const = 0;
-    virtual std::string getSetting(const std::string& chapter, const std::string& name, const std::string& defaultvalue = "") const = 0;
+    virtual std::string getSetting(const std::string& chapter, const std::string& name, const std::string& defaultValue = "") const = 0;
+    std::string getSettingAndSet(const std::string& chapter, const std::string& name, const std::string& defaultValue, bool addSettingIfNotExists);
 
     virtual void save() const = 0;
     virtual void load() = 0;
@@ -83,7 +84,7 @@ class APersist : public IPersist
     virtual void removeSetting(const std::string& chapter, const std::string& name);
     virtual void clear();
     virtual bool hasSetting(const std::string& chapter, const std::string& name) const;
-    virtual std::string getSetting(const std::string& chapter, const std::string& name, const std::string& defaultvalue = "") const;
+    virtual std::string getSetting(const std::string& chapter, const std::string& name, const std::string& defaultValue = "") const;
 
     APersist(const std::string& appuid, bool global); //pathuid must be something that can be a directory name! For safety use only letters and numbers.
     ~APersist();

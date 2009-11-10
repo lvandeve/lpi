@@ -33,7 +33,14 @@ TextureGL::TextureGL()
 : partsx(1)
 , partsy(1)
 {
-  deleteBuffer();
+}
+
+TextureGL::~TextureGL()
+{
+  for(size_t i = 0; i < parts.size(); i++)
+  {
+    glDeleteTextures(1, &parts[i].texture);
+  }
 }
 
 //make memory for the buffer of the texture
@@ -72,7 +79,7 @@ void TextureGL::makeBuffer()
       glDeleteTextures(1, &parts[i].texture);
     }
 
-    parts.resize(partsx * partsy); //TODO: clean up old textures from the video card if some disappear
+    parts.resize(partsx * partsy);
     for(size_t y = 0; y < partsy; y++)
     for(size_t x = 0; x < partsx; x++)
     {
@@ -93,12 +100,6 @@ void TextureGL::makeBuffer()
   }
   
   buffer.resize(4 * u2 * v2);
-}
-
-//free the memory again
-void TextureGL::deleteBuffer()
-{
-  buffer.clear();
 }
 
 void TextureGL::uploadPartial(int x0, int y0, int x1, int y1)

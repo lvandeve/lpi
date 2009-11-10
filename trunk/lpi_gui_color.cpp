@@ -1362,58 +1362,60 @@ void ColorEditorSynchronizer::handle()
         }
       }
       
-      
       if(editor->isMainColorGettable())
       {
-        ColorRGBd color;
-        editor->getColor(color);
+        editor->getColor(mainColor);
         for(size_t j = 0; j < editors.size(); j++)
         {
           if(j != i)
           {
-            editors[j]->setColor(color);
-            editors[j]->setMultiColor(mainColorLink, color);
+            editors[j]->setColor(mainColor);
+            editors[j]->setMultiColor(mainColorLink, mainColor);
           }
         }
+        
+        if(mainColorLink == ColorEditor::FG) mainFG = mainColor;
+        else if(mainColorLink == ColorEditor::MG) mainMG = mainColor;
+        else if(mainColorLink == ColorEditor::BG) mainBG = mainColor;
       }
       if(editor->isMultiColorGettable(ColorEditor::FG))
       {
-        ColorRGBd fg;
-        editor->getMultiColor(fg, ColorEditor::FG);
+        editor->getMultiColor(mainFG, ColorEditor::FG);
         for(size_t j = 0; j < editors.size(); j++)
         {
           if(j != i)
           {
-            editors[j]->setMultiColor(ColorEditor::FG, fg);
-            if(mainColorLink == ColorEditor::FG) editors[j]->setColor(fg);
+            editors[j]->setMultiColor(ColorEditor::FG, mainFG);
+            if(mainColorLink == ColorEditor::FG) editors[j]->setColor(mainFG);
           }
         }
+        mainColor = mainFG;
       }
       if(editor->isMultiColorGettable(ColorEditor::MG))
       {
-        ColorRGBd mg;
-        editor->getMultiColor(mg, ColorEditor::MG);
+        editor->getMultiColor(mainMG, ColorEditor::MG);
         for(size_t j = 0; j < editors.size(); j++)
         {
           if(j != i)
           {
-            editors[j]->setMultiColor(ColorEditor::MG, mg);
-            if(mainColorLink == ColorEditor::MG) editors[j]->setColor(mg);
+            editors[j]->setMultiColor(ColorEditor::MG, mainMG);
+            if(mainColorLink == ColorEditor::MG) editors[j]->setColor(mainMG);
           }
         }
+        mainColor = mainMG;
       }
       if(editor->isMultiColorGettable(ColorEditor::BG))
       {
-        ColorRGBd bg;
-        editor->getMultiColor(bg, ColorEditor::BG);
+        editor->getMultiColor(mainBG, ColorEditor::BG);
         for(size_t j = 0; j < editors.size(); j++)
         {
           if(j != i)
           {
-            editors[j]->setMultiColor(ColorEditor::BG, bg);
-            if(mainColorLink == ColorEditor::BG) editors[j]->setColor(bg);
+            editors[j]->setMultiColor(ColorEditor::BG, mainBG);
+            if(mainColorLink == ColorEditor::BG) editors[j]->setColor(mainBG);
           }
         }
+        mainColor = mainBG;
       }
       break;
     }
@@ -1422,6 +1424,7 @@ void ColorEditorSynchronizer::handle()
 
 void ColorEditorSynchronizer::setColor(const ColorRGBd& color)
 {
+  mainColor = color;
   for(size_t i = 0; i < editors.size(); i++)
   {
     editors[i]->setColor(color);
@@ -1430,6 +1433,9 @@ void ColorEditorSynchronizer::setColor(const ColorRGBd& color)
 
 void ColorEditorSynchronizer::setMultiColor(ColorEditor::Plane plane, const ColorRGBd& color)
 {
+  if(plane == ColorEditor::FG) mainFG = color;
+  else if(plane == ColorEditor::MG) mainMG = color;
+  else if(plane == ColorEditor::BG) mainBG = color;
   for(size_t i = 0; i < editors.size(); i++)
   {
     ColorEditor* editor = editors[i];
@@ -1443,6 +1449,7 @@ void ColorEditorSynchronizer::setMultiColor(ColorEditor::Plane plane, const Colo
 
 AColorPalette::AColorPalette()
 : dialog(0)
+, dontAffectAlpha(false)
 {
 }
 
@@ -1635,7 +1642,9 @@ void ColorPalette::handleImpl(const IInput& input)
 //these are from the ColorEditor interface, returns the currently selected color
 void ColorPalette::getColor(ColorRGBd& color) const
 {
+  double alpha = color.a;
   if(selected >= 0) color = colors[selected]->color;
+  if(dontAffectAlpha) color.a = alpha;
 }
 
 void ColorPalette::setColor(const ColorRGBd& color)
@@ -1762,9 +1771,11 @@ void MultiColorPalette::handleImpl(const IInput& input)
 //these are from the ColorEditor interface, returns the currently selected color
 void MultiColorPalette::getColor(ColorRGBd& color) const
 {
+  double alpha = color.a;
   if(selectedfg >= 0) color = colors[selectedfg];
-  if(selectedmg >= 0) color = colors[selectedmg];
-  if(selectedbg >= 0) color = colors[selectedbg];
+  else if(selectedmg >= 0) color = colors[selectedmg];
+  else if(selectedbg >= 0) color = colors[selectedbg];
+  if(dontAffectAlpha) color.a = alpha;
 }
 
 void MultiColorPalette::setColor(const ColorRGBd& color)
@@ -1784,9 +1795,11 @@ bool MultiColorPalette::isMultiColorGettable(Plane plane) const
 }
 void MultiColorPalette::getMultiColor(ColorRGBd& color, Plane plane) const
 {
+  double alpha = color.a;
   if(plane == FG && selectedfg >= 0) color = colors[selectedfg];
   if(plane == MG && selectedmg >= 0) color = colors[selectedmg];
   if(plane == BG && selectedbg >= 0) color = colors[selectedbg];
+  if(dontAffectAlpha) color.a = alpha;
 }
 
 void MultiColorPalette::setMultiColor(Plane plane, const ColorRGBd& color)
@@ -1916,6 +1929,7 @@ ColorDialog::ColorDialog(const IGUIDrawer& geom)
   addResizer(geom);
   
   palette.generateVibrant8x8();
+  palette.setDontAffectAlpha(true);
   
   ok.makeTextPanel(0, 0, "Ok", 64, 24);
   ok2.makeTextPanel(0, 0, "Ok", 64, 24);

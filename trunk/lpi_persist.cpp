@@ -36,6 +36,14 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
+std::string IPersist::getSettingAndSet(const std::string& chapter, const std::string& name, const std::string& defaultValue, bool addSettingIfNotExists)
+{
+  std::string result = getSetting(chapter, name, defaultValue);
+  if(addSettingIfNotExists) setSetting(chapter, name, result);
+  return result;
+}
+
+
 void APersist::setSetting(const std::string& chapter, const std::string& name, const std::string& value)
 {
   settings[chapter + "." + name] = value;
@@ -56,10 +64,10 @@ bool APersist::hasSetting(const std::string& chapter, const std::string& name) c
   return settings.find(chapter + "." + name) != settings.end();
 }
 
-std::string APersist::getSetting(const std::string& chapter, const std::string& name, const std::string& defaultvalue) const
+std::string APersist::getSetting(const std::string& chapter, const std::string& name, const std::string& defaultValue) const
 {
   Settings::const_iterator it = settings.find(chapter + "." + name);
-  if(it == settings.end()) return defaultvalue;
+  if(it == settings.end()) return defaultValue;
   else return it->second;
 }
 

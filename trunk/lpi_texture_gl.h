@@ -79,10 +79,11 @@ class TextureGL : public ITexture
   public:
 
     //divide texture in multiple ones if size is larger than this so that all video hardware can support it
-    static const size_t MAXX = 64;
-    static const size_t MAXY = 64;
+    static const size_t MAXX = 1024;
+    static const size_t MAXY = 1024;
   
     TextureGL();
+    ~TextureGL();
     
     virtual void setSize(size_t u, size_t v) { this->u = u; this->v = v; makeBuffer(); }
     //width and height of the texture
@@ -112,7 +113,6 @@ class TextureGL : public ITexture
   private:
     
     void makeBuffer(); //creates memory for the buffer
-    void deleteBuffer(); //deletes memory of the buffer
 
     void uploadPartial(int x0, int y0, int x1, int y1); //todo: make use of this for efficiency
     void upload(); //sets the texture to openGL with correct datatype and such. Everytime something changes in the data in the buffer, upload it again to let the videocard/API know the changes. Also, use upload AFTER a screen is already set! And when the screen changes resolution, everything has to be uploaded again.

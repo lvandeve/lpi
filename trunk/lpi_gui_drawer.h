@@ -100,6 +100,7 @@ enum GUIPart
   GP_SCROLLBAR_S,
   GP_SCROLLBAR_W,
   GP_SCROLLBAR_SCROLLER, //scroller button with fixed size
+  GP_SCROLLBAR_SCROLLER_OUT_OF_RANGE, //indication that value of the scrollbar is out of range for the "user" zone due to external setValue (is allowed on purpose!!! E.G. for the ScrollElement to allow elements to be out of range
   GP_SCROLLBAR_HBACK,
   GP_SCROLLBAR_VBACK,
   GP_SCROLLBARPAIR_CORNER,
