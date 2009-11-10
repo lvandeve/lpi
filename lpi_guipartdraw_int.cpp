@@ -951,6 +951,11 @@ void GUIPartDrawerInternal::drawGUIPart(GUIPart part, int x0, int y0, int x1, in
       drawer->drawTexture(guiset->scroller, x0, y0);
       break;
     }
+    case GP_SCROLLBAR_SCROLLER_OUT_OF_RANGE:
+    {
+      drawer->drawTexture(guiset->scroller, x0, y0, RGB_Red);
+      break;
+    }
     case GP_SCROLLBAR_HBACK:
     {
       drawer->drawTextureRepeated(guiset->scrollbarBackground, x0, y0, x1, y1);

@@ -760,6 +760,7 @@ class AColorPalette : public ColorEditor, public ElementComposite
   protected:
   
     AColorDialog* dialog; //if 0, dialog for changing colors is disabled
+    bool dontAffectAlpha; //if true, getColor will not affect the alpha channel, if false, alpha of palette color is chosen.
     
   public:
 
@@ -773,6 +774,7 @@ class AColorPalette : public ColorEditor, public ElementComposite
     void generateVibrant6x6();
     void setColorChoosingDialog(AColorDialog* dialog);
     virtual void manageHoverImpl(IHoverManager& hover);
+    void setDontAffectAlpha(bool set) { dontAffectAlpha = set; }
 };
 
 /*
@@ -865,6 +867,12 @@ class ColorEditorSynchronizer
   private:
     std::vector<ColorEditor*> editors;
     ColorEditor::Plane mainColorLink;
+    
+    //these are remembered to make editors that change only some color channels work (e.g. palette with "dontaffectalphachannel"
+    ColorRGBd mainColor;
+    ColorRGBd mainFG;
+    ColorRGBd mainMG;
+    ColorRGBd mainBG;
   
   public:
 

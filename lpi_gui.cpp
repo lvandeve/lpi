@@ -859,8 +859,11 @@ The size of that element isn't affected by this ScrollElement.
 The position of that element is completely controlled by this ScrollElement or its scrollbars
 */
 
+
+
 ScrollElement::ScrollElement()
-: element(0)
+: keepelementsinside(false)
+, element(0)
 {
 }
 
@@ -899,18 +902,17 @@ void ScrollElement::updateBars()
 {
   if(!element) return;
   
-  toggleBars();
-    
-  bars.hbar.scrollSize = element->getSizeX() - getVisibleSizeX();
-  bars.vbar.scrollSize = element->getSizeY() - getVisibleSizeY();
-  bars.vbar.scrollPos = y0 - element->getY0();
-  bars.hbar.scrollPos = x0 - element->getX0();
+  initBars();
+  
   if(bars.hbar.scrollSize < 0) bars.hbar.scrollSize = 0;
   if(bars.vbar.scrollSize < 0) bars.vbar.scrollSize = 0;
-  if(bars.hbar.scrollPos < 0) bars.hbar.scrollPos = 0;
-  if(bars.vbar.scrollPos < 0) bars.vbar.scrollPos = 0;
-  if(bars.hbar.scrollPos > bars.hbar.scrollSize) bars.hbar.scrollPos = bars.hbar.scrollSize;
-  if(bars.vbar.scrollPos > bars.vbar.scrollSize) bars.vbar.scrollPos = bars.vbar.scrollSize;
+  if(keepelementsinside)
+  {
+    if(bars.hbar.scrollPos < 0) bars.hbar.scrollPos = 0;
+    if(bars.vbar.scrollPos < 0) bars.vbar.scrollPos = 0;
+    if(bars.hbar.scrollPos > bars.hbar.scrollSize) bars.hbar.scrollPos = bars.hbar.scrollSize;
+    if(bars.vbar.scrollPos > bars.vbar.scrollSize) bars.vbar.scrollPos = bars.vbar.scrollSize;
+  }
 }
 
 void ScrollElement::drawImpl(IGUIDrawer& drawer) const
@@ -965,21 +967,27 @@ void ScrollElement::handleImpl(const IInput& input)
   
   if(element)
   {
-    int scrollx = x0 - int(bars.hbar.scrollPos); //the scrollpos is 0 if a bar is not enabled
+    int scrollx = x0 - int(bars.hbar.scrollPos);
     int scrolly = y0 - int(bars.vbar.scrollPos);
     
     //if bars are not enabled (if their size is 0), the position of the element should not be affected except that it should stay inside the scroll area
     if(bars.hbar.scrollSize == 0)
     {
       scrollx = element->getX0();
-      if(scrollx + element->getSizeX() > x1) scrollx = x1 - element->getSizeX();
-      if(scrollx < x0) scrollx = x0;
+      if(keepelementsinside)
+      {
+        if(scrollx + element->getSizeX() > x1) scrollx = x1 - element->getSizeX();
+        if(scrollx < x0) scrollx = x0;
+      }
     }
     if(bars.vbar.scrollSize == 0)
     {
       scrolly = element->getY0();
-      if(scrolly + element->getSizeY() > y1) scrolly = y1 - element->getSizeY();
-      if(scrolly < y0) scrolly = y0;
+      if(keepelementsinside)
+      {
+        if(scrolly + element->getSizeY() > y1) scrolly = y1 - element->getSizeY();
+        if(scrolly < y0) scrolly = y0;
+      }
     }
     
     moveAreaTo(scrollx, scrolly);
@@ -1789,7 +1797,11 @@ void Scrollbar::handleImpl(const IInput& input)
     bool buttonUp_grabbed = buttonUp.mouseGrabbed(input);
     bool buttonDown_grabbed = buttonDown.mouseGrabbed(input);
     if(scroller.mouseGrabbed(input))
+    {
       scrollPos = (scrollSize * (input.mouseY() - y0 - getSliderStart() - scroller.getSizeY() / 2)) / getSliderSize();
+      if(scrollPos < 0) scrollPos = 0;
+      if(scrollPos > scrollSize) scrollPos = scrollSize;
+    }
     else if(mouseDownHere(input) && !scroller.mouseGrabbed(input) && !buttonUp_grabbed && !buttonDown_grabbed)
     {
       scrollPos = (scrollSize * (input.mouseY() - y0 - getSliderStart() - scroller.getSizeY() / 2)) / getSliderSize();
@@ -1806,7 +1818,11 @@ void Scrollbar::handleImpl(const IInput& input)
     bool buttonUp_grabbed = buttonUp.mouseGrabbed(input);
     bool buttonDown_grabbed = buttonDown.mouseGrabbed(input);
     if(scroller.mouseGrabbed(input))
+    {
       scrollPos = (scrollSize * (input.mouseX() - x0 - getSliderStart() - scroller.getSizeX() / 2)) / getSliderSize();
+      if(scrollPos < 0) scrollPos = 0;
+      if(scrollPos > scrollSize) scrollPos = scrollSize;
+    }
     else if(mouseDownHere(input) && !scroller.mouseGrabbed(input) && !buttonUp_grabbed && !buttonDown_grabbed)
     {
       scrollPos = (scrollSize * (input.mouseX() - x0 - getSliderStart() - scroller.getSizeX() / 2)) / getSliderSize();
@@ -1820,13 +1836,17 @@ void Scrollbar::handleImpl(const IInput& input)
   }
   oldTime = input.getSeconds();
 
-  if(scrollPos < 0) scrollPos = 0;
-  if(scrollPos > scrollSize) scrollPos = scrollSize;
+  //DON'T do this HERE! Allow storing values in the scrollbar that are out of range! Only when the user interacts with the scrollbar, will in-range values be resulted.
+  //if(scrollPos < 0) scrollPos = 0;
+  //if(scrollPos > scrollSize) scrollPos = scrollSize;
   
   if(speedMode == 1) setRelativeScrollSpeed();
   
-  if(direction == V) scroller.moveTo(scroller.getX0(), int(y0 + getSliderStart() + (getSliderSize() * scrollPos) / scrollSize));
-  else scroller.moveTo(int(x0 + getSliderStart() + (getSliderSize() * scrollPos) / scrollSize), scroller.getY0());
+  int scrollPosForVisuals = scrollPos;
+  if(scrollPosForVisuals < 0) scrollPosForVisuals = 0;
+  if(scrollPosForVisuals > scrollSize) scrollPosForVisuals = scrollSize;
+  if(direction == V) scroller.moveTo(scroller.getX0(), int(y0 + getSliderStart() + (getSliderSize() * scrollPosForVisuals) / scrollSize));
+  else scroller.moveTo(int(x0 + getSliderStart() + (getSliderSize() * scrollPosForVisuals) / scrollSize), scroller.getY0());
 }
 
 //from an external source, use this function only BEFORE using the handle() function or getTicks() - oldTime will be zero
@@ -1852,7 +1872,11 @@ void Scrollbar::drawImpl(IGUIDrawer& drawer) const
     drawer.drawGUIPart(GP_SCROLLBAR_E, buttonDown.getX0(), buttonDown.getY0(), buttonDown.getX1(), buttonDown.getY1());
   }
 
-  if(scrollSize > 0) drawer.drawGUIPart(GP_SCROLLBAR_SCROLLER, scroller.getX0(), scroller.getY0(), scroller.getX1(), scroller.getY1());
+  if(scrollSize > 0)
+  {
+    if(scrollPos < 0 || scrollPos > scrollSize) drawer.drawGUIPart(GP_SCROLLBAR_SCROLLER_OUT_OF_RANGE, scroller.getX0(), scroller.getY0(), scroller.getX1(), scroller.getY1());
+    else drawer.drawGUIPart(GP_SCROLLBAR_SCROLLER, scroller.getX0(), scroller.getY0(), scroller.getX1(), scroller.getY1());
+  }
 }
 
 void Scrollbar::setRelativePosition(float position)
@@ -2414,6 +2438,17 @@ BulletList::BulletList()
   this->prototype.make(0, 0, 0, 0);
 }
 
+BulletList::~BulletList()
+{
+  clear();
+}
+
+void BulletList::clear()
+{
+  for(size_t i = 0; i < bullet.size(); i++) delete bullet[i];
+  bullet.clear();
+}
+
 void BulletList::make(int x, int y, unsigned long amount, int xDiff, int yDiff)
 {
   this->x0 = x;
@@ -2422,15 +2457,15 @@ void BulletList::make(int x, int y, unsigned long amount, int xDiff, int yDiff)
   this->yDiff = yDiff;
   this->setEnabled(true);
 
-  bullet.clear();
+  clear();
   for(unsigned long i = 0; i < amount; i++)
   {
-    bullet.push_back(prototype);
-    bullet[i].moveTo(x + xDiff * i, y + yDiff * i);
+    bullet.push_back(new Checkbox);
+    bullet.back()->make(0,0,0,0);
+    bullet.back()->moveTo(x + xDiff * i, y + yDiff * i);
+    addSubElement(bullet.back());
   }
-  
-  for(unsigned long i = 0; i < amount; i++)
-    addSubElement(&bullet[i]); //TODO: make bullet a vector of pointers to Bullet, now it copies elements, and gives wrong pointers if you add an element.
+    
   
   //NOTE: DIT IS NIET CORRECT, DEZE FORMULES
   this->setSizeX(amount * xDiff + prototype.getSizeX());
@@ -2441,46 +2476,42 @@ void BulletList::make(int x, int y, unsigned long amount, int xDiff, int yDiff, 
 {
   if(amountx < 1) amountx = 1;
   
-  //todo: use guidarwer to draw this
-  //this->prototype.setTexturesAndColors(set->bullet[0], set->bullet[1], set->mainColor, set->mainColor);
-  
   this->x0 = x;
   this->y0 = y;
   this->xDiff = xDiff;
   this->yDiff = yDiff;
   this->setEnabled(true);
 
-  bullet.clear();
+  clear();
   int xPos = x, yPos = y;
   for(unsigned long i = 0; i < amount; i++)
   {
     xPos = x + xDiff * (i % amountx);
     yPos = y + yDiff * (i / amountx);
-    bullet.push_back(prototype);
-    bullet[i].moveTo(xPos, yPos);
+    bullet.push_back(new Checkbox);
+    bullet.back()->make(0,0,0,0);
+    bullet.back()->moveTo(xPos, yPos);
+    addSubElement(bullet.back());
   }
-  
-  for(unsigned long i = 0; i < amount; i++)
-    addSubElement(&bullet[i]); //TODO: make bullet a vector of pointers to Bullet, now it copies elements, and gives wrong pointers if you add an element.
   
   setCorrectSize();
 }
 
 void BulletList::setCorrectSize()
 {
-  if(bullet.size() == 0) return;
+  if(bullet.empty()) return;
   
-  int minx = bullet[0].getX0();
-  int miny = bullet[0].getY0();
-  int maxx = bullet[0].getX1();
-  int maxy = bullet[0].getY1();
+  int minx = bullet[0]->getX0();
+  int miny = bullet[0]->getY0();
+  int maxx = bullet[0]->getX1();
+  int maxy = bullet[0]->getY1();
   
   for(size_t i = 1; i < bullet.size(); i++)
   {
-    minx = std::min(minx, bullet[i].getX0());
-    miny = std::min(miny, bullet[i].getY0());
-    maxx = std::max(maxx, bullet[i].getX1());
-    maxy = std::max(maxy, bullet[i].getY1());
+    minx = std::min(minx, bullet[i]->getX0());
+    miny = std::min(miny, bullet[i]->getY0());
+    maxx = std::max(maxx, bullet[i]->getX1());
+    maxy = std::max(maxy, bullet[i]->getY1());
   }
   
   this->x0 = minx;
@@ -2495,31 +2526,31 @@ void BulletList::handleImpl(const IInput& input)
   
   for(unsigned long i = 0; i < bullet.size(); i++)
   {
-    bullet[i].handle(input);
+    bullet[i]->handle(input);
   }
 
   int newChecked = -1;
   
   for(size_t i = 0; i < bullet.size(); i++)
   {
-    if(bullet[i].isChecked() && int(i) != lastChecked) newChecked = i;
-    bullet[i].setChecked(false);
+    if(bullet[i]->isChecked() && int(i) != lastChecked) newChecked = i;
+    bullet[i]->setChecked(false);
   }
 
   if(newChecked >= 0)
   {
-    bullet[newChecked].setChecked(true);
+    bullet[newChecked]->setChecked(true);
     lastChecked = newChecked;
   }
   else if(lastChecked >= 0 && lastChecked < int(bullet.size()))
-    bullet[lastChecked].setChecked(true);
+    bullet[lastChecked]->setChecked(true);
 }
 
 void BulletList::drawImpl(IGUIDrawer& drawer) const
 {
   for(unsigned long i = 0; i < bullet.size(); i++)
   {
-    bullet[i].draw(drawer);
+    bullet[i]->draw(drawer);
   }
 }
 
@@ -2530,19 +2561,19 @@ int BulletList::check()
 
 void BulletList::addText(const std::string& text, unsigned long i)
 {
-  if(i < bullet.size()) bullet[i].addText(text);
+  if(i < bullet.size()) bullet[i]->addText(text);
 }
 
 std::string BulletList::getText(unsigned long i) const
 {
   std::string result;
-  if(i < bullet.size()) result = bullet[i].getText();
+  if(i < bullet.size()) result = bullet[i]->getText();
   return result;
 }
 
 const std::string& BulletList::getCurrentText() const
 {
-  return bullet[lastChecked].getText();
+  return bullet[lastChecked]->getText();
 }
 
 void BulletList::set(unsigned long i)
@@ -2552,13 +2583,20 @@ void BulletList::set(unsigned long i)
 
   for(unsigned long j = 0; j < bullet.size(); j++)
   {
-    if(i != j) bullet[j].setChecked(false);
-    else bullet[j].setChecked(true);
+    if(i != j) bullet[j]->setChecked(false);
+    else bullet[j]->setChecked(true);
   }
   
   lastChecked = i;
   
   //handle(input);
+}
+
+const Element* BulletList::hitTest(const IInput& input) const
+{
+  const Element* result = ic.hitTest(input);
+  if(result) return result;
+  return Element::hitTest(input);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

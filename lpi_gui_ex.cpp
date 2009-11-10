@@ -217,6 +217,7 @@ void InternalList::swap(size_t item1, size_t item2)
 List::List(const IGUIDrawer& geom)
 {
   make(0, 0, 64, 64, &list, geom);
+  setKeepElementsInside(true);
 }
 
 void List::resizeImpl(const Pos<int>& newPos)

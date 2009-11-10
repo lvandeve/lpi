@@ -393,11 +393,17 @@ std::string RecentFiles::getFileDisplayName(size_t i) const
 
 void RecentFiles::addFile(const std::string& file) //adds the file unless it is already in the list
 {
-  if(!hasFile(file))
+  for(size_t i = 0; i < files.size(); i++)
   {
-    files.push_back(file);
-    if(files.size() > maxnum) files.erase(files.begin());
+    if(files[i] == file)
+    {
+      files.erase(files.begin() + i);
+      break;
+    }
   }
+  
+  files.push_back(file);
+  if(files.size() > maxnum) files.erase(files.begin());
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -634,6 +634,10 @@ class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
   The size of that element isn't affected by this ScrollElement.
   The position of that element is completely controlled by this ScrollElement or its scrollbars
   */
+  protected:
+  
+    bool keepelementsinside; //false by default
+  
   public:
     Element* element;
   
@@ -644,6 +648,8 @@ class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
     virtual void moveImpl(int x, int y);
     virtual void setElementOver(bool state);
     virtual const Element* hitTest(const IInput& input) const;
+    
+    void setKeepElementsInside(bool set) { keepelementsinside = set; }
 
     void make(int x, int y, int sizex, int sizey, Element* element, const IGUIDrawer& geom);
     
@@ -842,10 +848,12 @@ class Checkbox : public Element, public Label
 class BulletList : public ElementComposite
 {
   public:
-    std::vector <Checkbox> bullet;
+    std::vector <Checkbox*> bullet; //todo: make private
     Checkbox prototype;
     
     BulletList();
+    ~BulletList();
+    void clear();
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
     void make(int x, int y, unsigned long amount, int xDiff, int yDiff); //diff = the location difference between successive checkboxes
@@ -860,6 +868,7 @@ class BulletList : public ElementComposite
     const std::string& getCurrentText() const;
     void addText(const std::string& text, unsigned long i);
     void set(unsigned long i);
+    virtual const Element* hitTest(const IInput& input) const;
     
   private:
     int lastChecked; //remember which one was checked, so it can know when a new one is checked, which one that is
