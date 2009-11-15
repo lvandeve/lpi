@@ -184,7 +184,7 @@ void FileBrowseWin32WithDrives::getFiles(std::vector<std::string>& files, const 
 
 void FileBrowseWin32WithDrives::getDirectories(std::vector<std::string>& dirs, const std::string& directory) const
 {
-  if(directory.empty())
+  if(directory.empty() || directory == "\\")
   {
     for(char c = 'A'; c <= 'Z'; c++)
     {
@@ -206,7 +206,7 @@ std::string FileBrowseWin32WithDrives::getParent(const std::string& path) const
 std::string FileBrowseWin32WithDrives::getChild(const std::string& path, const std::string& child) const
 {
   std::string result = path;
-  if(!path.empty()) ensureDirectoryEndOSSlash(result);
+  if(!path.empty()) ensureDirectoryEndSlash(result);
   result += child;
   return result;
 }

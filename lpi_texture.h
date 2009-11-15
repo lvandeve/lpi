@@ -168,7 +168,8 @@ class AlphaEffect
   AlphaEffect(int style, unsigned char alpha = 0, const ColorRGB& alphaColor = RGB_Black);
 };
 
-static const AlphaEffect AE_Opaque(0, 255, RGB_Black); //no alpha effect
+static const AlphaEffect AE_Nothing(0, 255, RGB_Black); //no alpha effect
+static const AlphaEffect AE_Opaque(1, 255, RGB_Black); //make alpha channel opaque
 static const AlphaEffect AE_GreenKey(128, 255, RGB_Green); //make the green color invisible
 static const AlphaEffect AE_PinkKey(128, 255, RGB_Magenta); //make the magenta color invisible
 static const AlphaEffect AE_PinkKeyS(3200, 255, RGB_Magenta); //make the magenta color invisible, dark magenta (128) will become shadow, slightly brighter magenta (192) becomes more translucent shadow
@@ -182,6 +183,7 @@ static const AlphaEffect AE_Particle(260, 255, RGB_White); //Use this for turnin
 static const AlphaEffect AE_ColorParticle(516, 255, RGB_White); //Same as AE_Particle, but hue and saturation information is preserved. 
 static const AlphaEffect AE_Modulated(19, 255, RGB_White); //Modulated (special translucency, as in Unreal 1)
 static const AlphaEffect AE_IModulated(20, 255, RGB_White); //Inverse Modulated
+static const AlphaEffect AE_Saturation(8, 255, RGB_White); //Saturation to alpha
 
 void createImageAlpha(unsigned char* image, int w, int h, const AlphaEffect& effect);
 
@@ -189,8 +191,8 @@ void createImageAlpha(unsigned char* image, int w, int h, const AlphaEffect& eff
 
 //create the texture contents from some source (solid color, buffer, file)
 void makeTextureSolid(ITexture* texture, const ColorRGB& color, size_t w, size_t h); //create texture with plain color of given size
-void makeTextureFromBuffer(ITexture* texture, unsigned char* buffer, size_t w, size_t h, const AlphaEffect& effect = AE_Opaque, int x1=-1, int y1=-1, int x2=-1, int y2=-1); //w and h are the size of the buffer
-void makeTextureFromPNGFile(ITexture* texture, const std::string& filename, const AlphaEffect& effect = AE_Opaque, int x1=-1, int y1=-1, int x2=-1, int y2=-1);
+void makeTextureFromBuffer(ITexture* texture, unsigned char* buffer, size_t w, size_t h, const AlphaEffect& effect = AE_Nothing, int x1=-1, int y1=-1, int x2=-1, int y2=-1); //w and h are the size of the buffer
+void makeTextureFromPNGFile(ITexture* texture, const std::string& filename, const AlphaEffect& effect = AE_Nothing, int x1=-1, int y1=-1, int x2=-1, int y2=-1);
 //these affect only the alpha channel of the texture, e.g. use a greyscale PNG as alpha channel
 void makeTextureAlphaFromBuffer(ITexture* texture, unsigned char* buffer, size_t w, size_t h, int x1=-1, int y1=-1, int x2=-1, int y2=-1);
 void makeTextureAlphaFromPNGFile(ITexture* texture, const std::string& filename, int x1=-1, int y1=-1, int x2=-1, int y2=-1);

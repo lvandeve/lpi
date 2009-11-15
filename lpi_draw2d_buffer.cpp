@@ -691,7 +691,7 @@ ITexture* ADrawer2DBuffer::createTexture(ITexture* texture) const
   TextureBuffer* t = new TextureBuffer();
   makeTextureFromBuffer(t
                       , texture->getBuffer(), texture->getU2(), texture->getV2()
-                      , AE_Opaque
+                      , AE_Nothing
                       , 0, 0, texture->getU(), texture->getV());
   return t;
 }

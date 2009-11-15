@@ -153,6 +153,9 @@ enum GUIPart
   GP_SPINNER_DOWN, //idem for down button
   //dropdown list
   GP_DROPDOWN_BUTTON,
+  //toolbar
+  GP_TOOLBAR_SEPARATOR, //vertical separator for in toolbar
+  GP_TOOLBAR_BUTTON,
 
   ///Colored Parts //todo: just give everything a color parameter instead if needed
   GPC_WINDOW_PANEL, //colored windows

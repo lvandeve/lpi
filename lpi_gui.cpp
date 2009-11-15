@@ -1842,9 +1842,9 @@ void Scrollbar::handleImpl(const IInput& input)
   
   if(speedMode == 1) setRelativeScrollSpeed();
   
-  int scrollPosForVisuals = scrollPos;
+  int scrollPosForVisuals = (int)scrollPos;
   if(scrollPosForVisuals < 0) scrollPosForVisuals = 0;
-  if(scrollPosForVisuals > scrollSize) scrollPosForVisuals = scrollSize;
+  if(scrollPosForVisuals > scrollSize) scrollPosForVisuals = (int)scrollSize;
   if(direction == V) scroller.moveTo(scroller.getX0(), int(y0 + getSliderStart() + (getSliderSize() * scrollPosForVisuals) / scrollSize));
   else scroller.moveTo(int(x0 + getSliderStart() + (getSliderSize() * scrollPosForVisuals) / scrollSize), scroller.getY0());
 }

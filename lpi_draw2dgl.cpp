@@ -420,7 +420,7 @@ ITexture* Drawer2DGL::createTexture(ITexture* texture) const
   TextureGL* gl = new TextureGL();
   makeTextureFromBuffer(gl
                       , texture->getBuffer(), texture->getU2(), texture->getV2()
-                      , AE_Opaque
+                      , AE_Nothing
                       , 0, 0, texture->getU(), texture->getV());
   return gl;
 }
