@@ -365,8 +365,7 @@ void createImageAlpha(unsigned char* image, int w, int h, const AlphaEffect& eff
       int maxc = r; if(g > maxc) maxc = g; if(b > maxc) maxc = b;
 
       if(maxc == 0) image[index + 3] = 0;
-      else image[index + 3] = (maxc - minc) / maxc;
-      break;
+      else image[index + 3] = (255 * (maxc - minc)) / maxc;
     }
     break;
     case 9:

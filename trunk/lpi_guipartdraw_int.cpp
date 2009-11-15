@@ -1001,6 +1001,7 @@ void GUIPartDrawerInternal::drawGUIPart(GUIPart part, int x0, int y0, int x1, in
       break;
     }
     case GP_HMENU_SEPARATOR:
+    case GP_TOOLBAR_SEPARATOR:
     {
       int rulerCenter = guiset->horMenuSeparator->t0->getU() / 2;
       int centerPos = (x0 + x1) / 2;
@@ -1021,7 +1022,13 @@ void GUIPartDrawerInternal::drawGUIPart(GUIPart part, int x0, int y0, int x1, in
       
       break;
     }
-
+    case GP_TOOLBAR_BUTTON:
+    {
+      if(mod.mousedown) guiset->buttonDownPanel->draw(*drawer, x0+1, y0+1, x1 - x0 - 2, y1 - y0 - 2);
+      else if(mod.mouseover) guiset->buttonOverPanel->draw(*drawer, x0+1, y0+1, x1 - x0 - 2, y1 - y0 - 2);
+      else drawer->drawRectangle(x0+1, y0+1, x1-1, y1-1, RGB_Grey, true);
+      break;
+    }
     default:
       return;
   }

@@ -139,7 +139,7 @@ void FileList::setAllowedExtensions(const std::vector<std::string>& allowedExten
 
 ////////////////////////////////////////////////////////////////////////////////
 
-std::string FileDialog::REMEMBER_PATH;
+std::string FileDialog::REMEMBER_PATH; //for remembering it during one session at least
 
 FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser, bool save, bool multi)
 : list(geom)
@@ -161,11 +161,11 @@ FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser, bool save, 
 
   pushTop(&ok, Sticky(1.0,-84, 1.0,-50, 1.0,-4, 1.0,-30));
   pushTop(&cancel, Sticky(1.0,-84, 1.0,-24, 1.0,-4, 1.0,-4));
-  pushTop(&up, Sticky(1.0,-24, 0.0,4, 1.0,-4, 0.0,24));
-  pushTop(&list, Sticky(0.0,4, 0.0,40, 1.0,-4, 1.0,-52));
-  pushTop(&path, Sticky(0.0,4, 0.0,4, 1.0,-28, 0.0,24));
-  pushTop(&file, Sticky(0.0,4, 1.0,-50, 1.0,-88, 1.0,-30));
-  pushTop(&extensionChooser, Sticky(0.0,4, 1.0,-24, 1.0,-88, 1.0,-4));
+  pushTop(&up, Sticky(1.0,-84, 0.0,4, 1.0,-4, 0.0,24));
+  pushTop(&list, Sticky(0.0,4, 0.0,32, 1.0,-4, 1.0,-56));
+  pushTop(&path, Sticky(0.0,48, 0.0,4, 1.0,-88, 0.0,24));
+  pushTop(&file, Sticky(0.0,48, 1.0,-50, 1.0,-88, 1.0,-30));
+  pushTop(&extensionChooser, Sticky(0.0,48, 1.0,-24, 1.0,-88, 1.0,-4));
   path.make(0, 0, 256);
   file.make(0, 0, 256);
 
@@ -200,6 +200,10 @@ void FileDialog::drawImpl(IGUIDrawer& drawer) const
   drawer.drawRectangle(path.getX0(), path.getY0(), path.getX1(), path.getY1(), RGB_Black, false);
   drawer.drawRectangle(file.getX0(), file.getY0(), file.getX1(), file.getY1(), RGB_White, true);
   drawer.drawRectangle(file.getX0(), file.getY0(), file.getX1(), file.getY1(), RGB_Black, false);
+  
+  drawer.drawText("dir:", path.getX0() - 4, path.getCenterY(), lpi::FONT_White, lpi::TextAlign(HA_RIGHT, VA_CENTER));
+  drawer.drawText("file:", file.getX0() - 4, file.getCenterY(), lpi::FONT_White, lpi::TextAlign(HA_RIGHT, VA_CENTER));
+  drawer.drawText("ext:", extensionChooser.getX0() - 4, extensionChooser.getCenterY(), lpi::FONT_White, lpi::TextAlign(HA_RIGHT, VA_CENTER));
 
   drawElements(drawer);
 }

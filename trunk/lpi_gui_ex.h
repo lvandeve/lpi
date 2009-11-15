@@ -535,13 +535,26 @@ class ToolBar : public ElementComposite
     
     size_t getMouseIndex(const IInput& input) const; //index of item over which the mouse is
     
-    std::vector<HTexture*> icons;
-    std::vector<std::string> tooltips;
-  
+    enum Type
+    {
+      COMMAND,
+      SEPARATOR
+    };
+
+    struct Item
+    {
+      Type type;
+      std::string tooltip;
+      HTexture* icon;
+    };
+
+    std::vector<Item> items;
+    
   public:
   
     ToolBar();
     size_t addCommand(HTexture* icon, const std::string& tooltip);
+    size_t addSeparator();
     void clear();
     
     size_t getNumItems() const;

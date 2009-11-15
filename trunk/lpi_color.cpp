@@ -1073,7 +1073,7 @@ ColorRGBd YIQtoRGB(const ColorYIQd& colorYIQ)
 
 ColorRGB RGBdtoRGB(const ColorRGBd& color)
 {
-  return ColorRGB((int)(color.r*255),(int)(color.g*255),(int)(color.b*255),(int)(color.a*255));
+  return ColorRGB((int)(color.r*255 + 0.5),(int)(color.g*255 + 0.5),(int)(color.b*255 + 0.5),(int)(color.a*255 + 0.5));
 }
 
 ColorRGBd RGBtoRGBd(const ColorRGB& color)

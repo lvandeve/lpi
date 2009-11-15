@@ -1229,6 +1229,7 @@ void MenuVertical::drawImpl(IGUIDrawer& drawer) const
 
 #define TOOLBARICONW 24
 #define TOOLBARICONH 24
+#define TOOLBARSEPARATORW 8
 
 ToolBar::ToolBar()
 : lastItem((size_t)(-1))
@@ -1240,14 +1241,26 @@ void ToolBar::drawImpl(IGUIDrawer& drawer) const
   size_t mouseElement = getMouseIndex(drawer.getInput());
   
   drawer.drawGUIPart(GP_HMENU_PANEL, x0, y0, x1, y1);
+  
+  int x = 0;
 
-  for(size_t i = 0; i < icons.size(); i++)
+  for(size_t i = 0; i < items.size(); i++)
   {
     GUIPartMod mod(mouseElement == i, mouseElement == i && mouseDown(drawer.getInput()));
+    int itemWidth = (items[i].type == COMMAND ? TOOLBARICONW : TOOLBARSEPARATORW);
     
-    drawer.drawGUIPart(GP_BUTTON_PANEL, x0 + TOOLBARICONW * i, y0, x0 + TOOLBARICONW * (i + 1), y0 + TOOLBARICONH, mod);
-    drawer.convertTextureIfNeeded(icons[i]->texture);
-    drawer.drawTextureCentered(icons[i]->texture, x0 + TOOLBARICONW * i + TOOLBARICONW / 2, y0 + TOOLBARICONH / 2);
+    if(items[i].type == COMMAND)
+    {
+      drawer.drawGUIPart(GP_TOOLBAR_BUTTON, x0 + x, y0, x0 + x + itemWidth, y0 + TOOLBARICONH, mod);
+      drawer.convertTextureIfNeeded(items[i].icon->texture);
+      drawer.drawTextureCentered(items[i].icon->texture, x0 + x + itemWidth / 2, y0 + TOOLBARICONH / 2);
+    }
+    else if(items[i].type == SEPARATOR)
+    {
+      drawer.drawGUIPart(GP_TOOLBAR_SEPARATOR, x0 + x, y0, x0 + x + itemWidth, y0 + TOOLBARICONH, mod);
+    }
+    
+    x += itemWidth;
   }
 }
 
@@ -1256,7 +1269,7 @@ void ToolBar::drawToolTip(IGUIDrawer& drawer) const
   size_t mouseElement = getMouseIndex(drawer.getInput());
   if(mouseElement < getNumItems())
   {
-    ToolTipManager::drawToolTip(tooltips[mouseElement], drawer);
+    ToolTipManager::drawToolTip(items[mouseElement].tooltip, drawer);
   }
 }
 
@@ -1268,29 +1281,51 @@ void ToolBar::handleImpl(const IInput& input)
   }
 }
 
-size_t ToolBar::ToolBar::getMouseIndex(const IInput& input) const
+size_t ToolBar::getMouseIndex(const IInput& input) const
 {
-  int x = mouseGetRelPosX(input);
-  return x / TOOLBARICONW;
+  if(!mouseOver(input)) return (size_t)(-1);
+
+  int mousePos = mouseGetRelPosX(input);
+
+  int totalSize = 0;
+
+  for(size_t i = 0; i < items.size(); i++)
+  {
+    totalSize += (items[i].type == COMMAND ? TOOLBARICONW : TOOLBARSEPARATORW);
+    if(mousePos < totalSize) return i;
+  }
+
+  return (size_t)(-1);
 }
 
 size_t ToolBar::addCommand(HTexture* icon, const std::string& tooltip)
 {
-  icons.push_back(icon);
-  tooltips.push_back(tooltip);
-  resize(x0, y0, x0 + TOOLBARICONW * icons.size(), y0 + TOOLBARICONH);
+  items.resize(items.size() + 1);
+  items.back().icon = icon;
+  items.back().tooltip = tooltip;
+  items.back().type = COMMAND;
+  resize(x0, y0, x1 + TOOLBARICONW, y0 + TOOLBARICONH);
   return getNumItems() - 1;
 }
 
+size_t ToolBar::addSeparator()
+{
+  items.resize(items.size() + 1);
+  items.back().icon = 0;
+  items.back().type = SEPARATOR;
+  resize(x0, y0, x1 + TOOLBARSEPARATORW, y0 + TOOLBARICONH);
+  return getNumItems() - 1;
+}
+
+
 void ToolBar::clear()
 {
-  icons.clear();
-  tooltips.clear();
+  items.clear();
 }
 
 size_t ToolBar::getNumItems() const
 {
-  return icons.size();
+  return items.size();
 }
 
 bool ToolBar::itemClicked(size_t i, const IInput& input) const
