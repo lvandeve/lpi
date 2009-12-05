@@ -76,6 +76,32 @@ int cubicsol(double& x1, double& x2, double& x3, double a, double b, double c, d
 int quartsol(double& x1, double& x2, double& x3, double& x4, double a, double b, double c, double d, double e); //quadratic equation solution (axxxx+bxxx+cxx+dx+e=0)
 
 
+
+/*
+If the compiler is confused about the parameter type of abs, max, min, ...,
+or they are #defined wrongly or whatever else, the template functions below
+might lessen the pain.
+*/
+template<typename T>
+T template_abs(T a)
+{
+  return a > 0 ? a : -a;
+}
+
+template<typename T, typename U>
+T template_max(T a, U b)
+{
+  return a > (T)b ? a : (T)b;
+}
+
+template<typename T, typename U>
+T template_min(T a, U b)
+{
+  return a < (T)b ? a : (T)b;
+}
+
+
+
 }
 
 #endif

@@ -151,7 +151,7 @@ FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser, bool save, 
 , extensionChooser(geom)
 {
   addTop(geom);
-  addTitle("File");
+  addTitle(save ? "Save File" : "Open File");
   addResizer(geom);
   addCloseButton(geom);
   
@@ -203,7 +203,7 @@ void FileDialog::drawImpl(IGUIDrawer& drawer) const
   
   drawer.drawText("dir:", path.getX0() - 4, path.getCenterY(), lpi::FONT_White, lpi::TextAlign(HA_RIGHT, VA_CENTER));
   drawer.drawText("file:", file.getX0() - 4, file.getCenterY(), lpi::FONT_White, lpi::TextAlign(HA_RIGHT, VA_CENTER));
-  drawer.drawText("ext:", extensionChooser.getX0() - 4, extensionChooser.getCenterY(), lpi::FONT_White, lpi::TextAlign(HA_RIGHT, VA_CENTER));
+  drawer.drawText(save ? "type:":"ext:", extensionChooser.getX0() - 4, extensionChooser.getCenterY(), lpi::FONT_White, lpi::TextAlign(HA_RIGHT, VA_CENTER));
 
   drawElements(drawer);
 }
@@ -358,10 +358,16 @@ void FileDialog::setAllowedExtensions(const std::vector<std::string>& allowedExt
   list.generateListForDir(path.getText(), *browser); //regenerate the list
 }
 
-void FileDialog::addExtensionSet(const std::string& name, const std::vector<std::string>& extensions)
+size_t FileDialog::addExtensionSet(const std::string& name, const std::vector<std::string>& extensions)
 {
   extensionChooser.addItem(name);
   extensionSets.push_back(extensions);
+  return extensionSets.size() - 1;
+}
+
+size_t FileDialog::getExtensionSet() const
+{
+  return extensionChooser.getSelectedItem();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

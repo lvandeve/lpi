@@ -20,6 +20,8 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 #include "lpi_file.h"
 
+#include <algorithm>
+
 namespace lpi
 {
 
@@ -207,6 +209,15 @@ void ensureDirectoryEndSlash(std::string& filename)
 void ensureDirectoryEndBackslash(std::string& filename)
 {
   if(filename.empty() || filename[filename.size() - 1] != '\\') filename += '\\';
+}
+
+bool extEqualsIgnoreCase(const std::string& filename, const std::string& ext)
+{
+  std::string fext = getFileNameExtPart(filename, false);
+  std::transform(fext.begin(), fext.end(), fext.begin(), ::tolower);
+  std::string lext = ext;
+  std::transform(lext.begin(), lext.end(), lext.begin(), ::tolower);
+  return lext == fext;
 }
 
 

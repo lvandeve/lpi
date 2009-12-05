@@ -77,10 +77,20 @@ double dot(const Vector2& v, const Vector2& w);
 Vector2 getComponentInDirection(const Vector2& v, const Vector2& dir);
 double distancePointLine(const Vector2& p, const Vector2& a, const Vector2& b); //get distance from point p to the line given by a and b
 double distancePointLineSegment(const Vector2& p, const Vector2& a, const Vector2& b);
+double distancePointLineSq(const Vector2& p, const Vector2& a, const Vector2& b); //get distance from point p to the line given by a and b
+double distancePointLineSegmentSq(const Vector2& p, const Vector2& a, const Vector2& b);
+void intersectLineLine(Vector2& result, const Vector2& a0, const Vector2& a1, const Vector2& b0, const Vector2& b1);
 bool intersectLineSegmentLineSegment(Vector2& result, const Vector2& a0, const Vector2& a1, const Vector2& b0, const Vector2& b1);
+
+bool sideOfLineGivenByTwoPoints(const Vector2& p, const Vector2& a, const Vector2& b);
 
 //barycentric non-perspective correct coordinates for rasterizing 2D triangle; to make perspective correct, use barycentric_persp of lpi_math3d after this
 void barycentric(double& alpha, double& beta, double& gamma, const lpi::Vector2& a, const lpi::Vector2& b, const lpi::Vector2& c, const lpi::Vector2& p);
+bool pointInsideTriangle(const Vector2& p, const Vector2& a, const Vector2& b, const Vector2& c);
+
+//The 3 points are counterclockwise if result > 0, clockwise if result < 0, colinear if result = 0. Absolute value is triangle area.
+double triangleArea(const Vector2& v0, const Vector2& v1, const Vector2& v2);
+bool ccw(const Vector2& v0, const Vector2& v1, const Vector2& v2); //returns true if triangleArea(v0, v1, v2) < 0
 
 /*
 deflect, aka Target Leading or Target Prediction System.

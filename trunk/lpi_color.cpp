@@ -102,10 +102,10 @@ ColorRGB operator*(double a, const ColorRGB& color)
 ColorRGB operator*(const ColorRGB& color1, const ColorRGB& color2)
 {
   ColorRGB c;
-  c.r = (color1.r * color2.r) / 256;
-  c.g = (color1.g * color2.g) / 256;
-  c.b = (color1.b * color2.b) / 256;
-  c.a = (color1.a * color2.a) / 256;
+  c.r = (color1.r * color2.r) / 255;
+  c.g = (color1.g * color2.g) / 255;
+  c.b = (color1.b * color2.b) / 255;
+  c.a = (color1.a * color2.a) / 255;
   return c;
 }
 
