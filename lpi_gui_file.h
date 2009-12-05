@@ -98,6 +98,7 @@ TODO's:
 [ ] add some helpful text labels indicating what they are left of the "path", "file" and "extensionChooser"
 [ ] let the close button do the same as the cancel button
 [ ] also make a folder browsing dialog
+[ ] in save dialog, add a "automatically add extension" checkbox. If true and you type filename without extension from the list, it adds the first extension from the chosen type to the filename.
 [ ] 
 */
 class FileDialog : public Dialog
@@ -138,9 +139,10 @@ class FileDialog : public Dialog
     std::string getFileName(size_t i); //returns full path
     std::string getFileName(); //returns first file if getNumFiles() > 0, empty string otherwise. This is useful if it's not a multi-file dialog.
 
-    void setAllowedExtensions(const std::vector<std::string>& allowedExtensions);
+    void setAllowedExtensions(const std::vector<std::string>& allowedExtensions); //this has not much to do with addExtensionSet. This is called when the user selects one from the dropdown list. But can also be called programatically (e.g. when just setting a fixed filter and not using the dropdown list at all)
 
-    void addExtensionSet(const std::string& name, const std::vector<std::string>& extensions); //give empty vector to mean "any"
+    size_t addExtensionSet(const std::string& name, const std::vector<std::string>& extensions); //give empty vector to mean "any"
+    size_t getExtensionSet() const; //check which type or extension set was selected. This is useful for choosing to which file type your data has to be encoded (better than parsing the extension of getFileName())
 };
 
 class RecentFiles //convenient helper class

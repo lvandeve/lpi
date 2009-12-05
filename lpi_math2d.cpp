@@ -258,6 +258,33 @@ double distancePointLineSegment(const Vector2& p, const Vector2& a, const Vector
   }
 }
 
+//get squared distance from point p to the line given by a and b
+double distancePointLineSq(const Vector2& p, const Vector2& a, const Vector2& b)
+{
+  //Explanationn of the formula: see Vector3 version of this function.
+  
+  double k = -((b.x-a.x)*(a.x-p.x)+(b.y-a.y)*(a.y-p.y))/((b.x-a.x)*(b.x-a.x) + (b.y-a.y)*(b.y-a.y));
+  Vector2 q;
+  q.x = a.x + k * (b.x - a.x);
+  q.y = a.y + k * (b.y - a.y);
+  
+  return distancesq(p, q);
+}
+
+double distancePointLineSegmentSq(const Vector2& p, const Vector2& a, const Vector2& b)
+{
+  double k = -((b.x-a.x)*(a.x-p.x)+(b.y-a.y)*(a.y-p.y))/((b.x-a.x)*(b.x-a.x) + (b.y-a.y)*(b.y-a.y));
+  if(k < 0) return distancesq(p, a);
+  else if(k > 1) return distancesq(p, b);
+  else
+  {
+    Vector2 q;
+    q.x = a.x + k * (b.x - a.x);
+    q.y = a.y + k * (b.y - a.y);
+    return distancesq(p, q);
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 //not perspective correct
@@ -284,6 +311,42 @@ void barycentric(double& alpha, double& beta, double& gamma, const lpi::Vector2&
   alpha = 1.0 - beta - gamma;
 }
 
+bool pointInsideTriangle(const Vector2& p, const Vector2& a, const Vector2& b, const Vector2& c)
+{
+  double alpha, beta, gamma;
+  barycentric(alpha, beta, gamma, a, b, c, p);
+  return alpha >= 0.0 && alpha <= 1.0 && beta >= 0.0 && beta <= 1.0;
+}
+
+double triangleArea(const Vector2& v0, const Vector2& v1, const Vector2& v2)
+{
+  return (v1.x - v0.x) * (v2.y - v0.y) - (v1.y - v0.y) * (v2.x - v0.x);
+}
+
+bool ccw(const Vector2& v0, const Vector2& v1, const Vector2& v2)
+{
+  return triangleArea(v0, v1, v2) < 0;
+}
+
+//I want this to return true if you're on one side of the line, false if on other (use to check if two points are on same side)
+bool sideOfLineGivenByTwoPoints(const Vector2& p, const Vector2& a, const Vector2& b)
+{
+  Vector2 p2 = p - a;
+  Vector2 b2 = b - a;
+  
+  Vector2 n(b2.y, -b2.x);
+  
+  double proj = dot(p2, n);
+  
+  return (proj >= 0);
+}
+
+void intersectLineLine(Vector2& result, const Vector2& a0, const Vector2& a1, const Vector2& b0, const Vector2& b1)
+{
+  double noemer = ((b1.y-b0.y)*(a1.x-a0.x) - (b1.x-b0.x)*(a1.y-a0.y));
+  double ua = ((b1.x-b0.x)*(a0.y-b0.y) - (b1.y-b0.y)*(a0.x-b0.x)) / noemer;
+  result = a0 + ua * (a1 - a0);
+}
 
 bool intersectLineSegmentLineSegment(Vector2& result, const Vector2& a0, const Vector2& a1, const Vector2& b0, const Vector2& b1)
 {

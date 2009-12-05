@@ -36,22 +36,22 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
-std::string IPersist::getSettingAndSet(const std::string& chapter, const std::string& name, const std::string& defaultValue, bool addSettingIfNotExists)
+std::string IPersist::getSettingAndSet(const std::string& name, const std::string& defaultValue)
 {
-  std::string result = getSetting(chapter, name, defaultValue);
-  if(addSettingIfNotExists) setSetting(chapter, name, result);
+  std::string result = getSetting(name, defaultValue);
+  setSetting(name, result);
   return result;
 }
 
 
-void APersist::setSetting(const std::string& chapter, const std::string& name, const std::string& value)
+void APersist::setSetting(const std::string& name, const std::string& value)
 {
-  settings[chapter + "." + name] = value;
+  settings[name] = value;
 }
 
-void APersist::removeSetting(const std::string& chapter, const std::string& name)
+void APersist::removeSetting(const std::string& name)
 {
-  settings.erase(chapter + "." + name);
+  settings.erase(name);
 }
 
 void APersist::clear()
@@ -59,14 +59,14 @@ void APersist::clear()
   settings.clear();
 }
 
-bool APersist::hasSetting(const std::string& chapter, const std::string& name) const
+bool APersist::hasSetting(const std::string& name) const
 {
-  return settings.find(chapter + "." + name) != settings.end();
+  return settings.find(name) != settings.end();
 }
 
-std::string APersist::getSetting(const std::string& chapter, const std::string& name, const std::string& defaultValue) const
+std::string APersist::getSetting(const std::string& name, const std::string& defaultValue) const
 {
-  Settings::const_iterator it = settings.find(chapter + "." + name);
+  Settings::const_iterator it = settings.find(name);
   if(it == settings.end()) return defaultValue;
   else return it->second;
 }

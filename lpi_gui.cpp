@@ -913,6 +913,8 @@ void ScrollElement::updateBars()
     if(bars.hbar.scrollPos > bars.hbar.scrollSize) bars.hbar.scrollPos = bars.hbar.scrollSize;
     if(bars.vbar.scrollPos > bars.vbar.scrollSize) bars.vbar.scrollPos = bars.vbar.scrollSize;
   }
+  
+  resize(getX0(), getY0(), getX1(), getY1()); //VERY STUPID CODE. There is problem with the file list: if the number of files is such that the height of the list is exactly the list of the scroll element, it constantly flickers between V and H scrollbar. Simply doing this resize call fixes that problem. TODO: investigate the cause of the flickering and solve it in a better way
 }
 
 void ScrollElement::drawImpl(IGUIDrawer& drawer) const

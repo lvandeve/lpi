@@ -52,6 +52,8 @@ void giveFilenameSlashes(std::string& filename); //gives forward slashes to the 
 void giveFilenameBackslashes(std::string& filename); //gives backward slashes to the filename (for windows)
 void ensureDirectoryEndSlash(std::string& filename); //ensures that one ending slash is at the end (to indicate the path is a directory)
 void ensureDirectoryEndBackslash(std::string& filename); //ensures that one ending slash is at the end (to indicate the path is a directory, for windows)
+bool extEqualsIgnoreCase(const std::string& filename, const std::string& ext); //dpn't include the dot in ext
+
 
 } //namespace lpi
 

@@ -36,6 +36,7 @@ namespace lpi
 namespace gui
 {
 
+//TODO: consider doing "controlToValue" always in the handle function of the controls that edit the value a pointer points to
 
 class IDynamicControl : public ElementComposite
 {
@@ -325,13 +326,17 @@ class DynamicSliderSpinner : public TDymamicPageControl<T>
   private:
     SpinnerNumerical<T> spinner;
     Slider slider;
-    T valmax;
-    T valmin;
+    T slidervalmin;
+    T slidervalmax;
+    T spinnervalmin;
+    T spinnervalmax;
     
-    void ctor(T valmin, T valmax, const IGUIDrawer& geom)
+    void ctor(T slidervalmin, T slidervalmax, T spinnervalmin, T spinnervalmax, const IGUIDrawer& geom)
     {
-      this->valmin = valmin;
-      this->valmax = valmax;
+      this->slidervalmin = slidervalmin;
+      this->slidervalmax = slidervalmax;
+      this->spinnervalmin = spinnervalmin;
+      this->spinnervalmax = spinnervalmax;
       static const int TEXTSIZE = 64;
       this->resize(0, 0, TEXTSIZE * 2, 20);
       
@@ -349,12 +354,12 @@ class DynamicSliderSpinner : public TDymamicPageControl<T>
     T getSliderValue() const
     {
       double val = slider.getRelValue();
-      return (T)(valmin + val * (valmax - valmin));
+      return (T)(slidervalmin + val * (slidervalmax - slidervalmin));
     }
     
     void setSliderValue(T val)
     {
-      slider.setRelValue((double)(val - valmin) / (double)(valmax - valmin));
+      slider.setRelValue((double)(val - slidervalmin) / (double)(slidervalmax - slidervalmin));
     }
   
   public:
@@ -363,7 +368,15 @@ class DynamicSliderSpinner : public TDymamicPageControl<T>
     : spinner(step, true, valmin, true, valmax)
     {
       TDymamicPageControl<T>::bind = value;
-      ctor(valmin, valmax, geom);
+      ctor(valmin, valmax, valmin, valmax, geom);
+      setValue(value);
+    }
+  
+    DynamicSliderSpinner(T* value, T slidervalmin, T slidervalmax, T spinnervalmin, T spinnervalmax, T step, const IGUIDrawer& geom)
+    : spinner(step, true, spinnervalmin, true, spinnervalmax)
+    {
+      TDymamicPageControl<T>::bind = value;
+      ctor(slidervalmin, slidervalmax, spinnervalmin, spinnervalmax, geom);
       setValue(value);
     }
   

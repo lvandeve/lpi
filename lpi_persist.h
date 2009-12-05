@@ -21,6 +21,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #pragma once
 
 #include <string>
+#include <sstream>
 #include <map>
 #include <vector>
 
@@ -47,6 +48,9 @@ In windows, it saves the files in:
 In linux, it saves the files in:
 - ~/.lpi/YOURAPPUID/settings.txt for per-user settings
 - /etc/.lpi/YOURAPPUID/settings.txt for global settings
+
+To group your settings into chapters, ..., the adviced separator character to
+use in "name" is ".", e.g. "settings.color"
 */
 
 namespace lpi
@@ -55,15 +59,78 @@ namespace lpi
 class IPersist
 {
   public:
-    virtual void setSetting(const std::string& chapter, const std::string& name, const std::string& value) = 0;
-    virtual void removeSetting(const std::string& chapter, const std::string& name) = 0;
+    virtual void setSetting(const std::string& name, const std::string& value) = 0;
+    virtual void removeSetting(const std::string& name) = 0;
     virtual void clear() = 0;
-    virtual bool hasSetting(const std::string& chapter, const std::string& name) const = 0;
-    virtual std::string getSetting(const std::string& chapter, const std::string& name, const std::string& defaultValue = "") const = 0;
-    std::string getSettingAndSet(const std::string& chapter, const std::string& name, const std::string& defaultValue, bool addSettingIfNotExists);
+    virtual bool hasSetting(const std::string& name) const = 0;
+    virtual std::string getSetting(const std::string& name, const std::string& defaultValue = "") const = 0;
+    std::string getSettingAndSet(const std::string& name, const std::string& defaultValue);
 
     virtual void save() const = 0;
     virtual void load() = 0;
+    
+    //template convenience functions
+    template<typename T>
+    void setSettingT(const std::string& name, const T& value)
+    {
+      std::stringstream ss;
+      ss << value;
+      setSetting(name, ss.str());
+    }
+    
+    template<typename T>
+    void getSettingT(const std::string& name, T& value) const
+    {
+      if(hasSetting(name))
+      {
+        std::stringstream ss;
+        ss.str(getSetting(name));
+        ss >> value;
+      }
+    }
+    
+    //For enums. E must be an enum type. It's read as numerical integer value from the settings.
+    template<typename E>
+    void getSettingE(const std::string& name, E& value) const
+    {
+      if(hasSetting(name))
+      {
+        int i = (int)value;
+        getSettingT(name, i);
+        value = (E)i;
+      }
+    }
+    
+    template<typename T>
+    void getSettingAndSetT(const std::string& name, T& value)
+    {
+      getSettingT(value, name);
+      setSettingT(name, value);
+    }
+    
+    //"R" from "return"
+    template<typename T>
+    T getSettingR(const std::string& name, const T& defaultValue) const
+    {
+      if(hasSetting(name))
+      {
+        std::stringstream ss;
+        ss.str(getSetting(name));
+        T result;
+        ss >> result;
+        return result;
+      }
+      else return defaultValue;
+    }
+    
+    //"R" from "return"
+    template<typename T>
+    T getSettingAndSetR(const std::string& name, const T& defaultValue)
+    {
+      T result = getSettingR(name, defaultValue);
+      setSettingT(name, result);
+      return result;
+    }
     
     virtual ~IPersist(){};
 };
@@ -80,11 +147,11 @@ class APersist : public IPersist
     void readFromXML(const std::string& xml);
     
   public:
-    virtual void setSetting(const std::string& chapter, const std::string& name, const std::string& value);
-    virtual void removeSetting(const std::string& chapter, const std::string& name);
+    virtual void setSetting(const std::string& name, const std::string& value);
+    virtual void removeSetting(const std::string& name);
     virtual void clear();
-    virtual bool hasSetting(const std::string& chapter, const std::string& name) const;
-    virtual std::string getSetting(const std::string& chapter, const std::string& name, const std::string& defaultValue = "") const;
+    virtual bool hasSetting(const std::string& name) const;
+    virtual std::string getSetting(const std::string& name, const std::string& defaultValue = "") const;
 
     APersist(const std::string& appuid, bool global); //pathuid must be something that can be a directory name! For safety use only letters and numbers.
     ~APersist();

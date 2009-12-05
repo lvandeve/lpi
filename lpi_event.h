@@ -111,7 +111,9 @@ class StandByUtil
     double lastChangeTime;
   public:
     StandByUtil()
-    : lastChangeTime(-1)
+    : lastMouseX(0)
+    , lastMouseY(0)
+    , lastChangeTime(-1)
     {
     }
 
