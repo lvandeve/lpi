@@ -34,6 +34,9 @@ class ITexture
 {
   public:
   
+  ITexture();
+  virtual ~ITexture();
+  
   /*
   Get and set the size of the texture. The x-coordinate or width is called "u",
   the y-coordinate or height is called "v".
@@ -222,6 +225,8 @@ void createTexture(ITexture* texture, size_t w, size_t h, const ColorRGB& color)
 
 void setPixel(ITexture* texture, int x, int y, const ColorRGB& color);
 ColorRGB getPixel(ITexture* texture, int x, int y);
+
+void copyTexture(ITexture* dest, const ITexture* source);
 
 } //namespace lpi
 

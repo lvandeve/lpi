@@ -430,6 +430,7 @@ class DynamicEnum : public TDymamicPageControl<T>
       
       list.resize(0, 0, 1, 16);
       this->addSubElement(&list, Sticky(0.0, 0, 0.5,  -list.getSizeY() / 2, 1.0, 0, 0.5, list.getSizeY() / 2));
+      setValue(value);
     }
     
     virtual void getValue(T* value)
@@ -472,6 +473,25 @@ class DynamicColor : public TDymamicPageControl<ColorRGB>
     virtual void manageHoverImpl(IHoverManager& hover);
 };
 
+class DynamicColord : public TDymamicPageControl<ColorRGBd>
+{
+  private:
+    PColorPlaned box;
+
+    ColorDialog edit;
+
+    void ctor();
+
+  public:
+
+    DynamicColord(ColorRGBd* value, const IGUIDrawer& geom);
+    virtual void getValue(ColorRGBd* value);
+    virtual void setValue(ColorRGBd* value);
+    virtual void handleImpl(const IInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void manageHoverImpl(IHoverManager& hover);
+};
+
 class DynamicFile : public TDymamicPageControl<std::string>
 {
   private:
@@ -501,37 +521,76 @@ class DynamicControlDummy : public IDynamicControl
 class DynamicPage : public ElementComposite
 {
   private:
-    std::vector<IDynamicControl*> controls;
-    std::vector<std::string> control_names;
+    class IDynamicRow
+    {
+      public:
+        virtual int getHeight() const = 0;
+        virtual void draw(int x0, int y0, int x1, int y1, IGUIDrawer& drawer) const = 0;
+        virtual void handle(const IInput& input) { (void)input; }
+        virtual void controlToValue() {};
+        virtual void valueToControl() {};
+        virtual void manageHover(IHoverManager& hover) { (void)hover; }
+        
+        std::string tooltip;
+    };
+    
+    class RowControl : public IDynamicRow
+    {
+      public:
+        RowControl(IDynamicControl* control, const std::string& name) : control(control), name(name) {}
+        ~RowControl();
+        IDynamicControl* control;
+        std::string name;
+
+        virtual int getHeight() const { return CONTROLHEIGHT; }
+        virtual void draw(int x0, int y0, int x1, int y1, IGUIDrawer& drawer) const;
+        virtual void handle(const IInput& input) { control->handle(input); }
+        virtual void controlToValue() {control->controlToValue();}
+        virtual void valueToControl() {control->valueToControl();}
+        virtual void manageHover(IHoverManager& hover) { control->manageHover(hover); }
+    };
+    
+    class RowText : public IDynamicRow
+    {
+      public:
+        RowText(const std::string& text) : text(text) {}
+        std::string text;
+        virtual int getHeight() const { return CONTROLHEIGHT; }
+        virtual void draw(int x0, int y0, int x1, int y1, IGUIDrawer& drawer) const;
+    };
+
+    std::vector<IDynamicRow*> rows;
     
     bool enableTitle;
     std::string title; //title on top of this page
-
-    double title_width; //title of controls; number from 0.0 to 1.0
 
     const static int CONTROLHEIGHT = 16;
     const static int TITLEHEIGHT = 16;
   
   public:
   
-  DynamicPage();
-  ~DynamicPage();
-  
-  void controlToValue();
-  void valueToControl();
-  
-  void setTitle(const std::string& title);
-  
-  //to be overidden if wanted: to handle controls without bound values
-  virtual void controlToValueCustom() {};
-  virtual void valueToControlCustom() {};
-  
-  //DynamicPage takes ownership of destructor of your added control!
-  void addControl(const std::string& name, IDynamicControl* control);
-  
-  virtual void drawImpl(IGUIDrawer& drawer) const;
-  virtual void manageHoverImpl(IHoverManager& hover);
-  virtual void handleImpl(const IInput& input);
+    DynamicPage();
+    ~DynamicPage();
+
+    void controlToValue();
+    void valueToControl();
+
+    void setTitle(const std::string& title);
+
+    //to be overidden if wanted: to handle controls without bound values
+    virtual void controlToValueCustom() {};
+    virtual void valueToControlCustom() {};
+
+    //DynamicPage takes ownership of destructor of your added control!
+    size_t addControl(const std::string& name, IDynamicControl* control);
+    size_t addTextRow(const std::string& text);
+    void addToolTipToLastRow(const std::string& text);
+
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void manageHoverImpl(IHoverManager& hover);
+    virtual void handleImpl(const IInput& input);
+    
+    virtual void drawToolTip(IGUIDrawer& drawer) const;
 };
 
 } //namespace gui

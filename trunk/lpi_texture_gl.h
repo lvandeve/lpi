@@ -24,7 +24,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include <iostream>
 
 #include "lpi_texture.h"
-//#include "lpi_screen_gl.h"
+#include <SDL/SDL.h>
 
 
 namespace lpi
@@ -73,7 +73,9 @@ class TextureGL : public ITexture
     
     size_t partsx; //num parts in x direction
     size_t partsy; //num parts in y direction
-    std::vector<Part> parts;
+    mutable std::vector<Part> parts;
+    
+    mutable int openGLContextDestroyedNumber;
     
     
   public:
@@ -110,13 +112,16 @@ class TextureGL : public ITexture
     
     size_t getNumParts() const { return parts.size(); }
     const Part& getPart(size_t i) const { return parts[i]; }
+    
+    void updateForNewOpenGLContextIfNeeded(int number) const; //the number can be gotten from the ScreenGL with getOpenGLContextDestroyedNumber()
+    
   private:
     
     void makeBuffer(); //creates memory for the buffer
 
     void uploadPartial(int x0, int y0, int x1, int y1); //todo: make use of this for efficiency
-    void upload(); //sets the texture to openGL with correct datatype and such. Everytime something changes in the data in the buffer, upload it again to let the videocard/API know the changes. Also, use upload AFTER a screen is already set! And when the screen changes resolution, everything has to be uploaded again.
-    void reupload(); //call this after you changed the screen (causing the textures to be erased from the video card)
+    void upload() const; //sets the texture to openGL with correct datatype and such. Everytime something changes in the data in the buffer, upload it again to let the videocard/API know the changes. Also, use upload AFTER a screen is already set! And when the screen changes resolution, everything has to be uploaded again.
+    void reupload() const; //call this after you changed the screen (causing the textures to be erased from the video card)
     
     //get/set buffer that has the (possible non power of two) size of the wanted image (u * v RGBA pixels)
     void getTextAlignedBuffer(std::vector<unsigned char>& out);

@@ -100,7 +100,7 @@ struct Sticky
 
 static const Sticky STICKYOFF;
 static const Sticky STICKYTOPLEFT(0.0, 0, true, 0.0, 0, true, 0.0, 0, true, 0.0, 0, true); //follow top left side
-//static const Sticky STICKYFULL(0.0, 0, 1.0, 0, 0.0, 0, 1.0, 0);
+static const Sticky STICKYFULL(0.0,0, 0.0,0, 1.0,0, 1.0,0);
 static const Sticky& STICKYDEFAULT = STICKYTOPLEFT;
 
 

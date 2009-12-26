@@ -98,6 +98,8 @@ class InputLine : public Element //input text line
     void deleteSelectedText();
     
     void activate(bool i_active = true);
+    
+    virtual int getKeyboardFocus() const;
 };
 
 class ISpinner : public ElementComposite

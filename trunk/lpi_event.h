@@ -97,6 +97,11 @@ void sleep();
 bool frame(bool quit_if_esc, bool delay); //returns false when done, updates the event, should be called exactly once per frame
 void end();
 
+//yeah not yet in a class right now. Forwards the events encountered in "frame" related to screen resizing.
+bool resizeEventHappened();
+int resizeEventNewSizeX();
+int resizeEventNewSizeY();
+
 /*
 StandByUtil: this adds some SDL Delay if the mouse didn't move for a while.
 This because normally every frame everything is redrawn and handled. If the user
@@ -109,11 +114,13 @@ class StandByUtil
     int lastMouseX;
     int lastMouseY;
     double lastChangeTime;
+    double timeTillStandby;
   public:
-    StandByUtil()
+    StandByUtil(double timeTillStandby = 60)
     : lastMouseX(0)
     , lastMouseY(0)
     , lastChangeTime(-1)
+    , timeTillStandby(timeTillStandby)
     {
     }
 
@@ -143,7 +150,7 @@ class StandByUtil
 
     bool isStandBy(const lpi::IInput& input) const
     {
-      return input.getSeconds() - lastChangeTime > 10;
+      return input.getSeconds() - lastChangeTime > timeTillStandby;
     }
 };
 

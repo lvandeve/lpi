@@ -240,7 +240,7 @@ void List::handleImpl(const IInput& input)
 
 bool List::clickedOnItem(const IInput& input)
 {
-  return !bars.vbar.mouseDown(input) && clicked(input);
+  return !(bars.venabled && bars.vbar.mouseDown(input)) && clicked(input);
 }
 
 size_t List::getNumItems() const { return list.getNumItems(); }
@@ -1441,6 +1441,9 @@ void showMessageBox(MainContainer& c, IModalFrameHandler& frame, const std::stri
   frame.getScreenSize(x0, y0, x1, y1);
   
   lpi::gui::MessageBox dialog(frame.getDrawer(), text, title);
+  
+  //TODO: make the size of the dialog depend on the text size
+  dialog.resize(0, 0, 500, 200);
   dialog.moveCenterTo((x0+x1)/2, (y0+y1)/2);
   c.doModalDialog(dialog, frame);
 }

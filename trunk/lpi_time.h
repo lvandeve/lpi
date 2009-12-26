@@ -18,8 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef LPI_TIME_H_INCLUDED
-#define LPI_TIME_H_INCLUDED
+#pragma once
 
 #include <SDL/SDL.h>
 #include <vector>
@@ -107,4 +106,3 @@ class GameTime
 
 } //namespace lpi
 
-#endif

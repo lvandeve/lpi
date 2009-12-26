@@ -36,15 +36,15 @@ lpi_gui: an OpenGL GUI. Well actually now it is updated to support any lpi::IDra
 
 /*
 TODO:
-[ ] modal vs modeless dialogs or elements
+[X] modal vs modeless dialogs or elements
 [ ] progress bar (and a good multilevel one)
-[ ] menu (both menu bar and right click popup menus)
+[X] menu (both menu bar and right click popup menus)
 [ ] minimizable windows (and bar to dock them in?)
-[ ] spinner (value with up and down button)
-[ ] dropdown list
+[X] spinner (value with up and down button)
+[X] dropdown list
 [ ] tree (and flat list and table)
-[ ] file dialog
-[ ] toolbar (just a bunch of image buttons, not hard to make)
+[X] file dialog
+[X] toolbar (just a bunch of image buttons, not hard to make)
 [ ] textfield with multiple lines
 [ ] status bar in windows
 
@@ -137,6 +137,8 @@ class InternalContainer //container inside elements, for elements that contain s
     size_t findElementIndex(Element* element);
     void removeElement(Element* element);
     
+    int getKeyboardFocus() const;
+    
     Sticky getSticky(Element* element) const;
     void setSticky(Element* element, const Sticky& sticky, Element* parent);
     void setStickyRelative(Element* element, Element* parent); //automatically calculates the sticky for completely relative position, based on the current sizes
@@ -146,6 +148,25 @@ class InternalContainer //container inside elements, for elements that contain s
     void initSubElement(Element* element, const Sticky& sticky, Element* parent);
     void setStickyElementSize(Element* element, Element* parent);
     void setStickyElementSize(Element* element, const Pos<int>& newPos);
+};
+
+enum KeyMod
+{
+  /*
+  An intention is for example that if a GUI component says it has focus for KM_TEXT,
+  but not for KM_CTRL, that then a higher up component that wants to use a CTRL+letter shortcut,
+  will perform that shortcut action, because the lower element which has the focus doesn't use
+  that combination.
+  */
+  
+  //nothing (0) means no focus
+  KM_TEXT = 1, //regular typing (letters, arrows to move cursor, ...), also shift, alt gr and enter, insert, del, ... (because those are for typing text too)
+  KM_CTRL = 2, //this is supposed to take over the letters (ctrl+letter is not same as typing that letter)
+  KM_ALT = 4, //same behaviour as ctrl, but for the alt key
+  //not in the list: shift and alt+gr, because those are not for shortcuts but for typing alternate letters
+  KM_F = 8, //function keys (F1-F12)
+  KM_ESC = 16,
+  KM_TAB = 32 //special because it might be used to change focus
 };
 
 class Element : public ElementRectangular
@@ -232,6 +253,17 @@ class Element : public ElementRectangular
     void drawDebugCross(IGUIDrawer& drawer, const ColorRGB& color = RGB_Red) const;
     
     void drag(const IInput& input, MouseButton button = LMB); //utility function, for moving this element when it's dragged by the mouse
+    
+    /*
+    hasKeyboardFocus: experimental new system. Elements take focus themselves,
+    you don't set focus on them (e.g. inputlines take focus if you click on
+    them, remove focus if you click outside of them with the mouse). But this
+    can be used to detect whether one has focus, and if so you can ignore
+    keyboard commands yourself because the element is already taking them
+    (otherwise multiple things at the same time would use the command, e.g.
+    input box and shortcut)
+    */
+    virtual int getKeyboardFocus() const { return 0; }
 };
 
 class ElementComposite : public Element //element with "internal container" to automatically handle child elements for you
@@ -249,6 +281,7 @@ class ElementComposite : public Element //element with "internal container" to a
     virtual void resize(int x0, int y0, int x1, int y1);
     virtual void manageHoverImpl(IHoverManager& hover);
     //virtual const Element* hitTest(const IInput& input);
+    virtual int getKeyboardFocus() const;
 };
 
 /*
@@ -555,6 +588,8 @@ class Container : public Element
     virtual const Element* hitTest(const IInput& input) const;
     
     void setSizeToElements(); //makes the size of the container as big as the elements. This resizes the container in a non-sticky way: no element is affected
+    
+    virtual int getKeyboardFocus() const;
 };
 
 
@@ -675,6 +710,8 @@ class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
     }
     
     void updateBars(); //this is called automatically now and then, but can also be called by you at any time when the element changed position to ensure the scrollers position won't override your new position
+    
+    virtual int getKeyboardFocus() const;
   
   protected:
   
@@ -784,6 +821,8 @@ class Window : public ElementComposite
     void toggleClose() { if(closed) unClose(); else close(); }
     
     void setColorMod(const ColorRGB& color) { colorMod = color; }
+    
+    virtual int getKeyboardFocus() const;
 };
 
 //The Checkbox

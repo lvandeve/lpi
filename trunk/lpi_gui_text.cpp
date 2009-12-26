@@ -319,6 +319,12 @@ int InputLine::getInteger() const
   return std::atoi(text.c_str());
 }
 
+int InputLine::getKeyboardFocus() const
+{
+  if(control_active) return KM_TEXT;
+  else return 0;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 static const int SPINNERW = 16;
