@@ -32,6 +32,7 @@ namespace lpi
 TextureGL::TextureGL()
 : partsx(1)
 , partsy(1)
+, openGLContextDestroyedNumber(-1)
 {
 }
 
@@ -104,6 +105,8 @@ void TextureGL::makeBuffer()
 
 void TextureGL::uploadPartial(int x0, int y0, int x1, int y1)
 {
+  if(x0 == x1 || y0 == y1) return;
+  
   for(size_t i = 0; i < parts.size(); i++)
   {
     if(!parts[i].generated)
@@ -164,7 +167,7 @@ void TextureGL::uploadPartial(int x0, int y0, int x1, int y1)
 }
 
 //This generates the OpenGL texture so that OpenGL can use it, also use after changing the texture buffer
-void TextureGL::upload()
+void TextureGL::upload() const
 {
   for(size_t i = 0; i < parts.size(); i++)
   {
@@ -200,7 +203,7 @@ void TextureGL::upload()
   }
 }
 
-void TextureGL::reupload()
+void TextureGL::reupload() const
 {
   for(size_t i = 0; i < parts.size(); i++) parts[i].generated = false;
   upload();
@@ -237,6 +240,22 @@ void TextureGL::setTextAlignedBuffer(const std::vector<unsigned char>& in)
   for(size_t y = 0; y < v; y++)
   {
     std::copy(in.begin() + 4 * y * u, in.begin() + 4 * y * u + 4 * u, buffer.begin() + 4 * y * u2);
+  }
+}
+
+void TextureGL::updateForNewOpenGLContextIfNeeded(int number) const
+{
+  if(openGLContextDestroyedNumber == -1 && number == 0) //no resizes ever happened so far and the texture should be initialized
+  {
+    openGLContextDestroyedNumber = number;
+  }
+  else if(openGLContextDestroyedNumber != number)
+  {
+    openGLContextDestroyedNumber = number;
+    reupload();
+  }
+  else
+  {
   }
 }
 

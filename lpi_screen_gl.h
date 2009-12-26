@@ -34,7 +34,6 @@ class ScreenGL
     SDL_Surface* scr; //the single SDL surface used
     int w; //width of the screen
     int h; //height of the screen
-    bool fullscreenMode; //if true, it's fullscreen
     
     std::vector<int> clipLeft;
     std::vector<int> clipTop;
@@ -43,6 +42,8 @@ class ScreenGL
 
     int screenMode; //-1: uninited, 0: 2d thin geometry, 1: 2d filled geometry & textures, 2: 3d
     double lastNear, lastFar;
+    
+    int openGLContextDestroyedNumber; // see getOpenGLContextDestroyedNumber
 
   private:
     void lock();
@@ -53,10 +54,12 @@ class ScreenGL
     void set3DScreen(double near, double far, int w, int h);
 
     bool glsmoothing;
+    
+    bool setVideoMode(int width, int height, bool fullscreen, bool enable_fsaa, bool resizable, const char* text, bool print_debug_messages);
 
     
   public:
-    ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, const char* text);
+    ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, bool resizable, const char* text, bool print_debug_messages=false);
     
     void cls(const ColorRGB& color = RGB_Black);
     void redraw();
@@ -81,6 +84,10 @@ class ScreenGL
     void enableSmoothing();
     void disableSmoothing();
     bool isSmoothingEnabled();
+    
+    void changeResolution(int width, int height, bool fullscreen, bool enable_fsaa, bool resizable, const char* text, bool print_debug_messages=false);
+    
+    int getOpenGLContextDestroyedNumber() const { return openGLContextDestroyedNumber; } //every time OpenGL context is destroyed, this returns a new number; Used by textures to detect that they need to be uploaded again.
     
 };
 

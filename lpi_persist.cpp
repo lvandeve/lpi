@@ -148,7 +148,7 @@ std::string PersistWin32::getPath() const
   {
     std::string path = szPath;
     ensureDirectoryEndBackslash(path);
-    path += "lpi\\" + appuid + "\\settings.txt";
+    path += appuid + "\\settings.txt";
     return path;
   }
   else return "";
@@ -175,7 +175,7 @@ void PersistWin32::load()
   {
     std::string xml;
     loadFile(xml, path);
-    readFromXML(xml);
+    if(!xml.empty()) readFromXML(xml);
   }
 }
 
@@ -194,7 +194,7 @@ PersistLinux::~PersistLinux()
 
 std::string PersistLinux::getPath() const
 {
-  if(global) return "/etc/lpi/" + appuid + "/settings.txt";
+  if(global) return "/etc/" + appuid + "/settings.txt";
   else
   {
     std::string path;
@@ -211,7 +211,7 @@ std::string PersistLinux::getPath() const
         path += ".config/";
       }
     }
-    return path + "lpi/" + appuid + "/settings.txt";
+    return path + appuid + "/settings.txt";
   }
 }
 
@@ -235,7 +235,7 @@ void PersistLinux::load()
   {
     std::string xml;
     loadFile(xml, path);
-    readFromXML(xml);
+    if(!xml.empty()) readFromXML(xml);
   }
 }
 

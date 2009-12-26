@@ -88,6 +88,67 @@ void DynamicColor::manageHoverImpl(IHoverManager& hover)
 }
 ////////////////////////////////////////////////////////////////////////////////
 
+void DynamicColord::ctor()
+{
+  this->resize(0, 0, 20, 20);
+  box.resize(0, 0, 12, 12);
+  box.move(1, 1);
+  this->addSubElement(&box, Sticky(0.0,0, 0.5,-box.getSizeY() / 2, 0.0,box.getSizeX(), 0.5,box.getSizeY() / 2));
+  edit.setEnabled(false);
+}
+
+DynamicColord::DynamicColord(ColorRGBd* value, const IGUIDrawer& geom)
+: box(value)
+, edit(geom)
+{
+  this->bind = value;
+  ctor();
+}
+
+void DynamicColord::getValue(ColorRGBd* value)
+{
+  (void)value;
+}
+
+void DynamicColord::setValue(ColorRGBd* value)
+{
+  (void)value;
+}
+
+void DynamicColord::handleImpl(const IInput& input)
+{
+  box.handle(input);
+
+  if(this->clicked(input))
+  {
+    edit.setEnabled(true);
+    edit.setColor(*bind);
+    edit.moveTo(input.mouseX(), input.mouseY());
+  }
+  else if(edit.isEnabled() && edit.mouseJustDownElsewhere(input))
+  {
+    edit.setEnabled(false);
+  }
+  else if(edit.pressedOk(input)) edit.setEnabled(false);
+
+  if(edit.isEnabled())
+  {
+    edit.getColor(*bind);
+  }
+}
+
+void DynamicColord::drawImpl(IGUIDrawer& drawer) const
+{
+  box.draw(drawer);
+}
+
+void DynamicColord::manageHoverImpl(IHoverManager& hover)
+{
+  if(edit.isEnabled())
+    hover.addHoverElement(&edit);
+}
+////////////////////////////////////////////////////////////////////////////////
+
 void DynamicFile::ctor()
 {
   this->resize(0, 0, 20, 20);
@@ -152,42 +213,87 @@ void DynamicFile::manageHoverImpl(IHoverManager& hover)
 }
 ////////////////////////////////////////////////////////////////////////////////
 
+const static double TITLE_WIDTH = 0.5;
+
+void DynamicPage::RowControl::draw(int x0, int y0, int x1, int y1, IGUIDrawer& drawer) const
+{
+  int xb = (int)((x1-x0) * TITLE_WIDTH); //"x-between": the divider between title and value
+  drawer.drawRectangle(x0, y0, x0 + xb, y1, RGB_White, false);
+  drawer.drawRectangle(x0 + xb, y0, x1, y1, RGB_White, false);
+  drawer.drawText(name, x0 + 4, y0 + 4);
+  control->draw(drawer);
+}
+
+DynamicPage::RowControl::~RowControl()
+{
+  delete control;
+}
+
+void DynamicPage::RowText::draw(int x0, int y0, int x1, int y1, IGUIDrawer& drawer) const
+{
+  drawer.drawRectangle(x0, y0, x1, y1, RGB_White, false);
+  drawer.drawText(text, x0 + 4, y0 + 4);
+}
+
 DynamicPage::DynamicPage()
 : enableTitle(false)
-, title_width(0.5)
 {
   resize(0, 0, 200, 200); //if not resized to something at begin, then added rows go wrong... BUG! :(
 }
 
 DynamicPage::~DynamicPage()
 {
-  for(size_t i = 0; i < controls.size(); i++)
-    delete controls[i];
+  for(size_t i = 0; i < rows.size(); i++)
+    delete rows[i];
 }
 
 
 void DynamicPage::controlToValue()
 {
-  for(size_t i = 0; i < controls.size(); i++)
-    controls[i]->controlToValue();
+  for(size_t i = 0; i < rows.size(); i++)
+    rows[i]->controlToValue();
 }
 
 void DynamicPage::valueToControl()
 {
-  for(size_t i = 0; i < controls.size(); i++)
-    controls[i]->valueToControl();
+  for(size_t i = 0; i < rows.size(); i++)
+    rows[i]->valueToControl();
 }
 
-void DynamicPage::addControl(const std::string& name, IDynamicControl* control)
+size_t DynamicPage::addControl(const std::string& name, IDynamicControl* control)
 {
-  controls.push_back(control);
-  control_names.push_back(name);
-  
-  size_t i = controls.size() - 1;
-  int xb = (int)(getSizeX() * title_width);
+  rows.push_back(new RowControl(control, name));
+
+  size_t i = rows.size() - 1;
+  int xb = (int)(getSizeX() * TITLE_WIDTH);
   int titleheight = (enableTitle ? TITLEHEIGHT : 0);
   control->resize(x0 + xb + 1, y0 + titleheight + i * CONTROLHEIGHT + 1, x1, y0 + titleheight + (i + 1) * CONTROLHEIGHT);
-  addSubElement(control, Sticky(title_width,1, 0.0,titleheight + i * CONTROLHEIGHT + 1, 1.0,0, 0.0,titleheight + (i + 1) * CONTROLHEIGHT));
+  addSubElement(control, Sticky(TITLE_WIDTH,1, 0.0,titleheight + i * CONTROLHEIGHT + 1, 1.0,0, 0.0,titleheight + (i + 1) * CONTROLHEIGHT));
+  
+  return rows.size() - 1;
+}
+
+size_t DynamicPage::addTextRow(const std::string& text)
+{
+  rows.push_back(new RowText(text));
+  
+  return rows.size() - 1;
+}
+
+void DynamicPage::addToolTipToLastRow(const std::string& text)
+{
+  rows.back()->tooltip = text;
+}
+
+void DynamicPage::drawToolTip(IGUIDrawer& drawer) const
+{
+  int my = drawer.getInput().mouseY() - getY0();
+  int index = (my - (enableTitle ? TITLEHEIGHT : 0)) / CONTROLHEIGHT;
+  if(index >= 0 && index < (int)rows.size())
+  {
+    if(!rows[index]->tooltip.empty())
+      ToolTipManager::drawToolTip(rows[index]->tooltip, drawer);
+  }
 }
 
 void DynamicPage::drawImpl(IGUIDrawer& drawer) const
@@ -198,34 +304,32 @@ void DynamicPage::drawImpl(IGUIDrawer& drawer) const
     drawer.drawText(title, x0 + 4, y0 + 4);
   }
   
-  for(size_t i = 0; i < controls.size(); i++)
-  {
-    int y = (enableTitle ? TITLEHEIGHT : 0) + CONTROLHEIGHT * i;
-    int xb = (int)(getSizeX() * title_width); //"x-between": the divider between title and value
-    
-    drawer.drawRectangle(x0, y0 + y, x0 + xb, y0 + y + CONTROLHEIGHT, RGB_White, false);
-    drawer.drawRectangle(x0 + xb, y0 + y, x1, y0 + y + CONTROLHEIGHT, RGB_White, false);
-    drawer.drawText(control_names[i], x0 + 4, y0 + y + 4);
+  int y = 0;
+  int titleheight = (enableTitle ? TITLEHEIGHT : 0);
   
-    controls[i]->draw(drawer);
+  for(size_t i = 0; i < rows.size(); i++)
+  {
+    rows[i]->draw(x0, y0 + y + titleheight, x1, y0 + y + rows[i]->getHeight() + titleheight, drawer);
+    
+    y += rows[i]->getHeight();
   }
 }
 
 void DynamicPage::manageHoverImpl(IHoverManager& hover)
 {
-  for(size_t i = 0; i < controls.size(); i++)
+  for(size_t i = 0; i < rows.size(); i++)
   {
-    controls[i]->manageHover(hover);
+    rows[i]->manageHover(hover);
   }
 }
 
 
 void DynamicPage::handleImpl(const IInput& input)
 {
-  for(size_t i = 0; i < controls.size(); i++)
-    controls[i]->handle(input);
+  for(size_t i = 0; i < rows.size(); i++)
+    rows[i]->handle(input);
   
-  setSizeY((enableTitle ? TITLEHEIGHT : 0) + controls.size() * CONTROLHEIGHT);
+  setSizeY((enableTitle ? TITLEHEIGHT : 0) + rows.size() * CONTROLHEIGHT);
 }
 
 void DynamicPage::setTitle(const std::string& title)

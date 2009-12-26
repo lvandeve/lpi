@@ -439,6 +439,7 @@ void Drawer2DGL::drawTextureSized(const ITexture* texture, int x, int y, size_t 
   if(!texturegl) return;
 
   prepareDrawTextured();
+  texturegl->updateForNewOpenGLContextIfNeeded(screen->getOpenGLContextDestroyedNumber());
   glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
   
   if(texturegl->getNumParts() == 1)
@@ -493,6 +494,7 @@ void Drawer2DGL::drawTextureRepeated(const ITexture* texture, int x0, int y0, in
   if(!texturegl) return;
   
   prepareDrawTextured();
+  texturegl->updateForNewOpenGLContextIfNeeded(screen->getOpenGLContextDestroyedNumber());
 
   glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
   texturegl->bind(screen->isSmoothingEnabled(), 0);
@@ -555,6 +557,7 @@ void Drawer2DGL::drawTextureSizedRepeated(const ITexture* texture, int x0, int y
   if(!texturegl) return;
 
   prepareDrawTextured();
+  texturegl->updateForNewOpenGLContextIfNeeded(screen->getOpenGLContextDestroyedNumber());
 
   glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
   texturegl->bind(screen->isSmoothingEnabled(), 0);

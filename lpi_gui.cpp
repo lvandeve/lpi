@@ -191,6 +191,18 @@ void InternalContainer::manageHover(IHoverManager& hover)
   }
 }
 
+int InternalContainer::getKeyboardFocus() const
+{
+  int result = 0;
+  
+  for(size_t j = 0; j < elements.size(); j++)
+  {
+    result |= elements[j]->getKeyboardFocus();
+  }
+  
+  return result;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 MainContainer::MainContainer()
@@ -202,21 +214,21 @@ MainContainer::MainContainer(IGUIDrawer& drawer)
 : c(drawer)
 , e(drawer)
 {
-  ctor();
-
   //the default container is as big as the screen (note: don't forget to resize it if you resize the resolution of the screen!)
   x0 = 0;
   y0 = 0;
   x1 = drawer.getWidth();
   y1 = drawer.getHeight();
+  
+  ctor();
 }
 
 void MainContainer::ctor()
 {
   setEnabled();
-  addSubElement(&c);
-  c.pushTop(&e);
-  c.pushTop(&h);
+  addSubElement(&c, STICKYFULL);
+  c.pushTop(&e, STICKYFULL);
+  c.pushTop(&h, STICKYFULL);
 }
 
 void MainContainer::addHoverElement(Element* element)
@@ -262,17 +274,20 @@ const ToolTipManager& MainContainer::getToolTipManager() const
 bool MainContainer::doModalDialog(Dialog& dialog, IModalFrameHandler& frame)
 {
   int x0, y0, x1, y1;
-  frame.getScreenSize(x0, y0, x1, y1);
+  dialog.setElementOver(false);
   while(frame.doFrame())
   {
+    frame.getScreenSize(x0, y0, x1, y1); //gotten again every frame in case size changed
     dialog.handle(frame.getDrawer().getInput());
     h.clear();
     dialog.manageHover(*this);
+    dialog.setElementOver(h.mouseOver(frame.getDrawer().getInput()));
     h.setElementOver(false);
     h.handle(frame.getDrawer().getInput());
     draw(frame.getDrawer());
     frame.getDrawer().drawRectangle(x0, y0, x1, y1, ColorRGB(0,0,0,128), true); //"modal darkness"
     dialog.draw(frame.getDrawer());
+    tooltips.draw(&dialog, frame.getDrawer());
     h.draw(frame.getDrawer());
     if(dialog.done()) return true;
   }
@@ -547,6 +562,11 @@ void ElementComposite::manageHoverImpl(IHoverManager& hover)
   ic.manageHover(hover);
 }
 
+int ElementComposite::getKeyboardFocus() const
+{
+  return ic.getKeyboardFocus();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //LABEL/////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -623,6 +643,11 @@ const Element* Container::hitTest(const IInput& input) const
     return this;
   }
   else return 0;
+}
+
+int Container::getKeyboardFocus() const
+{
+  return elements.getKeyboardFocus();
 }
 
 void Container::handleImpl(const IInput& input)
@@ -943,6 +968,12 @@ const Element* ScrollElement::hitTest(const IInput& input) const
   else return 0;
 }
 
+int ScrollElement::getKeyboardFocus() const
+{
+  return element->getKeyboardFocus();
+}
+
+
 void ScrollElement::moveImpl(int x, int y)
 {
   ElementComposite::moveImpl(x, y);
@@ -953,7 +984,7 @@ void ScrollElement::handleImpl(const IInput& input)
 {
   if(element)
   {
-    if(mouseOver(input) && !bars.hbar.mouseOver(input) && !bars.vbar.mouseOver(input))
+    if(mouseOver(input) && !(bars.henabled && bars.hbar.mouseOver(input)) && !(bars.venabled && bars.vbar.mouseOver(input)))
     {
       element->setElementOver(false);
       element->handle(input);
@@ -1314,6 +1345,12 @@ void Window::manageHoverImpl(IHoverManager& hover)
   ElementComposite::manageHoverImpl(hover);
   if(scroll.element) scroll.manageHover(hover);
   else container.manageHover(hover);
+}
+
+int Window::getKeyboardFocus() const
+{
+  if(scroll.element) return scroll.getKeyboardFocus();
+  else return container.getKeyboardFocus();
 }
 
 void Window::addTitle(const std::string& title, const Font& titleFont)

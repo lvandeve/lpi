@@ -21,9 +21,22 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_audio.h"
 
 #include <SDL/SDL.h>
+#include <iostream>
 
 namespace lpi
 {
+
+AudioSDL::AudioSDL()
+{
+  if(SDL_Init(SDL_INIT_AUDIO) < 0)
+  {
+    std::cout << "Unable to init audio: " << SDL_GetError() << std::endl;
+  }
+}
+
+AudioSDL::~AudioSDL()
+{
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //Multithreading helper functions///////////////////////////////////////////////
@@ -82,18 +95,18 @@ size_t audio_max_samples = 8192; //avoid too long queue
 double audio_volume = 1.0;
 int audio_mode = 2; //0=off, 1=full (volume ignored), 2=volume-controlled
 
-void audioSetBufferSamplesRange(size_t min_samples, size_t max_samples)
+void AudioSDL::audioSetBufferSamplesRange(size_t min_samples, size_t max_samples)
 {
   audio_min_samples = min_samples;
   audio_max_samples = max_samples;
 }
 
-void audioSetMode(int mode) //0: silent, 1: full (no volume calculations ==> faster), 2: volume-controlled (= default value)
+void AudioSDL::audioSetMode(int mode) //0: silent, 1: full (no volume calculations ==> faster), 2: volume-controlled (= default value)
 {
   audio_mode = mode;
 }
 
-void audioSetVolume(double volume) //multiplier used if mode is 2 (volume-controlled). Default value is 1.0.
+void AudioSDL::audioSetVolume(double volume) //multiplier used if mode is 2 (volume-controlled). Default value is 1.0.
 {
   audio_volume = volume;
 }
@@ -109,13 +122,13 @@ std::vector<double> audio_data(audio_min_samples, 0);
 
 SDL_AudioSpec audiospec_wanted, audiospec_obtained;
 
-size_t audioSamplesShortage() //returns value > 0 if the soundcard is consuming more samples than you're producing
+size_t AudioSDL::audioSamplesShortage() //returns value > 0 if the soundcard is consuming more samples than you're producing
 {
   if(audio_data.size() < audio_min_samples) return audio_min_samples - audio_data.size();
   else return 0;
 }
 
-size_t audioSamplesOverflow() //returns value > 0 if you're producing more samples than the soundard is consuming - so take it easy a bit
+size_t AudioSDL::audioSamplesOverflow() //returns value > 0 if you're producing more samples than the soundard is consuming - so take it easy a bit
 {
   if(audio_data.size() > audio_max_samples) return audio_data.size() - audio_max_samples;
   else return 0;
@@ -150,7 +163,7 @@ void audioCallback(void* /*userdata*/, Uint8* stream, int len)
   audio_data.erase(audio_data.begin(), audio_data.begin() + fill_len);
 }
 
-int audioOpen(int samplerate, int framesize) //always 16-bit mono sound for now
+int AudioSDL::audioOpen(int samplerate, int framesize) //always 16-bit mono sound for now
 {
   //set the audio format
   audiospec_wanted.freq = samplerate;
@@ -176,12 +189,12 @@ int audioOpen(int samplerate, int framesize) //always 16-bit mono sound for now
   return 0;
 }
 
-void audioClose()
+void AudioSDL::audioClose()
 {
   SDL_CloseAudio();
 }
 
-int audioReOpen() //closes and opens again with same parameters
+int AudioSDL::audioReOpen() //closes and opens again with same parameters
 {
   SDL_PauseAudio(1);
   SDL_CloseAudio();
@@ -196,7 +209,7 @@ int audioReOpen() //closes and opens again with same parameters
 
 
 //only works correct for 16 bit audio currently
-void audioPushSamples(const std::vector<double>& samples, size_t pos, size_t end)
+void AudioSDL::audioPushSamples(const std::vector<double>& samples, size_t pos, size_t end)
 {
   if(audio_mode == 0) return;
   
@@ -217,7 +230,7 @@ void audioPushSamples(const std::vector<double>& samples, size_t pos, size_t end
   }
 }
 
-void audioPlay(const std::vector<double>& samples)
+void AudioSDL::audioPlay(const std::vector<double>& samples)
 {
   if(audio_mode == 0) return;
   

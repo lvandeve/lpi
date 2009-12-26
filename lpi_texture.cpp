@@ -29,6 +29,14 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
+ITexture::ITexture()
+{
+}
+
+ITexture::~ITexture()
+{
+}
+
 void loadTextures(std::vector<unsigned char>& buffer, std::vector<ITexture*>& textures, const ITextureFactory* factory, int widths, int heights, int w, int h, const AlphaEffect& effect)
 {
   int numx, numy;
@@ -892,6 +900,24 @@ void TextureBuffer::updatePartial(int x0, int y0, int x1, int y1)
   (void)y1;
   
   //nothing to do :)
+}
+
+void copyTexture(ITexture* dest, const ITexture* source)
+{
+  size_t u = source->getU();
+  size_t v = source->getV();
+  size_t u2 = source->getU2();
+  dest->setSize(u, v);
+  size_t u2b = dest->getU2();
+  for(size_t y = 0; y < v; y++)
+  for(size_t x = 0; x < u; x++)
+  for(size_t c = 0; c < 4; c++)
+  {
+    size_t index = y * u2 * 4 + x * 4 + c;
+    size_t indexb = y * u2b * 4 + x * 4 + c;
+    dest->getBuffer()[indexb] = source->getBuffer()[index];
+  }
+  dest->update();
 }
 
 } //namespace lpi

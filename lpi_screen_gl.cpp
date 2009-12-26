@@ -32,21 +32,23 @@ This function sets up an SDL window ready for OpenGL graphics.
 You can choose the resolution, whether or not it's fullscreen, and a caption for the window.
 This also inits everything else of the lpi application, so lpi::screen currently acts as init function.
 */
-ScreenGL::ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, const char* text)
+ScreenGL::ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, bool resizable, const char* text, bool print_debug_messages)
 : screenMode(-1)
+, openGLContextDestroyedNumber(0)
 , glsmoothing(false)
 {
-  int colorDepth = 32;
   w = width;
   h = height;
 
-  if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
+  if(print_debug_messages) std::cout<<"info: initing SDL"<<std::endl;
+  if(SDL_Init(SDL_INIT_VIDEO) < 0)
   {
-    std::cout << "Unable to init SDL: " << SDL_GetError() << std::endl;
+    std::cout << "Error: Unable to init SDL: " << SDL_GetError() << std::endl;
     SDL_Quit();
     std::exit(1);
   }
   atexit(SDL_Quit); //TODO: do this in the destructor of ScreenGL or elsewhere, instead of here
+  if(print_debug_messages) std::cout<<"info: SDL inited"<<std::endl;
   
   SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
@@ -55,8 +57,29 @@ ScreenGL::ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, con
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   
-  //FSAA
+  if(!setVideoMode(width, height, fullscreen, enable_fsaa, resizable, text, print_debug_messages))
+  {
+    SDL_Quit();
+    std::exit(1);
+  }
+  
+  
+  if(print_debug_messages) std::cout<<"info: initing GL"<<std::endl;
+  initGL();
+  if(print_debug_messages) std::cout<<"info: GL inited"<<std::endl;
+  
+  SDL_EnableUNICODE(1); //for the text input things //TODO: move this to SDL input class
+  
+  cls();
+  
+  //plane.create(RGB_Black, w, h);
+}
 
+bool ScreenGL::setVideoMode(int width, int height, bool fullscreen, bool enable_fsaa, bool resizable, const char* text, bool print_debug_messages)
+{
+  int colorDepth = 32;
+  
+  //FSAA
   if(enable_fsaa)
   {
     SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 ) ;
@@ -69,35 +92,56 @@ ScreenGL::ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, con
   }
   
   Uint32 flags = SDL_OPENGL;
+  if(resizable) flags |= SDL_RESIZABLE;
   if(fullscreen) flags |= SDL_FULLSCREEN;
-  fullscreenMode = fullscreen;
   
 
+  if(print_debug_messages) std::cout<<"info: initing screen"<<std::endl;
   scr = SDL_SetVideoMode(width, height, colorDepth, flags);
   if(scr == 0 && enable_fsaa)
   {
-    std::cout << "FSAA failed" << std::endl;
+    std::cout << "Warning: FSAA failed. Trying without." << std::endl;
     SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 0) ;
     SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, 0) ;
     scr = SDL_SetVideoMode(width, height, colorDepth, flags);
   }
   if(scr == 0)
   {
-    std::cout << "Unable to set video: " << SDL_GetError() << std::endl;
-    SDL_Quit();
-    std::exit(1);
+    w = 800;
+    h = 600;
+    scr = SDL_SetVideoMode(800, 600, colorDepth, flags);
+    if(scr != 0) std::cout << "Warning: Creating screen with desired resolution failed, created with 800*600 instead." << std::endl;
   }
+  if(scr == 0)
+  {
+    std::cout << "Error: Unable to set video. SDL error message: " << SDL_GetError() << std::endl;
+    return false;
+  }
+  if(print_debug_messages) std::cout<<"info: screen inited"<<std::endl;
   if(fullscreen) lock();
-  fullscreenMode = 1;
   SDL_WM_SetCaption(text, NULL);
   
+  return true;
+}
+
+void ScreenGL::changeResolution(int width, int height, bool fullscreen, bool enable_fsaa, bool resizable, const char* text, bool print_debug_messages)
+{
+  w = width;
+  h = height;
+  
+  setVideoMode(width, height, fullscreen, enable_fsaa, resizable, text, print_debug_messages);
+  
+#if defined(_WIN32) //if the opengl context is destroyed by SDL setVideoMode
+  openGLContextDestroyedNumber++;
+#endif
+
+  if(print_debug_messages) std::cout<<"info: initing GL"<<std::endl;
+  glViewport(0, 0, w, h);
+  screenMode = -1;
   initGL();
+  if(print_debug_messages) std::cout<<"info: GL inited"<<std::endl;
   
-  SDL_EnableUNICODE(1); //for the text input things //TODO: move this to SDL input class
-  
-  cls();
-  
-  //plane.create(RGB_Black, w, h);
+  //cls();
 }
 
 //Locks the screen
@@ -172,7 +216,6 @@ void ScreenGL::set2DScreen(int w, int h, bool filledGeometry)
   glLoadIdentity();
   if(!filledGeometry)
   {
-
     glTranslated(TWIDDLEX, TWIDDLEY, 0);
   }
   
@@ -254,6 +297,7 @@ void ScreenGL::set2DScreen(bool filledGeometry)
 {
   GLint array[4];
   glGetIntegerv(GL_VIEWPORT, array); //get viewport size from OpenGL
+//std::cout<<"zomg viewport "<<array[2]<<" "<<array[3]<<" "<<w<<" "<<h<<std::endl;
   set2DScreen(array[2], array[3], filledGeometry);
 }
 

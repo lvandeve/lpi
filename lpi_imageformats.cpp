@@ -833,7 +833,7 @@ bool decodeImageFile(std::string& error, std::vector<unsigned char>& image, int&
     if(img != 0)
     {
       image.resize(w * h * 4);
-      for(size_t i = 0; i < w * h * 4; i++) image[i] = img[i];
+      for(int i = 0; i < w * h * 4; i++) image[i] = img[i];
       stbi_image_free(img);
       return true;
     }
@@ -851,7 +851,7 @@ bool decodeImageFile(std::string& error, std::vector<unsigned char>& image, int&
     if(img != 0)
     {
       image.resize(w * h * 4);
-      for(size_t i = 0; i < w * h * 4; i++) image[i] = img[i];
+      for(int i = 0; i < w * h * 4; i++) image[i] = img[i];
       stbi_image_free(img);
       return true;
     }

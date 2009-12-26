@@ -360,6 +360,29 @@ void sleep()
   }
 }
 
+static bool resize_event_happaned = false;
+static int resize_event_happaned_new_size_x = 0;
+static int resize_event_happaned_new_size_y = 0;
+
+bool resizeEventHappened()
+{
+  if(resize_event_happaned)
+  {
+    resize_event_happaned = false;
+    return true;
+  }
+  else return false;
+}
+
+int resizeEventNewSizeX()
+{
+  return resize_event_happaned_new_size_x;
+}
+
+int resizeEventNewSizeY()
+{
+  return resize_event_happaned_new_size_y;
+}
 
 /*
 Returns 1 if you close the window or press the escape key
@@ -386,6 +409,12 @@ bool frame(bool quit_if_esc, bool delay) //delay makes CPU have some free time, 
     {
       if(event.button.button == SDL_BUTTON_WHEELUP) globalMouseWheelUp = true;
       if(event.button.button == SDL_BUTTON_WHEELDOWN) globalMouseWheelDown = true;
+    }
+    else if(event.type == SDL_VIDEORESIZE)
+    {
+      resize_event_happaned = true;
+      resize_event_happaned_new_size_x = event.resize.w;
+      resize_event_happaned_new_size_y = event.resize.h;
     }
     else events.push_back(event);
   }

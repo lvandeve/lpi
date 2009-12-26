@@ -36,33 +36,33 @@ namespace gui
 
 void drawCheckerBackground(IGUIDrawer& drawer, int x0, int y0, int x1, int y1, int w, int h, const ColorRGB& c0, const ColorRGB& c1)
 {
-  static ITexture* texture0 = 0;
-  static ITexture* texture1 = 0;
-  if(texture0 == 0)
+  static HTexture texture0;
+  static HTexture texture1;
+  if(texture0.texture == 0)
   {
-    texture0 = drawer.createTexture();
-    texture0->setSize(2, 2);
-    setPixel(texture0, 0, 0, RGB_White);
-    setPixel(texture0, 0, 1, RGB_Invisible);
-    setPixel(texture0, 1, 0, RGB_Invisible);
-    setPixel(texture0, 1, 1, RGB_White);
-    texture0->update();
+    texture0.texture = drawer.createTexture();
+    texture0.texture->setSize(2, 2);
+    setPixel(texture0.texture, 0, 0, RGB_White);
+    setPixel(texture0.texture, 0, 1, RGB_Invisible);
+    setPixel(texture0.texture, 1, 0, RGB_Invisible);
+    setPixel(texture0.texture, 1, 1, RGB_White);
+    texture0.texture->update();
   }
-  if(texture1 == 0)
+  if(texture1.texture == 0)
   {
-    texture1 = drawer.createTexture();
-    texture1->setSize(2, 2);
-    setPixel(texture1, 0, 0, RGB_Invisible);
-    setPixel(texture1, 0, 1, RGB_White);
-    setPixel(texture1, 1, 0, RGB_White);
-    setPixel(texture1, 1, 1, RGB_Invisible);
-    texture1->update();
+    texture1.texture = drawer.createTexture();
+    texture1.texture->setSize(2, 2);
+    setPixel(texture1.texture, 0, 0, RGB_Invisible);
+    setPixel(texture1.texture, 0, 1, RGB_White);
+    setPixel(texture1.texture, 1, 0, RGB_White);
+    setPixel(texture1.texture, 1, 1, RGB_Invisible);
+    texture1.texture->update();
   }
-  drawer.convertTextureIfNeeded(texture0);
-  drawer.convertTextureIfNeeded(texture1);
+  drawer.convertTextureIfNeeded(texture0.texture);
+  drawer.convertTextureIfNeeded(texture1.texture);
   
-  drawer.drawTextureSizedRepeated(texture0, x0, y0, x1, y1, w * 2, h * 2, c0);
-  drawer.drawTextureSizedRepeated(texture1, x0, y0, x1, y1, w * 2, h * 2, c1);
+  drawer.drawTextureSizedRepeated(texture0.texture, x0, y0, x1, y1, w * 2, h * 2, c0);
+  drawer.drawTextureSizedRepeated(texture1.texture, x0, y0, x1, y1, w * 2, h * 2, c1);
   
   
   //Rectangle method below is too slow.
