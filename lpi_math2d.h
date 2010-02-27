@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2010 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -18,8 +18,9 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef LPI_MATH2D_H_INCLUDED
-#define LPI_MATH2D_H_INCLUDED
+#pragma once
+
+#include <iostream>
 
 namespace lpi
 {
@@ -39,6 +40,9 @@ class Vector2
   Vector2(double x, double y);
   Vector2();
   Vector2(const Vector2& other);
+  
+  const double& operator[](int i) const { return *(&x + i); }
+  double& operator[](int i) { return *(&x + i); }
   
   Vector2& operator+=(const Vector2& v);
   Vector2& operator-=(const Vector2& v);
@@ -73,6 +77,64 @@ double distancesq(const Vector2& v, const Vector2& w);
 double manhattan(const Vector2& v, const Vector2& w);
 double dot(const Vector2& v, const Vector2& w);
 
+std::ostream& operator<<(std::ostream& ostr, const Vector2& v);
+
+static const Vector2 Vector2_origin = Vector2(0.0, 0.0);
+static const Vector2 Vector2_0 =      Vector2(0.0, 0.0);
+static const Vector2 Vector2_x =      Vector2(1.0, 0.0);
+static const Vector2 Vector2_y =      Vector2(0.0, 1.0);
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////////////////////////////////////
+//                  [ 0 2 ]                                                   //
+// 2D Matrix Class  [ 1 3 ]                                                   //
+////////////////////////////////////////////////////////////////////////////////
+class Matrix2 //memory: exactly 4 doubles
+{
+  public:
+    
+  Vector2 a[2];
+  
+  const Vector2& operator[](int i) const { return a[i]; }
+  Vector2& operator[](int i) { return a[i]; }
+  
+  Matrix2(double a0, double a1, double a2, double a3);
+  Matrix2();
+  
+  void transpose();
+  double determinant() const;
+  void invert();
+  
+  Matrix2& operator+=(const Matrix2& rhs);
+  Matrix2& operator-=(const Matrix2& rhs);
+  Matrix2& operator*=(double f);
+  Matrix2& operator/=(double f);
+  Matrix2& operator*=(const Matrix2& rhs);
+};
+
+static const Matrix2 Matrix2_identity(1.0, 0.0, 0.0, 1.0);
+static const Matrix2 Matrix2_unit(1.0, 0.0, 0.0, 1.0);
+
+Matrix2 transpose(const Matrix2& A);
+double determinant(const Matrix2& A);
+Matrix2 inverse(const Matrix2& A);
+Matrix2 operator+(const Matrix2& A, const Matrix2& B);
+Matrix2 operator-(const Matrix2& A, const Matrix2& B);
+Matrix2 operator*(const Matrix2& A, double a);
+Matrix2 operator*(double a, const Matrix2& A);
+Matrix2 operator/(const Matrix2& A, double a);
+Vector2 operator*(const Matrix2& A, const Vector2& v);
+Matrix2 operator*(const Matrix2& A, const Matrix2& B);
+
+std::ostream& operator<<(std::ostream& ostr, const Matrix2& m);
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+
 //precondition: dir must be normalized!!
 Vector2 getComponentInDirection(const Vector2& v, const Vector2& dir);
 double distancePointLine(const Vector2& p, const Vector2& a, const Vector2& b); //get distance from point p to the line given by a and b
@@ -103,5 +165,3 @@ speed is speed of the slow moving bullet.
 bool deflect(Vector2& dir, const Vector2& shooterpos, const Vector2& targetpos, const Vector2& vel, double speed);
 
 }
-
-#endif

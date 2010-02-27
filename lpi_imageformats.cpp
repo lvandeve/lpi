@@ -30,7 +30,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 //numChannels should be 3 (RGB) or 4 (RGBA).
 //Input buffer is in RGBA order (unlike BMP which is in BGRA order)
-void encodeBMP(std::vector<unsigned char>& bmp, const std::vector<unsigned char>& image, int w, int h, int numChannels)
+void encodeBMP(std::vector<unsigned char>& bmp, const unsigned char* image, int w, int h, int numChannels)
 {
     //convert to bmp
     //save bmp part
@@ -81,7 +81,7 @@ void encodeBMP(std::vector<unsigned char>& bmp, const std::vector<unsigned char>
 }
 
 //numChannels: 3 for RGB, 4 for RGBA (both input and output)
-void encodeTGA(std::vector<unsigned char>& buffer, const std::vector<unsigned char>& image, int w, int h, int numChannels)
+void encodeTGA(std::vector<unsigned char>& buffer, const unsigned char* image, int w, int h, int numChannels)
 {
   buffer.push_back(0); //ID length
   buffer.push_back(0); //color map type (none)
@@ -96,9 +96,16 @@ void encodeTGA(std::vector<unsigned char>& buffer, const std::vector<unsigned ch
   buffer.push_back(w % 256); buffer.push_back((w / 256) % 256); // width
   buffer.push_back(h % 256); buffer.push_back((h / 256) % 256); // height
   buffer.push_back(numChannels * 8); //bits per pixel
-  buffer.push_back(numChannels == 4 ? 8 : 0); //"has alpha"
+  buffer.push_back((numChannels == 4 ? 8 : 0) | 32); //"has alpha" + top-to-bottom ordering
   
-  for(size_t i = 0; i < image.size(); i++)  buffer.push_back(image[i]);
+  size_t size = w * h * numChannels;
+  for(size_t i = 0; i < size / 4; i++)
+  {
+    buffer.push_back(image[4 * i + 2]);
+    buffer.push_back(image[4 * i + 1]);
+    buffer.push_back(image[4 * i + 0]);
+    buffer.push_back(image[4 * i + 3]);
+  }
 }
 
 
@@ -271,7 +278,7 @@ class CBitmap
     /*
     Load specified Bitmap and stores it as RGBA in an internal buffer
     */
-    bool Load(const std::vector<unsigned char>& data)
+    bool Load(const unsigned char* data, size_t datasize)
     {
       size_t pos = 0;
       Dispose();
@@ -296,7 +303,7 @@ class CBitmap
 
       if(m_BitmapFileHeader.Signature[0] != BITMAP_SIGNATURE[0] || m_BitmapFileHeader.Signature[1] != BITMAP_SIGNATURE[1])  return false;
 
-      for(size_t i = 0; i < sizeof(BITMAP_HEADER) && pos < data.size(); i++) ((unsigned char*)(&m_BitmapHeader))[i] = data[pos++];
+      for(size_t i = 0; i < sizeof(BITMAP_HEADER) && pos < datasize; i++) ((unsigned char*)(&m_BitmapHeader))[i] = data[pos++];
 
       /* Load Color Table */
 
@@ -394,7 +401,7 @@ class CBitmap
         unsigned char ColorIndex = 0;
         int x = 0, y = 0;
 
-        while (pos < data.size()) {
+        while (pos < datasize) {
           Count = data[pos++];
           ColorIndex = data[pos++];
 
@@ -772,12 +779,12 @@ class CBitmap
 namespace lpi
 {
 
-bool decodeImageFile(std::string& error, std::vector<unsigned char>& image, int& w, int& h, const std::vector<unsigned char>& data, ImageFormat format)
+bool decodeImageFile(std::string& error, std::vector<unsigned char>& image, int& w, int& h, const unsigned char* data, size_t datasize, ImageFormat format)
 {
   if(format == IF_BMP)
   {
     CBitmap bitmap;
-    if(!bitmap.Load(data))
+    if(!bitmap.Load(data, datasize))
     {
       error = "Error decoding BMP image";
       return false;
@@ -785,8 +792,7 @@ bool decodeImageFile(std::string& error, std::vector<unsigned char>& image, int&
     w = bitmap.GetWidth();
     h = bitmap.GetHeight();
     image.resize(w * h * 4);
-    unsigned int size = image.size();
-    bitmap.GetBits(&image[0], size, 32);
+    bitmap.GetBits(&image[0], datasize, 32);
     if(bitmap.isUpsideDown())
     {
       for(int y = 0; y < h / 2; y++)
@@ -811,7 +817,7 @@ bool decodeImageFile(std::string& error, std::vector<unsigned char>& image, int&
   else if(format == IF_PNG)
   {
     LodePNG::Decoder png_decoder;
-    png_decoder.decode(image, data); //decode the image from PNG
+    png_decoder.decode(image, data, datasize); //decode the image from PNG
     if(png_decoder.hasError())
     {
       std::stringstream ss;
@@ -829,7 +835,7 @@ bool decodeImageFile(std::string& error, std::vector<unsigned char>& image, int&
   else if(format == IF_JPG)
   {
     int comp; //number of components in source image (not needed by us)
-    unsigned char* img = stbi_jpeg_load_from_memory(data.empty() ? 0 : &data[0], data.size(), &w, &h, &comp, 4);
+    unsigned char* img = stbi_jpeg_load_from_memory(data, datasize, &w, &h, &comp, 4);
     if(img != 0)
     {
       image.resize(w * h * 4);
@@ -847,7 +853,7 @@ bool decodeImageFile(std::string& error, std::vector<unsigned char>& image, int&
   else if(format == IF_TGA)
   {
     int comp; //number of components in source image (not needed by us)
-    unsigned char* img = stbi_tga_load_from_memory(data.empty() ? 0 : &data[0], data.size(), &w, &h, &comp, 4);
+    unsigned char* img = stbi_tga_load_from_memory(data, datasize, &w, &h, &comp, 4);
     if(img != 0)
     {
       image.resize(w * h * 4);
@@ -871,7 +877,7 @@ bool decodeImageFile(std::string& error, std::vector<unsigned char>& image, int&
   return false;
 }
 
-bool encodeImageFile(std::string& error, std::vector<unsigned char>& file, const std::vector<unsigned char>& image, int w, int h, ImageFormat format)
+bool encodeImageFile(std::string& error, std::vector<unsigned char>& file, const unsigned char* image, int w, int h, ImageFormat format)
 {
   if(format == IF_BMP)
   {
@@ -945,12 +951,12 @@ bool supportsImageEncode(ImageFormat format)
   }
 }
 
-bool isOfFormat(std::vector<unsigned char>& file, ImageFormat format)
+bool isOfFormat(const unsigned char* file, size_t filesize, ImageFormat format)
 {
   if(format == IF_BMP)
   {
     //too small to have the smallest possible header
-    if(file.size() < 26) return false;
+    if(filesize < 26) return false;
     //'BM' at the beginning
     if(file[0] != 'B' || file[1] != 'M') return false;
     //size of the header (40 bytes)
@@ -962,17 +968,17 @@ bool isOfFormat(std::vector<unsigned char>& file, ImageFormat format)
   else if(format == IF_PNG)
   {
     LodePNG::Decoder pngtest;
-    pngtest.inspect(file);
+    pngtest.inspect(file, filesize);
     return !pngtest.hasError();
   }
   else if(format == IF_JPG)
   {
-    int i = stbi_jpeg_test_memory(file.empty() ? 0 : &file[0], file.size());
+    int i = stbi_jpeg_test_memory(file, filesize);
     return i != 0;
   }
   else if(format == IF_TGA)
   {
-    int i = stbi_tga_test_memory(file.empty() ? 0 : &file[0], file.size());
+    int i = stbi_tga_test_memory(file, filesize);
     return i != 0;
   }
   else
@@ -981,12 +987,12 @@ bool isOfFormat(std::vector<unsigned char>& file, ImageFormat format)
   }
 }
 
-ImageFormat findImageFormat(std::vector<unsigned char>& file)
+ImageFormat findImageFormat(const unsigned char* file, size_t filesize)
 {
-  if(isOfFormat(file, IF_BMP)) return IF_BMP;
-  else if(isOfFormat(file, IF_PNG)) return IF_PNG;
-  else if(isOfFormat(file, IF_TGA)) return IF_TGA;
-  else if(isOfFormat(file, IF_JPG)) return IF_JPG;
+  if(isOfFormat(file, filesize, IF_BMP)) return IF_BMP;
+  else if(isOfFormat(file, filesize, IF_PNG)) return IF_PNG;
+  else if(isOfFormat(file, filesize, IF_TGA)) return IF_TGA;
+  else if(isOfFormat(file, filesize, IF_JPG)) return IF_JPG;
   else return IF_INVALID;
 }
 

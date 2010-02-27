@@ -147,7 +147,8 @@ struct SpawnTexts
 
 SpawnTexts spawns;
 
-lpi::ScreenGL screen(width, height, false, false, true, "lpi GUI demo");
+lpi::ScreenGL screen(width, height, false, false, false, "lpi GUI demo");
+lpi::AudioSDL audio;
 lpi::gui::GUIDrawerGL guidrawer(&screen);
 
 lpi::FileBrowse filebrowser;
@@ -408,7 +409,6 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   std::vector<double> sound(30000);
   for(size_t i = 0; i < 30000; i++) sound[i] = 0.1 * std::sin(i / (30.0 * (40000.0-i)/30000.0));
   
-  lpi::AudioSDL audio;
   audio.audioOpen(44100, 2048);
 
   tabs.setElementOver(true);

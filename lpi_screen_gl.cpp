@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2010 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -63,10 +63,21 @@ ScreenGL::ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, boo
     std::exit(1);
   }
   
+  if(print_debug_messages) std::cout<< "info: OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
+  if(print_debug_messages) std::cout<< "info: OpenGL Renderer: " << glGetString(GL_RENDERER) << std::endl;
+  if(print_debug_messages) std::cout<< "info: OpenGL Vendor: " << glGetString(GL_VENDOR) << std::endl;
   
   if(print_debug_messages) std::cout<<"info: initing GL"<<std::endl;
   initGL();
-  if(print_debug_messages) std::cout<<"info: GL inited"<<std::endl;
+  
+  GLenum err = glGetError();
+  if(err == GL_NO_ERROR && print_debug_messages) std::cout<<"info: GL inited"<<std::endl;
+  while(err != GL_NO_ERROR)
+  {
+    std::cout<<"Error initing GL: OpenGL glGetError() = " << err << std::endl;
+    err = glGetError();
+  }
+  
   
   SDL_EnableUNICODE(1); //for the text input things //TODO: move this to SDL input class
   
@@ -297,7 +308,6 @@ void ScreenGL::set2DScreen(bool filledGeometry)
 {
   GLint array[4];
   glGetIntegerv(GL_VIEWPORT, array); //get viewport size from OpenGL
-//std::cout<<"zomg viewport "<<array[2]<<" "<<array[3]<<" "<<w<<" "<<h<<std::endl;
   set2DScreen(array[2], array[3], filledGeometry);
 }
 

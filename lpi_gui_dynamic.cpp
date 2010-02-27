@@ -220,7 +220,7 @@ void DynamicPage::RowControl::draw(int x0, int y0, int x1, int y1, IGUIDrawer& d
   int xb = (int)((x1-x0) * TITLE_WIDTH); //"x-between": the divider between title and value
   drawer.drawRectangle(x0, y0, x0 + xb, y1, RGB_White, false);
   drawer.drawRectangle(x0 + xb, y0, x1, y1, RGB_White, false);
-  drawer.drawText(name, x0 + 4, y0 + 4);
+  drawer.drawGUIPartText(lpi::gui::GPT_DEFAULT_TEXT00, name, x0 + 4, y0 + 4, xb, y1 - 4); //drawer.drawText(name, x0 + 4, y0 + 4);
   control->draw(drawer);
 }
 

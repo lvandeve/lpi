@@ -112,14 +112,14 @@ typedef unsigned char validate_uint32[sizeof(uint32)==4];
 //
 
 // this is not threadsafe
-static char *failure_reason;
+static const char *failure_reason;
 
-char *stbi_failure_reason(void)
+const char *stbi_failure_reason(void)
 {
    return failure_reason;
 }
 
-static int e(char *str)
+static int e(const char *str)
 {
    failure_reason = str;
    return 0;
@@ -337,7 +337,7 @@ enum
 {
    SCAN_load=0,
    SCAN_type,
-   SCAN_header,
+   SCAN_header
 };
 
 typedef struct
@@ -1299,11 +1299,16 @@ typedef uint8 *(*resample_row_func)(uint8 *out, uint8 *in0, uint8 *in1,
 
 static uint8 *resample_row_1(uint8 *out, uint8 *in_near, uint8 *in_far, int w, int hs)
 {
+   (void)out;
+   (void)in_far;
+   (void)w;
+   (void)hs;
    return in_near;
 }
 
 static uint8* resample_row_v_2(uint8 *out, uint8 *in_near, uint8 *in_far, int w, int hs)
 {
+   (void)hs;
    // need to generate two samples vertically for every one in input
    int i;
    for (i=0; i < w; ++i)
@@ -1313,6 +1318,8 @@ static uint8* resample_row_v_2(uint8 *out, uint8 *in_near, uint8 *in_far, int w,
 
 static uint8*  resample_row_h_2(uint8 *out, uint8 *in_near, uint8 *in_far, int w, int hs)
 {
+   (void)hs;
+   (void)in_far;
    // need to generate two samples horizontally for every one in input
    int i;
    uint8 *input = in_near;
@@ -1338,6 +1345,8 @@ static uint8*  resample_row_h_2(uint8 *out, uint8 *in_near, uint8 *in_far, int w
 
 static uint8 *resample_row_hv_2(uint8 *out, uint8 *in_near, uint8 *in_far, int w, int hs)
 {
+   (void)hs;
+   (void)in_far;
    // need to generate 2x2 samples for every one in input
    int i,t0,t1;
    if (w == 1) {
@@ -1359,6 +1368,7 @@ static uint8 *resample_row_hv_2(uint8 *out, uint8 *in_near, uint8 *in_far, int w
 
 static uint8 *resample_row_generic(uint8 *out, uint8 *in_near, uint8 *in_far, int w, int hs)
 {
+   (void)in_far;
    // resample with nearest-neighbor
    int i,j;
    for (i=0; i < w; ++i)
@@ -2048,7 +2058,7 @@ typedef struct
 
 enum {
    F_none=0, F_sub=1, F_up=2, F_avg=3, F_paeth=4,
-   F_avg_first, F_paeth_first,
+   F_avg_first, F_paeth_first
 };
 
 static uint8 first_row_filter[5] =
@@ -2080,9 +2090,13 @@ static int create_png_image_raw(png *a, uint8 *raw, uint32 raw_len, int out_n, u
    if (!a->out) return e("outofmem", "Out of memory");
    if (!stbi_png_partial) {
       if (s->img_x == x && s->img_y == y)
+      {
          if (raw_len != (img_n * x + 1) * y) return e("not enough pixels","Corrupt PNG");
+      }
       else // interlaced:
+      {
          if (raw_len < (img_n * x + 1) * y) return e("not enough pixels","Corrupt PNG");
+      }
    }
    for (j=0; j < y; ++j) {
       uint8 *cur = a->out + stride*j;
@@ -2212,6 +2226,7 @@ static int compute_transparency(png *z, uint8 tc[3], int out_n)
 
 static int expand_palette(png *a, uint8 *palette, int len, int pal_img_n)
 {
+  (void)len;
    uint32 i, pixel_count = a->s.img_x * a->s.img_y;
    uint8 *p, *temp_out, *orig = a->out;
 
@@ -3292,7 +3307,7 @@ stbi_uc *stbi_psd_load_from_memory (stbi_uc const *buffer, int len, int *x, int 
 #ifndef STBI_NO_HDR
 static int hdr_test(stbi *s)
 {
-   char *signature = "#?RADIANCE\n";
+   const char *signature = "#?RADIANCE\n";
    int i;
    for (i=0; signature[i]; ++i)
       if (get8(s) != signature[i])
@@ -3322,8 +3337,10 @@ int stbi_hdr_test_file(FILE *f)
 #define HDR_BUFLEN  1024
 static char *hdr_gettoken(stbi *z, char *buffer)
 {
+   
    int len=0;
-	char *s = buffer, c = '\0';
+   char *s = buffer, c = '\0';
+   (void)s;
 
    c = get8(z);
 

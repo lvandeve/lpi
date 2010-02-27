@@ -63,18 +63,18 @@ enum ImageFormat
 decodeImageFile: decodes image to 32-bit RGBA buffer
 returns true if ok, false if error happened
 */
-bool decodeImageFile(std::string& error, std::vector<unsigned char>& image, int& w, int& h, const std::vector<unsigned char>& data, ImageFormat format);
-bool isOfFormat(std::vector<unsigned char>& file, ImageFormat format);
+bool decodeImageFile(std::string& error, std::vector<unsigned char>& image, int& w, int& h, const unsigned char* data, size_t datasize, ImageFormat format);
+bool isOfFormat(const unsigned char* file, size_t filesize, ImageFormat format);
 /*
 encodeImageFile: encodes image from 32-bit RGBA buffer, to the closest to RGBA that the image format can offer (some can't save alpha)
 TODO: add some generic options that some image formats support, such as: quality vs compression, number of channels, bit depth, interlace
 */
-bool encodeImageFile(std::string& error, std::vector<unsigned char>& file, const std::vector<unsigned char>& image, int w, int h, ImageFormat format);
+bool encodeImageFile(std::string& error, std::vector<unsigned char>& file, const unsigned char* image, int w, int h, ImageFormat format);
 
 bool supportsImageDecode(ImageFormat format);
 bool supportsImageEncode(ImageFormat format);
 
 
-ImageFormat findImageFormat(std::vector<unsigned char>& file); //returns IF_INVALID if no supported format found
+ImageFormat findImageFormat(const unsigned char* file, size_t filesize); //returns IF_INVALID if no supported format found
 
 } // namespace lpi

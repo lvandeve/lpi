@@ -95,10 +95,10 @@ TODO's:
 [ ] ensure that it works with multiple file choosing
 [ ] add "create directory" button
 [ ] BUG: when using modal file dialog, and dropdown list is over ok button, you click ok through the list
-[ ] add some helpful text labels indicating what they are left of the "path", "file" and "extensionChooser"
-[ ] let the close button do the same as the cancel button
+[X] add some helpful text labels indicating what they are left of the "path", "file" and "extensionChooser"
+[X] let the close button do the same as the cancel button
 [ ] also make a folder browsing dialog
-[ ] in save dialog, add a "automatically add extension" checkbox. If true and you type filename without extension from the list, it adds the first extension from the chosen type to the filename.
+[X] in save dialog, add a "automatically add extension" checkbox. If true and you type filename without extension from the list, it adds the first extension from the chosen type to the filename.
 [ ] 
 */
 class FileDialog : public Dialog
@@ -116,11 +116,15 @@ class FileDialog : public Dialog
     std::vector<std::string> selectedFiles;
     YesNoWindow overwriteQuestion;
     bool askingOverwrite;
+    Checkbox autoAddExtension; //when saving
     
     std::vector<std::vector<std::string> > extensionSets; //each "set" represents a list of allowed extensions. To indicate any file ("*.*"), use an EMPTY std::vector<std::string>, do NOT use a vector containing "*" for it because it'll literally try to find for extensions "dot asterix". If there are no extension sets at all, simply anything is shown. If there are multiple sets, they are chooseable in a dropdown box.
     DropDownList extensionChooser; //each extension set
     
     static std::string REMEMBER_PATH; //the least that can be done is automatically let all dialogs default to the last path if none is specified so that during one session of the application the user has to browse there max once. In programs using FileDialog I recommend remembering the path in a Persist and managing different dialogs for different file sources separatly instead of relying on this static behaviour.
+    static bool REMEMBER_AUTO_ADD_EXTENSION;
+    
+    void doAutoAddExtension();
     
   public:
 
@@ -132,6 +136,7 @@ class FileDialog : public Dialog
     virtual void manageHoverImpl(IHoverManager& hover);
     
     //the path is the folder the dialog is currently showing
+    //TODO: setting the actual file name should also be possible (e.g. when saving a file...)
     void setPath(const std::string& path); //it's allowed to give a path that includes a filename, only the folder part of it will be used.
     std::string getPath();
     

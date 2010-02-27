@@ -25,6 +25,8 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include <map>
 #include <vector>
 
+#include "lpi_os.h"
+
 /*
 lpi_persist is for remembering settings of your program between sessions. They
 are saved there where the operation system has reserved the best space to save
@@ -157,7 +159,7 @@ class APersist : public IPersist
     ~APersist();
 };
 
-#if defined(_WIN32)
+#if defined(LPI_WIN32)
 
 class PersistWin32 : public APersist
 {
@@ -173,7 +175,7 @@ class PersistWin32 : public APersist
 
 typedef PersistWin32 Persist;
 
-#elif defined(linux) || defined(__linux) || defined(__linux__) || defined(__GNU__) || defined(__GLIBC__) 
+#elif defined(LPI_LINUX)
 
 class PersistLinux : public APersist
 {

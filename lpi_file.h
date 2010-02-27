@@ -50,9 +50,9 @@ std::string getFileNameExtPart(const std::string& filename, bool include_dot = t
 std::string getFileNameFileExtPart(const std::string& filename); //e.g. "/mnt/D/main.cpp" gives "main.cpp" 
 void giveFilenameSlashes(std::string& filename); //gives forward slashes to the filename (for linux and mac)
 void giveFilenameBackslashes(std::string& filename); //gives backward slashes to the filename (for windows)
-void ensureDirectoryEndSlash(std::string& filename); //ensures that one ending slash is at the end (to indicate the path is a directory)
-void ensureDirectoryEndBackslash(std::string& filename); //ensures that one ending slash is at the end (to indicate the path is a directory, for windows)
-bool extEqualsIgnoreCase(const std::string& filename, const std::string& ext); //dpn't include the dot in ext
+void ensureDirectoryEndSlash(std::string& filename); //ensures that one ending slash is at the end (to indicate the path is a directory) NOTE: if the path is empty, no slash is added, or it'd mean "root directory"!
+void ensureDirectoryEndBackslash(std::string& filename); //ensures that one ending slash is at the end (to indicate the path is a directory, for windows) NOTE: if the path is empty, no slash is added, or it'd mean "root directory"!
+bool extEqualsIgnoreCase(const std::string& filename, const std::string& ext); //don't include the dot in ext
 
 
 } //namespace lpi

@@ -76,6 +76,7 @@ void InternalTextDrawer::drawLetter(unsigned char n, int x, int y, const Interna
 const InternalGlyphs::Glyphs* InternalTextDrawer::getGlyphsForFont(const Font& font) const
 {
   if(font.typeface == "lpi8") return &glyphs.glyphs8x8;
+  else if(font.typeface == "lpi7") return &glyphs.glyphs7x9;
   else if(font.typeface == "lpi6") return &glyphs.glyphs6x6;
   else if(font.typeface == "lpi4") return &glyphs.glyphs4x5;
   else return &glyphs.glyphs8x8;
@@ -402,7 +403,10 @@ InternalGlyphs::~InternalGlyphs()
 {
 }
 
-void InternalGlyphs::initBuiltInFontTextures(const ITextureFactory* factory)
+
+
+
+const std::string& getBuiltIn8x8FontTexture()
 {
   /*
   A PNG image, encoded in base64, containing the full extended ASCII character
@@ -437,7 +441,39 @@ Oei7GCx7yyU183lm+INjQAWklOfzDUPOGCtXlVx/KiPGUMhZrN4TuFoyJariKNcTbOZyJm5LjUu6\n\
 7ugdI7cH4p7F53JwmmCUka3bs/BqAKp6zbA2Q2UFcPVahgTouQT6MjTKUIdn+EqLb12cOWcBPi5V\n\
 O9lUrLR/ABF/3H2EtBmWAAAAAElFTkSuQmCC\
 ";
+  return font8x8string;
+}
 
+const std::string& getBuiltIn7x9FontTexture()
+{
+  /*
+  A PNG image, encoded in base64, containing a partial font (pure ASCII only)
+  of 7x9 pixels
+  First use the function decodeBase64
+  Then use the function LodePNG::decodePNG32
+  And you get the pixels in a buffer
+  NOTE: the background color is black, not transparent, so may need conversion
+  */
+  static const std::string font7x9string = "\
+iVBORw0KGgoAAAANSUhEUgAAAHAAAACQAQMAAADqan2KAAAABlBMVEUAAAD///+l2Z/dAAACWUlE\n\
+QVR42u3VQWjTUBgH8C/pcz5KZ7I6djHT17eylZ486Q4Dkza6CgM78OBx6rw5aE9uMFgSytbsMlsR\n\
+HAzm2MGzZy91G5ug4NVLWbIKu229rTCZfi+pIBOGt3roO+Txy/fy8t4/IYGzSEvx7lhnYQdnHaL0\n\
+43LzRm2h3XWMwN5uEKBU1y0AGbmRXe6h1GgiCXLzO6FUZXqbUlahoLJNT7GooO4MIAGrSIgcXoq3\n\
+qYpqRlaA6mBbMSTIDh6QESzBuabdLHjZ7XVtVCAGXHXVLdLHTRxK40i1L0Mlbk5N7e3KSPYkuyJr\n\
+YziVVELqV72cwwlglSBt1cyVOIUaw0Vp8y2vsUS0wpQlZr64jT71j5X160etkxeDp2tgJuLJkstN\n\
+xnnvKoeJyTi5G2XIjODDyQMyfoXNsyEn+hpZFNURM8EzOeSEi9eWOZLnXnEw9v2vypp21Nq7XT/V\n\
+YOzCZcwW/Xf105O9enOnB1NPlqvPchVuuqojRwNKtJJO5Zkj9wlWPtJqGp+RLYstlL0EXU6nmBWQ\n\
+lauCZkINWCh+3l6K9e8Wm5YTbPj3LWuL5xexAAyfVC2CMd6LiBOqBKAT0EGWggHFx41x5doj/8Af\n\
+vKUBuNXkp9LwNONGFMOBuTh5UMLohuxoBenGSY6IJI2AP/3G4QrmPHy4jzmHTQap9ucr8XcuBgn7\n\
+dhfs6NvM++PVDycz9WbA6TdbhFZ4ymW23Atglu0dEU7esCMDglbyPoaTfxkMnp1rbC9+6X+eCK/V\n\
+aTgvC2f22ivwwvt26kPxf343uml00+im8Q9/2F9GVBx9WjMqQAAAAABJRU5ErkJggg==\
+";
+  return font7x9string;
+
+}
+
+const std::string& getBuiltIn6x6FontTexture()
+{
   /*
   A PNG image, encoded in base64, containing the full extended ASCII character
   set, in the form 256 bitmap symbols of 6x6 pixels in one 96x96 PNG.
@@ -466,7 +502,12 @@ qA+Okr9o/tP4ck+A+BNMPuFHseneEnWjLi6k9n8gnPoTvOrL+ABYGOH2o3HdajidNK51eLbELhxs\n\
 3NoxcM3gc2WmlwynY2Chhb9qrLq2EY8bkE7chRpTPbJcMnJNWx13hypgl/2I0XwqnFX8KDLrDknu\n\
 eCWki3E3rce4tJL+r5AYwj/AsDX88LifHQAAAABJRU5ErkJggg==\
 ";
+  return font6x6string;
 
+}
+
+const std::string& getBuiltIn4x5FontTexture()
+{
   /*
   A PNG image, encoded in base64, containing printable part of ASCII character
   set, in the form 256 bitmap symbols of 4x5 pixels in one 64x80 PNG.
@@ -475,23 +516,31 @@ eCWki3E3rce4tJL+r5AYwj/AsDX88LifHQAAAABJRU5ErkJggg==\
   And you get the pixels in a buffer
   NOTE: the background color is black, not transparent, so may need conversion
   */
-  static const std::string font4x5string = "\
+static const std::string font4x5string = "\
 iVBORw0KGgoAAAANSUhEUgAAAEAAAABQAQMAAACTceEGAAAABlBMVEUAAAD///+l2Z/dAAAAwklE\n\
 QVQokWNgoBlgWcDJpMLAwARkMLE4LWFgAYkxOPmpsQApTgaVJQ4eCMVO59z0nriouTEsU2txWsXg\n\
 oMSwyOnRkhAXNQcGp3cuLhUsQHPgwKXt3LMlWm0pDKtOrOh4otW9iuHcijWnlqzpXMXw6ti5tiWn\n\
 Xi5BKD527NXKVc/cHBhWrfFa6aKitAAo4rXaxUWJgaFpjZ/bimdi/FhM1oKZzAczmQuXySFQk4HO\n\
 Bpvs48wFNdmNj2aBO0gBPykMWgAArlFWRoV1udAAAAAASUVORK5CYII=\
 ";
+  return font4x5string;
+}
 
+
+void InternalGlyphs::initBuiltInFontTextures(const ITextureFactory* factory)
+{
   AlphaEffect AE_BlackKey(128, 255, lpi::RGB_Black);
 
-  loadTexturesFromBase64PNG(glyphs8x8.texture, factory, font8x8string, 8, 8, AE_BlackKey);
+  loadTexturesFromBase64PNG(glyphs8x8.texture, factory, getBuiltIn8x8FontTexture(), 8, 8, AE_BlackKey);
   glyphs8x8.width = 8;
   glyphs8x8.height = 8;
-  loadTexturesFromBase64PNG(glyphs6x6.texture, factory, font6x6string, 6, 6, AE_BlackKey);
+  loadTexturesFromBase64PNG(glyphs7x9.texture, factory, getBuiltIn7x9FontTexture(), 7, 9, AE_BlackKey);
+  glyphs7x9.width = 7;
+  glyphs7x9.height = 9;
+  loadTexturesFromBase64PNG(glyphs6x6.texture, factory, getBuiltIn6x6FontTexture(), 6, 6, AE_BlackKey);
   glyphs6x6.width = 6;
   glyphs6x6.height = 6;
-  loadTexturesFromBase64PNG(glyphs4x5.texture, factory, font4x5string, 4, 5, AE_BlackKey);
+  loadTexturesFromBase64PNG(glyphs4x5.texture, factory, getBuiltIn4x5FontTexture(), 4, 5, AE_BlackKey);
   glyphs4x5.width = 4;
   glyphs4x5.height = 5;
 }

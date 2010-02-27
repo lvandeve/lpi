@@ -173,10 +173,13 @@ struct GuiSet //GuiSet is a bit of a LEGACY lpi concept. Currently it's just use
   ColorRGB mouseOverColor; //this isn't for panel buttons, but for image buttons like the arrows of a scrollbar, ...
   ColorRGB mouseDownColor; //this isn't for panel buttons, but for image buttons like the arrows of a scrollbar, ...
   
-  Font panelButtonFont[3];
-  Font textButtonFont[3];
-  Font windowTopFont;
-  Font tooltipFont;
+  Font defaultFont; //font for anything else that isn't in the list below
+  Font messageFont; //font for in message boxes
+  Font menuFont[2]; //font for (sub)menus
+  Font panelButtonFont[3]; //font for buttons
+  Font textButtonFont[3]; //font for buttons
+  Font windowTopFont; //font for the title bar or a window
+  Font tooltipFont; //font for tooltips
 };
 
 struct BuiltInIcons
@@ -229,6 +232,10 @@ class GUIPartDrawerInternal : public IGUIPartDrawer
     virtual size_t getGUIPartSizeY(GUIPart part) const;
     
     virtual void createIcon(ITexture& texture, GUIIcon icon, int size = 16) const;
+    
+    void setDefaultTypeFace(const std::string& typeface);
+    
+    GuiSet& getGUISet() { return *guiset; }
 
 };
 

@@ -203,12 +203,12 @@ void giveFilenameBackslashes(std::string& filename)
 
 void ensureDirectoryEndSlash(std::string& filename)
 {
-  if(filename.empty() || filename[filename.size() - 1] != '/') filename += '/';
+  if(!filename.empty() && filename[filename.size() - 1] != '/') filename += '/';
 }
 
 void ensureDirectoryEndBackslash(std::string& filename)
 {
-  if(filename.empty() || filename[filename.size() - 1] != '\\') filename += '\\';
+  if(!filename.empty() && filename[filename.size() - 1] != '\\') filename += '\\';
 }
 
 bool extEqualsIgnoreCase(const std::string& filename, const std::string& ext)

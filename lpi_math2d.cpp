@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2010 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -216,6 +216,196 @@ double Vector2::dot(const Vector2& v)
 double dot(const Vector2& v, const Vector2& w)
 {
   return v.x * w.x + v.y * w.y;
+}
+
+std::ostream& operator<<(std::ostream& ostr, const Vector2& v)
+{
+  return ostr << "[" << v.x << " " << v.y << "]";
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+Matrix2::Matrix2(double a0, double a1, double a2, double a3)
+{
+  a[0][0] = a0;
+  a[0][1] = a1;
+  a[1][0] = a2;
+  a[1][1] = a3;
+}
+
+Matrix2::Matrix2()
+{
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//Transpose:                                                                  //
+//                                                                            //
+// [ 0 2 ]T   [ 0 1 ]                                                         //
+// [ 1 3 ]  = [ 2 3 ]                                                         //
+////////////////////////////////////////////////////////////////////////////////
+void Matrix2::transpose()
+{
+  std::swap(a[0][1], a[1][0]);
+}
+
+Matrix2 transpose(const Matrix2& A)
+{
+  Matrix2 result = A;
+  result.transpose();
+  return result;
+}
+
+double Matrix2::determinant() const
+{
+  double det = a[0][0] * a[1][1]
+             - a[1][0] * a[0][1];
+  return det;
+}
+
+double determinant(const Matrix2& A)
+{
+  return A.determinant();
+}
+
+//Inverse of a 2x2 matrix
+void Matrix2::invert()
+{
+  /*
+  the inverse is the adjoint divided through the determinant
+  find the matrix of minors (minor = determinant of 2x2 matrix of the 2 rows/colums current element is NOT in)
+  turn them in cofactors (= change some of the signs)
+  find the adjoint by transposing the matrix of cofactors
+  divide this through the determinant to get the inverse
+  */
+  /*
+  abc 036
+  def 147
+  ghi 258
+  */
+
+  double det = determinant();
+  Matrix2 B;
+
+  //included in these calculations: minor, cofactor (changed signs), transpose (by the order of "="), division through determinant
+  B.a[0][0] = ( a[1][1] ) / det;
+  B.a[1][0] = (-a[1][0] ) / det;
+  B.a[0][1] = (-a[0][1] ) / det;
+  B.a[1][1] = ( a[0][0] ) / det;
+  
+  *this = B;
+}
+
+Matrix2 inverse(const Matrix2& A)
+{
+  Matrix2 result = A;
+  result.invert();
+  return result;
+}
+
+Matrix2& Matrix2::operator+=(const Matrix2& rhs)
+{
+  a[0][0] += rhs.a[0][0];
+  a[1][0] += rhs.a[1][0];
+  a[0][1] += rhs.a[0][1];
+  a[1][1] += rhs.a[1][1];
+  return *this;
+}
+
+Matrix2 operator+(const Matrix2& A, const Matrix2& B)
+{
+  Matrix2 result = A;
+  result += B;
+  return result;
+}
+
+Matrix2& Matrix2::operator-=(const Matrix2& rhs)
+{
+  a[0][0] -= rhs.a[0][0];
+  a[1][0] -= rhs.a[1][0];
+  a[0][1] -= rhs.a[0][1];
+  a[1][1] -= rhs.a[1][1];
+  return *this;
+}
+
+Matrix2 operator-(const Matrix2& A, const Matrix2& B)
+{
+  Matrix2 result = A;
+  result -= B;
+  return result;
+}
+
+Matrix2& Matrix2::operator*=(double f)
+{
+  a[0][0] *= f;
+  a[1][0] *= f;
+  a[0][1] *= f;
+  a[1][1] *= f;
+  return *this;
+}
+
+Matrix2 operator*(const Matrix2& A, double a)
+{
+  Matrix2 result = A;
+  result *= a;
+  return result;
+}
+
+Matrix2 operator*(double a, const Matrix2& A)
+{
+  Matrix2 result = A;
+  result *= a;
+  return result;
+}
+
+Matrix2& Matrix2::operator/=(double f)
+{
+  a[0][0] /= f;
+  a[1][0] /= f;
+  a[0][1] /= f;
+  a[1][1] /= f;
+  return *this;
+}
+
+Matrix2 operator/(const Matrix2& A, double a)
+{
+  Matrix2 result = A;
+  result /= a;
+  return result;
+}
+
+//Multiply a matrix with a column vector, resulting in a column vector
+Vector2 operator*(const Matrix2& A, const Vector2& v)
+{
+  Vector2 w(A.a[0][0] * v.x + A.a[1][0] * v.y,
+            A.a[0][1] * v.x + A.a[1][1] * v.y);
+  return w;
+}
+
+Matrix2& Matrix2::operator*=(const Matrix2& rhs)
+{
+  Matrix2 temp;
+  temp.a[0][0] = a[0][0]*rhs.a[0][0] + a[1][0]*rhs.a[0][1];
+  temp.a[0][1] = a[0][1]*rhs.a[0][0] + a[1][1]*rhs.a[0][1];
+  temp.a[1][0] = a[0][0]*rhs.a[1][0] + a[1][0]*rhs.a[1][1];
+  temp.a[1][1] = a[0][1]*rhs.a[1][0] + a[1][1]*rhs.a[1][1];
+  *this = temp;
+  return *this;
+}
+
+Matrix2 operator*(const Matrix2& A, const Matrix2& B)
+{
+  //not implemented in terms of operator*= because there already is a copy in there...
+  Matrix2 C;
+  C.a[0][0] = A.a[0][0]*B.a[0][0] + A.a[1][0]*B.a[0][1];
+  C.a[0][1] = A.a[0][1]*B.a[0][0] + A.a[1][1]*B.a[0][1];
+  C.a[1][0] = A.a[0][0]*B.a[1][0] + A.a[1][0]*B.a[1][1];
+  C.a[1][1] = A.a[0][1]*B.a[1][0] + A.a[1][1]*B.a[1][1];
+  return C;
+}
+
+std::ostream& operator<<(std::ostream& ostr, const Matrix2& m)
+{
+  return ostr << "[" << m.a[0][0] << " " << m.a[1][0] << " ; " << m.a[0][1] << " " << m.a[1][1] << "]";
 }
 
 ////////////////////////////////////////////////////////////////////////////////

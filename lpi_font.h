@@ -111,6 +111,17 @@ static const Font FONT_Red(RGB_Red);
 static const Font FONT_Green(RGB_Green);
 static const Font FONT_Blue(RGB_Blue);
 
+static const Font FONT_Default7(createFont("lpi7", RGB_Black));
+static const Font FONT_Black7(createFont("lpi7", RGB_Black));
+static const Font FONT_White7(createFont("lpi7", RGB_White));
+static const Font FONT_Shadow7 = createShadowFont("lpi7", RGB_White, RGB_Black);
+static const Font FONT_ShadowInverted7 = createShadowFont("lpi7", RGB_Black, RGB_White);
+static const Font FONT_Grey7(createFont("lpi7", RGB_Grey));
+static const Font FONT_Gray7(createFont("lpi7", RGB_Gray));
+static const Font FONT_Red7(createFont("lpi7", RGB_Red));
+static const Font FONT_Green7(createFont("lpi7", RGB_Green));
+static const Font FONT_Blue7(createFont("lpi7", RGB_Blue));
+
 static const Font FONT_Default6(createFont("lpi6", RGB_Black));
 static const Font FONT_Black6(createFont("lpi6", RGB_Black));
 static const Font FONT_White6(createFont("lpi6", RGB_White));

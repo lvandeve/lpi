@@ -23,11 +23,11 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_file.h"
 #include <iostream>
 
-#if defined(_WIN32)
+#if defined(LPI_WIN32)
 #include <windows.h>
 #include <Shlobj.h>
 #include "lpi_filebrowse.h"
-#elif defined(linux) || defined(__linux) || defined(__linux__) || defined(__GNU__) || defined(__GLIBC__)
+#elif defined(LPI_LINUX)
 #include "lpi_filebrowse.h"
 #include <cstdio>
 #include <cstdlib>
@@ -121,7 +121,7 @@ void APersist::readFromXML(const std::string& xml)
   }
 }
 
-#if defined(_WIN32)
+#if defined(LPI_WIN32)
 
 PersistWin32::PersistWin32(const std::string& appuid, bool global)
 : APersist(appuid, global)
@@ -179,7 +179,7 @@ void PersistWin32::load()
   }
 }
 
-#elif defined(linux) || defined(__linux) || defined(__linux__) || defined(__GNU__) || defined(__GLIBC__)
+#elif defined(LPI_LINUX)
 
 PersistLinux::PersistLinux(const std::string& appuid, bool global)
 : APersist(appuid, global)

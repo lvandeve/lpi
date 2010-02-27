@@ -144,7 +144,6 @@ void InputLine::drawImpl(IGUIDrawer& drawer) const
   }
 }
 
-//returns true if the user entered text, i.e. if there's text in it, and the user presses enter, and it's active
 bool InputLine::enter()
 {
   bool result = false;
@@ -274,6 +273,12 @@ void InputLine::selectAll()
 {
   sel0 = 0;
   sel1 = text.size();
+}
+
+void InputLine::selectNone()
+{
+  sel0 = 0;
+  sel1 = 0;
 }
 
 int InputLine::mouseToCursor(int mouseX) const
