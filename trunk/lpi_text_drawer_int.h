@@ -82,6 +82,7 @@ class InternalGlyphs
     static const int NUMFONT = 256;
     
     Glyphs glyphs8x8;
+    Glyphs glyphs7x9;
     Glyphs glyphs6x6;
     Glyphs glyphs4x5;
     
@@ -91,6 +92,11 @@ class InternalGlyphs
     InternalGlyphs(const ITextureFactory* factory);
     ~InternalGlyphs();
 };
+
+const std::string& getBuiltIn8x8FontTexture();
+const std::string& getBuiltIn7x9FontTexture();
+const std::string& getBuiltIn6x6FontTexture();
+const std::string& getBuiltIn4x5FontTexture();
 
 class InternalTextDrawer : public ITextDrawer //uses InternalGlyphs
 {

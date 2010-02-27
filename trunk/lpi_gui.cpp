@@ -888,6 +888,10 @@ The position of that element is completely controlled by this ScrollElement or i
 
 ScrollElement::ScrollElement()
 : keepelementsinside(false)
+, prevx0(-16000)
+, prevy0(-16000)
+, prevdx(-16000)
+, prevdy(-16000)
 , element(0)
 {
 }
@@ -926,8 +930,6 @@ void ScrollElement::initBars()
 void ScrollElement::updateBars()
 {
   if(!element) return;
-  
-  initBars();
   
   if(bars.hbar.scrollSize < 0) bars.hbar.scrollSize = 0;
   if(bars.vbar.scrollSize < 0) bars.vbar.scrollSize = 0;
@@ -1000,6 +1002,11 @@ void ScrollElement::handleImpl(const IInput& input)
   
   if(element)
   {
+    if(prevx0 != x0 - element->getX0() || prevy0 != y0 - element->getY0() || prevdx != element->getSizeX() - getVisibleSizeX() || prevdy != element->getSizeY() - getVisibleSizeY())
+    {
+      initBars();
+    }
+    
     int scrollx = x0 - int(bars.hbar.scrollPos);
     int scrolly = y0 - int(bars.vbar.scrollPos);
     
@@ -1027,6 +1034,14 @@ void ScrollElement::handleImpl(const IInput& input)
   }
   
   updateBars();
+
+  if(element)
+  {
+    prevx0 = x0 - element->getX0();
+    prevy0 = y0 - element->getY0();
+    prevdx = element->getSizeX() - getVisibleSizeX();
+    prevdy = element->getSizeY() - getVisibleSizeY();
+  }
 }
 
 void ScrollElement::setElementOver(bool state)
@@ -1154,7 +1169,6 @@ Window::Window()
 , closeEnabled(false)
 , enableResizer(false)
 , resizerOverContainer(false)
-, closed(false)
 {
   setEnabled(true);
 
@@ -1190,8 +1204,7 @@ void Window::addCloseButton(const IGUIDrawer& geom)
   int closeY = y0;
   closeButton.resize(closeX, closeY, closeX + geom.getGUIPartSizeX(GP_WINDOW_CLOSE), closeY + geom.getGUIPartSizeY(GP_WINDOW_CLOSE));
   
-  closed = 0;
-  closeEnabled = 1;
+  closeEnabled = true;
   
   ic.setSticky(&closeButton, Sticky(1.0, -closeButton.getSizeX(), 0.0, 0, 1.0, 0, 0.0, closeButton.getSizeY()), this);
 }
@@ -1294,9 +1307,6 @@ void Window::putInside(int i)
 
 void Window::handleImpl(const IInput& input)
 {
-  //the close button
-  if(closeEnabled && closeButton.clicked(input)) closed = 1;
-  
   if(scroll.element) scroll.handle(input);
   else container.handle(input);
   
@@ -1422,6 +1432,11 @@ void Window::pushBottomRelative(Element* element, const Sticky& sticky)
 void Window::insertRelative(size_t pos, Element* element, const Sticky& sticky)
 {
   container.insertRelative(pos, element, sticky);
+}
+
+void Window::clear()
+{
+  container.clear();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1825,7 +1840,7 @@ void Scrollbar::setValue(double value)
 
 void Scrollbar::handleImpl(const IInput& input)
 {
-  int scrollDir = 0;
+  double scrollDir = 0;
 
   if(buttonUp.mouseDownHere(input)) scrollDir = -1;
   if(buttonDown.mouseDownHere(input)) scrollDir = 1;
@@ -1846,10 +1861,10 @@ void Scrollbar::handleImpl(const IInput& input)
       scrollPos = (scrollSize * (input.mouseY() - y0 - getSliderStart() - scroller.getSizeY() / 2)) / getSliderSize();
       scroller.mouseGrab(input);
     }
-    if(mouseScrollUp(input)) scrollDir = -3;
-    if(mouseScrollDown(input)) scrollDir = 3;
-    if(forwardedMouseScrollUp()) scrollDir = -3;
-    if(forwardedMouseScrollDown()) scrollDir = 3;
+    if(mouseScrollUp(input)) scrollDir = -4;
+    if(mouseScrollDown(input)) scrollDir = 4;
+    if(forwardedMouseScrollUp()) scrollDir = -4;
+    if(forwardedMouseScrollDown()) scrollDir = 4;
   }
   else
   {
@@ -2333,6 +2348,11 @@ void Checkbox::setTexturesAndColors(HTexture* texture1, HTexture* texture2, HTex
   this->setSizeY(texture[0]->texture->getV());
   
   positionText();
+}
+
+void Checkbox::setText(const std::string& newText)
+{
+  text = newText;
 }
 
 void Checkbox::setTexturesAndColors(HTexture* texture1, HTexture* texture2, const ColorRGB& color1, const ColorRGB& color2)

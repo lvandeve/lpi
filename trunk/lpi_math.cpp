@@ -30,7 +30,7 @@ namespace lpi
 //this sorts objects based on their distance, and will at the same time also sort an ordered index
 void sort(std::vector<int>& order, std::vector<double>& dist)
 {
-  //implemented with combsort here
+  ////implemented with combsort here
   
   if(order.size() != dist.size()) return;
   int amount = order.size();

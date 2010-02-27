@@ -25,6 +25,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include <iostream>
 
 #include "lpi_file.h"
+#include "lpi_os.h"
 
 namespace lpi
 {
@@ -54,7 +55,7 @@ class IFileBrowse
   virtual void fixSlashes(std::string& path) const = 0; //makes sure the slashes of the path are the correct type for this platform.
 };
 
-#if defined(_WIN32)
+#if defined(LPI_WIN32)
 
 class FileBrowseWin32 : public IFileBrowse
 {
@@ -88,7 +89,7 @@ class FileBrowseWin32WithDrives : public FileBrowseWin32
 
 typedef FileBrowseWin32WithDrives FileBrowse;
 
-#elif defined(linux) || defined(__linux) || defined(__linux__) || defined(__GNU__) || defined(__GLIBC__) 
+#elif defined(LPI_LINUX)
 
 class FileBrowseLinux : public IFileBrowse
 {

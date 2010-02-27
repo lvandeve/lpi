@@ -163,6 +163,15 @@ enum GUIPart
   ///Text Parts
   
   
+  GPT_DEFAULT_TEXT00,
+  GPT_DEFAULT_TEXT01,
+  GPT_DEFAULT_TEXT02,
+  GPT_DEFAULT_TEXT10,
+  GPT_DEFAULT_TEXT11,
+  GPT_DEFAULT_TEXT12,
+  GPT_DEFAULT_TEXT20,
+  GPT_DEFAULT_TEXT21,
+  GPT_DEFAULT_TEXT22,
   GPT_TEXT_BUTTON_TEXT, //text button (NOT the text on a button with a panel, but a plain text-only button)
   GPT_PANEL_BUTTON_TEXT,
   GPT_WINDOW_TITLE,
@@ -171,7 +180,7 @@ enum GUIPart
   GPT_HMENU_SUBMENUTEXT,
   GPT_VMENU_TEXT,
   GPT_VMENU_SUBMENUTEXT,
-  
+  GPT_MESSAGE_TEXT,
   
   GP_END_DONT_USE //don't use this, it's placed here to have an element without comma at the end of the enumarator list.
 };

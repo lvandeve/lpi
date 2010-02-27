@@ -157,7 +157,7 @@ void clipRect(int& ox0, int& oy0, int& ox1, int& oy1, int ix0, int iy0, int ix1,
 
 void ADrawer2D::drawEllipse(int x0, int y0, int x1, int y1, const ColorRGB& color, bool filled)
 {
-  drawEllipseCentered((x0 + x1) / 2, (y0 + y1) / 2, x1 - x0, y1 - y0, color, filled);
+  drawEllipseCentered((x0 + x1) / 2, (y0 + y1) / 2, (x1 - x0) / 2, (y1 - y0) / 2, color, filled);
 }
 
 void ADrawer2D::drawCircle(int x, int y, int radius, const ColorRGB& color, bool filled)

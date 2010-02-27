@@ -49,7 +49,7 @@ for example for a test on a GUI where I wanted the mouse to be controlled, the r
   int silent = 0;\
   bool subError = 0;\
   bool subCheck = 0;\
-  std::cout << "\nstarting unit test";
+  std::cout << std::endl << "starting unit test" << std::endl;
 
 #define LUT_CASE(x) \
 {\
@@ -58,11 +58,13 @@ for example for a test on a GUI where I wanted the mouse to be controlled, the r
   _TEST_NAME = x;\
   _ERROR_SIGNATURE = "";\
   LUT_APPEND_MSG.str("");\
-  LUT_MY_RESET;
+  LUT_MY_RESET;\
+  try\
+  {
   
 #define LUT_SUB \
   subError = false;\
-  if(subCheck) { std::cout << "\nbad sub!\n"; } subCheck = true;\
+  if(subCheck) { std::cout << std::endl << "bad sub!" << std::endl; } subCheck = true;\
 
 
 #define LUT_SUB_ERROR \
@@ -70,12 +72,12 @@ for example for a test on a GUI where I wanted the mouse to be controlled, the r
   _TOTAL_ERRORS_TRIGGERED++;\
   _LOCAL_ERRORS_TRIGGERED++;\
   subError = true;\
-  if(!subCheck) { std::cout << "\nbad sub!\n"; }\
+  if(!subCheck) { std::cout << std::endl << "bad sub!" << std::endl; }\
 }
 
 #define LUT_SUB_END \
   if(subError) _ERROR_SIGNATURE += "-"; else _ERROR_SIGNATURE += "+";\
-  if(!subCheck) { std::cout << "\nbad sub!\n"; } subCheck = false;\
+  if(!subCheck) { std::cout << std::endl << "bad sub!" << std::endl; } subCheck = false;\
   
 #define LUT_SUB_ASSERT_FALSE(x) \
   LUT_SUB\
@@ -88,13 +90,19 @@ for example for a test on a GUI where I wanted the mouse to be controlled, the r
   LUT_SUB_END
   
 #define LUT_CASE_END \
-  if(_LOCAL_ERRORS_TRIGGERED > 0) _TESTS_FAILED++;\
-  if(!silent)\
+    if(_LOCAL_ERRORS_TRIGGERED > 0) _TESTS_FAILED++;\
+    if(!silent)\
+    {\
+      std::cout << std::endl;\
+      if(_LOCAL_ERRORS_TRIGGERED > 0) std::cout << " :E "; else std::cout << " :) ";\
+      std::cout << "case " << _TEST_INDEX << ": " /*<< _LOCAL_ERRORS_TRIGGERED <<" errors "*/ << _ERROR_SIGNATURE << " \"" << _TEST_NAME << "\"";\
+      if(LUT_APPEND_MSG.str().size() > 0) std::cout << " >>> " << LUT_APPEND_MSG.str();\
+    }\
+  }\
+  catch(...)\
   {\
-    std::cout << "\n";\
-    if(_LOCAL_ERRORS_TRIGGERED > 0) std::cout << " :E "; else std::cout << " :) ";\
-    std::cout << "case " << _TEST_INDEX << ": " /*<< _LOCAL_ERRORS_TRIGGERED <<" errors "*/ << _ERROR_SIGNATURE << " \"" << _TEST_NAME << "\"";\
-    if(LUT_APPEND_MSG.str().size() > 0) std::cout << " >>> " << LUT_APPEND_MSG.str();\
+    std::cout << ":E case " << _TEST_INDEX << " threw exception! ";\
+    std::cout << _ERROR_SIGNATURE << " \"" << _TEST_NAME << "\"";\
   }\
 }
 
@@ -103,5 +111,5 @@ for example for a test on a GUI where I wanted the mouse to be controlled, the r
 
 
 #define LUT_END_UNIT_TEST \
-  std::cout << "\ncases ran: " << _TEST_INDEX + 1 << "\ncases failed: " << _TESTS_FAILED << "\ntotal errors: " << _TOTAL_ERRORS_TRIGGERED << "\n";
+  std::cout << std::endl << "cases ran: " << _TEST_INDEX + 1 << std::endl << "cases failed: " << _TESTS_FAILED << std::endl << "total errors: " << _TOTAL_ERRORS_TRIGGERED << std::endl;
  

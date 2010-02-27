@@ -62,11 +62,11 @@ class InternalList : public Element
   protected:
     virtual void handleImpl(const IInput& input);
     virtual void drawImpl(IGUIDrawer& drawer) const;
-    size_t getItemHeight() const;
     
   public:
   
     InternalList();
+    size_t getItemHeight() const;
     size_t getNumItems() const;
     size_t getSelectedItem() const; //works only correctly if allowMultiSelection is false. Returns value larger than getNumItems if no item at all is selected.
     bool isSelected(size_t i) const; //works both if allowMultiSelection is true or false
@@ -83,6 +83,7 @@ class InternalList : public Element
     void clear();
     size_t getMouseItem(const IInput& input) const; //this returns the item over which the mouse is, which you can use together with checks like "doubleclicked" to determine if a certain item is being doubleclicked or whatever else you check. Returns invalid index if mouse is not over this list.
     void swap(size_t item1, size_t item2); //swapping location of two items, e.g. for sorting
+    void drawPartial(IGUIDrawer& drawer, int vy0, int vy1) const; //draw only the texts thare are visible between the absolute coordinates vy0 and vy1 (for efficiency)
 };
 
 class List : public ScrollElement
@@ -94,6 +95,7 @@ class List : public ScrollElement
   
     virtual void resizeImpl(const Pos<int>& newPos);
     virtual void handleImpl(const IInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
     
   public:
     
@@ -216,10 +218,11 @@ class MessageBox : public Dialog
 {
   protected:
     Button ok;
-    Text message;
+    std::string text;
 
   protected:
     virtual void handleImpl(const IInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
 
   public:
 
@@ -528,7 +531,7 @@ class ToolBar : public ElementComposite
 {
   protected:
   
-    mutable size_t lastItem;
+    mutable size_t lastItem[NUM_MOUSE_BUTTONS];
   
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
@@ -558,8 +561,8 @@ class ToolBar : public ElementComposite
     void clear();
     
     size_t getNumItems() const;
-    bool itemClicked(size_t i, const IInput& input) const; //returns whether item with given index is clicked
-    size_t itemClicked(const IInput& input) const; //returns index of item that is clicked if some item is clicked, an invalid index (>= getNumItems()) otherwise.
+    bool itemClicked(size_t i, const IInput& input, MouseButton button = LMB) const; //returns whether item with given index is clicked
+    size_t itemClicked(const IInput& input, MouseButton button = LMB) const; //returns index of item that is clicked if some item is clicked, an invalid index (>= getNumItems()) otherwise.
     
     virtual void drawToolTip(IGUIDrawer& drawer) const;
 };
@@ -586,6 +589,7 @@ class DropDownList : public Element
     MyList list; //the hovering list when opened
     
     bool changed;
+    size_t listvalue; //used while changed = true. Reason for using this and not getting it from list directoy: auto-updating (in both direction) dynamic GUI page with enum overwrites value before each handle
 
   protected:
     virtual void handleImpl(const IInput& input);

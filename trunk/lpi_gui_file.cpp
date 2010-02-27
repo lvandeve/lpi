@@ -140,6 +140,7 @@ void FileList::setAllowedExtensions(const std::vector<std::string>& allowedExten
 ////////////////////////////////////////////////////////////////////////////////
 
 std::string FileDialog::REMEMBER_PATH; //for remembering it during one session at least
+bool FileDialog::REMEMBER_AUTO_ADD_EXTENSION = true;
 
 FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser, bool save, bool multi)
 : list(geom)
@@ -158,14 +159,22 @@ FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser, bool save, 
   ok.makeTextPanel(0, 0, save ? "save" : "open");
   cancel.makeTextPanel(0, 0, "cancel");
   up.makeTextPanel(0, 0, "up");
+  if(save)
+  {
+    autoAddExtension.make(0, 0, REMEMBER_AUTO_ADD_EXTENSION);
+    autoAddExtension.makeLabel("Automatically add extension to filename", autoAddExtension.getSizeX(), autoAddExtension.getSizeY() / 2 - 4);
+  }
+  
+  int s = save ? 20 : 0; //y shift for auto add extension checkbox (variable has short name on purpose)
 
-  pushTop(&ok, Sticky(1.0,-84, 1.0,-50, 1.0,-4, 1.0,-30));
-  pushTop(&cancel, Sticky(1.0,-84, 1.0,-24, 1.0,-4, 1.0,-4));
+  pushTop(&ok, Sticky(1.0,-84, 1.0,-50-s, 1.0,-4, 1.0,-30-s));
+  pushTop(&cancel, Sticky(1.0,-84, 1.0,-24-s, 1.0,-4, 1.0,-4-s));
   pushTop(&up, Sticky(1.0,-84, 0.0,4, 1.0,-4, 0.0,24));
-  pushTop(&list, Sticky(0.0,4, 0.0,32, 1.0,-4, 1.0,-56));
   pushTop(&path, Sticky(0.0,48, 0.0,4, 1.0,-88, 0.0,24));
-  pushTop(&file, Sticky(0.0,48, 1.0,-50, 1.0,-88, 1.0,-30));
-  pushTop(&extensionChooser, Sticky(0.0,48, 1.0,-24, 1.0,-88, 1.0,-4));
+  pushTop(&list, Sticky(0.0,4, 0.0,32, 1.0,-4, 1.0,-56-s));
+  pushTop(&file, Sticky(0.0,48, 1.0,-50-s, 1.0,-88, 1.0,-30-s));
+  pushTop(&extensionChooser, Sticky(0.0,48, 1.0,-24-s, 1.0,-88, 1.0,-4-s));
+  if(save) pushTop(&autoAddExtension, Sticky(0.0,48, 1.0,-20, 1.0,-88, 1.0,-4));
   path.make(0, 0, 256);
   file.make(0, 0, 256);
 
@@ -296,8 +305,14 @@ void FileDialog::handleImpl(const IInput& input)
       file.setText(filename);
     }
 
-    if(ok.clicked(input) || okThroughDoubleClickOnFile)
+    if(ok.clicked(input) || okThroughDoubleClickOnFile || file.enter())
     {
+      if(save)
+      {
+        REMEMBER_AUTO_ADD_EXTENSION = autoAddExtension.isChecked();
+        if(REMEMBER_AUTO_ADD_EXTENSION) doAutoAddExtension();
+      }
+
       if(save && browser->fileExists(getFileName()))
       {
         overwriteQuestion.moveCenterTo(getCenterX(), getCenterY());
@@ -310,10 +325,11 @@ void FileDialog::handleImpl(const IInput& input)
         result = OK;
       }
     }
-    if(cancel.clicked(input))
+    if(cancel.clicked(input) || closeButton.clicked(input))
     {
       setEnabled(false);
       result = CANCEL;
+      if(save) REMEMBER_AUTO_ADD_EXTENSION = autoAddExtension.isChecked();
     }
     
     if(extensionChooser.hasChanged() && extensionChooser.getSelectedItem() < extensionChooser.getNumItems())
@@ -321,6 +337,40 @@ void FileDialog::handleImpl(const IInput& input)
       setAllowedExtensions(extensionSets[extensionChooser.getSelectedItem()]);
     }
   }
+}
+
+void FileDialog::doAutoAddExtension()
+{
+  /*
+  The first extension of the active extension set is added if the extension
+  is not already any of the ones in the extension set.
+  */
+  
+  if(extensionSets.empty()) return;
+  
+  std::vector<std::string>& exts = extensionSets[getExtensionSet()];
+  
+  if(exts.empty()) return;
+  
+  std::string filename = file.getText();
+  
+  
+  bool hasExt = false;
+  for(size_t i = 0; i < exts.size(); i++)
+  {
+    if(extEqualsIgnoreCase(filename, exts[i]))
+    {
+      hasExt = true;
+      break;
+    }
+  }
+  if(!hasExt)
+  {
+    filename += ".";
+    filename += exts[0];
+  }
+  
+  file.setText(filename);
 }
 
 std::string FileDialog::getPath()

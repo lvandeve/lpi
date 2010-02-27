@@ -55,6 +55,7 @@ class GUIDrawerGL : public AGUIDrawer
   public:
     GUIDrawerGL(ScreenGL* screen);
     
+    GuiSet& getInternal() { return guidrawer.getGUISet(); } //can be used to set font and such
 
     //input
     virtual IInput& getInput();

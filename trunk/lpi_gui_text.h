@@ -91,10 +91,11 @@ class InputLine : public Element //input text line
    
     void clear();
 
-    bool enter();
+    bool enter(); //returns true if the user entered text, i.e. if there's text in it, and the user presses enter, and it's active
     int getInteger() const; //returns any integer number that may be in the string you typed
     
     void selectAll();
+    void selectNone();
     void deleteSelectedText();
     
     void activate(bool i_active = true);

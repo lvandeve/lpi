@@ -320,6 +320,7 @@ class Label //convenience class: elements that want an optional label (e.g. chec
     Label();
     virtual ~Label(){}
     
+    //position is relative to the element
     void makeLabel(const std::string& label, int labelX, int labelY, const Font& labelFont = FONT_Default);
 };
 
@@ -423,6 +424,8 @@ class Scrollbar : public ElementComposite
     Dummy buttonDown;
     Dummy scroller;
     
+    int speedMode;
+    
   public:
     //get length and begin and end coordinates of the slider part (the part between the up and down buttons) (relative to x, y of the scrollbar)
     int getSliderSize() const;
@@ -438,12 +441,9 @@ class Scrollbar : public ElementComposite
     double scrollSpeed; //if speedMode == 0: steps / second, if speedMode == 1: seconds / whole bar
     double absoluteSpeed; //steps / second
     
-    int speedMode;
-    
-
-    
     void setRelativeScrollSpeed(); //time = time to scroll from top to bottom (in seconds)
     void setRelativePosition(float position); //position = 0.0-1.0
+    void setSpeedMode(int speedMode) { this->speedMode = speedMode; } //0: absolute, 1: relative
 
     Scrollbar();
     void makeVertical(int x, int y, int length,
@@ -672,6 +672,7 @@ class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
   protected:
   
     bool keepelementsinside; //false by default
+    int prevx0, prevy0, prevdx, prevdy; //used to do initBars again if element changed size or position due to external change
   
   public:
     Element* element;
@@ -780,6 +781,8 @@ class Window : public ElementComposite
     void pushTopAt(Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT);
     void pushBottomAt(Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT);
     void insertAt(size_t pos, Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT);
+    
+    void clear();
 
     void bringToTop(Element* element); //precondition: element must already be in the list
     
@@ -802,7 +805,7 @@ class Window : public ElementComposite
     void setTitle(const std::string& title); //only to be used after "addTitle" (or the x, y position will be messed up)
     
     ////optional part "close button"
-    bool closed;
+    bool closeButtonClicked(const IInput& input) { return closeButton.clicked(input); }
     void addCloseButton(const IGUIDrawer& geom); //ofsset from top *right* corner, choose style of close button by making it, it's the built in texture by default
     
     ////optional part "resizer" = draggable bottom right corner with diagonally striped image
@@ -814,11 +817,6 @@ class Window : public ElementComposite
     virtual void handleImpl(const IInput& input);
     virtual bool isFloating() const;
     virtual const Element* hitTest(const IInput& input) const;
-    
-    ////useful for the close button
-    void close() { closed = 1; setEnabled(false); } //use this if closed == 1
-    void unClose() { closed = 0; setEnabled(true); }
-    void toggleClose() { if(closed) unClose(); else close(); }
     
     void setColorMod(const ColorRGB& color) { colorMod = color; }
     

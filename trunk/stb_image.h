@@ -2,6 +2,17 @@
 #ifndef STBI_INCLUDE_STB_IMAGE_H
 #define STBI_INCLUDE_STB_IMAGE_H
 
+/*
+Modifications done by me:
+-fix warnings of "deprecated conversion from string constant to char" in the "e" #define
+-fix warning about "deprecated conversion from string constant to char" in hdr_test
+-#define STBI_NO_WRITE (because I don't use the writing and to get rid of more warnings)
+-#define STBI_NO_STDIO (because I don't use file access and to get rid of more warnings)
+-fix unused parameter warnings in the functions resample_row_1, resample_row_h_2, resample_row_v_2, resample_row_hv_2, resample_row_generic, expand_palette, hdr_gettoken by typing "(void)param" for each such parameter
+-fix warning about braces around else if in create_png_image_raw
+-fixed warnings about comma at end of enumerator list in 3 enums
+*/
+
 ////   begin header file  ////////////////////////////////////////////////////
 //
 // Limitations:
@@ -90,6 +101,9 @@
 //
 //     stbi_is_hdr(char *filename);
 
+#define STBI_NO_WRITE
+#define STBI_NO_STDIO
+
 #ifndef STBI_NO_STDIO
 #include <stdio.h>
 #endif
@@ -103,7 +117,7 @@ enum
    STBI_grey       = 1,
    STBI_grey_alpha = 2,
    STBI_rgb        = 3,
-   STBI_rgb_alpha  = 4,
+   STBI_rgb_alpha  = 4
 };
 
 typedef unsigned char stbi_uc;
@@ -150,7 +164,7 @@ extern void   stbi_ldr_to_hdr_scale(float scale);
 
 // get a VERY brief reason for failure
 // NOT THREADSAFE
-extern char    *stbi_failure_reason  (void);
+extern const char    *stbi_failure_reason  (void);
 
 // free the loaded image -- this is just free()
 extern void     stbi_image_free      (void *retval_from_stbi_load);

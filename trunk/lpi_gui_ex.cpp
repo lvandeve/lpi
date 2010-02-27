@@ -165,11 +165,19 @@ void InternalList::handleImpl(const IInput& input)
 
 void InternalList::drawImpl(IGUIDrawer& drawer) const
 {
+  drawPartial(drawer, y0, y1);
+}
+
+void InternalList::drawPartial(IGUIDrawer& drawer, int vy0, int vy1) const
+{
   for(size_t i = 0; i < items.size(); i++)
   {
-    const Font& font = isSelected(i) ? FONT_Red : FONT_Black;
-    drawer.drawText(items[i], x0 + (hasIcons ? 16 : 0), y0 + getItemHeight() * i + getItemHeight() / 2, font, TextAlign(HA_LEFT, VA_CENTER));
+    int y = y0 + getItemHeight() * i + getItemHeight() / 2;
+    if(y > vy1 || y < (int)(vy0 - getItemHeight())) continue; //it's not visible
     
+    const Font& font = isSelected(i) ? FONT_Red : FONT_Black;
+    drawer.drawText(items[i], x0 + (hasIcons ? 16 : 0), y, font, TextAlign(HA_LEFT, VA_CENTER));
+
     HTexture* icon = icons[i];
     if(icon && icon->texture)
     {
@@ -230,12 +238,23 @@ void List::resizeImpl(const Pos<int>& newPos)
 void List::handleImpl(const IInput& input)
 {
   ScrollElement::handleImpl(input);
+  bars.vbar.setSpeedMode(0);
+  bars.vbar.absoluteSpeed = list.getItemHeight() * 8; //the factor is the number of items per second scrolled
   
   if(!bars.vbar.mouseOver(input))
   {
     if(mouseScrollUp(input)) forwardScrollToVerticalScrollbar(-1);
     if(mouseScrollDown(input)) forwardScrollToVerticalScrollbar(1);
   }
+}
+
+void List::drawImpl(IGUIDrawer& drawer) const
+{
+  drawer.pushSmallestScissor(getVisibleX0(), getVisibleY0(), getVisibleX1(), getVisibleY1()); //TODO: currently does same as pushScissor (because otherwise there's weird bug, to reproduce: resize the red window and look at smiley in the small grey window), so elements from container in container are still drawn outside container. DEBUG THIS ASAP!!!
+  list.drawPartial(drawer, getVisibleY0(), getVisibleY1());
+  drawer.popScissor();
+
+  bars.draw(drawer);
 }
 
 bool List::clickedOnItem(const IInput& input)
@@ -542,6 +561,7 @@ void Painter::queueText(int x, int y, const std::string& text, const Font& font)
 ////////////////////////////////////////////////////////////////////////////////
 
 MessageBox::MessageBox(const IGUIDrawer& geom, const std::string& text, const std::string& title)
+: text(text)
 {
   resize(0, 0 , 300, 150);
   addTop(geom);
@@ -549,11 +569,7 @@ MessageBox::MessageBox(const IGUIDrawer& geom, const std::string& text, const st
   addCloseButton(geom);
 
   ok.makeTextPanel(0, 0, "Ok");
-  //ok.autoTextSize();
 
-  message.make(0, 0, text);
-
-  pushTop(&message, Sticky(0.0,4, 0.0,4, 1.0,-4, 1.0,-36));
   pushTop(&ok, Sticky(0.5,-40, 1.0,-32, 0.5,+40, 1.0,-4));
 
   setEnabled(true);
@@ -573,6 +589,12 @@ void MessageBox::handleImpl(const IInput& input)
 {
   Dialog::handleImpl(input);
   if(ok.clicked(input)) setEnabled(false);
+}
+
+void MessageBox::drawImpl(IGUIDrawer& drawer) const
+{
+  Dialog::drawImpl(drawer);
+  drawer.drawGUIPartText(GPT_MESSAGE_TEXT, text, x0 + 4, y0 + 4, x1 - 4, y1 - 4);
 }
   
 ////////////////////////////////////////////////////////////////////////////////
@@ -1186,7 +1208,7 @@ void MenuVertical::onOpenSubMenu(const IInput& input, size_t index)
 {
   (void)input;
   Item& item = items[index];
-  item.submenu->moveTo(x1, y0 + positions[index] + 1);
+  item.submenu->moveTo(x1, y0 + positions[index] + 1 - 4);
 }
 
 void MenuVertical::onClear()
@@ -1232,8 +1254,9 @@ void MenuVertical::drawImpl(IGUIDrawer& drawer) const
 #define TOOLBARSEPARATORW 8
 
 ToolBar::ToolBar()
-: lastItem((size_t)(-1))
+//: lastItem((size_t)(-1))
 {
+  for(size_t i = 0; i < NUM_MOUSE_BUTTONS; i++) lastItem[i] = (size_t)(-1);
 }
 
 void ToolBar::drawImpl(IGUIDrawer& drawer) const
@@ -1275,9 +1298,12 @@ void ToolBar::drawToolTip(IGUIDrawer& drawer) const
 
 void ToolBar::handleImpl(const IInput& input)
 {
-  if(clicked(input))
+  for(size_t i = 0; i < NUM_MOUSE_BUTTONS; i++)
   {
-    lastItem = getMouseIndex(input);
+    if(clicked(input, (MouseButton)i))
+    {
+      lastItem[i] = getMouseIndex(input);
+    }
   }
 }
 
@@ -1328,26 +1354,28 @@ size_t ToolBar::getNumItems() const
   return items.size();
 }
 
-bool ToolBar::itemClicked(size_t i, const IInput& input) const
+bool ToolBar::itemClicked(size_t i, const IInput& input, MouseButton button) const
 {
   (void)input;
   
-  if(lastItem == i)
+  if(lastItem[button] == i)
   {
-    lastItem = (size_t)(-1);
+    lastItem[button] = (size_t)(-1);
     return true;
   }
   return false;
 }
 
-size_t ToolBar::itemClicked(const IInput& input) const
+size_t ToolBar::itemClicked(const IInput& input, MouseButton button) const
 {
   (void)input;
-  size_t result = lastItem;
-  lastItem = (size_t)(-1);
+  size_t result = lastItem[button];
+  lastItem[button] = (size_t)(-1);
   return result;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 void DropDownList::handleImpl(const IInput& input)
@@ -1357,14 +1385,16 @@ void DropDownList::handleImpl(const IInput& input)
     list.setEnabled(!list.isEnabled());
     if(list.isEnabled())
     {
-      list.resize(x0, list.getY0(), x1, list.getY0() + 64);
+      list.resize(x0, list.getY0(), x1, list.getY0() + 80);
     }
   }
   if(list.clickedOnItem(input))
   {
     list.setEnabled(false);
     changed = true;
+    listvalue = list.getSelectedItem();
   }
+  else if(!list.mouseDown(input)) list.setSelected(listvalue); //lame, but, this is for the dynamic enum page with auto update (sets value before handle, gets value after handle). It goes wrong when setting while mouse is down (to select item...)
 }
 
 void DropDownList::drawImpl(IGUIDrawer& drawer) const
@@ -1391,6 +1421,7 @@ DropDownList::DropDownList(const IGUIDrawer& geom)
 {
   setEnabled(true);
   list.setEnabled(false);
+  listvalue = list.getSelectedItem();
 }
 
 void DropDownList::setItems(const std::vector<std::string>& items)
@@ -1406,11 +1437,6 @@ void DropDownList::addItem(const std::string& item)
   if(list.getNumItems() == 1) { list.setSelected(0); changed = true; }
 }
 
-size_t DropDownList::getSelectedItem() const
-{
-  return list.getSelectedItem();
-}
-
 size_t DropDownList::getNumItems() const
 {
   return list.getNumItems();
@@ -1421,9 +1447,15 @@ const std::string& DropDownList::getValue(size_t i) const
   return list.getValue(i);
 }
 
+size_t DropDownList::getSelectedItem() const
+{
+  return listvalue;//list.getSelectedItem();
+}
+
 void DropDownList::setSelectedItem(size_t i)
 {
-  list.setSelected(i);
+  //list.setSelected(i);
+  listvalue = i;
 }
 
 bool DropDownList::hasChanged()

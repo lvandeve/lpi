@@ -49,7 +49,7 @@ std::string IFileBrowse::getChild(const std::string& path, const std::string& ch
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#if defined(_WIN32)
+#if defined(LPI_WIN32)
 
 #include "lpi_file.h"
 
@@ -215,7 +215,7 @@ std::string FileBrowseWin32WithDrives::getChild(const std::string& path, const s
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#elif defined(linux) || defined(__linux) || defined(__linux__) || defined(__GNU__) || defined(__GLIBC__) 
+#elif defined(LPI_LINUX)
 
 #include <sys/types.h>
 #include <sys/stat.h>

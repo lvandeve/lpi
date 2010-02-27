@@ -138,6 +138,7 @@ struct TColorRGB1
 
 typedef TColorRGB255<int> ColorRGB;
 typedef TColorRGB1<double> ColorRGBd;
+typedef TColorRGB1<float> ColorRGBf;
 
 //the + and - operator add/subtract the R G and B channels but not the alpha channel
 ColorRGB operator+(const ColorRGB& color, const ColorRGB& color2);
@@ -179,6 +180,24 @@ ColorRGBd operator&(double a, const ColorRGBd& color);
 bool operator==(const ColorRGBd& color, const ColorRGBd& color2);
 bool operator!=(const ColorRGBd& color, const ColorRGBd& color2);
 
+//the + and - operator add/subtract the R G and B channels but not the alpha channel
+ColorRGBf operator+(const ColorRGBf& color, const ColorRGBf& color2);
+ColorRGBf operator-(const ColorRGBf& color, const ColorRGBf& color2);
+//these multiplication operators with a constant don't affect the alpha channel
+ColorRGBf operator*(const ColorRGBf& color, double a);
+ColorRGBf operator*(double a, const ColorRGBf& color);
+ColorRGBf operator/(const ColorRGBf& color, double a);
+//this multiplies two colors, and the alpha channels too
+ColorRGBf operator*(const ColorRGBf& color1, const ColorRGBf& color2);
+//The | operator adds two color including their alpha channel
+ColorRGBf operator|(const ColorRGBf& color, const ColorRGBf& color2);
+//The & operator multiplies a color and also its alpha channel with a constant
+ColorRGBf operator&(const ColorRGBf& color, double a);
+ColorRGBf operator&(double a, const ColorRGBf& color);
+//Compare
+bool operator==(const ColorRGBf& color, const ColorRGBf& color2);
+bool operator!=(const ColorRGBf& color, const ColorRGBf& color2);
+
 static const ColorRGB RGB_Black        (  0,   0,   0, 255);
 static const ColorRGB RGB_Red          (255,   0,   0, 255);
 static const ColorRGB RGB_Green        (  0, 255,   0, 255);
@@ -217,22 +236,33 @@ static const ColorRGB RGB_Translucent(255, 255, 255, 128);
 static const ColorRGB RGB_Ghost(255, 255, 255, 64);
 static const ColorRGB RGB_Invisible(  0,   0,   0,   0);
 
-static const ColorRGBd RGBd_Black        (  0,   0,   0, 1.0);
-static const ColorRGBd RGBd_Red          (1.0,   0,   0, 1.0);
-static const ColorRGBd RGBd_Green        (  0, 1.0,   0, 1.0);
-static const ColorRGBd RGBd_Blue         (  0,   0, 1.0, 1.0);
-static const ColorRGBd RGBd_Cyan         (  0, 1.0, 1.0, 1.0);
-static const ColorRGBd RGBd_Magenta      (1.0,   0, 1.0, 1.0);
-static const ColorRGBd RGBd_Yellow       (1.0, 1.0,   0, 1.0);
+static const ColorRGBd RGBd_Black        (0.0, 0.0, 0.0, 1.0);
+static const ColorRGBd RGBd_Red          (1.0, 0.0, 0.0, 1.0);
+static const ColorRGBd RGBd_Green        (0.0, 1.0, 0.0, 1.0);
+static const ColorRGBd RGBd_Blue         (0.0, 0.0, 1.0, 1.0);
+static const ColorRGBd RGBd_Cyan         (0.0, 1.0, 1.0, 1.0);
+static const ColorRGBd RGBd_Magenta      (1.0, 0.0, 1.0, 1.0);
+static const ColorRGBd RGBd_Yellow       (1.0, 1.0, 0.0, 1.0);
 static const ColorRGBd RGBd_White        (1.0, 1.0, 1.0, 1.0);
 static const ColorRGBd RGBd_Gray         (0.5, 0.5, 0.5, 1.0);
 static const ColorRGBd RGBd_Grey         (.75, .75, .75, 1.0);
+
+static const ColorRGBf RGBf_Black        (0.0f, 0.0f, 0.0f, 1.0f);
+static const ColorRGBf RGBf_Red          (1.0f, 0.0f, 0.0f, 1.0f);
+static const ColorRGBf RGBf_Green        (0.0f, 1.0f, 0.0f, 1.0f);
+static const ColorRGBf RGBf_Blue         (0.0f, 0.0f, 1.0f, 1.0f);
+static const ColorRGBf RGBf_Cyan         (0.0f, 1.0f, 1.0f, 1.0f);
+static const ColorRGBf RGBf_Magenta      (1.0f, 0.0f, 1.0f, 1.0f);
+static const ColorRGBf RGBf_Yellow       (1.0f, 1.0f, 0.0f, 1.0f);
+static const ColorRGBf RGBf_White        (1.0f, 1.0f, 1.0f, 1.0f);
+static const ColorRGBf RGBf_Gray         (0.5f, 0.5f, 0.5f, 1.0f);
+static const ColorRGBf RGBf_Grey         (.75f, .75f, .75f, 1.0f);
 
 
 template<typename T>
 struct TColorHSL255
 {
-  T h;
+  T h; //range 0-255 (not 0-360)
   T s;
   T l;
   T a;
@@ -265,7 +295,7 @@ struct TColorHSL255
 template<typename T>
 struct TColorHSL1
 {
-  T h;
+  T h; //range 0.0-1.0 (not 0-360)
   T s;
   T l;
   T a;
@@ -297,11 +327,12 @@ struct TColorHSL1
 
 typedef TColorHSL255<int> ColorHSL;
 typedef TColorHSL1<double> ColorHSLd;
+typedef TColorHSL1<float> ColorHSLf;
 
 template<typename T>
 struct TColorHSV255
 {
-  T h;
+  T h; //range 0-255 (not 0-360)
   T s;
   T v;
   T a;
@@ -334,7 +365,7 @@ struct TColorHSV255
 template<typename T>
 struct TColorHSV1
 {
-  T h;
+  T h; //range 0.0-1.0 (not 0-360)
   T s;
   T v;
   T a;
@@ -366,13 +397,14 @@ struct TColorHSV1
 
 typedef TColorHSV255<int> ColorHSV;
 typedef TColorHSV1<double> ColorHSVd;
+typedef TColorHSV1<float> ColorHSVf;
 
 template<typename T>
-struct TColorCIELab255 //NOTE: most colors here are in range 0 to 255, BUT, this one has range ~ -255 to ~ +255 for a and b (but l is still0-255)
+struct TColorCIELab255 //NOTE: most colors here are in range 0 to 255, BUT, this one has range ~ -255 to ~ +255 for a and b (but l is still 0-255)
 {
-  T l;
-  T a;
-  T b;
+  T l; //range 0 - +255
+  T a; //range -255 - +255
+  T b; //range -255 - +255
   T alpha;
   
   TColorCIELab255(T l, T a, T b, T alpha)
@@ -402,9 +434,9 @@ struct TColorCIELab255 //NOTE: most colors here are in range 0 to 255, BUT, this
 template<typename T>
 struct TColorCIELab1 //NOTE: most colors here are in range 0.0 to 1.0, BUT, this one has range ~ -1.0 to ~ +1.0 for a and b (but l is still 0.0-1.0)
 {
-  T l;
-  T a;
-  T b;
+  T l; //range 0.0 - 1.0
+  T a; //range -1.0 - +1.0
+  T b; //range -1.0 - +1.0
   T alpha;
   
   TColorCIELab1(T l, T a, T b, T alpha)
@@ -433,6 +465,7 @@ struct TColorCIELab1 //NOTE: most colors here are in range 0.0 to 1.0, BUT, this
 
 typedef TColorCIELab255<int> ColorCIELab;
 typedef TColorCIELab1<double> ColorCIELabd;
+typedef TColorCIELab1<float> ColorCIELabf;
 
 template<typename T>
 struct TColorCIEXYZ255
@@ -500,6 +533,7 @@ struct TColorCIEXYZ1
 
 typedef TColorCIEXYZ255<int> ColorCIEXYZ;
 typedef TColorCIEXYZ1<double> ColorCIEXYZd;
+typedef TColorCIEXYZ1<float> ColorCIEXYZf;
 
 template<typename T>
 struct TColorCMY255
@@ -567,6 +601,7 @@ struct TColorCMY1
 
 typedef TColorCMY255<int> ColorCMY;
 typedef TColorCMY1<double> ColorCMYd;
+typedef TColorCMY1<float> ColorCMYf;
 
 template<typename T>
 struct TColorCMYK255
@@ -644,13 +679,14 @@ struct TColorCMYK1
 
 typedef TColorCMYK255<int> ColorCMYK;
 typedef TColorCMYK1<double> ColorCMYKd;
+typedef TColorCMYK1<float> ColorCMYKf;
 
 template<typename T>
 struct TColorYPbPr255 //NOTE: most colors here are in range 0 to 255, BUT, this one has range -128 to +128 for pb and pr (but y is still 0-255)
 {
-  T y;
-  T pb;
-  T pr;
+  T y; //range 0 - 255
+  T pb; //range -128 - +128
+  T pr; //range -128 - +128
   T alpha;
   
   TColorYPbPr255(T y, T pb, T pr, T alpha)
@@ -680,9 +716,9 @@ struct TColorYPbPr255 //NOTE: most colors here are in range 0 to 255, BUT, this 
 template<typename T>
 struct TColorYPbPr1 //NOTE: most colors here are in range 0.0 to 1.0, BUT, this one has range -0.5 to +0.5 for pb and pr (but y is still 0.0-1.0)
 {
-  T y;
-  T pb;
-  T pr;
+  T y; //range 0.0 - +1.0
+  T pb; //range -0.5-+0.5
+  T pr; //range -0.5-+0.5
   T alpha;
   
   TColorYPbPr1(T y, T pb, T pr, T alpha)
@@ -711,6 +747,7 @@ struct TColorYPbPr1 //NOTE: most colors here are in range 0.0 to 1.0, BUT, this 
 
 typedef TColorYPbPr255<int> ColorYPbPr;
 typedef TColorYPbPr1<double> ColorYPbPrd;
+typedef TColorYPbPr1<float> ColorYPbPrf;
 
 template<typename T>
 struct TColorYCbCr255 //this presents JFIF JPEG's YCbCr
@@ -778,6 +815,7 @@ struct TColorYCbCr1 //this presents JFIF JPEG's YCbCr
 
 typedef TColorYCbCr255<int> ColorYCbCr;
 typedef TColorYCbCr1<double> ColorYCbCrd;
+typedef TColorYCbCr1<float> ColorYCbCrf;
 
 template<typename T>
 struct TColorYUV255
@@ -845,6 +883,7 @@ struct TColorYUV1
 
 typedef TColorYUV255<int> ColorYUV;
 typedef TColorYUV1<double> ColorYUVd;
+typedef TColorYUV1<float> ColorYUVf;
 
 template<typename T>
 struct TColorYIQ255
@@ -912,6 +951,7 @@ struct TColorYIQ1
 
 typedef TColorYIQ255<int> ColorYIQ;
 typedef TColorYIQ1<double> ColorYIQd;
+typedef TColorYIQ1<float> ColorYIQf;
 
 //TODO: HunterLab
 //TODO: make conversion function from CIELab to XYZ and vica versa, since it's already internally used by the CIELab to RGB and vica versa
@@ -960,10 +1000,35 @@ ColorRGBd YUVtoRGB(const ColorYUVd& colorYUV);
 ColorYIQd RGBtoYIQ(const ColorRGBd& colorRGB);
 ColorRGBd YIQtoRGB(const ColorYIQd& colorYIQ);
 
+ColorHSLf RGBtoHSL(const ColorRGBf& colorRGB);
+ColorRGBf HSLtoRGB(const ColorHSLf& colorHSL);
+ColorHSVf RGBtoHSV(const ColorRGBf& colorRGB);
+ColorRGBf HSVtoRGB(const ColorHSVf& colorHSV);
+ColorCMYf RGBtoCMY(const ColorRGBf& colorRGB);
+ColorRGBf CMYtoRGB(const ColorCMYf& colorCMY);
+ColorCMYKf RGBtoCMYK(const ColorRGBf& colorRGB);
+ColorRGBf CMYKtoRGB(const ColorCMYKf& colorCMYK);
+ColorCIEXYZf RGBtoCIEXYZ(const ColorRGBf& colorRGB);
+ColorRGBf CIEXYZtoRGB(const ColorCIEXYZf& colorCIEXYZ);
+ColorCIELabf RGBtoCIELab(const ColorRGBf& colorRGB);
+ColorRGBf CIELabtoRGB(const ColorCIELabf& colorCIELab);
+ColorYPbPrf RGBtoYPbPr(const ColorRGBf& colorRGB);
+ColorRGBf YPbPrtoRGB(const ColorYPbPrf& colorYPbPr);
+ColorYCbCrf RGBtoYCbCr(const ColorRGBf& colorRGB);
+ColorRGBf YCbCrtoRGB(const ColorYCbCrf& colorYCbCr);
+ColorYUVf RGBtoYUV(const ColorRGBf& colorRGB);
+ColorRGBf YUVtoRGB(const ColorYUVf& colorYUV);
+ColorYIQf RGBtoYIQ(const ColorRGBf& colorRGB);
+ColorRGBf YIQtoRGB(const ColorYIQf& colorYIQ);
+
 unsigned long RGBtoINT(const ColorRGB& colorRGB);
 ColorRGB INTtoRGB(unsigned long colorINT);
 
 ColorRGB RGBdtoRGB(const ColorRGBd& color);
 ColorRGBd RGBtoRGBd(const ColorRGB& color);
+ColorRGB RGBftoRGB(const ColorRGBf& color);
+ColorRGBf RGBtoRGBf(const ColorRGB& color);
+ColorRGBd RGBftoRGBd(const ColorRGBf& color);
+ColorRGBf RGBdtoRGBf(const ColorRGBd& color);
 
 }

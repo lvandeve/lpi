@@ -342,7 +342,7 @@ void Drawer2DGL::drawCircle(int x, int y, int radius, const ColorRGB& color, boo
 void Drawer2DGL::drawEllipseCentered(int x, int y, int radiusx, int radiusy, const ColorRGB& color, bool filled)
 {
   static const double pi = 3.141592653589793238;
-  static const size_t numsegments = 32;
+  static const size_t numsegments = 64;
   
   prepareDrawUntextured(filled);
   glColor4ub(color.r, color.g, color.b, color.a);

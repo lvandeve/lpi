@@ -304,8 +304,121 @@ bool operator!=(const ColorRGBd& color, const ColorRGBd& color2)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////
 
+//Add two colors
+ColorRGBf operator+(const ColorRGBf& color, const ColorRGBf& color2)
+{
+  ColorRGBf c;
+  c.r = color.r + color2.r;
+  c.g = color.g + color2.g;
+  c.b = color.b + color2.b;
+  return c;
+}
 
+//Subtract two colors
+ColorRGBf operator-(const ColorRGBf& color, const ColorRGBf& color2)
+{
+  ColorRGBf c;
+  c.r = color.r - color2.r;
+  c.g = color.g - color2.g;
+  c.b = color.b - color2.b;
+  return c;
+}
+
+//Multiplying with a constant does NOT affect the alpha channel, use the "&" operator on two colors instead if you need that
+
+//Multiplies a color with a double
+ColorRGBf operator*(const ColorRGBf& color, double a)
+{
+  ColorRGBf c;
+  c.r = color.r * a;
+  c.g = color.g * a;
+  c.b = color.b * a;
+  c.a = color.a;
+  return c;
+}
+
+//Multiplies a color with a double
+ColorRGBf operator*(double a, const ColorRGBf& color)
+{
+  ColorRGBf c;
+  c.r = color.r * a;
+  c.g = color.g * a;
+  c.b = color.b * a;
+  c.a = color.a;
+  return c;
+}
+
+//Multiply two colors (component by component)
+ColorRGBf operator*(const ColorRGBf& color1, const ColorRGBf& color2)
+{
+  ColorRGBf c;
+  c.r = (color1.r * color2.r);
+  c.g = (color1.g * color2.g);
+  c.b = (color1.b * color2.b);
+  c.a = (color1.a * color2.a);
+  return c;
+}
+
+//Divides a color through an value
+ColorRGBf operator/(const ColorRGBf& color, double d)
+{
+  if(d == 0.0) return color;
+  ColorRGBf c;
+  c.r = color.r / d;
+  c.g = color.g / d;
+  c.b = color.b / d;
+  c.a = color.a;
+  return c;
+}
+
+//Add two colors including their alpha channel
+ColorRGBf operator|(const ColorRGBf& color, const ColorRGBf& color2)
+{
+  ColorRGBf c;
+  c.r = color.r + color2.r;
+  c.g = color.g + color2.g;
+  c.b = color.b + color2.b;
+  c.a = color.a + color2.a;
+  return c;
+}
+
+//Multiplies a color with a double, including alpha channel
+ColorRGBf operator&(const ColorRGBf& color, double a)
+{
+  ColorRGBf c;
+  c.r = int(color.r * a);
+  c.g = int(color.g * a);
+  c.b = int(color.b * a);
+  c.a = int(color.a * a);
+  return c;
+}
+
+//Multiplies a color with a double, including alpha channel
+ColorRGBf operator&(double a, const ColorRGBf& color)
+{
+  ColorRGBf c;
+  c.r = int(color.r * a);
+  c.g = int(color.g * a);
+  c.b = int(color.b * a);
+  c.a = int(color.a * a);
+  return c;
+}
+
+//Are both colors equal?
+bool operator==(const ColorRGBf& color, const ColorRGBf& color2)
+{
+  return(color.r == color2.r && color.g == color2.g && color.b == color2.b && color.a == color2.a);
+}
+
+//Are both colors not equal?
+bool operator!=(const ColorRGBf& color, const ColorRGBf& color2)
+{
+  return(!(color.r == color2.r && color.g == color2.g && color.b == color2.b && color.a == color2.a));
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
 //COLOR CONVERSIONS/////////////////////////////////////////////////////////////
@@ -1071,6 +1184,410 @@ ColorRGBd YIQtoRGB(const ColorYIQd& colorYIQ)
   return result;
 }
 
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+
+//Converts an RGB color to HSL color
+ColorHSLf RGBtoHSL(const ColorRGBf& colorRGB)
+{
+  float r, g, b, h, s, l; //this function works with floats between 0 anf 1
+  r = colorRGB.r;
+  g = colorRGB.g;
+  b = colorRGB.b;
+
+  float maxColor = std::max(r, std::max(g, b));
+  float minColor = std::min(r, std::min(g, b));
+
+  if(minColor == maxColor) //R = G = B, so it's a shade of grey
+  {
+    h = 0.0; //it doesn't matter what value it has
+    s = 0.0;
+    l = r; //doesn't matter if you pick r, g, or b
+  }
+  else
+  {
+    l = (minColor + maxColor) / 2.0;
+    
+    float fiv = l < 0.5 ? (maxColor + minColor) : (2.0 - maxColor - minColor);
+    s = fiv == 0.0 ? 0.0 : (maxColor - minColor) / fiv;
+
+    if(r == maxColor) h = (g - b) / (maxColor - minColor);
+    else if(g == maxColor) h = 2.0 + (b - r) / (maxColor - minColor);
+    else h = 4.0 + (r - g) / (maxColor - minColor); //b == maxColor
+
+    h /= 6.0; //to bring it to a number between 0 and 1
+    if(h < 0.0) h += 1.0;
+  }
+  
+  ColorHSLf colorHSL;
+  colorHSL.h = h;
+  colorHSL.s = s;
+  colorHSL.l = l;
+  colorHSL.a = colorRGB.a;
+  return colorHSL;
+}
+
+//Converts an HSL color to RGB color
+ColorRGBf HSLtoRGB(const ColorHSLf& colorHSL)
+{
+  float r, g, b, h, s, l; //this function works with floats between 0 anf 1
+  float temp1, temp2, tempr, tempg, tempb;
+  h = colorHSL.h;
+  s = colorHSL.s;
+  l = colorHSL.l;
+
+  //If saturation is 0, the color is a shade of grey
+  if(s == 0.0) r = g = b = l;
+  //If saturation > 0, more complex calculations are needed
+  else
+  {
+    //set the temporary values
+    if(l < 0.5) temp2 = l * (1 + s);
+    else temp2 = (l + s) - (l * s);
+    temp1 = 2.0 * l - temp2;
+    tempr=h + 1.0 / 3.0;
+    if(tempr > 1.0) tempr--;
+    tempg=h;
+    tempb=h-1.0 / 3.0;
+    if(tempb < 0.0) tempb++;
+
+    //red
+    if(tempr < 1.0 / 6.0) r = temp1 + (temp2 - temp1) * 6.0 * tempr;
+    else if(tempr < 0.5) r = temp2;
+    else if(tempr < 2.0 / 3.0) r = temp1 + (temp2 - temp1) * ((2.0 / 3.0) - tempr) * 6.0;
+    else r = temp1;
+    
+     //green
+    if(tempg < 1.0 / 6.0) g = temp1 + (temp2 - temp1) * 6.0 * tempg;
+    else if(tempg < 0.5) g=temp2;
+    else if(tempg < 2.0 / 3.0) g = temp1 + (temp2 - temp1) * ((2.0 / 3.0) - tempg) * 6.0;
+    else g = temp1;
+
+    //blue
+    if(tempb < 1.0 / 6.0) b = temp1 + (temp2 - temp1) * 6.0 * tempb;
+    else if(tempb < 0.5) b = temp2;
+    else if(tempb < 2.0 / 3.0) b = temp1 + (temp2 - temp1) * ((2.0 / 3.0) - tempb) * 6.0;
+    else b = temp1;
+  }
+
+  ColorRGBf colorRGB;
+  colorRGB.r = r;
+  colorRGB.g = g;
+  colorRGB.b = b;
+  colorRGB.a = colorHSL.a;
+  return colorRGB;
+}
+
+//Converts an RGB color to HSV color
+ColorHSVf RGBtoHSV(const ColorRGBf& colorRGB)
+{
+  float r, g, b, h, s, v; //this function works with floats between 0 anf 1
+  r = colorRGB.r;
+  g = colorRGB.g;
+  b = colorRGB.b;
+
+  float maxColor = std::max(r, std::max(g, b));
+  float minColor = std::min(r, std::min(g, b));
+
+  v = maxColor;
+
+  if(maxColor == 0.0) //avoid division by zero when the color is black
+  {
+    s = 0.0;
+  }
+  else
+  {
+    s = (maxColor - minColor) / maxColor;
+  }
+  if(s == 0.0)
+  {
+    h = 0.0; //it doesn't matter what value it has
+  }
+  else
+  {
+    if(r == maxColor) h = (g - b) / (maxColor - minColor);
+    else if(g == maxColor) h = 2.0 + (b - r) / (maxColor - minColor);
+    else h = 4.0 + (r - g) / (maxColor - minColor); //b == maxColor
+
+    h /= 6.0; //to bring it to a number between 0 anf 1
+    if(h < 0.0) h++;
+  }
+
+  ColorHSVf colorHSV;
+  colorHSV.h = h;
+  colorHSV.s = s;
+  colorHSV.v = v;
+  colorHSV.a = colorRGB.a;
+  return colorHSV;
+}
+
+//Converts an HSV color to RGB color
+ColorRGBf HSVtoRGB(const ColorHSVf& colorHSV)
+{
+  float r, g, b, h, s, v; //this function works with floats between 0 anf 1
+  h = colorHSV.h;
+  s = colorHSV.s;
+  v = colorHSV.v;
+
+  //if saturation is 0, the color is a shade of grey
+  if(s == 0.0) r = g = b = v;
+  //if saturation > 0, more complex calculations are needed
+  else
+  {
+    float f, p, q, t;
+    int i;
+    h *= 6.0; //to bring hue to a number between 0 anf 6, better for the calculations
+    i = (int)(floor(h)); //e.g. 2.7 becomes 2 anf 3.01 becomes 3 or 4.9999 becomes 4
+    f = h - floor(h); //the fractional part of h
+
+    p = v * (1.0 - s);
+    q = v * (1.0 - (s * f));
+    t = v * (1.0 - (s * (1.0 - f)));
+
+    switch(i)
+    {
+      case 0: r=v; g=t; b=p; break;
+      case 1: r=q; g=v; b=p; break;
+      case 2: r=p; g=v; b=t; break;
+      case 3: r=p; g=q; b=v; break;
+      case 4: r=t; g=p; b=v; break;
+      default: r=v; g=p; b=q; break; //this be case 5, it's mathematically impossible for i to be something else
+    }
+  }
+  
+  ColorRGBf colorRGB;
+  colorRGB.r = r;
+  colorRGB.g = g;
+  colorRGB.b = b;
+  colorRGB.a = colorHSV.a;
+  return colorRGB;
+}
+
+ColorCMYf RGBtoCMY(const ColorRGBf& colorRGB)
+{
+  return ColorCMYf(1.0 - colorRGB.r, 1.0 - colorRGB.g, 1.0 - colorRGB.b, colorRGB.a);
+}
+
+ColorRGBf CMYtoRGB(const ColorCMYf& colorCMY)
+{
+  return ColorRGBf(1.0 - colorCMY.c, 1.0 - colorCMY.m, 1.0 - colorCMY.y, colorCMY.a);
+}
+
+ColorCMYKf RGBtoCMYK(const ColorRGBf& colorRGB)
+{
+  ColorCMYKf result(1.0 - colorRGB.r, 1.0 - colorRGB.g, 1.0 - colorRGB.b, 1.0, colorRGB.a);
+  if(result.c < result.k) result.k = result.c;
+  if(result.m < result.k) result.k = result.m;
+  if(result.y < result.k) result.k = result.y;
+  if(result.k == 1.0)
+  {
+    result.c = result.m = result.y = 0.0;
+  }
+  else
+  {
+    result.c = (result.c - result.k) / (1.0 - result.k);
+    result.m = (result.m - result.k) / (1.0 - result.k);
+    result.y = (result.y - result.k) / (1.0 - result.k);
+  }
+  result.a = colorRGB.a;
+  return result;
+}
+
+ColorRGBf CMYKtoRGB(const ColorCMYKf& colorCMYK)
+{
+  float k = colorCMYK.k;
+  ColorCMYf colorCMY(colorCMYK.c * (1.0 - k) + k, colorCMYK.m * (1.0 - k) + k, colorCMYK.y * (1.0 - k) + k, colorCMYK.a);
+  return ColorRGBf(1.0 - colorCMY.c, 1.0 - colorCMY.m, 1.0 - colorCMY.y, colorCMY.a);
+}
+
+ColorCIEXYZf RGBtoCIEXYZ(const ColorRGBf& colorRGB)
+{
+  ColorCIEXYZf result;
+  float factor = 1.0;//1.0/0.17697;
+  result.x = factor * (0.49 * colorRGB.r + 0.31 * colorRGB.g + 0.20 * colorRGB.b);
+  result.y = factor * (0.17697 * colorRGB.r + 0.81240 * colorRGB.g + 0.01063 * colorRGB.b);
+  result.z = factor * (0.00 * colorRGB.r + 0.01 * colorRGB.g + 0.99 * colorRGB.b);
+  result.alpha = colorRGB.a;
+  return result;
+}
+
+ColorRGBf CIEXYZtoRGB(const ColorCIEXYZf& colorCIEXYZ)
+{
+  ColorRGBf result;
+  float factor = 1.0;//0.17697;
+  result.r = factor * (2.3646138 * colorCIEXYZ.x - 0.8965406 * colorCIEXYZ.y - 0.4680733 * colorCIEXYZ.z);
+  result.g = factor * ((-0.5151662) * colorCIEXYZ.x + 1.4264081 * colorCIEXYZ.y + 0.0887581 * colorCIEXYZ.z);
+  result.b = factor * (0.0052037 * colorCIEXYZ.x - 0.0144082 * colorCIEXYZ.y + 1.0092045 * colorCIEXYZ.z);
+  result.a = colorCIEXYZ.alpha;
+  return result;
+}
+
+namespace
+{
+  float labf(float t)
+  {
+    static const float felta = 6.0 / 29.0;
+    static const float v = felta * felta * felta; //(6/29)^3
+    static const float f = (1.0 / 3.0) / (felta * felta);
+    if(t > v) return std::pow(t, 1.0f / 3.0f);
+    else return f * t + 4.0 / 29.0;
+  }
+}
+
+ColorCIELabf RGBtoCIELab(const ColorRGBf& colorRGB)
+{
+  ColorCIEXYZf colorXYZ = RGBtoCIEXYZ(colorRGB);
+  ColorCIELabf result;
+  
+  //CIE XYZ tristimulus values of white point
+  static const float xn = 1.0;
+  static const float yn = 1.0;
+  static const float zn = 1.0;
+
+  result.l = 1.16 * labf(colorXYZ.y / yn) - 0.16;
+  result.a = 5.0 * (labf(colorXYZ.x / xn) - labf(colorXYZ.y / yn));
+  result.b = 2.0 * (labf(colorXYZ.y / yn) - labf(colorXYZ.z / zn));
+  result.alpha = colorRGB.a;
+  return result;
+}
+
+ColorRGBf CIELabtoRGB(const ColorCIELabf& colorCIELab)
+{
+  
+  ColorCIEXYZf colorXYZ;
+  
+  static const float felta = 6.0 / 29.0;
+  float fy = (colorCIELab.l + 0.16) / 1.16;
+  float fx = fy + colorCIELab.a / 5.0;
+  float fz = fy - colorCIELab.b / 2.0;
+  
+  //CIE XYZ tristimulus values of white point
+  static const float xn = 1.0;
+  static const float yn = 1.0;
+  static const float zn = 1.0;
+  
+  float sixteens = 16.0 / 116.0;
+  float tfs = 3.0 * felta * felta; //"three delta square"
+  
+  colorXYZ.x = fx > felta ? xn * fx * fx * fx : (fx - sixteens) * tfs * xn;
+  colorXYZ.y = fy > felta ? yn * fy * fy * fy : (fy - sixteens) * tfs * yn;
+  colorXYZ.z = fz > felta ? zn * fz * fz * fz : (fz - sixteens) * tfs * zn;
+  
+  ColorRGBf result = CIEXYZtoRGB(colorXYZ);
+  result.a = colorCIELab.alpha;
+  return result;
+}
+
+ColorYPbPrf RGBtoYPbPr(const ColorRGBf& colorRGB)
+{
+  ColorYPbPrf result;
+  result.y = (colorRGB.r + colorRGB.g + colorRGB.b) / 3.0;
+  result.pb = colorRGB.b - result.y;
+  result.pr = colorRGB.r - result.y;
+  result.alpha = colorRGB.a;
+  return result;
+}
+
+ColorRGBf YPbPrtoRGB(const ColorYPbPrf& colorYPbPr)
+{
+  ColorRGBf result;
+  result.r = colorYPbPr.y + colorYPbPr.pr;
+  result.g = colorYPbPr.y - colorYPbPr.pr - colorYPbPr.pb;
+  result.b = colorYPbPr.y + colorYPbPr.pb;
+  result.a = colorYPbPr.alpha;
+  return result;
+}
+
+ColorYCbCrf RGBtoYCbCr(const ColorRGBf& colorRGB)
+{
+  ColorYCbCrf result;
+  result.y   =  0.299f  * colorRGB.r + 0.587f  * colorRGB.g + 0.114f  * colorRGB.b;
+  result.cb  = -0.1687f * colorRGB.r - 0.3313f * colorRGB.g + 0.5f    * colorRGB.b + 0.5f;
+  result.cr  =  0.5f    * colorRGB.r - 0.4187f * colorRGB.g - 0.0813f * colorRGB.b + 0.5f;
+  result.alpha = colorRGB.a;
+  return result;
+}
+
+ColorRGBf YCbCrtoRGB(const ColorYCbCrf& colorYCbCr)
+{
+  ColorRGBf result;
+  result.r = colorYCbCr.y                                   + 1.402   * (colorYCbCr.cr - 0.5f);
+  result.g = colorYCbCr.y - 0.34414 * (colorYCbCr.cb - 0.5) - 0.71414 * (colorYCbCr.cr - 0.5f);
+  result.b = colorYCbCr.y + 1.772   * (colorYCbCr.cb - 0.5);
+  result.a = colorYCbCr.alpha;
+  return result;
+}
+
+
+ColorYUVf RGBtoYUV(const ColorRGBf& colorRGB)
+{
+  ColorYUVf result;
+  float y   = 0.299f   * colorRGB.r + 0.587f   * colorRGB.g + 0.114f   * colorRGB.b;
+  float u  = -0.14713f * colorRGB.r - 0.28886f * colorRGB.g + 0.436f   * colorRGB.b;
+  float v  =  0.615f   * colorRGB.r - 0.51499f * colorRGB.g - 0.10001f * colorRGB.b;
+  result.y = y;
+  result.u = u / 0.436f;
+  result.v = v / 0.615f;
+  result.alpha = colorRGB.a;
+  return result;
+}
+
+ColorRGBf YUVtoRGB(const ColorYUVf& colorYUV)
+{
+  ColorRGBf result;
+  float y = colorYUV.y;
+  float u = colorYUV.u * 0.436f;
+  float v = colorYUV.v * 0.615f;
+  result.r = y               + 1.402f   * v;
+  result.g = y - 0.39465f * u - 0.58060f * v;
+  result.b = y + 2.03211f * u              ;
+  result.a = colorYUV.alpha;
+  return result;
+}
+
+ColorYIQf RGBtoYIQ(const ColorRGBf& colorRGB)
+{
+  ColorYIQf result;
+  float y   = 0.299f      * colorRGB.r + 0.587f    * colorRGB.g + 0.114f    * colorRGB.b;
+  float i  = -0.595716f   * colorRGB.r - 0.274453f * colorRGB.g - 0.321263f * colorRGB.b;
+  float q  =  0.211456f   * colorRGB.r - 0.522591f * colorRGB.g + 0.311135f * colorRGB.b;
+  result.y = y;
+  result.i = i / 0.5957f;
+  result.q = q / 0.5226f;
+  result.alpha = colorRGB.a;
+  return result;
+}
+
+ColorRGBf YIQtoRGB(const ColorYIQf& colorYIQ)
+{
+  ColorRGBf result;
+  float y = colorYIQ.y;
+  float i = colorYIQ.i * 0.5957f;
+  float q = colorYIQ.q * 0.5226f;
+  result.r = y + 0.9563f * i + 0.6210f * q;
+  result.g = y - 0.2721f * i - 0.6474f * q;
+  result.b = y - 1.1070f * i + 1.7046f * q;
+  result.a = colorYIQ.alpha;
+  return result;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 ColorRGB RGBdtoRGB(const ColorRGBd& color)
 {
   return ColorRGB((int)(color.r*255 + 0.5),(int)(color.g*255 + 0.5),(int)(color.b*255 + 0.5),(int)(color.a*255 + 0.5));
@@ -1079,6 +1596,26 @@ ColorRGB RGBdtoRGB(const ColorRGBd& color)
 ColorRGBd RGBtoRGBd(const ColorRGB& color)
 {
   return ColorRGBd(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0);
+}
+
+ColorRGB RGBftoRGB(const ColorRGBf& color)
+{
+  return ColorRGB((int)(color.r*255 + 0.5f),(int)(color.g*255 + 0.5f),(int)(color.b*255 + 0.5f),(int)(color.a*255 + 0.5f));
+}
+
+ColorRGBf RGBtoRGBf(const ColorRGB& color)
+{
+  return ColorRGBf(color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f);
+}
+
+ColorRGBd RGBftoRGBd(const ColorRGBf& color)
+{
+  return ColorRGBd(color.r, color.g, color.b, color.a);
+}
+
+ColorRGBf RGBdtoRGBf(const ColorRGBd& color)
+{
+  return ColorRGBf(color.r, color.g, color.b, color.a);
 }
 
 

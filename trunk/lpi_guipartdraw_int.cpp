@@ -520,6 +520,10 @@ void GUIPartDrawerInternal::initBuiltInGuiTextures(const ITextureFactory& factor
   builtInGuiSet.mouseDownColor = RGB_Grey;
   
   //font
+  builtInGuiSet.defaultFont.color = RGB_Black;
+  builtInGuiSet.messageFont.color = RGB_Black;
+  builtInGuiSet.menuFont[0].color = RGB_Black;
+  builtInGuiSet.menuFont[1].color = RGB_White;
   builtInGuiSet.panelButtonFont[0].color = RGB_Black;
   builtInGuiSet.panelButtonFont[1].color = RGB_Black;
   builtInGuiSet.panelButtonFont[2].color = RGB_Black;
@@ -542,6 +546,17 @@ void GUIPartDrawerInternal::initBuiltInGuiTextures(const ITextureFactory& factor
   builtInGuiSet.verMenuPanel = builtInGuiSet.buttonPanel;
   builtInGuiSet.horMenuSeparator = builtInGuiSet.sliderVRule;
   builtInGuiSet.verMenuSeparator = builtInGuiSet.sliderHRule;
+}
+
+void GUIPartDrawerInternal::setDefaultTypeFace(const std::string& typeface)
+{
+  builtInGuiSet.panelButtonFont[0].typeface = typeface;
+  builtInGuiSet.panelButtonFont[1].typeface = typeface;
+  builtInGuiSet.panelButtonFont[2].typeface = typeface;
+  builtInGuiSet.textButtonFont[0].typeface = typeface;
+  builtInGuiSet.textButtonFont[1].typeface = typeface;
+  builtInGuiSet.textButtonFont[2].typeface = typeface;
+  builtInGuiSet.windowTopFont.typeface = typeface;
 }
 
 void GUIPartDrawerInternal::initBuiltInIcons64(const std::string& png_base64)
@@ -867,13 +882,13 @@ void GUIPartDrawerInternal::drawGUIPart(GUIPart part, int x0, int y0, int x1, in
     }
     case GP_CHECKBOX_OFF:
     {
-      if(x1 - x0 >= 16) drawer->drawTexture(guiset->checkBox[0], x0, y0);
+      if(y1 - y0 >= 16) drawer->drawTexture(guiset->checkBox[0], x0, y0);
       else drawer->drawTexture(guiset->smallCheckBox[0], x0, y0);
       break;
     }
     case GP_CHECKBOX_ON:
     {
-      if(x1 - x0 >= 16) drawer->drawTexture(guiset->checkBox[1], x0, y0);
+      if(y1 - y0 >= 16) drawer->drawTexture(guiset->checkBox[1], x0, y0);
       else drawer->drawTexture(guiset->smallCheckBox[1], x0, y0);
       break;
     }
@@ -1084,10 +1099,60 @@ void GUIPartDrawerInternal::drawGUIPartText(GUIPart part, const std::string& tex
       textdrawer->drawText(text, x0, y0, guiset->tooltipFont);
       break;
     }
+    case GPT_DEFAULT_TEXT00:
+    {
+      textdrawer->drawText(text, x0, y0, guiset->defaultFont, TextAlign(HA_LEFT, VA_TOP));
+      break;
+    }
+    case GPT_DEFAULT_TEXT01:
+    {
+      textdrawer->drawText(text, x0, (y0+y1)/2, guiset->defaultFont, TextAlign(HA_LEFT, VA_CENTER));
+      break;
+    }
+    case GPT_DEFAULT_TEXT02:
+    {
+      textdrawer->drawText(text, x0, y1, guiset->defaultFont, TextAlign(HA_LEFT, VA_BOTTOM));
+      break;
+    }
+    case GPT_DEFAULT_TEXT10:
+    {
+      textdrawer->drawText(text, (x0+x1)/2, y0, guiset->defaultFont, TextAlign(HA_CENTER, VA_TOP));
+      break;
+    }
+    case GPT_DEFAULT_TEXT11:
+    {
+      textdrawer->drawText(text, (x0+x1)/2, (y0+y1)/2, guiset->defaultFont, TextAlign(HA_CENTER, VA_CENTER));
+      break;
+    }
+    case GPT_DEFAULT_TEXT12:
+    {
+      textdrawer->drawText(text, (x0+x1)/2, y1, guiset->defaultFont, TextAlign(HA_CENTER, VA_BOTTOM));
+      break;
+    }
+    case GPT_DEFAULT_TEXT20:
+    {
+      textdrawer->drawText(text, x1, y0, guiset->defaultFont, TextAlign(HA_RIGHT, VA_TOP));
+      break;
+    }
+    case GPT_DEFAULT_TEXT21:
+    {
+      textdrawer->drawText(text, x1, (y0+y1)/2, guiset->defaultFont, TextAlign(HA_RIGHT, VA_CENTER));
+      break;
+    }
+    case GPT_DEFAULT_TEXT22:
+    {
+      textdrawer->drawText(text, x1, y1, guiset->defaultFont, TextAlign(HA_RIGHT, VA_BOTTOM));
+      break;
+    }
+    case GPT_MESSAGE_TEXT:
+    {
+      textdrawer->drawText(text, (x0+x1)/2, (y0+y1)/2, guiset->messageFont, TextAlign(HA_CENTER, VA_CENTER));
+      break;
+    }
     case GPT_HMENU_TEXT:
     case GPT_HMENU_SUBMENUTEXT:
     {
-      textdrawer->drawText(text, (x0+x1)/2, (y0+y1)/2, FONT_Black, TextAlign(HA_CENTER, VA_CENTER));
+      textdrawer->drawText(text, (x0+x1)/2, (y0+y1)/2, guiset->menuFont[0], TextAlign(HA_CENTER, VA_CENTER));
       break;
     }
     case GPT_VMENU_TEXT:
@@ -1095,9 +1160,9 @@ void GUIPartDrawerInternal::drawGUIPartText(GUIPart part, const std::string& tex
       if(mod.mouseover)
       {
         drawer->drawRectangle(x0+2, y0+2, x1-2, y1-2, ColorRGB(0, 0, 128), true);
-        textdrawer->drawText(text, x0+4, (y0+y1)/2, FONT_White, TextAlign(HA_LEFT, VA_CENTER));
+        textdrawer->drawText(text, x0+4, (y0+y1)/2, guiset->menuFont[1], TextAlign(HA_LEFT, VA_CENTER));
       }
-      else textdrawer->drawText(text, x0+4, (y0+y1)/2, FONT_Black, TextAlign(HA_LEFT, VA_CENTER));
+      else textdrawer->drawText(text, x0+4, (y0+y1)/2, guiset->menuFont[0], TextAlign(HA_LEFT, VA_CENTER));
       break;
     }
     case GPT_VMENU_SUBMENUTEXT:
@@ -1106,12 +1171,12 @@ void GUIPartDrawerInternal::drawGUIPartText(GUIPart part, const std::string& tex
       if(mod.mouseover)
       {
         drawer->drawRectangle(x0+2, y0+2, x1-2, y1-2, ColorRGB(0, 0, 128), true);
-        textdrawer->drawText(text, x0+4, (y0+y1)/2, FONT_White, TextAlign(HA_LEFT, VA_CENTER));
+        textdrawer->drawText(text, x0+4, (y0+y1)/2, guiset->menuFont[1], TextAlign(HA_LEFT, VA_CENTER));
         drawer->drawTexture(t, x1 - t->getU(), ((y0 + y1) / 2) - t->getV() / 2);
       }
       else
       {
-        textdrawer->drawText(text, x0+4, (y0+y1)/2, FONT_Black, TextAlign(HA_LEFT, VA_CENTER));
+        textdrawer->drawText(text, x0+4, (y0+y1)/2, guiset->menuFont[0], TextAlign(HA_LEFT, VA_CENTER));
         drawer->drawTexture(t, x1 - t->getU(), ((y0 + y1) / 2) - t->getV() / 2, RGB_Black);
       }
       
