@@ -1540,7 +1540,7 @@ void Button::makeText
 (
   int x, int y, //basic properties
   const std::string& text, //text
-  ITextDrawer& drawer
+  const ITextDrawer& drawer
 )
 {
   this->x0 = x;
@@ -1644,7 +1644,7 @@ void Button::drawImpl(IGUIDrawer& drawer) const
 /*This function automaticly changes sizex and sizey of the button so that the
 size of the button matches the size of the text, so that it detects the mouse
 as being in the button when the mouse is over the text*/
-void Button::autoTextSize(ITextDrawer* drawer, int extrasize)
+void Button::autoTextSize(const ITextDrawer* drawer, int extrasize)
 {
   int w, h;
   drawer->calcTextRectSize(w, h, text, font[0]);
@@ -2275,6 +2275,8 @@ How to use:
 Checkbox::Checkbox()
 : useCustomImages(false)
 , useCustomImages2(false)
+, partOn(GP_CHECKBOX_ON)
+, partOff(GP_CHECKBOX_OFF)
 {
   //bad old code, must be fixed!
   this->enabled = 0;
@@ -2450,8 +2452,8 @@ void Checkbox::drawImpl(IGUIDrawer& drawer) const
   }
   else
   {
-    if(checked) drawer.drawGUIPart(GP_CHECKBOX_ON, x0, y0, x1, y1);
-    else drawer.drawGUIPart(GP_CHECKBOX_OFF, x0, y0, x1, y1);
+    if(checked) drawer.drawGUIPart(partOn, x0, y0, x1, y1);
+    else drawer.drawGUIPart(partOff, x0, y0, x1, y1);
   }
 
   if(useCustomImages2)
@@ -2476,6 +2478,12 @@ void Checkbox::drawImpl(IGUIDrawer& drawer) const
   drawLabel(drawer, this);
 }
 
+void Checkbox::setCustomGUIParts(GUIPart part_on, GUIPart part_off)
+{
+  partOn = part_on;
+  partOff = part_off;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //GUIBULLETLIST/////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -2495,6 +2503,7 @@ BulletList::BulletList()
   this->lastChecked = -1;
   
   this->prototype.make(0, 0, 0, 0);
+  this->prototype.setCustomGUIParts(GP_BULLET_ON, GP_BULLET_OFF);
 }
 
 BulletList::~BulletList()
@@ -2521,6 +2530,7 @@ void BulletList::make(int x, int y, unsigned long amount, int xDiff, int yDiff)
   {
     bullet.push_back(new Checkbox);
     bullet.back()->make(0,0,0,0);
+    bullet.back()->setCustomGUIParts(GP_BULLET_ON, GP_BULLET_OFF);
     bullet.back()->moveTo(x + xDiff * i, y + yDiff * i);
     addSubElement(bullet.back());
   }

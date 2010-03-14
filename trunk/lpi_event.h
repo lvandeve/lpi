@@ -93,7 +93,7 @@ having released the key resets the warmup
 */
 int unicodeKey(double time, double warmupTime = 0.5, double repTime = 0.025, KeyState* state = 0);
 
-void sleep();
+void sleep(bool wake_up_on_mouse = false, bool quit_on_quit = false);
 bool frame(bool quit_if_esc, bool delay); //returns false when done, updates the event, should be called exactly once per frame
 void end();
 

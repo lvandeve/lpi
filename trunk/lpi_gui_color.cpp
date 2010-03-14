@@ -564,7 +564,7 @@ double ChannelSliderEx::getValue() const
 
 void ChannelSliderEx::setValue(double value)
 {
-//std::cout<<value<<" "<<valtostr((int)(0.49 + smallest + value * (largest - smallest)))<<std::endl;
+  if(input.isControlActive()) return;
   input.setText(valtostr((int)(0.49 + smallest + value * (largest - smallest)))); //the 0.49 is for rounding
   slider->setValue(value);
 }

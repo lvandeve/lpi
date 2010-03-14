@@ -182,7 +182,7 @@ void ADrawer2D::drawTextureCentered(const ITexture* texture, int x, int y, const
 
 void ADrawer2D::drawTextureSizedCentered(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod)
 {
-  drawTextureSized(texture, x, y, x - sizex / 2, y - sizey / 2, colorMod);
+  drawTextureSized(texture, x - sizex / 2, y - sizey / 2, sizex, sizey, colorMod);
 }
 
 //void ADrawer2D::drawTextureTransformedCentered(const ITexture* texture, int x, int y, const double* matrix, const ColorRGB& colorMod)

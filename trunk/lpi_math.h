@@ -30,7 +30,7 @@ namespace lpi
 
 void sort(std::vector<int>& order, std::vector<double>& dist);
 
-double getRandom();
+double getRandom(); //returns a random value in the range [0.0-1.0[, excluding the value 1.0 itself.
 int getRandom(int first, int last); //get random number in the range of integers first-last (including last)
 double getRandom(double first, double last); //get random number in the range of doubles first-last
 

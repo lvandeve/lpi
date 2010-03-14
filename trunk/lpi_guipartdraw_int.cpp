@@ -518,6 +518,7 @@ void GUIPartDrawerInternal::initBuiltInGuiTextures(const ITextureFactory& factor
   builtInGuiSet.mainColor = RGB_White;
   builtInGuiSet.mouseOverColor = RGB_Brightred;
   builtInGuiSet.mouseDownColor = RGB_Grey;
+  builtInGuiSet.windowTopColor = RGB_Lightblue;
   
   //font
   builtInGuiSet.defaultFont.color = RGB_Black;
@@ -817,7 +818,7 @@ void GUIPartDrawerInternal::drawGUIPart(GUIPart part, int x0, int y0, int x1, in
     }
     case GP_WINDOW_TOP:
     {
-      guiset->windowTopRule->draw(*drawer, x0, y0, x1 - x0, RGB_Lightblue);
+      guiset->windowTopRule->draw(*drawer, x0, y0, x1 - x0, guiset->windowTopColor);
       break;
     }
     case GP_WINDOW_CLOSE:
@@ -890,6 +891,16 @@ void GUIPartDrawerInternal::drawGUIPart(GUIPart part, int x0, int y0, int x1, in
     {
       if(y1 - y0 >= 16) drawer->drawTexture(guiset->checkBox[1], x0, y0);
       else drawer->drawTexture(guiset->smallCheckBox[1], x0, y0);
+      break;
+    }
+    case GP_BULLET_OFF:
+    {
+      drawer->drawTexture(guiset->bullet[0], x0, y0);
+      break;
+    }
+    case GP_BULLET_ON:
+    {
+      drawer->drawTexture(guiset->bullet[1], x0, y0);
       break;
     }
     case GP_SLIDER_HBUTTON:

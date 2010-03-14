@@ -173,6 +173,8 @@ struct GuiSet //GuiSet is a bit of a LEGACY lpi concept. Currently it's just use
   ColorRGB mouseOverColor; //this isn't for panel buttons, but for image buttons like the arrows of a scrollbar, ...
   ColorRGB mouseDownColor; //this isn't for panel buttons, but for image buttons like the arrows of a scrollbar, ...
   
+  ColorRGB windowTopColor;
+  
   Font defaultFont; //font for anything else that isn't in the list below
   Font messageFont; //font for in message boxes
   Font menuFont[2]; //font for (sub)menus
@@ -212,9 +214,6 @@ class GUIPartDrawerInternal : public IGUIPartDrawer
     GuiSet builtInGuiSet;
     
     void initBuiltInGui(const ITextureFactory& factory);
-    void initBuiltInGuiTextures64(const ITextureFactory& factory, const std::string& png_base64);
-    void initBuiltInGuiTextures(const ITextureFactory& factory, const std::vector<unsigned char>& png);
-    void initBuiltInGuiTextures(const ITextureFactory& factory, const std::string& png_file_name);
     void initBuiltInIcons();
     void initBuiltInIcons64(const std::string& png_base64);
     void initBuiltInIcons(const std::vector<unsigned char>& png);
@@ -236,7 +235,10 @@ class GUIPartDrawerInternal : public IGUIPartDrawer
     void setDefaultTypeFace(const std::string& typeface);
     
     GuiSet& getGUISet() { return *guiset; }
-
+    
+    void initBuiltInGuiTextures64(const ITextureFactory& factory, const std::string& png_base64);
+    void initBuiltInGuiTextures(const ITextureFactory& factory, const std::vector<unsigned char>& png);
+    void initBuiltInGuiTextures(const ITextureFactory& factory, const std::string& png_file_name);
 };
 
 

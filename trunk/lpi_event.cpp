@@ -345,7 +345,7 @@ int unicodeKey(double time, double warmupTime, double repTime, KeyState* state)
 
 
 //Waits until you press a key. First the key has to be loose, this means, if you put two sleep functions in a row, the second will only work after you first released the key.
-void sleep()
+void sleep(bool wake_up_on_mouse, bool quit_on_quit)
 {
   int done = 0;
   SDL_Event event = {0};
@@ -353,8 +353,9 @@ void sleep()
   {
     while(SDL_PollEvent(&event))
     {
-      if(event.type == SDL_QUIT) end();
+      if(event.type == SDL_QUIT) { if(quit_on_quit) end(); else done = 1; }
       if(event.type == SDL_KEYDOWN) done = 1;
+      if(event.type == SDL_MOUSEBUTTONDOWN && wake_up_on_mouse) done = 1;
     }
     SDL_Delay(5); //so it consumes less processing power
   }

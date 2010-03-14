@@ -1,7 +1,7 @@
 /*
-LodePNG version 20080927
+LodePNG version 20100314
 
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2010 Lode Vandevenne
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any damages
@@ -1611,6 +1611,7 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 14 mar 2010: fixed bug where more memory than needed was allocated for char buffers.
 *) 02 sep 2008: fixed bug where it could create empty tree that linux apps could
     read by ignoring the problem but windows apps couldn't.
 *) 06 jun 2008: added more error checks for out of memory cases.

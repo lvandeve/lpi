@@ -411,6 +411,9 @@ ADrawer2DBuffer::ADrawer2DBuffer()
 : buffer(0)
 , w(0)
 , h(0)
+, texture_alpha_as_opacity(true)
+, color_alpha_as_opacity(true)
+, extra_opacity(1.0)
 {
   TextureFactory<TextureBuffer> factory;
 }
@@ -418,6 +421,23 @@ ADrawer2DBuffer::ADrawer2DBuffer()
 ADrawer2DBuffer::~ADrawer2DBuffer()
 {
 }
+
+void ADrawer2DBuffer::setTextureAlphaAsOpacity(bool set)
+{
+  texture_alpha_as_opacity = set;
+}
+
+void ADrawer2DBuffer::setColorAlphaAsOpacity(bool set)
+{
+  color_alpha_as_opacity = set;
+}
+
+void ADrawer2DBuffer::setExtraOpacity(double opacity)
+{
+  extra_opacity = opacity;
+}
+
+
 
 void ADrawer2DBuffer::pushScissor(int x0, int y0, int x1, int y1)
 {
@@ -696,14 +716,98 @@ ITexture* ADrawer2DBuffer::createTexture(ITexture* texture) const
   return t;
 }
 
+/*
+ob: output buffer (RGBA)
+oi: index in output buffer
+ib: input buffer (RGBA), this buffer is being blended over ob
+ii: index in input buffer
+colorMod: multiplied with output buffer
+texture_alpha_as_opacity: is the alpha channel of the input texture treated as opacity?
+extra_opacity: extra weighed average
+*/
+static void blend(unsigned char* ob, size_t oi, const unsigned char* ib, size_t ii
+               , const ColorRGB& colorMod
+               , bool texture_alpha_as_opacity, bool color_alpha_as_opacity, double extra_opacity)
+{
+  int r, g, b, a;
+
+  if(color_alpha_as_opacity)
+  {
+    if(texture_alpha_as_opacity)
+    {
+      int ri = (ib[ii + 0] * colorMod.r) / 255;
+      int gi = (ib[ii + 1] * colorMod.g) / 255;
+      int bi = (ib[ii + 2] * colorMod.b) / 255;
+      int ai = (ib[ii + 3] * colorMod.a) / 255;
+
+      int ro = ob[oi + 0];
+      int go = ob[oi + 1];
+      int bo = ob[oi + 2];
+      int ao = ob[oi + 3];
+
+      int o = 255 - ((255 - ai) * ao) / 255;
+      if(ai < ao) o = std::min(ai, o); //avoid color of fully transparent foreground leaking through
+      r = (ri * o + ro * (255 - o)) / 255;
+      g = (gi * o + go * (255 - o)) / 255;
+      b = (bi * o + bo * (255 - o)) / 255;
+      a = ai + ((255 - ai) * ao) / 255;
+    }
+    else
+    {
+      //TODO
+    }
+  }
+  else
+  {
+    if(texture_alpha_as_opacity)
+    {
+      int ri = (ib[ii + 0] * colorMod.r) / 255;
+      int gi = (ib[ii + 1] * colorMod.g) / 255;
+      int bi = (ib[ii + 2] * colorMod.b) / 255;
+      int ai = ib[ii + 3];
+      
+      int ro = ob[oi + 0];
+      int go = ob[oi + 1];
+      int bo = ob[oi + 2];
+      int ao = ob[oi + 3];
+
+      int o = 255 - ((255 - ai) * ao) / 255;
+      if(ai < ao) o = std::min(ai, o); //avoid color of fully transparent foreground leaking through
+      o = (o * ai) / 255;
+      r = (ri * o + ro * (255 - o)) / 255;
+      g = (gi * o + go * (255 - o)) / 255;
+      b = (bi * o + bo * (255 - o)) / 255;
+      //alpha channel: the intention is: if ia is 0, the alpha channel must become oa. If ia is 255, the alpha channel must become colorMod.a. For values in between: not sure yet, TODO!
+      a = (colorMod.a * ai + ao * (255 - ai)) / 255;
+    }
+    else
+    {
+      r = ib[ii + 0];
+      g = ib[ii + 1];
+      b = ib[ii + 2];
+      a = ib[ii + 3];
+    }
+  }
+  
+  if(extra_opacity != 1.0)
+  {
+    int o = (int)(255 * extra_opacity);
+    ob[oi + 0] = (r * o + ob[oi + 0] * (255 - o)) / 255;
+    ob[oi + 1] = (g * o + ob[oi + 1] * (255 - o)) / 255;
+    ob[oi + 2] = (b * o + ob[oi + 2] * (255 - o)) / 255;
+    ob[oi + 3] = (a * o + ob[oi + 3] * (255 - o)) / 255;
+  }
+  else
+  {
+    ob[oi + 0] = r;
+    ob[oi + 1] = g;
+    ob[oi + 2] = b;
+    ob[oi + 3] = a;
+  }
+}
     
 void ADrawer2DBuffer::drawTexture(const ITexture* texture, int x, int y, const ColorRGB& colorMod)
 {
-  const unsigned short cr = colorMod.r;
-  const unsigned short cg = colorMod.g;
-  const unsigned short cb = colorMod.b;
-  const unsigned short ca = colorMod.a;
-  
   const unsigned char* tb = texture->getBuffer();
   size_t tu = texture->getU();
   size_t tv = texture->getV();
@@ -723,22 +827,8 @@ void ADrawer2DBuffer::drawTexture(const ITexture* texture, int x, int y, const C
   {
     int bufferpos = (y + ty) * w * 4 + (x + tx) * 4;
     int tbufferpos = ty * tu2 * 4 + tx * 4;
-
-    const unsigned short ccr = (tb[tbufferpos + 0] * cr) / 256;
-    const unsigned short ccg = (tb[tbufferpos + 1] * cg) / 256;
-    const unsigned short ccb = (tb[tbufferpos + 2] * cb) / 256;
-    const unsigned short cca = (tb[tbufferpos + 3] * ca) / 256;
-    const unsigned short cca1 = 256 - cca;
     
-    const unsigned short orr = buffer[bufferpos + 0];
-    const unsigned short org = buffer[bufferpos + 1];
-    const unsigned short orb = buffer[bufferpos + 2];
-    const unsigned short ora = buffer[bufferpos + 3];
-      
-    buffer[bufferpos + 0] = ((orr * cca1) + (ccr * cca)) / 256;
-    buffer[bufferpos + 1] = ((org * cca1) + (ccg * cca)) / 256;
-    buffer[bufferpos + 2] = ((orb * cca1) + (ccb * cca)) / 256;
-    buffer[bufferpos + 3] = ora > cca ? ora : cca; //not really correct but good enough for now.
+    blend(buffer, bufferpos, tb, tbufferpos, colorMod, texture_alpha_as_opacity, color_alpha_as_opacity, extra_opacity);
   }
 }
 
@@ -751,11 +841,7 @@ void ADrawer2DBuffer::drawTextureSized(const ITexture* texture, int x, int y, si
 void ADrawer2DBuffer::drawTextureRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, const ColorRGB& colorMod)
 {
   lpi::clipRect(x0, y0, x1, y1, x0, y0, x1, y1, clip.x0, clip.y0, clip.x1, clip.y1);
-  const unsigned short cr = colorMod.r;
-  const unsigned short cg = colorMod.g;
-  const unsigned short cb = colorMod.b;
-  const unsigned short ca = colorMod.a;
-  
+
   const unsigned char* tb = texture->getBuffer();
   
     
@@ -766,21 +852,8 @@ void ADrawer2DBuffer::drawTextureRepeated(const ITexture* texture, int x0, int y
       int bufferpos = 4 * (y * w + x);
       int tbufferpos = 4 * (ty * texture->getU2() + tx);
       
-      const unsigned short ccr = (tb[tbufferpos + 0] * cr) / 256;
-      const unsigned short ccg = (tb[tbufferpos + 1] * cg) / 256;
-      const unsigned short ccb = (tb[tbufferpos + 2] * cb) / 256;
-      const unsigned short cca = (tb[tbufferpos + 3] * ca) / 256;
-      const unsigned short cca1 = 256 - cca;
-      
-      const unsigned short orr = buffer[bufferpos + 0];
-      const unsigned short org = buffer[bufferpos + 1];
-      const unsigned short orb = buffer[bufferpos + 2];
-      const unsigned short ora = buffer[bufferpos + 3];
-      
-      buffer[bufferpos + 0] = ((orr * cca1) + (ccr * cca)) / 256;
-      buffer[bufferpos + 1] = ((org * cca1) + (ccg * cca)) / 256;
-      buffer[bufferpos + 2] = ((orb * cca1) + (ccb * cca)) / 256;
-      buffer[bufferpos + 3] = ora > cca ? ora : cca; //not really correct but good enough for now.
+
+      blend(buffer, bufferpos, tb, tbufferpos, colorMod, texture_alpha_as_opacity, color_alpha_as_opacity, extra_opacity);
 
       tx++;
       if(tx >= (int)texture->getU()) tx = 0;
@@ -795,10 +868,6 @@ void ADrawer2DBuffer::drawTextureSizedRepeated(const ITexture* texture, int x0, 
   (void)sizex; (void)sizey; //TODO: use the size!!!
   
   lpi::clipRect(x0, y0, x1, y1, x0, y0, x1, y1, clip.x0, clip.y0, clip.x1, clip.y1);
-  const unsigned short cr = colorMod.r;
-  const unsigned short cg = colorMod.g;
-  const unsigned short cb = colorMod.b;
-  const unsigned short ca = colorMod.a;
 
   const unsigned char* tb = texture->getBuffer();
 
@@ -809,22 +878,9 @@ void ADrawer2DBuffer::drawTextureSizedRepeated(const ITexture* texture, int x0, 
     {
       int bufferpos = 4 * (y * w + x);
       int tbufferpos = 4 * (ty * texture->getU2() + tx);
-
-      const unsigned short ccr = (tb[tbufferpos + 0] * cr) / 256;
-      const unsigned short ccg = (tb[tbufferpos + 1] * cg) / 256;
-      const unsigned short ccb = (tb[tbufferpos + 2] * cb) / 256;
-      const unsigned short cca = (tb[tbufferpos + 3] * ca) / 256;
-      const unsigned short cca1 = 256 - cca;
-
-      const unsigned short orr = buffer[bufferpos + 0];
-      const unsigned short org = buffer[bufferpos + 1];
-      const unsigned short orb = buffer[bufferpos + 2];
-      const unsigned short ora = buffer[bufferpos + 3];
-
-      buffer[bufferpos + 0] = ((orr * cca1) + (ccr * cca)) / 256;
-      buffer[bufferpos + 1] = ((org * cca1) + (ccg * cca)) / 256;
-      buffer[bufferpos + 2] = ((orb * cca1) + (ccb * cca)) / 256;
-      buffer[bufferpos + 3] = ora > cca ? ora : cca; //not really correct but good enough for now.
+      
+      blend(buffer, bufferpos, tb, tbufferpos, colorMod, texture_alpha_as_opacity, color_alpha_as_opacity, extra_opacity);
+  
 
       tx++;
       if(tx >= (int)texture->getU()) tx = 0;

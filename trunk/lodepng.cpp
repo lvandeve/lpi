@@ -1,7 +1,7 @@
 /*
-LodePNG version 20080927
+LodePNG version 20100314
 
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2010 Lode Vandevenne
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any damages
@@ -30,7 +30,7 @@ You are free to name this file lodepng.cpp or lodepng.c depending on your usage.
 
 #include "lodepng.h"
 
-#define VERSION_STRING "20080927"
+#define VERSION_STRING "20100314"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Tools For C                                                            / */
@@ -209,9 +209,9 @@ static void ucvector_cleanup(void* p)
 
 static unsigned ucvector_resize(ucvector* p, size_t size) /*returns 1 if success, 0 if failure ==> nothing done*/
 {
-  if(size * sizeof(unsigned) > p->allocsize)
+  if(size * sizeof(unsigned char) > p->allocsize)
   {
-    size_t newsize = size * sizeof(unsigned) * 2;
+    size_t newsize = size * sizeof(unsigned char) * 2;
     void* data = realloc(p->data, newsize);
     if(data)
     {

@@ -44,11 +44,14 @@ GUIDrawerGL::GUIDrawerGL(ScreenGL* screen)
 {
 }
 
-
-
 IInput& GUIDrawerGL::getInput()
 {
   return input;
+}
+
+void GUIDrawerGL::loadGUITextures(const std::vector<unsigned char>& png)
+{
+  guidrawer.initBuiltInGuiTextures(TextureFactory<TextureGL>(), png);
 }
 
 } //namespace gui
