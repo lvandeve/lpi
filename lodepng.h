@@ -1704,6 +1704,8 @@ My email address is (puzzle the account and domain together with an @ symbol):
 Domain: gmail dot com.
 Account: lode dot vandevenne.
 
+Thanks to everyone who reported bugs and suggestions!
 
-Copyright (c) 2005-2008 Lode Vandevenne
+
+Copyright (c) 2005-2010 Lode Vandevenne
 */
