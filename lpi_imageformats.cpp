@@ -792,7 +792,8 @@ bool decodeImageFile(std::string& error, std::vector<unsigned char>& image, int&
     w = bitmap.GetWidth();
     h = bitmap.GetHeight();
     image.resize(w * h * 4);
-    bitmap.GetBits(&image[0], datasize, 32);
+    unsigned int datasizeuint = datasize;
+    bitmap.GetBits(&image[0], datasizeuint, 32);
     if(bitmap.isUpsideDown())
     {
       for(int y = 0; y < h / 2; y++)

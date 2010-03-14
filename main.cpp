@@ -70,6 +70,7 @@ gprof > gprof.txt
 #include "lodepng.h"
 #include "lpi_filebrowse.h"
 #include "lpi_gui_file.h"
+#include "lpi_text_drawer_int.h"
 
 #include <vector>
 #include <iostream>
@@ -147,8 +148,7 @@ struct SpawnTexts
 
 SpawnTexts spawns;
 
-lpi::ScreenGL screen(width, height, false, false, false, "lpi GUI demo");
-lpi::AudioSDL audio;
+lpi::ScreenGL screen(width, height, false, false, true, "lpi GUI demo");
 lpi::gui::GUIDrawerGL guidrawer(&screen);
 
 lpi::FileBrowse filebrowser;
@@ -409,6 +409,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   std::vector<double> sound(30000);
   for(size_t i = 0; i < 30000; i++) sound[i] = 0.1 * std::sin(i / (30.0 * (40000.0-i)/30000.0));
   
+  lpi::AudioSDL audio;
   audio.audioOpen(44100, 2048);
 
   tabs.setElementOver(true);
@@ -498,6 +499,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     if(tb.clicked(input))
     {
       lpi::base64StringToBinaryFile("builtInGuiTextures.png", lpi::gui::getBuiltInGuiTextureData());
+      lpi::base64StringToBinaryFile("builtIn8x8FontTextures.png", lpi::getBuiltIn8x8FontTexture());
     }
 
     if(tb2.clicked(input))

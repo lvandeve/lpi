@@ -363,7 +363,7 @@ class Button : public Element
     int textOffsetx;
     int textOffsety;
     Font font[3];
-    void autoTextSize(ITextDrawer* drawer, int extrasize = 0); //will automaticly adjust it's size to fit text size
+    void autoTextSize(const ITextDrawer* drawer, int extrasize = 0); //will automaticly adjust it's size to fit text size
     
     ////part "panel"
     bool enablePanel;
@@ -394,7 +394,7 @@ class Button : public Element
     //text only constructor (without offset)
     void makeText(int x, int y, //basic properties
                   const std::string& text, //text
-                  ITextDrawer& drawer); //drawer is for auto-text-size
+                  const ITextDrawer& drawer); //drawer is for auto-text-size
     
     //panel + text constructor (text always in center of panel, no offsets and thinking needed)
     //this is the constructor with default parameters
@@ -849,6 +849,10 @@ class Checkbox : public Element, public Label
     HTexture* texture2[4];
     ColorRGB colorMod2[4];
     
+    bool useCustomGUIPart;
+    GUIPart partOn;
+    GUIPart partOff;
+    
   public:
 
     Checkbox();
@@ -878,10 +882,12 @@ class Checkbox : public Element, public Label
     void addFrontImage(HTexture* texture);
     void setCustomColor(const ColorRGB& color);
     void setCustomColor2(const ColorRGB& color); //for the front image
+    void setCustomGUIParts(GUIPart part_on, GUIPart part_off);
 
 };
 
-//The bulletlist, a list of checkboxes where only one can be selected
+//The bulletlist, a list of checkboxes where only one can be selected (radio buttons)
+//TODO: improve this interface
 class BulletList : public ElementComposite
 {
   public:

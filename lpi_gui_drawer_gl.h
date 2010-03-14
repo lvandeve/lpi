@@ -56,6 +56,8 @@ class GUIDrawerGL : public AGUIDrawer
     GUIDrawerGL(ScreenGL* screen);
     
     GuiSet& getInternal() { return guidrawer.getGUISet(); } //can be used to set font and such
+    
+    void loadGUITextures(const std::vector<unsigned char>& png); //optional. Built in textures are already loaded. This is for custom ones from external PNG. Requires PNG file exactly matching the built-in GUI.
 
     //input
     virtual IInput& getInput();

@@ -42,6 +42,10 @@ class ADrawer2DBuffer : public ADrawer2D //draws on a buffer
     size_t w;
     size_t h;
     
+    bool texture_alpha_as_opacity;
+    bool color_alpha_as_opacity;
+    double extra_opacity;
+
   public:
     
     struct Clip
@@ -129,6 +133,19 @@ class ADrawer2DBuffer : public ADrawer2D //draws on a buffer
     virtual void drawTextureSized(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureSizedRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White);
+    
+    /*
+    This sets whether you want the alpha channel of textures to be treated as opacity when drawing, or as literal.
+    When treated as opacity, the shape is drawn over the existing buffer.
+    When treated as literal, the existing pixels are completely replaced by the new values, with the literal alpha value.
+    */
+    void setTextureAlphaAsOpacity(bool set);
+    void setColorAlphaAsOpacity(bool set);
+
+    /*
+    Works only for a few things, currently only for the texture drawing, rest is to do
+    */
+    void setExtraOpacity(double opacity);
 
 };
 
