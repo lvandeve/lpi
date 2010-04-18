@@ -331,7 +331,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   dyn.addControl("boolean", new lpi::gui::DynamicCheckbox(&dyn_value3));
   dyn.addControl("double", new lpi::gui::DynamicValue<double>(&dyn_value4));
   dyn.addControl("slider", new lpi::gui::DynamicSlider<float>(&dyn_value5, 0, 100, guidrawer));
-  dyn.addControl("filename", new lpi::gui::DynamicFile(&dyn_value6, guidrawer, &filebrowser));
+  dyn.addControl("filename", new lpi::gui::DynamicFile(&dyn_value6, guidrawer, &filebrowser, 0));
   //dyn.resize(0,0,200,100);
   tabs.getTabContent(1).pushTop(&dyn, lpi::gui::Sticky(0.0,8, 0.0,8, 1.0, -8, 0.0,8+dyn.getSizeY()));
   tabs.selectTab(1);
@@ -469,7 +469,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
     if(menu1.itemClicked(0, input))
     {
       std::string filename;
-      lpi::gui::Dialog::Result result = lpi::gui::getFileNameModal(c, modalFrameHandler, &filebrowser, filename, "", false);
+      lpi::gui::Dialog::Result result = lpi::gui::getFileNameModal(c, modalFrameHandler, &filebrowser, filename, "", false, 0);
       if(result == lpi::gui::Dialog::OK) lpi::gui::showMessageBox(c, modalFrameHandler, filename, "Filename");
     }
     if(menu2.itemClicked(0, input))

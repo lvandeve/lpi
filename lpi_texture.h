@@ -224,7 +224,7 @@ void setAlignedBuffer(ITexture* texture, const unsigned char* buffer); //assumes
 void createTexture(ITexture* texture, size_t w, size_t h, const ColorRGB& color);
 
 void setPixel(ITexture* texture, int x, int y, const ColorRGB& color);
-ColorRGB getPixel(ITexture* texture, int x, int y);
+ColorRGB getPixel(const ITexture* texture, int x, int y);
 
 void copyTexture(ITexture* dest, const ITexture* source);
 

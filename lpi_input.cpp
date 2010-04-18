@@ -24,6 +24,17 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 namespace lpi
 {
+IInputClick::IInputClick()
+{
+  for(size_t i = 0; i < NUM_MOUSE_BUTTONS; i++)
+  {
+    doubleClickState[i] = 0;
+    doubleClickTime[i] = 0;
+    doubleClickX[i] = 0;
+    doubleClickY[i] = 0;
+  }
+}
+
 bool IInputClick::doubleClicked(MouseButton button) const
 {
   double timeBetween = 0.5;

@@ -61,6 +61,8 @@ class GUIDrawerGL : public AGUIDrawer
 
     //input
     virtual IInput& getInput();
+    
+    ScreenGL* getScreen() { return drawer.getScreen(); }
 };
 
 

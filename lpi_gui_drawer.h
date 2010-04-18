@@ -156,6 +156,9 @@ enum GUIPart
   //toolbar
   GP_TOOLBAR_SEPARATOR, //vertical separator for in toolbar
   GP_TOOLBAR_BUTTON,
+  //status bar
+  GP_STATUSBAR,
+  GP_STATUSBAR_SEPARATOR, //vertical separator for in status bar
 
   ///Colored Parts //todo: just give everything a color parameter instead if needed
   GPC_WINDOW_PANEL, //colored windows
@@ -181,6 +184,7 @@ enum GUIPart
   GPT_VMENU_TEXT,
   GPT_VMENU_SUBMENUTEXT,
   GPT_MESSAGE_TEXT,
+  GPT_STATUSBAR_TEXT,
   
   GP_END_DONT_USE //don't use this, it's placed here to have an element without comma at the end of the enumarator list.
 };

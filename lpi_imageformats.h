@@ -59,6 +59,24 @@ enum ImageFormat
   IF_INVALID //use if unknown
 };
 
+//these options are followed only loosely by the encoders, depending on what they support and/or what is relevant to the format
+struct ImageEncodeOptions
+{
+  /*
+  Type of the raw data. Currently, only 8 bits per channel, and only greyscale or RGBA is supported.
+  Also, only having the data and format types be exactly the same is supported.
+  In other words, only an RGBA and a greyscale mode with matching raw data are supported currently.
+  This might get more possibilities later.
+  */
+  int dataBitsPerChannel;
+  int dataColorType; //1 = Greyscale, 4 = RGBA
+  
+  int formatBitsPerChannel;
+  int formatColorType; //1 = Greyscale, 4 = RGBA
+  
+  ImageEncodeOptions();
+};
+
 /*
 decodeImageFile: decodes image to 32-bit RGBA buffer
 returns true if ok, false if error happened
@@ -69,7 +87,7 @@ bool isOfFormat(const unsigned char* file, size_t filesize, ImageFormat format);
 encodeImageFile: encodes image from 32-bit RGBA buffer, to the closest to RGBA that the image format can offer (some can't save alpha)
 TODO: add some generic options that some image formats support, such as: quality vs compression, number of channels, bit depth, interlace
 */
-bool encodeImageFile(std::string& error, std::vector<unsigned char>& file, const unsigned char* image, int w, int h, ImageFormat format);
+bool encodeImageFile(std::string& error, std::vector<unsigned char>& file, const unsigned char* image, int w, int h, ImageFormat format, const ImageEncodeOptions* options = 0);
 
 bool supportsImageDecode(ImageFormat format);
 bool supportsImageEncode(ImageFormat format);

@@ -946,10 +946,19 @@ void ScrollElement::updateBars()
 
 void ScrollElement::drawImpl(IGUIDrawer& drawer) const
 {
+  drawElements(drawer);
+  drawScroll(drawer);
+}
+
+void ScrollElement::drawElements(IGUIDrawer& drawer) const
+{
   drawer.pushSmallestScissor(getVisibleX0(), getVisibleY0(), getVisibleX1(), getVisibleY1()); //TODO: currently does same as pushScissor (because otherwise there's weird bug, to reproduce: resize the red window and look at smiley in the small grey window), so elements from container in container are still drawn outside container. DEBUG THIS ASAP!!!
   element->draw(drawer);
   drawer.popScissor();
-  
+}
+
+void ScrollElement::drawScroll(IGUIDrawer& drawer) const
+{
   bars.draw(drawer);
 }
 
@@ -1143,6 +1152,79 @@ void Group::drawImpl(IGUIDrawer& drawer) const
   drawElements(drawer);
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+StatusBar::StatusBar()
+{
+}
+
+void StatusBar::drawImpl(IGUIDrawer& drawer) const
+{
+  drawer.pushSmallestScissor(x0, y0, x1, y1);
+  drawer.drawGUIPart(GP_STATUSBAR, x0, y0, x1, y1);
+  
+  double x = 0;
+
+  for(size_t i = 0; i < zonesizesrel.size(); i++)
+  {
+    int xa = x0 + (int)x;
+    if(i < zonesizesrel.size() - 1)
+    {
+      x += (x1 - x0) * zonesizesrel[i];
+      x += zonesizesabs[i];
+    }
+    else x = x1 - x0;
+    int xb = x0 + (int)x;
+    //int xb = (i == zonesize.size() - 1) ? x1 : (int)x + (int)((x1 - x0) * zonesizesrel[i] + 1);
+    //if(i < zonesize.size() - 1) drawer.drawGUIPart(GP_STATUSBAR_SEPARATOR, xb, y0, xb, y1);
+    if(i > 0) drawer.drawGUIPart(GP_STATUSBAR_SEPARATOR, xa, y0, xa, y1);
+    
+    drawer.pushSmallestScissor(xa, y0, xb, y1);
+    drawer.drawGUIPartText(GPT_STATUSBAR_TEXT, texts[i], xa, y0 , xb, y1);
+    drawer.popScissor();
+  }
+  drawer.popScissor();
+}
+
+
+void StatusBar::handleImpl(const IInput& input)
+{
+  (void)input;
+}
+
+void StatusBar::clear()
+{
+  texts.clear();
+  zonesizesrel.clear();
+  zonesizesabs.clear();
+}
+
+size_t StatusBar::getNumZones() const
+{
+  return zonesizesrel.size();
+}
+
+void StatusBar::setNumZones(size_t num)
+{
+  zonesizesrel.resize(num);
+  zonesizesabs.resize(num);
+  texts.resize(num);
+}
+
+void StatusBar::setZoneSize(size_t i, double relsize, int abssize)
+{
+  zonesizesrel[i] = relsize;
+  zonesizesabs[i] = abssize;
+}
+
+void StatusBar::setZoneText(size_t i, const std::string& text)
+{
+  texts[i] = text;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //GUIWINDOW/////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -1169,6 +1251,7 @@ Window::Window()
 , closeEnabled(false)
 , enableResizer(false)
 , resizerOverContainer(false)
+, statusBar(0)
 {
   setEnabled(true);
 
@@ -1225,6 +1308,13 @@ void Window::addResizer(const IGUIDrawer& geom, bool overContainer)
   }
   
   resizerOverContainer = overContainer;
+}
+
+void Window::addStatusBar()
+{
+  statusBar = new StatusBar();
+  statusBar->resize(x0, 0, x1, 16);
+  addSubElement(statusBar, Sticky(0.0,0 ,1.0,-16, 1.0,0, 1.0,0));
 }
 
 
@@ -1335,12 +1425,16 @@ void Window::drawWindow(IGUIDrawer& drawer) const
 
   if(closeEnabled) drawGUIPart(drawer, &closeButton, GP_WINDOW_CLOSE);
 
+  if(statusBar != 0) statusBar->draw(drawer);
   if(enableResizer) drawer.drawGUIPart(GP_WINDOW_RESIZER, resizer.getX0(), resizer.getY0(), resizer.getX1(), resizer.getY1()); //draw this after the container so the resizer is drawn over scrollbars if that is needed
+  
+  if(scroll.element) scroll.drawScroll(drawer);
+  
 }
 
 void Window::drawElements(IGUIDrawer& drawer) const
 {
-  if(scroll.element) scroll.draw(drawer);
+  if(scroll.element) scroll.drawElements(drawer);
   else container.draw(drawer);
 }
 

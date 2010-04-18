@@ -24,6 +24,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include <vector>
 #include <cmath>
 #include <algorithm> //std::min and std::max
+#include <iostream>
 
 namespace lpi
 {
@@ -34,9 +35,47 @@ double getRandom(); //returns a random value in the range [0.0-1.0[, excluding t
 int getRandom(int first, int last); //get random number in the range of integers first-last (including last)
 double getRandom(double first, double last); //get random number in the range of doubles first-last
 
-int wrap(int i, int n); //wraps i between 0 and n, using the modulo operator
-int clamp(int a, int low, int high);
-double clamp(double a, double low, double high);
+/*
+This wraps i between 0 and n, using the modulo operator. Result is in range [0,n[, n NOT included.
+This is actually intended as a replacement
+for the module operator that behaves different for negative numbers: the repeating pattern of the shape of the function curve
+isn't disturbed at 0, the result is always positive
+*/
+int wrap(int i, int n); //
+
+
+/*
+WARNING! In the template functions below, wrap does NOT include the highest
+value in the range of the result, while clamp DOES include the highest value in the range
+of the result. The reason for this is that the functions can work on both floating point
+numbers and integers. For floating point numbers, in the case of wrapping it's hard to define
+how to include the highest value in a way consistent with integers (some difference has to be
+chosen, 1 for integers, ???? for floating point). For clamping, it's the opposite, then it's
+hard to choose how NOT to include the highest value (the next lower float, or -1 in case of integers).
+
+So, read the comments about the result range in the wrap and clamp functions below very carefully.
+*/
+
+template<typename T, typename U, typename V>
+T wrap(T a, U low, V high) //wraps in range [low,high[, high NOT included!
+{
+  if(low == (U)high) return low;
+  
+  T diff = high - low;
+  
+  if(a < (T)low) a += ((long)((low - a) / diff) + 1) * (diff);
+  if(a >= (T)high) a -= ((long)((a - high) / diff) + 1) * (diff);
+
+  return a;
+}
+
+template<typename T, typename U, typename V>
+T clamp(T a, U low, V high) //clamps in range [low,high], high INCLUDED!
+{
+  if(a < (T)low) a = (T)low;
+  if(a > (T)high) a = (T)high;
+  return a;
+}
 
 bool isPowerOfTwo(int n);
 int floatMod(double f, int m); //TODO: remove, this is just fmod from the C library

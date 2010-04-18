@@ -79,29 +79,6 @@ double getRandom(double first, double last)
   return first + getRandom() * (last - first);
 }
 
-int wrap(int i, int n) //wraps i between 0 and n, using the modulo operator
-{
-  if(i >= n) i = i % n;
-  if(i < 0) i = (n - ((-i) % n)); //modulo division on negative values
-  if(i == n) i = 0; //happens if i = -n, -2n, ...
-  
-  return i;
-}
-
-double clamp(double a, double low, double high)
-{
-  if(a < low) a = low;
-  if(a > high) a = high;
-  return a;
-}
-
-int clamp(int a, int low, int high)
-{
-  if(a < low) a = low;
-  if(a > high) a = high;
-  return a;
-}
-
 bool isPowerOfTwo(int n) //does not work properly if n is <= 0, then an extra test n > 0 should be added
 {
   return !(n & (n - 1)); //this checks if the integer n is a power of two or not
@@ -392,3 +369,23 @@ int quartsol(double& x1, double& x2, double& x3, double& x4, double a, double b,
 //   TEST_quartsol(3,6,-123,-126,1080); //4 real roots
 //   
 // }
+
+//int main()
+//{
+  //std::cout
+  //<<lpi::wrap(-6, 0, 3)<<" "<<lpi::wrap(-5, 0, 3)<<" "<<lpi::wrap(-4, 0, 3)<<" "
+  //<<lpi::wrap(-3, 0, 3)<<" "<<lpi::wrap(-2, 0, 3)<<" "<<lpi::wrap(-1, 0, 3)<<" "
+  //<<lpi::wrap(0, 0, 3)<<" "<<lpi::wrap(1, 0, 3)<<" "<<lpi::wrap(2, 0, 3)<<" "
+  //<<lpi::wrap(3, 0, 3)<<" "<<lpi::wrap(4, 0, 3)<<" "<<lpi::wrap(5, 0, 3)<<" "
+  //<<lpi::wrap(6, 0, 3)<<" "<<lpi::wrap(7, 0, 3)<<" "<<lpi::wrap(8, 0, 3)<<" "
+  //<<lpi::wrap(9, 0, 3)<<" "<<lpi::wrap(10, 0, 3)<<" "<<lpi::wrap(11, 0, 3)<<" "
+  //<<std::endl;
+  //std::cout
+  //<<lpi::wrap(-6.5, 0.5, 3.5)<<" "<<lpi::wrap(-5.5, 0.5, 3.5)<<" "<<lpi::wrap(-4.5, 0.5, 3.5)<<" "
+  //<<lpi::wrap(-3.5, 0.5, 3.5)<<" "<<lpi::wrap(-2.5, 0.5, 3.5)<<" "<<lpi::wrap(-1.5, 0.5, 3.5)<<" "
+  //<<lpi::wrap(0.5, 0.5, 3.5)<<" "<<lpi::wrap(1.5, 0.5, 3.5)<<" "<<lpi::wrap(2.5, 0.5, 3.5)<<" "
+  //<<lpi::wrap(3.5, 0.5, 3.5)<<" "<<lpi::wrap(4.5, 0.5, 3.5)<<" "<<lpi::wrap(5.5, 0.5, 3.5)<<" "
+  //<<lpi::wrap(6.5, 0.5, 3.5)<<" "<<lpi::wrap(7.5, 0.5, 3.5)<<" "<<lpi::wrap(8.5, 0.5, 3.5)<<" "
+  //<<lpi::wrap(9.5, 0.5, 3.5)<<" "<<lpi::wrap(10.5, 0.5, 3.5)<<" "<<lpi::wrap(11.5, 0.5, 3.5)<<" "
+  //<<std::endl;
+//}

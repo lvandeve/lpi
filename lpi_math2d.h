@@ -67,6 +67,8 @@ Vector2 operator/(const Vector2& v, double a);
 Vector2 operator+(const Vector2& v, const Vector2& w);
 Vector2 operator-(const Vector2& v, const Vector2& w); //a - b is b----->a
 Vector2 operator-(const Vector2& v);
+bool operator==(const Vector2& a, const Vector2& b);
+bool operator!=(const Vector2& a, const Vector2& b);
 
 double length(const Vector2& v);
 double lengthsq(const Vector2& v);
@@ -141,6 +143,7 @@ double distancePointLine(const Vector2& p, const Vector2& a, const Vector2& b); 
 double distancePointLineSegment(const Vector2& p, const Vector2& a, const Vector2& b);
 double distancePointLineSq(const Vector2& p, const Vector2& a, const Vector2& b); //get distance from point p to the line given by a and b
 double distancePointLineSegmentSq(const Vector2& p, const Vector2& a, const Vector2& b);
+bool linesParallel(const Vector2& a0, const Vector2& a1, const Vector2& b0, const Vector2& b1);
 void intersectLineLine(Vector2& result, const Vector2& a0, const Vector2& a1, const Vector2& b0, const Vector2& b1);
 bool intersectLineSegmentLineSegment(Vector2& result, const Vector2& a0, const Vector2& a1, const Vector2& b0, const Vector2& b1);
 

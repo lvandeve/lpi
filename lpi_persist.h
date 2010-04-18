@@ -71,6 +71,8 @@ class IPersist
     virtual void save() const = 0;
     virtual void load() = 0;
     
+    virtual std::string getURLIndicationForUser() const = 0; //returns the file URL if this persist is saved in a file, or some user-understandable description if it's not possible to use an URL or path to describe where the persistent data is saved.
+    
     //template convenience functions
     template<typename T>
     void setSettingT(const std::string& name, const T& value)
@@ -171,6 +173,8 @@ class PersistWin32 : public APersist
     
     virtual void save() const;
     virtual void load();
+    
+    virtual std::string getURLIndicationForUser() const { return getPath(); }
 };
 
 typedef PersistWin32 Persist;
@@ -188,6 +192,8 @@ class PersistLinux : public APersist
     
     virtual void save() const;
     virtual void load();
+    
+    virtual std::string getURLIndicationForUser() const { return getPath(); }
 };
 
 typedef PersistLinux Persist;

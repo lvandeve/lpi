@@ -129,6 +129,17 @@ Vector2 operator/(const Vector2& v, double a)
   return w;
 }
 
+bool operator==(const Vector2& a, const Vector2& b)
+{
+  return (a.x == b.x && a.y == b.y);
+}
+
+bool operator!=(const Vector2& a, const Vector2& b)
+{
+  return !(a == b);
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 
 double Vector2::length() const
@@ -529,6 +540,16 @@ bool sideOfLineGivenByTwoPoints(const Vector2& p, const Vector2& a, const Vector
   double proj = dot(p2, n);
   
   return (proj >= 0);
+}
+
+bool linesParallel(const Vector2& a0, const Vector2& a1, const Vector2& b0, const Vector2& b1)
+{
+  if(a1.x - a0.x == 0 && b1.x - b0.x == 0) return true;
+  
+  double ricoa = (a1.y-a0.y)/(a1.x-a0.x);
+  double ricob = (b1.y-b0.y)/(b1.x-b0.x);
+  
+  return ricoa == ricob;
 }
 
 void intersectLineLine(Vector2& result, const Vector2& a0, const Vector2& a1, const Vector2& b0, const Vector2& b1)

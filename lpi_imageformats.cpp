@@ -28,6 +28,17 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lodepng.h"
 #include "stb_image.h"
 
+namespace lpi
+{
+
+ImageEncodeOptions::ImageEncodeOptions()
+: dataBitsPerChannel(8)
+, dataColorType(4)
+, formatBitsPerChannel(8)
+, formatColorType(4)
+{
+}
+
 //numChannels should be 3 (RGB) or 4 (RGBA).
 //Input buffer is in RGBA order (unlike BMP which is in BGRA order)
 void encodeBMP(std::vector<unsigned char>& bmp, const unsigned char* image, int w, int h, int numChannels)
@@ -775,10 +786,6 @@ class CBitmap
 
 };
 
-
-namespace lpi
-{
-
 bool decodeImageFile(std::string& error, std::vector<unsigned char>& image, int& w, int& h, const unsigned char* data, size_t datasize, ImageFormat format)
 {
   if(format == IF_BMP)
@@ -878,31 +885,41 @@ bool decodeImageFile(std::string& error, std::vector<unsigned char>& image, int&
   return false;
 }
 
-bool encodeImageFile(std::string& error, std::vector<unsigned char>& file, const unsigned char* image, int w, int h, ImageFormat format)
+bool encodeImageFile(std::string& error, std::vector<unsigned char>& file, const unsigned char* image, int w, int h, ImageFormat format, const ImageEncodeOptions* p_options)
 {
+  ImageEncodeOptions options;
+  if(p_options) options = *p_options;
+  
+  if(options.dataBitsPerChannel != 8
+  || (options.dataColorType != 1 && options.dataColorType != 4)
+  || options.formatBitsPerChannel != 8
+  || (options.formatColorType != 1 && options.formatColorType != 4)
+  || options.dataColorType != options.formatColorType
+  || options.dataBitsPerChannel != options.formatBitsPerChannel)
+  {
+    error = "Unsupported encoding options";
+    return false;
+  }
+
+  
   if(format == IF_BMP)
   {
-//    CBitmap bitmap;
-//    bitmap.SetBits(image.empty() ? 0 : &image[0], w, h, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
-//    if(!bitmap.Save(file, 32))
-//    {
-//      error = "Error saving BMP";
-//      return false;
-//    }
-//    return true;
-
-
-    encodeBMP(file, image, w, h, 4);
+    encodeBMP(file, image, w, h, options.dataColorType);
     return true;
   }
   if(format == IF_TGA)
   {
-    encodeTGA(file, image, w, h, 4);
+    encodeTGA(file, image, w, h, options.dataColorType);
     return true;
   }
   else if(format == IF_PNG)
   {
     LodePNG::Encoder png_encoder;
+    if(options.dataColorType == 1)
+    {
+      png_encoder.getInfoPng().color.colorType = 0;
+      png_encoder.getInfoRaw().color.colorType = 0;
+    }
     png_encoder.encode(file, image, w, h);
     if(png_encoder.hasError())
     {

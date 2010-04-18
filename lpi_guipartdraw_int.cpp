@@ -1055,6 +1055,17 @@ void GUIPartDrawerInternal::drawGUIPart(GUIPart part, int x0, int y0, int x1, in
       else drawer->drawRectangle(x0+1, y0+1, x1-1, y1-1, RGB_Grey, true);
       break;
     }
+    case GP_STATUSBAR:
+    {
+      drawer->drawRectangle(x0, y0, x1, y1, RGB_Grey, true);
+      drawer->drawRectangle(x0, y0, x1, y1, RGB_White, false);
+      break;
+    }
+    case GP_STATUSBAR_SEPARATOR:
+    {
+      drawer->drawLine(x0, y0, x0, y1, RGB_White);
+      break;
+    }
     default:
       return;
   }
@@ -1192,6 +1203,12 @@ void GUIPartDrawerInternal::drawGUIPartText(GUIPart part, const std::string& tex
       }
       
       
+      break;
+    }
+    case GPT_STATUSBAR_TEXT:
+    {
+      x0 += 2;
+      textdrawer->drawText(text, x0, (y0 + y1) / 2, guiset->defaultFont, TextAlign(HA_LEFT, VA_CENTER));
       break;
     }
     default:
