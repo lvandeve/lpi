@@ -160,8 +160,8 @@ void DynamicFile::ctor()
   this->addSubElement(&line, Sticky(0.0,0, 0.5,-line.getSizeY() / 2, 1.0,0, 0.5,line.getSizeY() / 2));
 }
 
-DynamicFile::DynamicFile(std::string* value, const IGUIDrawer& geom, IFileBrowse* browser)
-: edit(geom, browser, false, false)
+DynamicFile::DynamicFile(std::string* value, const IGUIDrawer& geom, IFileBrowse* browser, FileDialogPersist* persist)
+: edit(geom, browser, false, false, persist)
 {
   this->bind = value;
   ctor();

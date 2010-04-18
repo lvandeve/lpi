@@ -190,7 +190,7 @@ class Element : public ElementRectangular
     virtual void drawImpl(IGUIDrawer& drawer) const = 0; //called by draw(), this one can be overloaded for each widget defined below
     virtual void handleImpl(const IInput& input);
     virtual void moveImpl(int x, int y); //Override this if you have subelements, unless you use addSubElement in ElementComposite.
-    virtual void resizeImpl(const Pos<int>& newPos); //always called after resize, will resize the other elements to the correct size. Override this if you have subelements, unless you use addSubElement in ElementComposite. When resizeWidget is called, you can get the new size from newPos, while the old size is still in x0, y0, x1, y1 from this and will be set after resizeWidget is called.
+    virtual void resizeImpl(const Pos<int>& newPos); //always called after resize, will resize the other elements to the correct size. Override this if you have subelements, unless you use addSubElement in ElementComposite. When resizeImpl is called, you can get the new size from newPos, while the old size is still in x0, y0, x1, y1 from this and will be set after resizeImpl is called.
     virtual void manageHoverImpl(IHoverManager& hover);
 
     /*
@@ -569,13 +569,13 @@ class Container : public Element
     void insertAt(size_t pos, Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT);
     
     Element* getElement(size_t i) const { return elements.getElement(i); }
-
+    unsigned long size() const;
+    
     void bringToTop(Element* element); //precondition: element must already be in the list
     
     void centerElement(Element* element); //TODO: remove this function from this class, if necessary put it somewhere else as utility function
 
     void remove(Element* element);
-    unsigned long size() const;
     void clear(); //clears all the elements
     void putInside(unsigned long i);
     virtual void moveImpl(int x, int y);
@@ -655,7 +655,12 @@ class MainContainer : public IHoverManager, public ElementComposite
     void pushBottomAt(Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT){e.pushBottomAt(element, x, y, sticky);}
     void insertAt(size_t pos, Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT){e.insertAt(pos, element, x, y, sticky);}
     
+    void remove(Element* element) { e.remove(element); }
+    
     virtual const Element* hitTest(const IInput& input) const;
+    
+    Element* getElement(size_t i) const { return e.getElement(i); }
+    unsigned long size() const { return e.size(); }
     
     bool doModalDialog(Dialog& dialog, IModalFrameHandler& frame); //Blocking function call. Runs a gameloop where only the given dialog is handled. Returns true normally, false if the loop during modal dialog showing was force-quit. After running doModalDialog(), you should check for ok/cancel with dialog's getResult, and if it was OK, use the value if the dialog (if any).
 };
@@ -685,6 +690,9 @@ class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
     virtual void setElementOver(bool state);
     virtual const Element* hitTest(const IInput& input) const;
     
+    void drawElements(IGUIDrawer& drawer) const;
+    void drawScroll(IGUIDrawer& drawer) const;
+
     void setKeepElementsInside(bool set) { keepelementsinside = set; }
 
     void make(int x, int y, int sizex, int sizey, Element* element, const IGUIDrawer& geom);
@@ -722,6 +730,30 @@ class ScrollElement : public ElementComposite //a.k.a "ScrollZone"
     void toggleBars(); //turns the bars on or of depending on if they're needed or not
 };
 
+class StatusBar : public ElementComposite
+{
+  protected:
+  
+  
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IInput& input);
+    
+   
+    std::vector<std::string> texts;
+    std::vector<double> zonesizesrel; //last size is ignored, instead it's the remaining space. Sum is maximum 1.0.
+    std::vector<int> zonesizesabs;
+    
+  public:
+  
+    StatusBar();
+    void setNumZones(size_t num);
+    size_t getNumZones() const;
+    void clear();
+    
+    void setZoneSize(size_t i, double relsize, int abssize);
+    void setZoneText(size_t i, const std::string& text);
+};
+
 //Window is a container for other gui elements that'll move and get drawn at the command of the window
 class Window : public ElementComposite
 {
@@ -735,6 +767,7 @@ class Window : public ElementComposite
     bool closeEnabled; //close button is enabled
     bool enableResizer;
     bool resizerOverContainer;
+    StatusBar* statusBar;
 
     virtual int getMinSizeX() { return 128; }
     virtual int getMinSizeY() { return 64; }
@@ -810,6 +843,9 @@ class Window : public ElementComposite
     
     ////optional part "resizer" = draggable bottom right corner with diagonally striped image
     void addResizer(const IGUIDrawer& geom, bool overContainer = false);
+    
+    ////optional part "status bar"
+    void addStatusBar();
 
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void manageHoverImpl(IHoverManager& hover);
@@ -821,6 +857,8 @@ class Window : public ElementComposite
     void setColorMod(const ColorRGB& color) { colorMod = color; }
     
     virtual int getKeyboardFocus() const;
+    
+    StatusBar* getStatusBar() { return statusBar; }
 };
 
 //The Checkbox

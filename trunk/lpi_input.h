@@ -108,6 +108,8 @@ class IInputClick : public IInput //this one already implements the double click
     double mouseSpeedImp(int pos, std::vector<int>& mousePosHistory, std::vector<double>& mousePosTimeHistory) const;
 
   public:
+  
+    IInputClick();
 
     virtual bool doubleClicked(MouseButton button) const;
     virtual bool tripleClicked(MouseButton button) const;

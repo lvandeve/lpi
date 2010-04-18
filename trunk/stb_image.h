@@ -11,6 +11,7 @@ Modifications done by me:
 -fix unused parameter warnings in the functions resample_row_1, resample_row_h_2, resample_row_v_2, resample_row_hv_2, resample_row_generic, expand_palette, hdr_gettoken by typing "(void)param" for each such parameter
 -fix warning about braces around else if in create_png_image_raw
 -fixed warnings about comma at end of enumerator list in 3 enums
+-fixed warnings about "trans_data may be used uninitialized in this function"
 */
 
 ////   begin header file  ////////////////////////////////////////////////////

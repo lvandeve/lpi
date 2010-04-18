@@ -19,6 +19,9 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 */
 
 #include "lpi_gui_file.h"
+#include "lpi_os.h"
+#include "lpi_persist.h"
+#include <iostream>
 
 namespace lpi
 {
@@ -139,17 +142,33 @@ void FileList::setAllowedExtensions(const std::vector<std::string>& allowedExten
 
 ////////////////////////////////////////////////////////////////////////////////
 
+
+void FileDialogPersist::add(const std::string& path)
+{
+  for(size_t i = 0; i < sug.size(); i++)
+  {
+    if(sug[i] == path) return;
+  }
+  sug.push_back(path);
+  if(sug.size() >= MAXPATHS)
+  {
+    sug.erase(sug.begin());
+  }
+}
+    
 std::string FileDialog::REMEMBER_PATH; //for remembering it during one session at least
 bool FileDialog::REMEMBER_AUTO_ADD_EXTENSION = true;
 
-FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser, bool save, bool multi)
+FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser, bool save, bool multi, FileDialogPersist* persist)
 : list(geom)
 , save(save)
 , multiselection(multi)
 , browser(browser)
+, persist(persist)
 , overwriteQuestion(geom, "File exists. Overwrite?", "Confirm")
 , askingOverwrite(false)
 , extensionChooser(geom)
+, suggestedFolders(geom)
 {
   addTop(geom);
   addTitle(save ? "Save File" : "Open File");
@@ -171,7 +190,8 @@ FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser, bool save, 
   pushTop(&cancel, Sticky(1.0,-84, 1.0,-24-s, 1.0,-4, 1.0,-4-s));
   pushTop(&up, Sticky(1.0,-84, 0.0,4, 1.0,-4, 0.0,24));
   pushTop(&path, Sticky(0.0,48, 0.0,4, 1.0,-88, 0.0,24));
-  pushTop(&list, Sticky(0.0,4, 0.0,32, 1.0,-4, 1.0,-56-s));
+  pushTop(&suggestedFolders, Sticky(0.0,48, 0.0,28, 1.0,-88, 0.0,48));
+  pushTop(&list, Sticky(0.0,4, 0.0,52, 1.0,-4, 1.0,-56-s));
   pushTop(&file, Sticky(0.0,48, 1.0,-50-s, 1.0,-88, 1.0,-30-s));
   pushTop(&extensionChooser, Sticky(0.0,48, 1.0,-24-s, 1.0,-88, 1.0,-4-s));
   if(save) pushTop(&autoAddExtension, Sticky(0.0,48, 1.0,-20, 1.0,-88, 1.0,-4));
@@ -182,15 +202,52 @@ FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser, bool save, 
   
   overwriteQuestion.setEnabled(false);
   
+  if(persist)
+  {
+    if(persist->sug.empty())
+    {
+      std::string home = browser->getDefaultDir(lpi::IFileBrowse::DD_HOME);
+      if(!home.empty()) persist->add(home);
+#ifdef LPI_WIN32
+      persist->add("C:\\");
+#else
+      persist->add("/");
+      persist->add("/mnt/");
+#endif
+    }
+    
+    for(size_t i = 0; i < persist->sug.size(); i++)
+    {
+      suggestedFolders.addItem(persist->sug[persist->sug.size() - i - 1]);
+    }
+  }
+  else //no persistent data to get directory history from. Instead just suggest some locations based on the OS
+  {
+    std::string home = browser->getDefaultDir(lpi::IFileBrowse::DD_HOME);
+    if(!home.empty()) suggestedFolders.addItem(home);
+#ifdef LPI_WIN32
+    suggestedFolders.addItem("C:\\");
+#else
+    suggestedFolders.addItem("/");
+    suggestedFolders.addItem("/mnt/");
+#endif
+  }
+  
   if(REMEMBER_PATH.empty())
   {
-#ifdef WIN32
+#ifdef LPI_WIN32
     setPath("C:\\");
 #else
     setPath("/");
 #endif
   }
   else setPath(REMEMBER_PATH);
+  
+  file.activate(true);
+  suggestedFolders.setSelectedItem((size_t)(-1)); //never display anything by default or it is confusing to the user
+  suggestedFolders.hasChanged(); //reset the "has changed" value to false
+  
+  list.setAllowMultiSelection(multi);
 }
 
 FileDialog::~FileDialog()
@@ -211,6 +268,7 @@ void FileDialog::drawImpl(IGUIDrawer& drawer) const
   drawer.drawRectangle(file.getX0(), file.getY0(), file.getX1(), file.getY1(), RGB_Black, false);
   
   drawer.drawText("dir:", path.getX0() - 4, path.getCenterY(), lpi::FONT_White, lpi::TextAlign(HA_RIGHT, VA_CENTER));
+  drawer.drawText("sug:", suggestedFolders.getX0() - 4, suggestedFolders.getCenterY(), lpi::FONT_White, lpi::TextAlign(HA_RIGHT, VA_CENTER));
   drawer.drawText("file:", file.getX0() - 4, file.getCenterY(), lpi::FONT_White, lpi::TextAlign(HA_RIGHT, VA_CENTER));
   drawer.drawText(save ? "type:":"ext:", extensionChooser.getX0() - 4, extensionChooser.getCenterY(), lpi::FONT_White, lpi::TextAlign(HA_RIGHT, VA_CENTER));
 
@@ -324,6 +382,10 @@ void FileDialog::handleImpl(const IInput& input)
         setEnabled(false);
         result = OK;
       }
+      
+      std::string sugFolder = path.getText();
+      browser->ensureDirectoryEndSlash(sugFolder);
+      if(persist) persist->add(sugFolder);
     }
     if(cancel.clicked(input) || closeButton.clicked(input))
     {
@@ -335,6 +397,12 @@ void FileDialog::handleImpl(const IInput& input)
     if(extensionChooser.hasChanged() && extensionChooser.getSelectedItem() < extensionChooser.getNumItems())
     {
       setAllowedExtensions(extensionSets[extensionChooser.getSelectedItem()]);
+    }
+    
+    if(suggestedFolders.hasChanged() && suggestedFolders.getSelectedItem() < suggestedFolders.getNumItems())
+    {
+      setPath(suggestedFolders.getValue(suggestedFolders.getSelectedItem()));
+      suggestedFolders.setSelectedItem((size_t)(-1));
     }
   }
 }
@@ -381,8 +449,8 @@ std::string FileDialog::getPath()
 void FileDialog::setPath(const std::string& path)
 {
   std::string folder = getFileNamePathPart(path);
-  this->path.setText(path);
-  list.generateListForDir(path, *browser);
+  this->path.setText(folder);
+  list.generateListForDir(folder, *browser);
 }
 
 size_t FileDialog::getNumFiles() const

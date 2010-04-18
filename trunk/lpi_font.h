@@ -62,6 +62,7 @@ NOTE: since LPI currently has only 3 bitmap fonts, the above rules are quite irr
 The 3 bitmap fonts have following typeface names:
 
 "lpi8": 8-pixel bitmap font, monospace, not resizable, not italicable, not serifable
+"lpi7": 7-pixel bitmap font, monospace, not resizable, not italicable, not serifable
 "lpi6": 6-pixel bitmap font, monospace, not resizable, not italicable, not serifable
 "lpi4": 4x5-pixel bitmap font, monospace, not resizable, not italicable, not serifable
 */

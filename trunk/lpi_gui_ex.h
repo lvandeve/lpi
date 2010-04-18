@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2009 Lode Vandevenne
+Copyright (c) 2005-2010 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -40,6 +40,8 @@ class IFileBrowse;
 
 namespace gui
 {
+
+struct FileDialogPersist;
 
 class InternalList : public Element
 {
@@ -248,6 +250,7 @@ class YesNoWindow : public Dialog
     virtual bool done() const;
     virtual Result getResult() const; //returns OK or CANCEL (since there's no cancel button, it's always OK)
     bool getValue() const; //returns true for yes, false for no
+    void setButtonTexts(const std::string& textYes, const std::string& textNo);
 };
 
 //a painting canvas that allows you to paint with the mouse
@@ -526,7 +529,6 @@ class MenuVertical : public AMenu
     MenuVertical();
 };
 
-//TODO: separators
 class ToolBar : public ElementComposite
 {
   protected:
@@ -541,6 +543,7 @@ class ToolBar : public ElementComposite
     enum Type
     {
       COMMAND,
+      TOGGLE,
       SEPARATOR
     };
 
@@ -549,6 +552,7 @@ class ToolBar : public ElementComposite
       Type type;
       std::string tooltip;
       HTexture* icon;
+      bool toggle; //for TOGGLE mode
     };
 
     std::vector<Item> items;
@@ -557,12 +561,16 @@ class ToolBar : public ElementComposite
   
     ToolBar();
     size_t addCommand(HTexture* icon, const std::string& tooltip);
+    size_t addToggle(HTexture* icon, const std::string& tooltip, bool enabled);
     size_t addSeparator();
     void clear();
     
     size_t getNumItems() const;
     bool itemClicked(size_t i, const IInput& input, MouseButton button = LMB) const; //returns whether item with given index is clicked
     size_t itemClicked(const IInput& input, MouseButton button = LMB) const; //returns index of item that is clicked if some item is clicked, an invalid index (>= getNumItems()) otherwise.
+    
+    bool toggleEnabled(size_t i) const;
+    void setToggle(size_t i, bool enabled);
     
     virtual void drawToolTip(IGUIDrawer& drawer) const;
 };
@@ -589,7 +597,7 @@ class DropDownList : public Element
     MyList list; //the hovering list when opened
     
     bool changed;
-    size_t listvalue; //used while changed = true. Reason for using this and not getting it from list directoy: auto-updating (in both direction) dynamic GUI page with enum overwrites value before each handle
+    size_t listvalue; //used while changed = true. Reason for using this and not getting it from list directly: auto-updating (in both direction) dynamic GUI page with enum overwrites value before each handle
 
   protected:
     virtual void handleImpl(const IInput& input);
@@ -615,11 +623,14 @@ class DropDownList : public Element
 
 void showMessageBox(MainContainer& c, IModalFrameHandler& frame, const std::string& text, const std::string& title = "");
 //current_path is the folder the file dialog should show initially. If you give empty string, then something is chosen for you instead.
-lpi::gui::Dialog::Result getFileNameModal(MainContainer& c, IModalFrameHandler& frame, IFileBrowse* browser, std::string& filename, const std::string& current_path, bool save);
-lpi::gui::Dialog::Result getFileNamesModal(MainContainer& c, IModalFrameHandler& frame, IFileBrowse* browser, std::vector<std::string>& filenames, const std::string& current_path);
+lpi::gui::Dialog::Result getFileNameModal(MainContainer& c, IModalFrameHandler& frame, IFileBrowse* browser, std::string& filename, const std::string& current_path, bool save, FileDialogPersist* persist);
+lpi::gui::Dialog::Result getFileNamesModal(MainContainer& c, IModalFrameHandler& frame, IFileBrowse* browser, std::vector<std::string>& filenames, const std::string& current_path, FileDialogPersist* persist);
 class FileDialog;
 lpi::gui::Dialog::Result getFileNameModal(MainContainer& c, IModalFrameHandler& frame, FileDialog& dialog, std::string& filename);
 lpi::gui::Dialog::Result getFileNamesModal(MainContainer& c, IModalFrameHandler& frame, FileDialog& dialog, std::vector<std::string>& filenames);
+bool getYesNoModal(MainContainer& c, IModalFrameHandler& frame, const std::string& question);
+bool getYesNoModal(MainContainer& c, IModalFrameHandler& frame, const std::string& question, const std::string& textYes, const std::string& textNo);
+
 
 } //namespace gui
 } //namespace lpi

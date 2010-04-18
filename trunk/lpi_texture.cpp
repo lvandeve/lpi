@@ -825,10 +825,10 @@ void setPixel(ITexture* texture, int x, int y, const ColorRGB& color)
   buffer[y * u2 * 4 + x * 4 + 3] = color.a;
 }
 
-ColorRGB getPixel(ITexture* texture, int x, int y)
+ColorRGB getPixel(const ITexture* texture, int x, int y)
 {
   ColorRGB result;
-  unsigned char* buffer = texture->getBuffer();
+  const unsigned char* buffer = texture->getBuffer();
   size_t u2 = texture->getU2();
   result.r = buffer[y * u2 * 4 + x * 4 + 0];
   result.g = buffer[y * u2 * 4 + x * 4 + 1];

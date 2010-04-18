@@ -29,28 +29,38 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
+TextureGL::Part::Part()
+: generated(false)
+{
+}
+
+TextureGL::Part::~Part()
+{
+  if(generated) glDeleteTextures(1, &texture);
+}
+
 TextureGL::TextureGL()
-: partsx(1)
-, partsy(1)
+: u(0)
+, v(0)
+, u2(0)
+, v2(0)
 , openGLContextDestroyedNumber(-1)
 {
 }
 
 TextureGL::~TextureGL()
 {
-  for(size_t i = 0; i < parts.size(); i++)
-  {
-    glDeleteTextures(1, &parts[i].texture);
-  }
 }
 
 //make memory for the buffer of the texture
 void TextureGL::makeBuffer()
 {
-  if(u <= MAXX && v <= MAXY)
+  if(u == 0 && v == 0)
   {
-    partsx = partsy = 1;
-    
+    parts.clear();
+  }
+  else if(u <= MAXX && v <= MAXY)
+  {
     //find first larger power of two of width and store it in u2
     u2 = 1;
     while(u2 < u) u2 *= 2;
@@ -59,7 +69,7 @@ void TextureGL::makeBuffer()
     v2 = 1;
     while(v2 < v) v2 *= 2;
     
-    
+    parts.clear(); //always clear before resizing, a Part can't be correctly copied
     parts.resize(1);
     Part& part = parts[0];
     part.shiftx = 0;
@@ -71,16 +81,12 @@ void TextureGL::makeBuffer()
   }
   else
   {
-    partsx = (u + MAXX - 1) / MAXX;
-    partsy = (v + MAXY - 1) / MAXY;
-    
-    size_t newsize = partsx * partsy;
-    for(size_t i = newsize; i < parts.size(); i++)
-    {
-      glDeleteTextures(1, &parts[i].texture);
-    }
+    size_t partsx = (u + MAXX - 1) / MAXX; //num parts in x direction
+    size_t partsy = (v + MAXY - 1) / MAXY; //num parts in y direction
 
+    parts.clear(); //always clear before resizing, a Part can't be correctly copied
     parts.resize(partsx * partsy);
+
     for(size_t y = 0; y < partsy; y++)
     for(size_t x = 0; x < partsx; x++)
     {
@@ -105,6 +111,15 @@ void TextureGL::makeBuffer()
 
 void TextureGL::uploadPartial(int x0, int y0, int x1, int y1)
 {
+  if(parts.empty()) return;
+  
+  //if(x0 < 0 || x0 > (int)u || y0 < 0 || y0 > (int)v || x1 < 0 || x1 > (int)u || y1 < 0 || y1 > (int)v) std::cout<<"panic!"<<std::endl;
+  
+  if(x0 < 0) x0 = 0; if(x0 > (int)u) x0 = u;
+  if(y0 < 0) y0 = 0; if(y0 > (int)v) y0 = v;
+  if(x1 < 0) x1 = 0; if(x1 > (int)u) x1 = u;
+  if(y1 < 0) y1 = 0; if(y1 > (int)v) y1 = v;
+
   if(x0 == x1 || y0 == y1) return;
   
   for(size_t i = 0; i < parts.size(); i++)
@@ -115,7 +130,6 @@ void TextureGL::uploadPartial(int x0, int y0, int x1, int y1)
       return;
     }
   }
-  
  
   if(u <= MAXX && v <= MAXY)
   {
@@ -134,6 +148,7 @@ void TextureGL::uploadPartial(int x0, int y0, int x1, int y1)
     for(size_t i = 0; i < parts.size(); i++)
     {
       Part& part = parts[i];
+      
       
       bool xoverlap = true;
       if(x1 <= part.shiftx || x0 >= (int)(part.shiftx + part.u)) xoverlap = false;
@@ -169,6 +184,8 @@ void TextureGL::uploadPartial(int x0, int y0, int x1, int y1)
 //This generates the OpenGL texture so that OpenGL can use it, also use after changing the texture buffer
 void TextureGL::upload() const
 {
+  if(parts.empty()) return;
+  
   for(size_t i = 0; i < parts.size(); i++)
   {
     Part& part = parts[i];
@@ -183,13 +200,13 @@ void TextureGL::upload() const
   {
     bind(false, 0);
     glTexImage2D(GL_TEXTURE_2D, 0, 4, u2, v2, 0, GL_RGBA, GL_UNSIGNED_BYTE, &buffer[0]);
-
   }
   else
   {
     for(size_t i = 0; i < parts.size(); i++)
     {
       Part& part = parts[i];
+
       bind(false, i);
       glPixelStorei( GL_UNPACK_ROW_LENGTH, u2);
       glPixelStorei( GL_UNPACK_SKIP_PIXELS, part.shiftx);
@@ -205,7 +222,14 @@ void TextureGL::upload() const
 
 void TextureGL::reupload() const
 {
-  for(size_t i = 0; i < parts.size(); i++) parts[i].generated = false;
+  for(size_t i = 0; i < parts.size(); i++)
+  {
+    if(parts[i].generated)
+    {
+      //glDeleteTextures(1, &parts[i].texture);
+      parts[i].generated = false;
+    }
+  }
   upload();
 }
 
@@ -243,19 +267,38 @@ void TextureGL::setTextAlignedBuffer(const std::vector<unsigned char>& in)
   }
 }
 
-void TextureGL::updateForNewOpenGLContextIfNeeded(int number) const
+bool TextureGL::updateForNewOpenGLContextIfNeeded(int number) const
 {
+  if(parts.empty()) return false;
+  
   if(openGLContextDestroyedNumber == -1 && number == 0) //no resizes ever happened so far and the texture should be initialized
   {
     openGLContextDestroyedNumber = number;
+    return false;
   }
-  else if(openGLContextDestroyedNumber != number)
+  //something mysterious goes wrong in Windows with a small number of random textures when resizing. reuploading twice fixes this problem apparently. Hence the "-2" stuff below.
+  //TODO: find out what the actual cause of this is. Find out if this isn't an indication of memory corruption or so.
+  else if(openGLContextDestroyedNumber == -2)
   {
     openGLContextDestroyedNumber = number;
     reupload();
+    return true;
   }
+  else if(openGLContextDestroyedNumber != number)
+  {
+    openGLContextDestroyedNumber = -2;
+    reupload();
+    return true;
+  }
+//  else if(openGLContextDestroyedNumber != number)
+//  {
+//    openGLContextDestroyedNumber = number;
+//    reupload();
+//    return true;
+//  }
   else
   {
+    return false;
   }
 }
 

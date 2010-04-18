@@ -22,6 +22,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_gui_text.h"
 
 #include "lodepng.h"
+#include "lpi_clipboard.h"
 #include "lpi_draw2d.h"
 #include "lpi_file.h"
 #include "lpi_base64.h"
@@ -54,7 +55,8 @@ How to use it:
 
 //the default constructor
 InputLine::InputLine()
-: sel0(0)
+: last_draw_time(0)
+, sel0(0)
 , sel1(0)
 {
   this->x0 = 0;
@@ -129,7 +131,7 @@ void InputLine::drawImpl(IGUIDrawer& drawer) const
   else if(type == 2) drawer.print(getInteger(), inputX, inputY, font, TextAlign(HA_LEFT, VA_CENTER));
   
   //draw the cursor if active
-  if(control_active && (int(draw_time * 2.0) % 2 == 0 || mouseDown(drawer.getInput())))
+  if(control_active && (int((draw_time - last_draw_time) * 2.0) % 2 == 0 || mouseDown(drawer.getInput())))
   {
     int cursorXDraw = inputX + cursor * FONTSIZE - 1;
     drawer.drawLine(cursorXDraw, inputY - FONTSIZE / 2, cursorXDraw, inputY + FONTSIZE / 2, font.color);
@@ -182,12 +184,16 @@ void InputLine::handleImpl(const IInput& input) //both check if you pressed ente
   if(mouseJustDownHere(input))
   {
     sel0 = mouseToCursor(input.mouseX());
+    last_draw_time = draw_time;
   }
+  
+  bool shift = input.keyDown(SDLK_LSHIFT) || input.keyDown(SDLK_RSHIFT);
+  bool ctrl = input.keyDown(SDLK_LCTRL) || input.keyDown(SDLK_RCTRL);
   
   autoActivate(input, auto_activate_mouse_state, control_active);
   if(control_active)
   {
-    if(input.keyDown(13))
+    if(input.keyDown(SDLK_RETURN) || input.keyDown(SDLK_KP_ENTER))
     {
       control_active = false;
       entered = true;
@@ -196,75 +202,175 @@ void InputLine::handleImpl(const IInput& input) //both check if you pressed ente
     
     if(cursor >= text.length()) cursor = text.length();
 
-    int ascii = input.unicodeKey(0.5, 0.025);
-    if(ascii)
+    if(!ctrl)
     {
-      switch(ascii)
+      int ascii = input.unicodeKey(0.5, 0.025);
+      if(ascii)
       {
-        case 8: //backspace
-          //COMMENTED OUT!! For same reason as case 127, except that this one actually worked in both linux and windows, but you know, the fact that 127 doesn't reliably work everywhere doesn't give the feeling that backspase will. Handled with input.keyPressedTime instead.
-          /*if(sel0 == sel1 && cursor > 0) text.erase(--cursor, 1);
-          else if(sel0 != sel1) deleteSelectedText();*/
-          break;
-        case 13: //enter
-          //COMMENTED OUT!!!! UNICODEKEY DOES NOT RELIABLY SAY THAT THIS KEY IS DOWN, IT MAY MISS THE UP EVENT. SO FOR THIS ENTER FEATURE, I USE THE SIMPLE KEY INPUT WAY INSTEAD.
-          //So, do NOTHING with enter
-          /*entered = 1;
-          control_active = false;*/
-          break;
-        case 127: //delete
-          //COMMENTED OUT!!! works with this in linux, but not in windows, so I check with keyPressedTime instead below
-          /*if(sel0 == sel1 && cursor <= text.size()) text.erase(cursor, 1);
-          else if(sel0 != sel1) deleteSelectedText();*/
-          break;
-        //a few certainly not meant to be printed ones
-        case 0:
-          break;
-        case 10: break;
-        default:
-          if(sel0 != sel1) deleteSelectedText();
-          if(text.length() < l) text.insert(cursor, 1, ascii);
-          if(text.length() < l || cursor == l - 1) cursor++;
-          break;
+        last_draw_time = draw_time;
+        switch(ascii)
+        {
+          case 8: //backspace
+            //COMMENTED OUT!! For same reason as case 127, except that this one actually worked in both linux and windows, but you know, the fact that 127 doesn't reliably work everywhere doesn't give the feeling that backspase will. Handled with input.keyPressedTime instead.
+            /*if(sel0 == sel1 && cursor > 0) text.erase(--cursor, 1);
+            else if(sel0 != sel1) deleteSelectedText();*/
+            break;
+          case 13: //enter
+            //COMMENTED OUT!!!! UNICODEKEY DOES NOT RELIABLY SAY THAT THIS KEY IS DOWN, IT MAY MISS THE UP EVENT. SO FOR THIS ENTER FEATURE, I USE THE SIMPLE KEY INPUT WAY INSTEAD.
+            //So, do NOTHING with enter
+            /*entered = 1;
+            control_active = false;*/
+            break;
+          case 127: //delete
+            //COMMENTED OUT!!! works with this in linux, but not in windows, so I check with keyPressedTime instead below
+            /*if(sel0 == sel1 && cursor <= text.size()) text.erase(cursor, 1);
+            else if(sel0 != sel1) deleteSelectedText();*/
+            break;
+          //a few certainly not meant to be printed ones
+          case 0:
+            break;
+          case 10: break;
+          default:
+            if(sel0 != sel1) deleteSelectedText();
+            if(text.length() < l) text.insert(cursor, 1, ascii);
+            if(text.length() < l || cursor == l - 1) cursor++;
+            break;
+        }
       }
     }
+    if(ctrl)
+    {
+      if(input.keyPressed(SDLK_v))
+      {
+        std::string pasteText;
+        if(getClipboardString(pasteText))
+        {
+          if(sel0 != sel1) deleteSelectedText();
+          for(size_t i = 0; i < pasteText.size(); i++)
+          {
+            char c = pasteText[i];
+            if(c == 10 || c == 13) break; //no newlines in single-line text
+            if(text.length() < l) text.insert(cursor, 1, c);
+            if(text.length() < l || cursor == l - 1) cursor++;
+          }
+          last_draw_time = draw_time;
+        }
+      }
+      bool doCopy = input.keyPressed(SDLK_c);
+      bool doCut = input.keyPressed(SDLK_x);
+      if(doCopy || doCut)
+      {
+        if(sel0 != sel1)
+        {
+          std::string copyText;
+          for(int i = (int)sel0; i < (int)sel1; i++)
+          {
+            if(i < 0) { i = -1; continue; }
+            if(i >= (int)text.size()) break;
+            copyText.push_back(text[i]);
+          }
+          if(!copyText.empty()) setClipboardString(copyText);
+          if(doCut) deleteSelectedText();
+        }
+      }
+      if(input.keyPressed(SDLK_a) || input.keyPressed(SDLK_q)) //the q is for the azerty problem in Windows
+      {
+        last_draw_time = draw_time;
+        selectAll();
+      }
+
+    }
     
-    if(input.keyPressed(SDLK_HOME)) cursor = 0;
+    if(input.keyPressed(SDLK_HOME))
+    {
+      last_draw_time = draw_time;
+      if(shift)
+      {
+        if(sel0 == sel1)
+        {
+          sel0 = cursor;
+          sel1 = 0;
+        }
+        else
+        {
+          sel1 = 0;
+        }
+      }
+      else selectNone();
+      cursor = 0;
+    }
     if(input.keyPressed(SDLK_END))
     {
+      last_draw_time = draw_time;
       unsigned long pos = 0;
       while(text[pos] != 0 && pos < text.length()) pos++;
+      if(shift)
+      {
+        if(sel0 == sel1)
+        {
+          sel0 = cursor;
+          sel1 = pos;
+        }
+        else
+        {
+          sel1 = pos;
+        }
+      }
+      else selectNone();
       cursor = pos;
     }
     if(input.keyPressedTime(SDLK_LEFT, 0.5, 0.025))
     {
-      if(sel0 == sel1)
-        {if(cursor > 0) cursor--;}
+      last_draw_time = draw_time;
+      if(shift)
+      {
+        if(sel0 == sel1) sel0 = sel1 = cursor;
+        if(cursor > 0) cursor--;
+        if(sel1 > 0) sel1--;
+      }
       else
-        cursor = sel1 = sel0 = (sel1 > sel0 ? sel0 : sel1);
+      {
+        if(sel0 == sel1)
+          {if(cursor > 0) cursor--;}
+        else
+          cursor = sel1 = sel0 = (sel1 > sel0 ? sel0 : sel1);
+      }
     }
     if(input.keyPressedTime(SDLK_RIGHT, 0.5, 0.025))
     {
-      if(sel0 == sel1)
-        {if(cursor < text.length()) cursor++;}
+      last_draw_time = draw_time;
+      if(shift)
+      {
+        if(sel0 == sel1) sel0 = sel1 = cursor;
+        if(cursor < text.length()) cursor++;
+        if(sel1 < text.length()) sel1++;
+      }
       else
-        cursor = sel0 = sel1 = (sel1 < sel0 ? sel0 : sel1);
+      {
+        if(sel0 == sel1)
+          {if(cursor < text.length()) cursor++;}
+        else
+          cursor = sel0 = sel1 = (sel1 < sel0 ? sel0 : sel1);
+      }
     }
     if(input.keyPressedTime(SDLK_DELETE, 0.5, 0.025))
     {
+      last_draw_time = draw_time;
       if(sel0 == sel1 && cursor <= text.size()) text.erase(cursor, 1);
       else if(sel0 != sel1) deleteSelectedText();
     }
     if(input.keyPressedTime(SDLK_BACKSPACE, 0.5, 0.025))
     {
+      last_draw_time = draw_time;
       if(sel0 == sel1 && cursor > 0) text.erase(--cursor, 1);
       else if(sel0 != sel1) deleteSelectedText();
     }
-
   }
+  else selectNone();
   
   if(mouseDoubleClicked(input))
   {
+    last_draw_time = draw_time;
     selectAll();
   }
 }
@@ -286,7 +392,8 @@ int InputLine::mouseToCursor(int mouseX) const
   static const int FONTSIZE = 8; //TODO: use drawer to find out cursor position in text and such
   int relMouse = mouseX - x0 + FONTSIZE / 2;
   relMouse -= title.length() * FONTSIZE;
-  if(relMouse / FONTSIZE < int(text.length())) return relMouse / FONTSIZE;
+  if(relMouse < 0) return 0;
+  else if(relMouse / FONTSIZE < int(text.length())) return relMouse / FONTSIZE;
   else return text.length();
 }
 

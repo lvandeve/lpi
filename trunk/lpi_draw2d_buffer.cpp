@@ -729,7 +729,7 @@ static void blend(unsigned char* ob, size_t oi, const unsigned char* ib, size_t 
                , const ColorRGB& colorMod
                , bool texture_alpha_as_opacity, bool color_alpha_as_opacity, double extra_opacity)
 {
-  int r, g, b, a;
+  int r=0, g=0, b=0, a=0;
 
   if(color_alpha_as_opacity)
   {

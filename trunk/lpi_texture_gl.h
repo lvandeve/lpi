@@ -55,10 +55,8 @@ class TextureGL : public ITexture
       int shiftx; //shift compared to topleft of main texture
       int shifty; //shift compared to topleft of main texture
       
-      Part()
-      : generated(false)
-      {
-      }
+      Part();
+      ~Part();
     };
   
   private:
@@ -71,8 +69,6 @@ class TextureGL : public ITexture
     size_t u2;
     size_t v2;
     
-    size_t partsx; //num parts in x direction
-    size_t partsy; //num parts in y direction
     mutable std::vector<Part> parts;
     
     mutable int openGLContextDestroyedNumber;
@@ -113,7 +109,12 @@ class TextureGL : public ITexture
     size_t getNumParts() const { return parts.size(); }
     const Part& getPart(size_t i) const { return parts[i]; }
     
-    void updateForNewOpenGLContextIfNeeded(int number) const; //the number can be gotten from the ScreenGL with getOpenGLContextDestroyedNumber()
+    /*
+    updateForNewOpenGLContextIfNeeded: on some operating systems (for Windows, not for Linux), SDL handles resizes
+    of the screen in such a way that all OpenGL texture information is lost. This updates it if needed.
+    Returns false if nothing needed to be done, true if it had to reupload the texture due to screen resize.
+    */
+    bool updateForNewOpenGLContextIfNeeded(int number) const; //the number can be gotten from the ScreenGL with getOpenGLContextDestroyedNumber()
     
   private:
     

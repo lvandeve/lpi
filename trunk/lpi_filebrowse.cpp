@@ -56,7 +56,7 @@ std::string IFileBrowse::getChild(const std::string& path, const std::string& ch
 #include <windows.h>
 #include <tchar.h>
 #include <stdio.h>
-
+#include <Shlobj.h>
 #include <sstream>
 
 namespace lpi
@@ -173,6 +173,33 @@ void FileBrowseWin32::ensureDirectoryEndSlash(std::string& path) const
   lpi::ensureDirectoryEndBackslash(path);
 }
 
+std::string FileBrowseWin32::getDefaultDir(DefaultDir dd) const
+{
+  TCHAR szPath[MAX_PATH];
+
+  int csidl = -1;
+  
+  switch(dd)
+  {
+    case DD_HOME: csidl = CSIDL_PERSONAL; break;
+    case DD_USER_APP_SETTINGS: csidl = CSIDL_APPDATA; break;
+    case DD_GLOBAL_APP_SETTINGS: csidl = CSIDL_COMMON_APPDATA; break;
+    default: return "";
+  }
+
+  if(SUCCEEDED(SHGetFolderPath(NULL,
+                               csidl,
+                               NULL,
+                               0,
+                               szPath)))
+  {
+    std::string path = szPath;
+    ensureDirectoryEndBackslash(path);
+    return path;
+  }
+  else return "";
+}
+
 void FileBrowseWin32WithDrives::getFiles(std::vector<std::string>& files, const std::string& directory) const
 {
   if(directory.empty())
@@ -222,7 +249,8 @@ std::string FileBrowseWin32WithDrives::getChild(const std::string& path, const s
 #include <unistd.h>
 #include <dirent.h>
 #include <sstream>
-
+#include <cstdio>
+#include <cstdlib>
 
 namespace lpi
 {
@@ -328,6 +356,44 @@ void FileBrowseLinux::fixSlashes(std::string& path) const
 void FileBrowseLinux::ensureDirectoryEndSlash(std::string& path) const
 {
   lpi::ensureDirectoryEndSlash(path);
+}
+
+std::string FileBrowseLinux::getDefaultDir(DefaultDir dd) const
+{
+  switch(dd)
+  {
+    case DD_HOME:
+    {
+      char* c = std::getenv("HOME");
+      if(c == 0) return "";
+      std::string path = c;
+      ensureDirectoryEndSlash(path);
+      return path;
+    }
+    case DD_USER_APP_SETTINGS:
+    {
+      std::string path;
+      char* c = std::getenv("XDG_CONFIG_HOME");
+      if(c != 0) path = c;
+      if(!path.empty()) ensureDirectoryEndSlash(path);
+      if(path.empty())
+      {
+        char* c = std::getenv("HOME");
+        if(c != 0) path = c;
+        if(!path.empty())
+        {
+          ensureDirectoryEndSlash(path);
+          path += ".config/";
+        }
+      }
+      return path;
+    }
+    case DD_GLOBAL_APP_SETTINGS:
+    {
+      return "/etc/";
+    }
+    default: return "";
+  }
 }
 
 } // namespace lpi
@@ -468,6 +534,12 @@ void FileBrowseBoost::ensureDirectoryEndSlash(std::string& path) const
   lpi::ensureDirectoryEndSlash(path);
 }
 
+std::string FileBrowseBoost::getDefaultDir(DefaultDir dd) const
+{
+  (void)dd;
+  
+  return ""; //not supported yet for the FileBrowseBoost implementation! TODO
+}
 
 } // namespace lpi
 
@@ -513,6 +585,13 @@ void FileBrowseNotSupported::ensureDirectoryEndSlash(std::string& path) const
 {
   (void)path;
 }
+
+std::string FileBrowseBoost::getDefaultDir(DefaultDir dd) const
+{
+  (void)dd;
+  return "";
+}
+
 
 } //namespace lpi
 

@@ -4096,26 +4096,34 @@ unsigned LodePNG_saveFile(const unsigned char* buffer, size_t buffersize, const 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / C++ RAII wrapper                                                       / */
 /* ////////////////////////////////////////////////////////////////////////// */
+#ifdef LODEPNG_COMPILE_ZLIB
 namespace LodeZlib
 {
+#ifdef LODEPNG_COMPILE_DECODER
+  unsigned decompress(std::vector<unsigned char>& out, const unsigned char* in, size_t insize, const LodeZlib_DecompressSettings& settings)
+  {
+    unsigned char* buffer = 0;
+    size_t buffersize = 0;
+    unsigned error = LodeZlib_decompress(&buffer, &buffersize, in, insize, &settings);
+    if(buffer)
+    {
+      out.insert(out.end(), &buffer[0], &buffer[buffersize]);
+      free(buffer);
+    }
+    return error;
+  }
+
   unsigned decompress(std::vector<unsigned char>& out, const std::vector<unsigned char>& in, const LodeZlib_DecompressSettings& settings)
   {
-    unsigned char* buffer = 0;
-    size_t buffersize = 0;
-    unsigned error = LodeZlib_decompress(&buffer, &buffersize, in.empty() ? 0 : &in[0], in.size(), &settings);
-    if(buffer)
-    {
-      out.insert(out.end(), &buffer[0], &buffer[buffersize]);
-      free(buffer);
-    }
-    return error;
+    return decompress(out, in.empty() ? 0 : &in[0], in.size(), settings);
   }
-  
-  unsigned compress(std::vector<unsigned char>& out, const std::vector<unsigned char>& in, const LodeZlib_DeflateSettings& settings)
+#endif //LODEPNG_COMPILE_DECODER
+#ifdef LODEPNG_COMPILE_ENCODER
+  unsigned compress(std::vector<unsigned char>& out, const unsigned char* in, size_t insize, const LodeZlib_DeflateSettings& settings)
   {
     unsigned char* buffer = 0;
     size_t buffersize = 0;
-    unsigned error = LodeZlib_compress(&buffer, &buffersize, in.empty() ? 0 : &in[0], in.size(), &settings);
+    unsigned error = LodeZlib_compress(&buffer, &buffersize, in, insize, &settings);
     if(buffer)
     {
       out.insert(out.end(), &buffer[0], &buffer[buffersize]);
@@ -4123,7 +4131,14 @@ namespace LodeZlib
     }
     return error;
   }
+
+  unsigned compress(std::vector<unsigned char>& out, const std::vector<unsigned char>& in, const LodeZlib_DeflateSettings& settings)
+  {
+    return compress(out, in.empty() ? 0 : &in[0], in.size(), settings);
+  }
+#endif //LODEPNG_COMPILE_ENCODER
 }
+#endif //LODEPNG_COMPILE_ZLIB
 
 namespace LodePNG
 {

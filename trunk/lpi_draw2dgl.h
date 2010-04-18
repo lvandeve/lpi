@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2009 Lode Vandevenne
+Copyright (c) 2005-2010 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -20,8 +20,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 
 //2D drawing with opengl
 
-#ifndef LPI_DRAW2DGL_H_INCLUDED
-#define LPI_DRAW2DGL_H_INCLUDED
+#pragma once
 
 
 #include <vector>
@@ -98,11 +97,13 @@ class Drawer2DGL : public ADrawer2D
     void gradientLine(int x0, int y0, int x1, int y1, const ColorRGB& color1, const ColorRGB& color2);
     void drawGradientDisk(int x, int y, double radius, const ColorRGB& color1, const ColorRGB& color2);
     void drawGradientEllipse(int x, int y, double radiusx, double radiusy, const ColorRGB& color1, const ColorRGB& color2);
+    
+    
+  public:
+    ScreenGL* getScreen() { return screen; }
 };
 
 
 
 
 } //end of namespace lpi
-
-#endif

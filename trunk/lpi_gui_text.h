@@ -45,6 +45,7 @@ class InputLine : public Element //input text line
     unsigned long cursor; //position of the cursor (0 = before first char)
     bool entered; //after you pressed enter!
     double draw_time; //for drawing the blinking cursor
+    double last_draw_time; //time when last done something
     MouseState auto_activate_mouse_state;
     bool control_active;
     mutable bool entering_done;

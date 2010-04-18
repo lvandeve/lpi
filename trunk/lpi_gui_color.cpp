@@ -1993,7 +1993,7 @@ void ColorDialog::drawImpl(IGUIDrawer& drawer) const
 
 bool ColorDialog::pressedOk(const IInput& input)
 {
-  return ok.clicked(input);
+  return ok.clicked(input) || ok2.clicked(input);
 }
 
 void ColorDialog::getColor(ColorRGBd& color) const

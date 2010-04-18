@@ -588,7 +588,7 @@ Dialog::Result MessageBox::getResult() const
 void MessageBox::handleImpl(const IInput& input)
 {
   Dialog::handleImpl(input);
-  if(ok.clicked(input)) setEnabled(false);
+  if(ok.clicked(input) || closeButtonClicked(input)) setEnabled(false);
 }
 
 void MessageBox::drawImpl(IGUIDrawer& drawer) const
@@ -640,6 +640,12 @@ void YesNoWindow::handleImpl(const IInput& input)
 bool YesNoWindow::getValue() const
 {
   return value;
+}
+
+void YesNoWindow::setButtonTexts(const std::string& textYes, const std::string& textNo)
+{
+  yes.makeTextPanel(0, 0, textYes);
+  no.makeTextPanel(0, 0, textNo);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1125,7 +1131,7 @@ void MenuHorizontal::onClear()
 {
   sizes.clear();
   positions.clear();
-  resize(0, 0, 1, 16);
+  resize(0, 0, 1, 20);
 }
 
 void MenuHorizontal::drawImpl(IGUIDrawer& drawer) const
@@ -1191,7 +1197,7 @@ void MenuVertical::onAddItem(const IGUIDrawer& geom)
   {
     int w, h;
     geom.calcTextRectSize(w, h, item.name);
-    size = 20;
+    size = 24;
     w += 8;
     if(item.type == SUBMENU) w += 16; //space for the arrow icon
     if(getSizeX() < w) resize(x0, y0, x0 + w, y1);
@@ -1208,7 +1214,7 @@ void MenuVertical::onOpenSubMenu(const IInput& input, size_t index)
 {
   (void)input;
   Item& item = items[index];
-  item.submenu->moveTo(x1, y0 + positions[index] + 1 - 4);
+  item.submenu->moveTo(x1, y0 + positions[index] + 1 - 2);
 }
 
 void MenuVertical::onClear()
@@ -1270,13 +1276,20 @@ void ToolBar::drawImpl(IGUIDrawer& drawer) const
   for(size_t i = 0; i < items.size(); i++)
   {
     GUIPartMod mod(mouseElement == i, mouseElement == i && mouseDown(drawer.getInput()));
-    int itemWidth = (items[i].type == COMMAND ? TOOLBARICONW : TOOLBARSEPARATORW);
+    int itemWidth = (items[i].type == SEPARATOR ? TOOLBARSEPARATORW : TOOLBARICONW);
     
     if(items[i].type == COMMAND)
     {
       drawer.drawGUIPart(GP_TOOLBAR_BUTTON, x0 + x, y0, x0 + x + itemWidth, y0 + TOOLBARICONH, mod);
       drawer.convertTextureIfNeeded(items[i].icon->texture);
       drawer.drawTextureCentered(items[i].icon->texture, x0 + x + itemWidth / 2, y0 + TOOLBARICONH / 2);
+    }
+    else if(items[i].type == TOGGLE)
+    {
+      drawer.drawGUIPart(GP_TOOLBAR_BUTTON, x0 + x, y0, x0 + x + itemWidth, y0 + TOOLBARICONH, mod);
+      drawer.convertTextureIfNeeded(items[i].icon->texture);
+      drawer.drawTextureCentered(items[i].icon->texture, x0 + x + itemWidth / 2, y0 + TOOLBARICONH / 2);
+      if(items[i].toggle) drawer.drawRectangle(x0 + x + 1, y0 + 1, x0 + x + itemWidth - 1, y0 + TOOLBARICONH - 1, RGB_Red, false);
     }
     else if(items[i].type == SEPARATOR)
     {
@@ -1302,7 +1315,9 @@ void ToolBar::handleImpl(const IInput& input)
   {
     if(clicked(input, (MouseButton)i))
     {
-      lastItem[i] = getMouseIndex(input);
+      size_t j = getMouseIndex(input);
+      lastItem[i] = j;
+      if(i == 0 && items[j].type == TOGGLE) items[j].toggle = !items[j].toggle;
     }
   }
 }
@@ -1317,7 +1332,7 @@ size_t ToolBar::getMouseIndex(const IInput& input) const
 
   for(size_t i = 0; i < items.size(); i++)
   {
-    totalSize += (items[i].type == COMMAND ? TOOLBARICONW : TOOLBARSEPARATORW);
+    totalSize += (items[i].type == SEPARATOR ? TOOLBARSEPARATORW : TOOLBARICONW);
     if(mousePos < totalSize) return i;
   }
 
@@ -1334,6 +1349,17 @@ size_t ToolBar::addCommand(HTexture* icon, const std::string& tooltip)
   return getNumItems() - 1;
 }
 
+size_t ToolBar::addToggle(HTexture* icon, const std::string& tooltip, bool enabled)
+{
+  items.resize(items.size() + 1);
+  items.back().icon = icon;
+  items.back().tooltip = tooltip;
+  items.back().type = TOGGLE;
+  items.back().toggle = enabled;
+  resize(x0, y0, x1 + TOOLBARICONW, y0 + TOOLBARICONH);
+  return getNumItems() - 1;
+}
+
 size_t ToolBar::addSeparator()
 {
   items.resize(items.size() + 1);
@@ -1343,6 +1369,15 @@ size_t ToolBar::addSeparator()
   return getNumItems() - 1;
 }
 
+bool ToolBar::toggleEnabled(size_t i) const
+{
+  return items[i].toggle;
+}
+
+void ToolBar::setToggle(size_t i, bool enabled)
+{
+  items[i].toggle = enabled;
+}
 
 void ToolBar::clear()
 {
@@ -1374,6 +1409,7 @@ size_t ToolBar::itemClicked(const IInput& input, MouseButton button) const
   return result;
 }
 
+////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -1474,34 +1510,38 @@ void showMessageBox(MainContainer& c, IModalFrameHandler& frame, const std::stri
   
   lpi::gui::MessageBox dialog(frame.getDrawer(), text, title);
   
+  int numlines = 0;
+  for(size_t i = 0; i < text.size(); i++) if(text[i] == 10) numlines++;
+  int height = std::max(200, numlines * 9 + 64);
+  
   //TODO: make the size of the dialog depend on the text size
-  dialog.resize(0, 0, 500, 200);
+  dialog.resize(0, 0, 500, height);
   dialog.moveCenterTo((x0+x1)/2, (y0+y1)/2);
   c.doModalDialog(dialog, frame);
 }
 
-lpi::gui::Dialog::Result getFileNameModal(MainContainer& c, IModalFrameHandler& frame, IFileBrowse* browser, std::string& filename, const std::string& current_path, bool save)
+lpi::gui::Dialog::Result getFileNameModal(MainContainer& c, IModalFrameHandler& frame, IFileBrowse* browser, std::string& filename, const std::string& current_path, bool save, FileDialogPersist* persist)
 {
   (void)current_path; //TODO
   
   int x0, y0, x1, y1;
   frame.getScreenSize(x0, y0, x1, y1);
 
-  lpi::gui::FileDialog dialog(frame.getDrawer(), browser, save, false);
+  lpi::gui::FileDialog dialog(frame.getDrawer(), browser, save, false, persist);
   dialog.moveCenterTo((x0+x1)/2, (y0+y1)/2);
   c.doModalDialog(dialog, frame);
   filename = dialog.getFileName();
   return dialog.getResult();
 }
 
-lpi::gui::Dialog::Result getFileNamesModal(MainContainer& c, IModalFrameHandler& frame, IFileBrowse* browser, std::vector<std::string>& filenames, const std::string& current_path)
+lpi::gui::Dialog::Result getFileNamesModal(MainContainer& c, IModalFrameHandler& frame, IFileBrowse* browser, std::vector<std::string>& filenames, const std::string& current_path, FileDialogPersist* persist)
 {
   (void)current_path; //TODO
   
   int x0, y0, x1, y1;
   frame.getScreenSize(x0, y0, x1, y1);
 
-  lpi::gui::FileDialog dialog(frame.getDrawer(), browser, false, true);
+  lpi::gui::FileDialog dialog(frame.getDrawer(), browser, false, true, persist);
   dialog.moveCenterTo((x0+x1)/2, (y0+y1)/2);
   c.doModalDialog(dialog, frame);
   for(size_t i = 0; i < dialog.getNumFiles(); i++)
@@ -1537,6 +1577,45 @@ lpi::gui::Dialog::Result getFileNamesModal(MainContainer& c, IModalFrameHandler&
 }
 
 
+
+bool getYesNoModal(MainContainer& c, IModalFrameHandler& frame, const std::string& question)
+{
+  int x0, y0, x1, y1;
+  frame.getScreenSize(x0, y0, x1, y1);
+  
+  YesNoWindow dialog(frame.getDrawer(), question);
+  
+  int numlines = 0;
+  for(size_t i = 0; i < question.size(); i++) if(question[i] == 10) numlines++;
+  int height = std::max(200, numlines * 9 + 64);
+  //TODO: make the size of the dialog depend on the text size
+  dialog.resize(0, 0, 500, height);
+
+  dialog.moveCenterTo((x0+x1)/2, (y0+y1)/2);
+  c.doModalDialog(dialog, frame);
+
+  return dialog.getValue();
+}
+
+bool getYesNoModal(MainContainer& c, IModalFrameHandler& frame, const std::string& question, const std::string& textYes, const std::string& textNo)
+{
+  int x0, y0, x1, y1;
+  frame.getScreenSize(x0, y0, x1, y1);
+
+  YesNoWindow dialog(frame.getDrawer(), question);
+  dialog.setButtonTexts(textYes, textNo);
+
+  int numlines = 0;
+  for(size_t i = 0; i < question.size(); i++) if(question[i] == 10) numlines++;
+  int height = std::max(200, numlines * 9 + 64);
+  //TODO: make the size of the dialog depend on the text size
+  dialog.resize(0, 0, 500, height);
+
+  dialog.moveCenterTo((x0+x1)/2, (y0+y1)/2);
+  c.doModalDialog(dialog, frame);
+
+  return dialog.getValue();
+}
 
 } //namespace gui
 } //namespace lpi

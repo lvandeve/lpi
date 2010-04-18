@@ -66,11 +66,11 @@ int findRegion(int x, int y, int left, int top, int right, int bottom)
   int code=0;
   if(y >= bottom)
   code |= 1; //top
-  else if( y < top)
+  else if(y < top)
   code |= 2; //bottom
   if(x >= right)
   code |= 4; //right
-  else if ( x < left)
+  else if (x < left)
   code |= 8; //left
   return(code);
 }
@@ -82,8 +82,8 @@ bool clipLine(int& ox0, int& oy0, int& ox1, int& oy1, int ix0, int iy0, int ix1,
   code1 = findRegion(ix1, iy1, left, top, right, bottom);
   do  //In theory, this can never end up in an infinite loop, it'll always come in one of the trivial cases eventually
   {
-    if(!(code0 | code1)) accept = done = 1;  //accept because both endpoints are in screen or on the border, trivial accept
-    else if(code0 & code1) done = 1; //the line isn't visible on screen, trivial reject
+    if(!(code0 | code1)) accept = done = true;  //accept because both endpoints are in screen or on the border, trivial accept
+    else if(code0 & code1) done = true; //the line isn't visible on screen, trivial reject
     else  //if no trivial reject or accept, continue the loop
     {
       int x, y;

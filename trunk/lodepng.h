@@ -375,9 +375,11 @@ unsigned LodePNG_saveFile(const unsigned char* buffer, size_t buffersize, const 
 namespace LodeZlib
 {
 #ifdef LODEPNG_COMPILE_DECODER
+  unsigned decompress(std::vector<unsigned char>& out, const unsigned char* in, size_t insize, const LodeZlib_DecompressSettings& settings = LodeZlib_defaultDecompressSettings);
   unsigned decompress(std::vector<unsigned char>& out, const std::vector<unsigned char>& in, const LodeZlib_DecompressSettings& settings = LodeZlib_defaultDecompressSettings);
 #endif //LODEPNG_COMPILE_DECODER
 #ifdef LODEPNG_COMPILE_ENCODER
+  unsigned compress(std::vector<unsigned char>& out, const unsigned char* in, size_t insize, const LodeZlib_DeflateSettings& settings = LodeZlib_defaultDeflateSettings);
   unsigned compress(std::vector<unsigned char>& out, const std::vector<unsigned char>& in, const LodeZlib_DeflateSettings& settings = LodeZlib_defaultDeflateSettings);
 #endif //LODEPNG_COMPILE_ENCODER
 }
@@ -1611,7 +1613,7 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
-*) 14 mar 2010: fixed bug where more memory than needed was allocated for char buffers.
+*) 14 mar 2010: fixed bug where too much memory was allocated for char buffers.
 *) 02 sep 2008: fixed bug where it could create empty tree that linux apps could
     read by ignoring the problem but windows apps couldn't.
 *) 06 jun 2008: added more error checks for out of memory cases.
@@ -1704,8 +1706,6 @@ My email address is (puzzle the account and domain together with an @ symbol):
 Domain: gmail dot com.
 Account: lode dot vandevenne.
 
-Thanks to everyone who reported bugs and suggestions!
 
-
-Copyright (c) 2005-2010 Lode Vandevenne
+Copyright (c) 2005-2008 Lode Vandevenne
 */

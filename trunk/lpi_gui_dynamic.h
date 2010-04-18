@@ -454,6 +454,46 @@ class DynamicEnum : public TDymamicPageControl<T>
     }
 };
 
+//a simple way to make a boolean that has two names instead of being a simple checkbox, with a dropdown. So this is the same as DynamicEnum, but with only two states and a boolean as parameter type.
+class DynamicDropDownBool : public TDymamicPageControl<bool>
+{
+  protected:
+    DropDownList list;
+
+  public:
+    DynamicDropDownBool(bool* value, const std::string& nameFalse, const std::string& nameTrue, const IGUIDrawer& geom)
+    : list(geom)
+    {
+      TDymamicPageControl<bool>::bind = value;
+      std::vector<std::string> names; names.push_back(nameFalse); names.push_back(nameTrue);
+      list.setItems(names);
+      
+      list.resize(0, 0, 1, 16);
+      this->addSubElement(&list, Sticky(0.0, 0, 0.5,  -list.getSizeY() / 2, 1.0, 0, 0.5, list.getSizeY() / 2));
+      setValue(value);
+    }
+    
+    virtual void getValue(bool* value)
+    {
+      *value = list.getSelectedItem() == 1;
+    }
+    
+    virtual void setValue(bool* value)
+    {
+      list.setSelectedItem(*value ? 1 : 0);
+    }
+    
+    virtual void handleImpl(const IInput& input)
+    {
+      list.handle(input);
+    }
+
+    virtual void drawImpl(IGUIDrawer& drawer) const
+    {
+      list.draw(drawer);
+    }
+};
+
 class DynamicColor : public TDymamicPageControl<ColorRGB>
 {
   private:
@@ -503,7 +543,7 @@ class DynamicFile : public TDymamicPageControl<std::string>
 
   public:
 
-    DynamicFile(std::string* value, const IGUIDrawer& geom, IFileBrowse* browser);
+    DynamicFile(std::string* value, const IGUIDrawer& geom, IFileBrowse* browser, FileDialogPersist* persist);
     virtual void getValue(std::string* value);
     virtual void setValue(std::string* value);
     virtual void handleImpl(const IInput& input);
