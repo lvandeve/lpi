@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2010 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -19,9 +19,9 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 */
 
 #include "lpi_text_drawer_int.h"
-#include "lpi_draw2dgl.h"
-#include "lodepng.h"
 
+#include "lpi_draw2d.h"
+#include "lodepng.h"
 
 namespace lpi
 {
@@ -32,7 +32,7 @@ namespace lpi
 
 InternalTextDrawer::InternalTextDrawer(const ITextureFactory& factory, IDrawer2D* drawer)
 : drawer(drawer)
-, glyphs(&factory)
+, glyphs(&factory, false)
 {
 }
 
@@ -389,9 +389,9 @@ void InternalTextDrawer::calcTextCharToPos(int& x, int& y, size_t index, const s
   //TODO!
 }
 
-InternalGlyphs::InternalGlyphs(const ITextureFactory* factory)
+InternalGlyphs::InternalGlyphs(const ITextureFactory* factory, bool allInOneBigTexture)
 {
-  initBuiltInFontTextures(factory);
+  initBuiltInFontTextures(factory, allInOneBigTexture);
 }
 
 InternalGlyphs::Glyphs::~Glyphs()
@@ -402,9 +402,6 @@ InternalGlyphs::Glyphs::~Glyphs()
 InternalGlyphs::~InternalGlyphs()
 {
 }
-
-
-
 
 const std::string& getBuiltIn8x8FontTexture()
 {
@@ -527,22 +524,33 @@ Bpvs48wFNdmNj2aBO0gBPykMWgAArlFWRoV1udAAAAAASUVORK5CYII=\
 }
 
 
-void InternalGlyphs::initBuiltInFontTextures(const ITextureFactory* factory)
+void InternalGlyphs::initBuiltInFontTextures(const ITextureFactory* factory, bool allInOneBigTexture)
 {
   AlphaEffect AE_BlackKey(128, 255, lpi::RGB_Black);
 
-  loadTexturesFromBase64PNG(glyphs8x8.texture, factory, getBuiltIn8x8FontTexture(), 8, 8, AE_BlackKey);
   glyphs8x8.width = 8;
   glyphs8x8.height = 8;
-  loadTexturesFromBase64PNG(glyphs7x9.texture, factory, getBuiltIn7x9FontTexture(), 7, 9, AE_BlackKey);
   glyphs7x9.width = 7;
   glyphs7x9.height = 9;
-  loadTexturesFromBase64PNG(glyphs6x6.texture, factory, getBuiltIn6x6FontTexture(), 6, 6, AE_BlackKey);
   glyphs6x6.width = 6;
   glyphs6x6.height = 6;
-  loadTexturesFromBase64PNG(glyphs4x5.texture, factory, getBuiltIn4x5FontTexture(), 4, 5, AE_BlackKey);
   glyphs4x5.width = 4;
   glyphs4x5.height = 5;
+
+  if(allInOneBigTexture)
+  {
+    loadTexturesFromBase64PNG(glyphs8x8.texture, factory, getBuiltIn8x8FontTexture(), 8*16, 8*16, AE_BlackKey);
+    loadTexturesFromBase64PNG(glyphs7x9.texture, factory, getBuiltIn7x9FontTexture(), 7*16, 9*16, AE_BlackKey);
+    loadTexturesFromBase64PNG(glyphs6x6.texture, factory, getBuiltIn6x6FontTexture(), 6*16, 6*16, AE_BlackKey);
+    loadTexturesFromBase64PNG(glyphs4x5.texture, factory, getBuiltIn4x5FontTexture(), 4*16, 5*16, AE_BlackKey);
+  }
+  else
+  {
+    loadTexturesFromBase64PNG(glyphs8x8.texture, factory, getBuiltIn8x8FontTexture(), 8, 8, AE_BlackKey);
+    loadTexturesFromBase64PNG(glyphs7x9.texture, factory, getBuiltIn7x9FontTexture(), 7, 9, AE_BlackKey);
+    loadTexturesFromBase64PNG(glyphs6x6.texture, factory, getBuiltIn6x6FontTexture(), 6, 6, AE_BlackKey);
+    loadTexturesFromBase64PNG(glyphs4x5.texture, factory, getBuiltIn4x5FontTexture(), 4, 5, AE_BlackKey);
+  }
 }
 
 

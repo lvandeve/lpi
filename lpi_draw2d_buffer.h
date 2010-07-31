@@ -133,7 +133,11 @@ class ADrawer2DBuffer : public ADrawer2D //draws on a buffer
     virtual void drawTextureSized(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureSizedRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White);
-    
+    virtual void drawTextureGradient(const ITexture* texture, int x, int y
+                                   , const ColorRGB& color00, const ColorRGB& color01, const ColorRGB& color10, const ColorRGB& color11);
+    virtual void drawTextureRepeatedGradient(const ITexture* texture, int x0, int y0, int x1, int y1
+                                           , const ColorRGB& color00, const ColorRGB& color01, const ColorRGB& color10, const ColorRGB& color11);
+
     /*
     This sets whether you want the alpha channel of textures to be treated as opacity when drawing, or as literal.
     When treated as opacity, the shape is drawn over the existing buffer.

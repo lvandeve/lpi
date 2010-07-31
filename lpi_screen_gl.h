@@ -24,6 +24,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include <vector>
 
 #include "lpi_color.h"
+#include "lpi_gl_context.h"
 
 namespace lpi
 {
@@ -43,7 +44,9 @@ class ScreenGL
     int screenMode; //-1: uninited, 0: 2d thin geometry, 1: 2d filled geometry & textures, 2: 3d
     double lastNear, lastFar;
     
-    int openGLContextDestroyedNumber; // see getOpenGLContextDestroyedNumber
+    GLContext context;
+
+    bool print_debug_messages;
 
   private:
     void lock();
@@ -60,6 +63,7 @@ class ScreenGL
     
   public:
     ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, bool resizable, const char* text, bool print_debug_messages=false);
+    ~ScreenGL();
     
     void cls(const ColorRGB& color = RGB_Black);
     void redraw();
@@ -87,8 +91,7 @@ class ScreenGL
     
     void changeResolution(int width, int height, bool fullscreen, bool enable_fsaa, bool resizable, const char* text, bool print_debug_messages=false);
     
-    int getOpenGLContextDestroyedNumber() const { return openGLContextDestroyedNumber; } //every time OpenGL context is destroyed, this returns a new number; Used by textures to detect that they need to be uploaded again.
-    
+    GLContext* getGLContext();
 };
 
 

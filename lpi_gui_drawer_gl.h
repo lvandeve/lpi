@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2009 Lode Vandevenne
+Copyright (c) 2005-2010 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -26,7 +26,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_gui_base.h"
 #include "lpi_color.h"
 #include "lpi_texture.h"
-#include "lpi_text_drawer_int.h"
+#include "lpi_text_drawer_gl.h"
 #include "lpi_input_sdl.h"
 #include "lpi_guipartdraw_int.h"
 
@@ -40,7 +40,7 @@ class GUIDrawerGL : public AGUIDrawer
   private:
     InputSDL input;
     Drawer2DGL drawer;
-    InternalTextDrawer textdrawer;
+    TextDrawerGL textdrawer;
     GUIPartDrawerInternal guidrawer;
   
   protected:

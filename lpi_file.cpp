@@ -19,6 +19,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 */
 
 #include "lpi_file.h"
+#include "lpi_os.h"
 
 #include <algorithm>
 
@@ -110,7 +111,11 @@ std::string getFileNamePathPart(const std::string& filename, bool include_end_sl
   int last = -1;
   for(size_t i = 0; i < filename.size(); i++)
   {
+#if !defined(LPI_OS_AMIGA) && !defined(LPI_OS_AROS) //todo: remove all platform dependent code from lpi_file.cpp and move it to lpi_filebrowse.cpp
     if(filename[i] == '/' || filename[i] == '\\') last = i;
+#else
+	if(filename[i] == '/' || filename[i] == ':') last = i;
+#endif
   }
   
   return last < 0 ? std::string("") : filename.substr(0, include_end_slash ? last + 1 : last);
@@ -122,7 +127,11 @@ std::string getFileNameFilePart(const std::string& filename)
   int lastslash = -1;
   for(size_t i = 0; i < filename.size(); i++)
   {
+#if !defined(LPI_OS_AMIGA) && !defined(LPI_OS_AROS) //todo: remove all platform dependent code from lpi_file.cpp and move it to lpi_filebrowse.cpp
     if(filename[i] == '/' || filename[i] == '\\') lastslash = i;
+#else
+    if(filename[i] == '/' || filename[i] == ':') lastslash = i;
+#endif
   }
   
   //find the last dot
@@ -179,7 +188,11 @@ std::string getFileNameFileExtPart(const std::string& filename)
   int last = -1;
   for(size_t i = 0; i < filename.size(); i++)
   {
+#if !defined(LPI_OS_AMIGA) && !defined(LPI_OS_AROS) //todo: remove all platform dependent code from lpi_file.cpp and move it to lpi_filebrowse.cpp
     if(filename[i] == '/' || filename[i] == '\\') last = i;
+#else
+    if(filename[i] == '/' || filename[i] == ':') last = i;
+#endif
   }
   
   return last < 0 ? filename : filename.substr(last + 1, filename.size() - last - 1);
@@ -203,7 +216,11 @@ void giveFilenameBackslashes(std::string& filename)
 
 void ensureDirectoryEndSlash(std::string& filename)
 {
+#if !defined(LPI_OS_AMIGA) && !defined(LPI_OS_AROS) //todo: remove all platform dependent code from lpi_file.cpp and move it to lpi_filebrowse.cpp
   if(!filename.empty() && filename[filename.size() - 1] != '/') filename += '/';
+#else
+  if(!filename.empty() && filename[filename.size() - 1] != '/' && filename[filename.size() - 1] != ':') filename += '/';
+#endif
 }
 
 void ensureDirectoryEndBackslash(std::string& filename)

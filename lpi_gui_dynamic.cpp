@@ -21,20 +21,14 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_gui_dynamic.h"
 
 #include <iostream>
+#include <SDL/SDL.h> //this is for the key codes like SDLK_TAB
 
 namespace lpi
 {
 namespace gui
 {
 
-void DynamicColor::ctor()
-{
-  this->resize(0, 0, 20, 20);
-  box.resize(0, 0, 12, 12);
-  box.move(1, 1);
-  this->addSubElement(&box, Sticky(0.0,0, 0.5,-box.getSizeY() / 2, 0.0,box.getSizeX(), 0.5,box.getSizeY() / 2));
-  edit.setEnabled(false);
-}
+static ColorRGB rectangleColor(255, 255, 255, 128);
 
 DynamicColor::DynamicColor(ColorRGB* value, const IGUIDrawer& geom)
 : box(value)
@@ -42,6 +36,15 @@ DynamicColor::DynamicColor(ColorRGB* value, const IGUIDrawer& geom)
 {
   this->bind = value;
   ctor();
+}
+
+void DynamicColor::ctor()
+{
+  this->resize(0, 0, 20, CONTROLHEIGHT);
+  box.resize(0, 0, 12, 12);
+  box.move(1, 1);
+  this->addSubElement(&box, Sticky(0.0,0, 0.5,-box.getSizeY() / 2, 0.0,box.getSizeX(), 0.5,box.getSizeY() / 2));
+  edit.setEnabled(false);
 }
 
 void DynamicColor::getValue(ColorRGB* value)
@@ -88,21 +91,25 @@ void DynamicColor::manageHoverImpl(IHoverManager& hover)
 }
 ////////////////////////////////////////////////////////////////////////////////
 
-void DynamicColord::ctor()
-{
-  this->resize(0, 0, 20, 20);
-  box.resize(0, 0, 12, 12);
-  box.move(1, 1);
-  this->addSubElement(&box, Sticky(0.0,0, 0.5,-box.getSizeY() / 2, 0.0,box.getSizeX(), 0.5,box.getSizeY() / 2));
-  edit.setEnabled(false);
-}
-
 DynamicColord::DynamicColord(ColorRGBd* value, const IGUIDrawer& geom)
 : box(value)
 , edit(geom)
 {
   this->bind = value;
   ctor();
+}
+
+DynamicColord::~DynamicColord()
+{
+}
+
+void DynamicColord::ctor()
+{
+  this->resize(0, 0, 20, CONTROLHEIGHT);
+  box.resize(0, 0, 12, 12);
+  box.move(1, 1);
+  this->addSubElement(&box, Sticky(0.0,0, 0.5,-box.getSizeY() / 2, 0.0,box.getSizeX(), 0.5,box.getSizeY() / 2));
+  edit.setEnabled(false);
 }
 
 void DynamicColord::getValue(ColorRGBd* value)
@@ -151,7 +158,7 @@ void DynamicColord::manageHoverImpl(IHoverManager& hover)
 
 void DynamicFile::ctor()
 {
-  this->resize(0, 0, 20, 20);
+  this->resize(0, 0, 20, CONTROLHEIGHT);
   pick.resize(0, 0, 12, 12);
   this->addSubElement(&pick, Sticky(1.0,-pick.getSizeX(), 0.5,-pick.getSizeY() / 2, 1.0,0, 0.5,pick.getSizeY() / 2));
   edit.setEnabled(false);
@@ -213,14 +220,14 @@ void DynamicFile::manageHoverImpl(IHoverManager& hover)
 }
 ////////////////////////////////////////////////////////////////////////////////
 
-const static double TITLE_WIDTH = 0.5;
+const static double TITLE_WIDTH = 0.45;
 
 void DynamicPage::RowControl::draw(int x0, int y0, int x1, int y1, IGUIDrawer& drawer) const
 {
   int xb = (int)((x1-x0) * TITLE_WIDTH); //"x-between": the divider between title and value
-  drawer.drawRectangle(x0, y0, x0 + xb, y1, RGB_White, false);
-  drawer.drawRectangle(x0 + xb, y0, x1, y1, RGB_White, false);
-  drawer.drawGUIPartText(lpi::gui::GPT_DEFAULT_TEXT00, name, x0 + 4, y0 + 4, xb, y1 - 4); //drawer.drawText(name, x0 + 4, y0 + 4);
+  drawer.drawRectangle(x0, y0, x0 + xb, y1 + 1, rectangleColor, false);
+  drawer.drawRectangle(x0 + xb, y0, x1, y1 + 1, rectangleColor, false);
+  drawer.drawGUIPartText(lpi::gui::GPT_DEFAULT_TEXT00, name, x0 + 4, y0 + 3, xb, y1 - 4); //drawer.drawText(name, x0 + 4, y0 + 4);
   control->draw(drawer);
 }
 
@@ -231,22 +238,32 @@ DynamicPage::RowControl::~RowControl()
 
 void DynamicPage::RowText::draw(int x0, int y0, int x1, int y1, IGUIDrawer& drawer) const
 {
-  drawer.drawRectangle(x0, y0, x1, y1, RGB_White, false);
+  drawer.drawRectangle(x0, y0, x1, y1 + 1, rectangleColor, false);
   drawer.drawText(text, x0 + 4, y0 + 4);
 }
 
 DynamicPage::DynamicPage()
 : enableTitle(false)
+, activeNumber(-1)
+, totalSizeY(0)
 {
   resize(0, 0, 200, 200); //if not resized to something at begin, then added rows go wrong... BUG! :(
 }
 
 DynamicPage::~DynamicPage()
 {
-  for(size_t i = 0; i < rows.size(); i++)
-    delete rows[i];
+  clear();
 }
 
+void DynamicPage::clear()
+{
+  clearSubElements();
+  for(size_t i = 0; i < rows.size(); i++)
+    delete rows[i];
+  rows.clear();
+  activeNumber = -1;
+  totalSizeY = 0;
+}
 
 void DynamicPage::controlToValue()
 {
@@ -263,32 +280,51 @@ void DynamicPage::valueToControl()
 size_t DynamicPage::addControl(const std::string& name, IDynamicControl* control)
 {
   rows.push_back(new RowControl(control, name));
+  
+  size_t controlheight = control->getSizeY();
 
   size_t i = rows.size() - 1;
   int xb = (int)(getSizeX() * TITLE_WIDTH);
   int titleheight = (enableTitle ? TITLEHEIGHT : 0);
-  control->resize(x0 + xb + 1, y0 + titleheight + i * CONTROLHEIGHT + 1, x1, y0 + titleheight + (i + 1) * CONTROLHEIGHT);
-  addSubElement(control, Sticky(TITLE_WIDTH,1, 0.0,titleheight + i * CONTROLHEIGHT + 1, 1.0,0, 0.0,titleheight + (i + 1) * CONTROLHEIGHT));
+  control->resize(x0 + xb + 1, y0 + titleheight + i * controlheight + 1, x1, y0 + titleheight + (i + 1) * controlheight);
+  addSubElement(control, Sticky(TITLE_WIDTH,1, 0.0,totalSizeY, 1.0,0, 0.0,totalSizeY+controlheight));
+  
+  totalSizeY += controlheight;
   
   return rows.size() - 1;
+}
+
+int DynamicPage::mouseToRow(int mouseY) const
+{
+  int my = mouseY - getY0();
+  if(enableTitle) my -= TITLEHEIGHT;
+  int h = 0;
+  for(int i = 0; i < (int)rows.size(); i++)
+  {
+    if(my < h) return i - 1;
+    h += rows[i]->getHeight();
+  }
+  return -1;
 }
 
 size_t DynamicPage::addTextRow(const std::string& text)
 {
   rows.push_back(new RowText(text));
-  
+  totalSizeY += CONTROLHEIGHT;
   return rows.size() - 1;
 }
 
 void DynamicPage::addToolTipToLastRow(const std::string& text)
 {
-  rows.back()->tooltip = text;
+  if(!rows.empty())
+  {
+    rows.back()->tooltip = text;
+  }
 }
 
 void DynamicPage::drawToolTip(IGUIDrawer& drawer) const
 {
-  int my = drawer.getInput().mouseY() - getY0();
-  int index = (my - (enableTitle ? TITLEHEIGHT : 0)) / CONTROLHEIGHT;
+  int index = mouseToRow(drawer.getInput().mouseY());
   if(index >= 0 && index < (int)rows.size())
   {
     if(!rows[index]->tooltip.empty())
@@ -300,7 +336,7 @@ void DynamicPage::drawImpl(IGUIDrawer& drawer) const
 {
   if(enableTitle)
   {
-    drawer.drawRectangle(x0, y0, x1, y0 + TITLEHEIGHT, RGB_White, false);
+    drawer.drawRectangle(x0, y0, x1, y0 + TITLEHEIGHT, rectangleColor, false);
     drawer.drawText(title, x0 + 4, y0 + 4);
   }
   
@@ -329,13 +365,106 @@ void DynamicPage::handleImpl(const IInput& input)
   for(size_t i = 0; i < rows.size(); i++)
     rows[i]->handle(input);
   
-  setSizeY((enableTitle ? TITLEHEIGHT : 0) + rows.size() * CONTROLHEIGHT);
+  setSizeY(totalSizeY);
+  
+  if(input.keyPressed(SDLK_TAB))
+  {
+    int active = getActiveNumber();
+    if(active >= 0)
+    {
+      IDynamicControl* control = getControl(active);
+      control->tabDeActivate();
+      int j = active;
+      int origj = j;
+      if(input.keyDown(SDLK_LSHIFT))
+      {
+        for(;;)
+        {
+          j--;
+          if(j < 0) j = rows.size() - 1;
+          if(j == origj) break;
+          IDynamicControl* control = getControl(j);
+          if(control && control->canTab()) break;
+        }
+      }
+      else
+      {
+        for(;;)
+        {
+          j++;
+          if(j >= (int)rows.size()) j = 0;
+          if(j == origj) break;
+          IDynamicControl* control = getControl(j);
+          if(control && control->canTab()) break;
+        }
+      }
+      
+      IDynamicControl* newControl = getControl(j);
+      if(newControl)
+      {
+        newControl->tabActivate();
+        activeNumber = j;
+      }
+    }
+  }
 }
 
 void DynamicPage::setTitle(const std::string& title)
 {
   enableTitle = true;
   this->title = title;
+  totalSizeY += TITLEHEIGHT;
+}
+
+int DynamicPage::getKeyboardFocus() const
+{
+  int parentresult = ElementComposite::getKeyboardFocus();
+  
+  int active = getActiveNumber();
+  if(active >= 0)
+  {
+    activeNumber = active;
+    return parentresult | lpi::gui::KM_TAB;
+  }
+  else return parentresult;
+}
+
+IDynamicControl* DynamicPage::getControl(size_t index) const
+{
+  if(RowControl* c = dynamic_cast<RowControl*>(rows[index]))
+  {
+    return c->control;
+  }
+  return 0;
+}
+
+int DynamicPage::getActiveNumber() const
+{
+  const IDynamicControl* control = 0;
+  
+  if(activeNumber >= 0)
+  {
+    if(IDynamicControl* c = getControl(activeNumber))
+    {
+      control = c;
+    }
+  }
+  
+  if(activeNumber >= 0 && control && control->tabIsActive())
+  {
+    return activeNumber;
+  }
+  else
+  {
+    for(size_t i = 0; i < rows.size(); i++)
+    {
+      if(IDynamicControl* c = getControl(i))
+      {
+        if(c->tabIsActive()) return i;
+      }
+    }
+  }
+  return -1;
 }
 
 } //namespace gui

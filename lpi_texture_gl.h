@@ -24,6 +24,8 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include <iostream>
 
 #include "lpi_texture.h"
+#include "lpi_gl_context.h"
+
 #include <SDL/SDL.h>
 
 
@@ -44,7 +46,7 @@ class TextureGL : public ITexture
   
     struct Part
     {
-      bool generated;
+      int generated_id; //-1 if not generated, id of GL context otherwise
       GLuint texture; //the unique OpenGL texture "name" to identify ourselves
       size_t u;
       size_t v;
@@ -52,10 +54,12 @@ class TextureGL : public ITexture
       size_t u2;
       size_t v2;
       
+      GLContext* context;
+      
       int shiftx; //shift compared to topleft of main texture
       int shifty; //shift compared to topleft of main texture
       
-      Part();
+      Part(GLContext* context);
       ~Part();
     };
   
@@ -71,7 +75,7 @@ class TextureGL : public ITexture
     
     mutable std::vector<Part> parts;
     
-    mutable int openGLContextDestroyedNumber;
+    GLContext* context;
     
     
   public:
@@ -80,7 +84,7 @@ class TextureGL : public ITexture
     static const size_t MAXX = 1024;
     static const size_t MAXY = 1024;
   
-    TextureGL();
+    TextureGL(GLContext* context);
     ~TextureGL();
     
     virtual void setSize(size_t u, size_t v) { this->u = u; this->v = v; makeBuffer(); }
@@ -110,11 +114,11 @@ class TextureGL : public ITexture
     const Part& getPart(size_t i) const { return parts[i]; }
     
     /*
-    updateForNewOpenGLContextIfNeeded: on some operating systems (for Windows, not for Linux), SDL handles resizes
-    of the screen in such a way that all OpenGL texture information is lost. This updates it if needed.
-    Returns false if nothing needed to be done, true if it had to reupload the texture due to screen resize.
+    updateForNewOpenGLContextIfNeeded: If the GL context changed (previous destroyed, new one created),
+    the texture needs to be reuploaded. If this function is called, the texture will detect that it
+    has been destroyed by checking the context member.
     */
-    bool updateForNewOpenGLContextIfNeeded(int number) const; //the number can be gotten from the ScreenGL with getOpenGLContextDestroyedNumber()
+    bool updateForNewOpenGLContextIfNeeded() const;
     
   private:
     
@@ -127,6 +131,18 @@ class TextureGL : public ITexture
     //get/set buffer that has the (possible non power of two) size of the wanted image (u * v RGBA pixels)
     void getTextAlignedBuffer(std::vector<unsigned char>& out);
     void setTextAlignedBuffer(const std::vector<unsigned char>& in);
+};
+
+/*
+Default implementation of texturefactory: templatized for convenience
+*/
+class TextureFactoryGL : public ITextureFactory
+{
+  private:
+    GLContext* context;
+  public:
+    TextureFactoryGL(GLContext* context) : context(context) {};
+    virtual TextureGL* createNewTexture() const { return new TextureGL(context); }
 };
 
 } //namespace lpi

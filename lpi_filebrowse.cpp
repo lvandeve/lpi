@@ -49,7 +49,7 @@ std::string IFileBrowse::getChild(const std::string& path, const std::string& ch
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#if defined(LPI_WIN32)
+#if defined(LPI_OS_WINDOWS)
 
 #include "lpi_file.h"
 
@@ -242,7 +242,7 @@ std::string FileBrowseWin32WithDrives::getChild(const std::string& path, const s
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#elif defined(LPI_LINUX)
+#elif defined(LPI_OS_LINUX)
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -391,6 +391,163 @@ std::string FileBrowseLinux::getDefaultDir(DefaultDir dd) const
     case DD_GLOBAL_APP_SETTINGS:
     {
       return "/etc/";
+    }
+    default: return "";
+  }
+}
+
+} // namespace lpi
+
+////////////////////////////////////////////////////////////////////////////////
+#elif defined(LPI_OS_AMIGA) || defined(LPI_OS_AROS)
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dirent.h>
+#include <sstream>
+#include <cstdio>
+#include <cstdlib>
+
+namespace lpi
+{
+
+bool FileBrowseAmiga::isDirectory(const std::string& filename) const
+{
+  struct stat _stat;
+  if(lstat(filename.c_str(), &_stat) == 0 )
+  {
+    return S_ISDIR(_stat.st_mode);
+  }
+  return false;
+}
+
+static bool isRegularFile(const std::string& filename)
+{
+  struct stat _stat;
+  if(lstat(filename.c_str(), &_stat) == 0 )
+  {
+    return S_ISREG(_stat.st_mode);
+  }
+  return false;
+}
+
+void FileBrowseAmiga::getFiles(std::vector<std::string>& files, const std::string& directory) const
+{
+  DIR* d = opendir( directory.c_str() );
+  static struct dirent* dirp;
+  if (!d)
+  {
+    files.push_back("Error. No permission?");
+    return;
+  }
+  
+  while ( (dirp = readdir(d)) != NULL )
+  {
+    if( isRegularFile(directory + dirp->d_name))
+    {
+      files.push_back(dirp->d_name);
+    }
+  }
+  closedir(d);
+}
+
+void FileBrowseAmiga::getDirectories(std::vector<std::string>& dirs, const std::string& directory) const
+{
+  DIR* d = opendir( directory.c_str() );
+  static struct dirent* dirp;
+  if (!d)
+  {
+    dirs.push_back("/");
+    return;
+  }
+  
+  while ( (dirp = readdir(d)) != NULL )
+  {
+    if( isDirectory(directory + dirp->d_name))
+    {
+      dirs.push_back(dirp->d_name);
+    }
+  }
+  closedir(d);
+}
+
+bool FileBrowseAmiga::fileExists(const std::string& filename) const
+{
+  struct stat _stat;
+  return(stat(filename.c_str(),&_stat) == 0);
+}
+
+std::string FileBrowseAmiga::getParent(const std::string& path) const
+{
+  return IFileBrowse::getParent(path);
+}
+
+void FileBrowseAmiga::createDirectory(const std::string& path)
+{
+  std::string dir = getFileNamePathPart(path);
+
+  if(fileExists(dir)) return;
+
+  giveFilenameSlashes(dir);
+  if(!dir.empty())
+  {
+    if(dir[dir.size() - 1] == '/')
+    {
+      std::string parent = getParent(dir);
+      createDirectory(parent); //recursive
+    }
+
+    if(dir[dir.size() - 1] == '/' && !(dir.size() > 2 && dir[dir.size() - 2] == ':'))
+    {
+      mkdir(dir.c_str(), 0777);
+    }
+  }
+}
+
+void FileBrowseAmiga::fixSlashes(std::string& path) const
+{
+  giveFilenameSlashes(path);
+}
+
+void FileBrowseAmiga::ensureDirectoryEndSlash(std::string& path) const
+{
+  lpi::ensureDirectoryEndSlash(path);
+}
+
+std::string FileBrowseAmiga::getDefaultDir(DefaultDir dd) const
+{
+  switch(dd)
+  {
+    case DD_HOME:
+    {
+      char* c = "PROGDIR:";
+      if(c == 0) return "";
+      std::string path = c;
+      ensureDirectoryEndSlash(path);
+      return path;
+    }
+    case DD_USER_APP_SETTINGS:
+    {
+      std::string path;
+      char* c = std::getenv("XDG_CONFIG_HOME");
+      if(c != 0) path = c;
+      if(!path.empty()) ensureDirectoryEndSlash(path);
+      if(path.empty())
+      {
+        char* c = "PROGDIR:";
+        if(c != 0) path = c;
+        if(!path.empty())
+        {
+          ensureDirectoryEndSlash(path);
+          path += ".config/";
+        }
+      }
+      return path;
+    }
+    case DD_GLOBAL_APP_SETTINGS:
+    {
+      return "PROGDIR:";
     }
     default: return "";
   }

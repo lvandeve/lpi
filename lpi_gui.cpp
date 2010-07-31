@@ -29,6 +29,68 @@ namespace lpi
 namespace gui
 {
 
+AInternalContainer::AInternalContainer()
+: elementOver(false)
+{
+}
+
+void AInternalContainer::move(int x, int y)
+{
+  if(x == 0 && y == 0) return;
+  for(size_t i = 0; i < elements.size(); i++)
+  {
+    elements[i]->move(x, y);
+  }
+}
+
+void AInternalContainer::setElementOver(bool state)
+{
+  if(state == elementOver) return; //this optimization is done because setElementOver gets called so much, it pops up on top of a profiler even when not even moving the mouse in the program
+  elementOver = state;
+  for(size_t i = 0; i < elements.size(); i++)
+  {
+    elements[i]->setElementOver(state);
+  }
+}
+
+size_t AInternalContainer::findElementIndex(Element* element)
+{
+  for(size_t i = 0; i < elements.size(); i++) if(elements[i] == element) return i;
+  return elements.size();
+}
+
+const Element* AInternalContainer::hitTest(const IInput& input) const
+{
+  for(size_t j = 0; j < elements.size(); j++)
+  {
+    size_t i = elements.size() - j - 1; //invert order, the last elements are on top
+    if(elements[i]->mouseOver(input)) return elements[i]->hitTest(input);
+  }
+  return 0;
+}
+
+void AInternalContainer::manageHover(IHoverManager& hover)
+{
+  for(size_t j = 0; j < elements.size(); j++)
+  {
+    elements[j]->manageHover(hover);
+  }
+}
+
+int AInternalContainer::getKeyboardFocus() const
+{
+  int result = 0;
+  
+  for(size_t j = 0; j < elements.size(); j++)
+  {
+    result |= elements[j]->getKeyboardFocus();
+  }
+  
+  return result;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 void InternalContainer::setStickyElementSize(Element* element, const Pos<int>& newPos)
 {
   Sticky& s = sticky[element];
@@ -91,21 +153,6 @@ void InternalContainer::resize(const Pos<int>& oldPos, const Pos<int>& newPos)  
   }
 }
 
-void InternalContainer::move(int x, int y)
-{
-  for(size_t i = 0; i < elements.size(); i++)
-  {
-    elements[i]->move(x, y);
-  }
-}
-
-void InternalContainer::setElementOver(bool state)
-{
-  for(size_t i = 0; i < elements.size(); i++)
-  {
-    elements[i]->setElementOver(state);
-  }
-}
 
 Sticky InternalContainer::getSticky(Element* element) const
 {
@@ -156,51 +203,94 @@ void InternalContainer::insertSubElement(size_t index, Element* element, const S
   elements.insert(elements.begin() + index, element);
 }
 
-size_t InternalContainer::findElementIndex(Element* element)
-{
-  for(size_t i = 0; i < elements.size(); i++) if(elements[i] == element) return i;
-  return elements.size();
-}
-
 void InternalContainer::removeElement(Element* element)
 {
   elements.erase(std::remove(elements.begin(), elements.end(), element), elements.end());
-  sticky.erase(sticky.find(element));
+  if(sticky.find(element) != sticky.end()) sticky.erase(sticky.find(element));
 }
 
 void InternalContainer::clearSubElements()
 {
   elements.clear();
+  sticky.clear();
 }
 
-const Element* InternalContainer::hitTest(const IInput& input) const
-{
-  for(size_t j = 0; j < elements.size(); j++)
-  {
-    size_t i = elements.size() - j - 1; //invert order, the last elements are on top
-    if(elements[i]->mouseOver(input)) return elements[i]->hitTest(input);
-  }
-  return 0;
-}
+////////////////////////////////////////////////////////////////////////////////
 
-void InternalContainer::manageHover(IHoverManager& hover)
+void InternalContainerWrapping::resize(const Pos<int>& oldPos, const Pos<int>& newPos)  //this function is where the "sticky"-related calculations happen
 {
-  for(size_t j = 0; j < elements.size(); j++)
-  {
-    elements[j]->manageHover(hover);
-  }
-}
+  (void)oldPos;
+  int x0 = newPos.x0;
+  int y0 = newPos.y0;
+  int x1 = newPos.x1;
+  //int y1 = newPos.y1;
+  int dx = x1 - x0;
+  //int dy = y1 - y0;
 
-int InternalContainer::getKeyboardFocus() const
-{
-  int result = 0;
+  int y = y0;
+  int ny = y0; //next y
+
+  int x = x0;
+
+  int num = 0; //num of this row so far
   
-  for(size_t j = 0; j < elements.size(); j++)
+  for(size_t i = 0; i < elements.size(); i++)
   {
-    result |= elements[j]->getKeyboardFocus();
+    Element& e = *elements[i];
+    
+    if(e.getSizeX() > dx)
+    {
+      if(num == 0)
+      {
+        e.moveTo(x, y);
+        y += e.getSizeY();
+        ny = y;
+      }
+      else
+      {
+        num = 0;
+        x = x0;
+        y = ny;
+        e.moveTo(x, y);
+        y += e.getSizeY();
+      }
+    }
+    else
+    {
+      if(x + e.getSizeX() > x1)
+      {
+        num = 1;
+        x = x0;
+        y = ny;
+        e.moveTo(x, y);
+        ny += e.getSizeY();
+        x += e.getSizeX();
+      }
+      else
+      {
+        e.moveTo(x, y);
+        x += e.getSizeX();
+        num++;
+        if(y + e.getSizeY() > ny) ny = y + e.getSizeY();
+      }
+    }
   }
-  
-  return result;
+}
+
+void InternalContainerWrapping::addSubElement(Element* element)
+{
+  elements.push_back(element);
+}
+
+
+void InternalContainerWrapping::removeElement(Element* element)
+{
+  elements.erase(std::remove(elements.begin(), elements.end(), element), elements.end());
+}
+
+void InternalContainerWrapping::clearSubElements()
+{
+  elements.clear();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -422,6 +512,8 @@ void Element::draw(IGUIDrawer& drawer) const
 
 void Element::move(int x, int y)
 {
+  if(x == 0 && y == 0) return; //optimization to avoid many recursive calls to child elements for nothing
+  
   this->x0 += x;
   this->y0 += y;
   this->x1 += x;
@@ -493,7 +585,6 @@ bool Element::isFloating() const
 
 void Element::resize(int x0, int y0, int x1, int y1)
 {
-  
   if(x1 - x0 < getMinSizeX()) x1 = x0 + getMinSizeX();
   if(y1 - y0 < getMinSizeY()) y1 = y0 + getMinSizeY();
 
@@ -522,31 +613,23 @@ void Element::drag(const IInput& input, MouseButton button)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ElementComposite::addSubElement(Element* element, const Sticky& sticky)
+void AElementComposite::move(int x, int y)
 {
-  ic.addSubElement(element, sticky, this);
-}
-
-void ElementComposite::clearSubElements()
-{
-  ic.clearSubElements();
-}
-
-void ElementComposite::move(int x, int y)
-{
+  if(x == 0 && y == 0) return; //optimization to avoid many recursive calls to child elements for nothing
+  
   ic.move(x, y);
   
   Element::move(x, y);
 }
 
-void ElementComposite::setElementOver(bool state)
+void AElementComposite::setElementOver(bool state)
 {
   Element::setElementOver(state);
   
   ic.setElementOver(state);
 }
 
-void ElementComposite::resize(int x0, int y0, int x1, int y1)
+void AElementComposite::resize(int x0, int y0, int x1, int y1)
 {
   Pos<int> oldPos = { this->x0, this->y0, this->x1, this->y1 };
   
@@ -557,14 +640,26 @@ void ElementComposite::resize(int x0, int y0, int x1, int y1)
   ic.resize(oldPos, newPos);
 }
 
-void ElementComposite::manageHoverImpl(IHoverManager& hover)
+void AElementComposite::manageHoverImpl(IHoverManager& hover)
 {
   ic.manageHover(hover);
 }
 
-int ElementComposite::getKeyboardFocus() const
+int AElementComposite::getKeyboardFocus() const
 {
   return ic.getKeyboardFocus();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void ElementComposite::addSubElement(Element* element, const Sticky& sticky)
+{
+  my_ic.addSubElement(element, sticky, this);
+}
+
+void ElementComposite::clearSubElements()
+{
+  my_ic.clearSubElements();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -593,12 +688,8 @@ void Label::drawLabel(IGUIDrawer& drawer, const Element* element) const
 //GUICONTAINER//////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-/*
-Contains many elements in it and draws them and handles them, and even makes
-sure you can't press the mouse "through" elements on top of other elements.
-*/
-
-Container::Container()
+AContainer::AContainer(AInternalContainer* ic)
+: elements(ic)
 {
   setEnabled(true);
   x0 = 0;
@@ -607,7 +698,8 @@ Container::Container()
   y1 = 1;
 }
 
-Container::Container(IGUIDrawer& drawer)
+AContainer::AContainer(AInternalContainer* ic, IGUIDrawer& drawer)
+: elements(ic)
 {
   setEnabled(true);
   
@@ -618,7 +710,7 @@ Container::Container(IGUIDrawer& drawer)
   y1 = drawer.getHeight();
 }
 
-void Container::make(int x, int y, int sizex, int sizey)
+void AContainer::make(int x, int y, int sizex, int sizey)
 {
   //ic.getElements().clear();
   
@@ -628,29 +720,30 @@ void Container::make(int x, int y, int sizex, int sizey)
   this->setSizeY(sizey);
 }
 
-void Container::setElementOver(bool state)
+void AContainer::setElementOver(bool state)
 {
+  if(state == elementOver) return; //this optimization is done because setElementOver gets called so much, it pops up on top of a profiler even when not even moving the mouse in the program
   Element::setElementOver(state);
-  elements.setElementOver(state);
+  elements->setElementOver(state);
 }
 
-const Element* Container::hitTest(const IInput& input) const
+const Element* AContainer::hitTest(const IInput& input) const
 {
   if(mouseOver(input))
   {
-    const Element* result = elements.hitTest(input);
+    const Element* result = elements->hitTest(input);
     if(result) return result;
     return this;
   }
   else return 0;
 }
 
-int Container::getKeyboardFocus() const
+int AContainer::getKeyboardFocus() const
 {
-  return elements.getKeyboardFocus();
+  return elements->getKeyboardFocus();
 }
 
-void Container::handleImpl(const IInput& input)
+void AContainer::handleImpl(const IInput& input)
 {
   if(mouseOver(input))
   {
@@ -659,90 +752,180 @@ void Container::handleImpl(const IInput& input)
     //priority to mouseGrabbed over mouseOver
     for(int i = size() - 1; i >= 0; i--)
     {
-      elements.getElement(i)->setElementOver(false);
-      bool grabbed = elements.getElement(i)->getMouseStateForContainer().mouseGrabbed(elements.getElement(i)->mouseOver(input)
+      elements->getElement(i)->setElementOver(false);
+      bool grabbed = elements->getElement(i)->getMouseStateForContainer().mouseGrabbed(elements->getElement(i)->mouseOver(input)
                                                                                     , input.mouseButtonDown(LMB)
                                                                                     , input.mouseX()
                                                                                     , input.mouseY()
-                                                                                    , elements.getElement(i)->mouseGetRelPosX(input)
-                                                                                    , elements.getElement(i)->mouseGetRelPosY(input));
+                                                                                    , elements->getElement(i)->mouseGetRelPosX(input)
+                                                                                    , elements->getElement(i)->mouseGetRelPosY(input));
       if(grabbed)
       {
         if(topElement < 0) topElement = i;
         //break;
       }
-      elements.getElement(i)->setElementOver(true);
+      elements->getElement(i)->setElementOver(true);
     }
     
     //only now test mouseOver
     if(topElement == -1)
     for(int i = size() - 1; i >= 0; i--)
     {
-      elements.getElement(i)->setElementOver(false);
-      if(elements.getElement(i)->mouseOver(input))
+      elements->getElement(i)->setElementOver(false);
+      if(elements->getElement(i)->mouseOver(input))
       {
         topElement = i;
         break;
       }
-      elements.getElement(i)->setElementOver(true);
+      elements->getElement(i)->setElementOver(true);
     }
 
     //make all elements unresponsive to the mouse by setting "elementover", except the topElement
-    for(size_t i = 0; i < size(); i++) elements.getElement(i)->setElementOver(true);
+    for(size_t i = 0; i < size(); i++) elements->getElement(i)->setElementOver(true);
     if(topElement >= 0 && topElement < (int)size())
     {
-      elements.getElement(topElement)->setElementOver(false);
-      if(elements.getElement(topElement)->isFloating()
-      && elements.getElement(topElement)->getMouseStateForContainer().mouseDownHere(elements.getElement(topElement)->mouseOver(input), input.mouseButtonDown(LMB)))
-        bringToTop(elements.getElement(topElement));
+      elements->getElement(topElement)->setElementOver(false);
+      if(elements->getElement(topElement)->isFloating()
+      && elements->getElement(topElement)->getMouseStateForContainer().mouseDownHere(elements->getElement(topElement)->mouseOver(input), input.mouseButtonDown(LMB)))
+        bringToTop(elements->getElement(topElement));
     }
   }
-  else for(size_t i = 0; i < size(); i++) elements.getElement(i)->setElementOver(true);
+  else for(size_t i = 0; i < size(); i++) elements->getElement(i)->setElementOver(true);
 
   for(unsigned long i = 0; i < size(); i++)
   {
-    elements.getElement(i)->handle(input);
+    elements->getElement(i)->handle(input);
   }
 }
 
-void Container::drawElements(IGUIDrawer& drawer) const
+void AContainer::drawElements(IGUIDrawer& drawer) const
 {
   for(unsigned long i = 0; i < size(); i++)
   {
-    elements.getElement(i)->draw(drawer);
+    elements->getElement(i)->draw(drawer);
   }
 }
 
-void Container::drawImpl(IGUIDrawer& drawer) const
+void AContainer::drawImpl(IGUIDrawer& drawer) const
 {
   drawer.pushSmallestScissor(x0, y0, x1, y1);
   drawElements(drawer);
   drawer.popScissor();
 }
 
-void Container::manageHoverImpl(IHoverManager& hover)
+void AContainer::manageHoverImpl(IHoverManager& hover)
 {
-  elements.manageHover(hover);
+  elements->manageHover(hover);
 }
 
-unsigned long Container::size() const
+unsigned long AContainer::size() const
 {
-  return elements.getElements().size();
+  return elements->getElements().size();
+}
+
+void AContainer::centerElement(Element* element)
+{
+  element->moveCenterTo(getCenterX(), getCenterY());
+}
+
+void AContainer::putInside(unsigned long i)
+{
+  if(i < size())
+  {
+    int ex0 = elements->getElement(i)->getX0();
+    int ey0 = elements->getElement(i)->getY0();
+    int ex1 = elements->getElement(i)->getX1();
+    int ey1 = elements->getElement(i)->getY1();
+    int esx = ex1 - ex0;
+    int esy = ey1 - ey0;
+    
+    int newx = ex0, newy = ey0;
+    
+    if(ex0 < getX0()) newx = getX0();
+    if(ey0 < getY0()) newy = getY0();
+    if(ex1 > getX1()) newx = getX1() - esx;
+    if(ey1 > getY1()) newy = getY1() - esy;
+    
+    //if the size of the element is too large to fit in the window, there's no reason to move it (or it'll warp all the time)
+    if(elements->getElement(i)->getSizeX() > getSizeX()) newx = elements->getElement(i)->getX0();
+    if(elements->getElement(i)->getSizeY() > getSizeY()) newy = elements->getElement(i)->getY0();
+    
+    elements->getElement(i)->moveTo(newx, newy);
+  }
+}
+
+void AContainer::moveImpl(int x, int y)
+{
+  elements->move(x, y);
+}
+
+void AContainer::getRelativeElementPos(Element& element, int& ex, int& ey) const
+{
+  ex = element.getX0() - x0;
+  ey = element.getY0() - y0;
+}
+
+void AContainer::resizeImpl(const Pos<int>& newPos)
+{
+  Pos<int> oldPos = { this->x0, this->y0, this->x1, this->y1 };
+  elements->resize(oldPos, newPos);
+}
+
+void AContainer::setSizeToElements()
+{
+  int newx0 = x0, newy0 = y0, newx1 = x1, newy1 = y1;
+  if(size() > 0)
+  {
+    newx0 = elements->getElement(0)->getX0();
+    newy0 = elements->getElement(0)->getY0();
+    newx1 = elements->getElement(0)->getX1();
+    newy1 = elements->getElement(0)->getY1();
+  }
+  for(unsigned i = 1; i < size(); i++)
+  {
+    if(elements->getElement(i)->getX0() < newx0) newx0 = elements->getElement(i)->getX0();
+    if(elements->getElement(i)->getY0() < newy0) newy0 = elements->getElement(i)->getY0();
+    if(elements->getElement(i)->getX1() > newx1) newx1 = elements->getElement(i)->getX1();
+    if(elements->getElement(i)->getY1() > newy1) newy1 = elements->getElement(i)->getY1();
+  }
+  
+  x0 = newx0;
+  y0 = newy0;
+  x1 = newx1;
+  y1 = newy1;
+}
+
+void AContainer::bringToTop(Element* element) //precondition: element must already be in the list
+{
+  size_t index = elements->findElementIndex(element);
+  if(index >= size()) return;
+  elements->getElements().erase(elements->getElements().begin() + index);
+  elements->getElements().push_back(element);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+Contains many elements in it and draws them and handles them, and even makes
+sure you can't press the mouse "through" elements on top of other elements.
+*/
+
+Container::Container()
+: AContainer(&elements_ic)
+{
+}
+
+Container::Container(IGUIDrawer& drawer)
+: AContainer(&elements_ic, drawer)
+{
 }
 
 void Container::remove(Element* element)
 {
-  size_t index = elements.findElementIndex(element);
+  /*size_t index = elements.findElementIndex(element);
   if(index >= size()) return;
-  elements.getElements().erase(elements.getElements().begin() + index);
-}
-
-void Container::bringToTop(Element* element) //precondition: element must already be in the list
-{
-  size_t index = elements.findElementIndex(element);
-  if(index >= size()) return;
-  elements.getElements().erase(elements.getElements().begin() + index);
-  elements.getElements().push_back(element);
+  elements.getElements().erase(elements.getElements().begin() + index);*/
+  elements_ic.removeElement(element);
 }
 
 void Container::pushTop(Element* element, const Sticky& sticky)
@@ -779,98 +962,54 @@ void Container::pushTopAt(Element* element, int x, int y, const Sticky& sticky)
 {
   remove(element); //prevent duplicates
   element->moveTo(x0 + x, y0 + y);
-  elements.addSubElement(element, sticky, this);
+  elements_ic.addSubElement(element, sticky, this);
 }
 
 void Container::pushBottomAt(Element* element, int x, int y, const Sticky& sticky)
 {
   remove(element); //prevent duplicates
   element->moveTo(x0 + x, y0 + y);
-  elements.insertSubElement(0, element, sticky, this);
+  elements_ic.insertSubElement(0, element, sticky, this);
 }
 
 void Container::insertAt(size_t pos, Element* element, int x, int y, const Sticky& sticky)
 {
   remove(element); //prevent duplicates
   element->moveTo(x0 + x, y0 + y);
-  elements.insertSubElement(pos, element, sticky, this);
-}
-
-void Container::centerElement(Element* element)
-{
-  element->moveCenterTo(getCenterX(), getCenterY());
+  elements_ic.insertSubElement(pos, element, sticky, this);
 }
 
 void Container::clear()
 {
-  elements.getElements().clear();
+  elements_ic.clearSubElements();
 }
 
-void Container::putInside(unsigned long i)
+////////////////////////////////////////////////////////////////////////////////
+
+ContainerWrapping::ContainerWrapping()
+: AContainer(&elements_ic)
 {
-  if(i < size())
-  {
-    int ex0 = elements.getElement(i)->getX0();
-    int ey0 = elements.getElement(i)->getY0();
-    int ex1 = elements.getElement(i)->getX1();
-    int ey1 = elements.getElement(i)->getY1();
-    int esx = ex1 - ex0;
-    int esy = ey1 - ey0;
-    
-    int newx = ex0, newy = ey0;
-    
-    if(ex0 < getX0()) newx = getX0();
-    if(ey0 < getY0()) newy = getY0();
-    if(ex1 > getX1()) newx = getX1() - esx;
-    if(ey1 > getY1()) newy = getY1() - esy;
-    
-    //if the size of the element is too large to fit in the window, there's no reason to move it (or it'll warp all the time)
-    if(elements.getElement(i)->getSizeX() > getSizeX()) newx = elements.getElement(i)->getX0();
-    if(elements.getElement(i)->getSizeY() > getSizeY()) newy = elements.getElement(i)->getY0();
-    
-    elements.getElement(i)->moveTo(newx, newy);
-  }
 }
 
-void Container::moveImpl(int x, int y)
+ContainerWrapping::ContainerWrapping(IGUIDrawer& drawer)
+: AContainer(&elements_ic, drawer)
 {
-  elements.move(x, y);
 }
 
-void Container::getRelativeElementPos(Element& element, int& ex, int& ey) const
+void ContainerWrapping::remove(Element* element)
 {
-  ex = element.getX0() - x0;
-  ey = element.getY0() - y0;
+  elements_ic.removeElement(element);
 }
 
-void Container::resizeImpl(const Pos<int>& newPos)
+void ContainerWrapping::pushTop(Element* element)
 {
-  Pos<int> oldPos = { this->x0, this->y0, this->x1, this->y1 };
-  elements.resize(oldPos, newPos);
+  remove(element); //prevent duplicates
+  elements_ic.addSubElement(element);
 }
 
-void Container::setSizeToElements()
+void ContainerWrapping::clear()
 {
-  int newx0 = x0, newy0 = y0, newx1 = x1, newy1 = y1;
-  if(size() > 0)
-  {
-    newx0 = elements.getElement(0)->getX0();
-    newy0 = elements.getElement(0)->getY0();
-    newx1 = elements.getElement(0)->getX1();
-    newy1 = elements.getElement(0)->getY1();
-  }
-  for(unsigned i = 1; i < size(); i++)
-  {
-    if(elements.getElement(i)->getX0() < newx0) newx0 = elements.getElement(i)->getX0();
-    if(elements.getElement(i)->getY0() < newy0) newy0 = elements.getElement(i)->getY0();
-    if(elements.getElement(i)->getX1() > newx1) newx1 = elements.getElement(i)->getX1();
-    if(elements.getElement(i)->getY1() > newy1) newy1 = elements.getElement(i)->getY1();
-  }
-  
-  x0 = newx0;
-  y0 = newy0;
-  x1 = newx1;
-  y1 = newy1;
+  elements_ic.clearSubElements();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1141,7 +1280,7 @@ bool Group::isInside(int x, int y) const
 {
   for(int i = size() - 1; i >= 0; i--)
   {
-    if(elements.getElement(i)->isInside(x, y)) return true;
+    if(elements->getElement(i)->isInside(x, y)) return true;
   }
   
   return false;
@@ -1167,13 +1306,16 @@ void StatusBar::drawImpl(IGUIDrawer& drawer) const
   drawer.drawGUIPart(GP_STATUSBAR, x0, y0, x1, y1);
   
   double x = 0;
+  
+  int available = x1 - x0;
+  for(size_t i = 0; i < zonesizesabs.size(); i++) available -= zonesizesabs[i];
 
   for(size_t i = 0; i < zonesizesrel.size(); i++)
   {
     int xa = x0 + (int)x;
     if(i < zonesizesrel.size() - 1)
     {
-      x += (x1 - x0) * zonesizesrel[i];
+      x += available * zonesizesrel[i];
       x += zonesizesabs[i];
     }
     else x = x1 - x0;
@@ -1261,6 +1403,10 @@ Window::Window()
   addSubElement(&closeButton, Sticky(1.0, -closeButton.getSizeX(), 0.0, 0, 1.0, 0, 0.0, closeButton.getSizeY()));
 }
 
+Window::~Window()
+{
+  if(statusBar) delete statusBar;
+}
 
 const Element* Window::hitTest(const IInput& input) const
 {
@@ -1289,7 +1435,7 @@ void Window::addCloseButton(const IGUIDrawer& geom)
   
   closeEnabled = true;
   
-  ic.setSticky(&closeButton, Sticky(1.0, -closeButton.getSizeX(), 0.0, 0, 1.0, 0, 0.0, closeButton.getSizeY()), this);
+  my_ic.setSticky(&closeButton, Sticky(1.0, -closeButton.getSizeX(), 0.0, 0, 1.0, 0, 0.0, closeButton.getSizeY()), this);
 }
 
 void Window::addResizer(const IGUIDrawer& geom, bool overContainer)
@@ -1298,13 +1444,13 @@ void Window::addResizer(const IGUIDrawer& geom, bool overContainer)
   int resizerY = y1 - geom.getGUIPartSizeY(GP_WINDOW_RESIZER);
   resizer.resize(resizerX, resizerY, resizerX + geom.getGUIPartSizeX(GP_WINDOW_RESIZER), resizerY + geom.getGUIPartSizeY(GP_WINDOW_RESIZER));
   enableResizer = true;
-  ic.setSticky(&resizer, Sticky(1.0, -resizer.getSizeX(), 1.0, -resizer.getSizeY(), 1.0, 0, 1.0, 0), this);
+  my_ic.setSticky(&resizer, Sticky(1.0, -resizer.getSizeX() - 1, 1.0, -resizer.getSizeY() - 1, 1.0, -1, 1.0, -1), this);
   
   if(!overContainer)
   {
-    Sticky sticky = ic.getSticky(&container);
+    Sticky sticky = my_ic.getSticky(&container);
     sticky.i.y1 = resizer.getY0() - y1;
-    ic.setSticky(&container, sticky, this);
+    my_ic.setSticky(&container, sticky, this);
   }
   
   resizerOverContainer = overContainer;
@@ -1313,8 +1459,8 @@ void Window::addResizer(const IGUIDrawer& geom, bool overContainer)
 void Window::addStatusBar()
 {
   statusBar = new StatusBar();
-  statusBar->resize(x0, 0, x1, 16);
-  addSubElement(statusBar, Sticky(0.0,0 ,1.0,-16, 1.0,0, 1.0,0));
+  statusBar->resize(x0 + 1, 0, x1 - 1, 16);
+  addSubElement(statusBar, Sticky(0.0,+1 ,1.0,-17, 1.0,-1, 1.0,-1));
 }
 
 
@@ -1322,11 +1468,11 @@ void Window::addTop(const IGUIDrawer& geom)
 {
   top.resize(x0, y0, x1, y0 + geom.getGUIPartSizeY(GP_WINDOW_TOP));
   this->enableTop = 1;
-  ic.setSticky(&top, Sticky(0.0, 0, 0.0, 0, 1.0, 0, 0.0, top.getSizeY()), this);
+  my_ic.setSticky(&top, Sticky(0.0, 0, 0.0, 0, 1.0, 0, 0.0, top.getSizeY()), this);
 
-  Sticky sticky = ic.getSticky(&container);
+  Sticky sticky = my_ic.getSticky(&container);
   sticky.i.y0 = top.getY1() - y0;
-  ic.setSticky(&container, sticky, this);
+  my_ic.setSticky(&container, sticky, this);
 }
 
 //returns the lowest position the container bottom side is allowed to have (for example not over resizer if resizerOverContainer is false
@@ -1368,9 +1514,9 @@ void Window::addScrollbars(const IGUIDrawer& geom)
   
   scroll.make(container.getX0(), container.getY0(), container.getSizeX(), container.getSizeY(), &container, geom);
   container.setSizeToElements();
-  ic.removeElement(&container); //the scrollbars must control the container now
+  my_ic.removeElement(&container); //the scrollbars must control the container now
   addSubElement(&scroll);
-  ic.setStickyFull(&scroll, this);
+  my_ic.setStickyFull(&scroll, this);
 }
 
 void Window::removeScrollbars()
@@ -1378,10 +1524,10 @@ void Window::removeScrollbars()
   if(!scroll.element) return;
   
   scroll.element = 0;
-  ic.removeElement(&scroll);
+  my_ic.removeElement(&scroll);
   addSubElement(&container);
   container.resize(scroll.getX0(), scroll.getY0(), scroll.getX1(), scroll.getY1());
-  ic.setStickyFull(&container, this);
+  my_ic.setStickyFull(&container, this);
 }
 
 void Window::updateScroll()
@@ -1819,7 +1965,7 @@ void Scrollbar::init(const IGUIDrawer& geom)
     buttonDown.moveTo(x0, y1 - geom.getGUIPartSizeY(GP_SCROLLBAR_S));
     scroller.resize(0, 0, geom.getGUIPartSizeX(GP_SCROLLBAR_SCROLLER), geom.getGUIPartSizeY(GP_SCROLLBAR_SCROLLER));
     scroller.moveTo(x0, int(y0 + getSliderStart() + (getSliderSize() * scrollPos) / scrollSize));
-    ic.setSticky(&buttonDown, Sticky(0.0, 0, 1.0, -buttonDown.getSizeY(), 1.0, 0, 1.0, 0), this);
+    my_ic.setSticky(&buttonDown, Sticky(0.0, 0, 1.0, -buttonDown.getSizeY(), 1.0, 0, 1.0, 0), this);
   }
   else
   {
@@ -1829,7 +1975,7 @@ void Scrollbar::init(const IGUIDrawer& geom)
     buttonDown.moveTo(x1 - geom.getGUIPartSizeX(GP_SCROLLBAR_E), y0);
     scroller.resize(0, 0, geom.getGUIPartSizeX(GP_SCROLLBAR_SCROLLER), geom.getGUIPartSizeY(GP_SCROLLBAR_SCROLLER));
     scroller.moveTo(int(x0 + getSliderStart() + (getSliderSize() * scrollPos) / scrollSize), y0);
-    ic.setSticky(&buttonDown, Sticky(1.0, -buttonDown.getSizeX(), 0.0, 0, 1.0, 0, 1.0, 0), this);
+    my_ic.setSticky(&buttonDown, Sticky(1.0, -buttonDown.getSizeX(), 0.0, 0, 1.0, 0, 1.0, 0), this);
   }
 }
 
@@ -2080,8 +2226,8 @@ void ScrollbarPair::make(int x, int y, int sizex, int sizey, double scrollSizeH,
   hbar.makeHorizontal(x0, y1 - geom.getGUIPartSizeX(GP_SCROLLBAR_HBACK), sizex - geom.getGUIPartSizeX(GP_SCROLLBARPAIR_CORNER),
           scrollSizeH, geom, 0, 0, 1, 1);
 
-  ic.setSticky(&vbar, STICKYOFF/*Sticky(1.0, -vbar.getSizeX(), 0.0, 0, 1.0, 0, 1.0, 0)*/, this);
-  ic.setSticky(&hbar, STICKYOFF/*Sticky(0.0,  0, 1.0, -hbar.getSizeY(), 1.0, 0, 1.0, 0)*/, this);
+  my_ic.setSticky(&vbar, STICKYOFF/*Sticky(1.0, -vbar.getSizeX(), 0.0, 0, 1.0, 0, 1.0, 0)*/, this);
+  my_ic.setSticky(&hbar, STICKYOFF/*Sticky(0.0,  0, 1.0, -hbar.getSizeY(), 1.0, 0, 1.0, 0)*/, this);
   this->venabled = true;
   this->henabled = true;
 }
@@ -2582,6 +2728,89 @@ void Checkbox::setCustomGUIParts(GUIPart part_on, GUIPart part_off)
 //GUIBULLETLIST/////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+
+
+ABulletList::ABulletList()
+{
+  this->lastChecked = -1;
+}
+
+ABulletList::~ABulletList()
+{
+}
+
+void ABulletList::handleBullets(const IInput& input)
+{
+  for(unsigned long i = 0; i < bullet.size(); i++)
+  {
+    bullet[i]->handle(input);
+  }
+
+  int newChecked = -1;
+  
+  for(size_t i = 0; i < bullet.size(); i++)
+  {
+    if(bullet[i]->isChecked() && int(i) != lastChecked) newChecked = i;
+    bullet[i]->setChecked(false);
+  }
+
+  if(newChecked >= 0)
+  {
+    bullet[newChecked]->setChecked(true);
+    lastChecked = newChecked;
+  }
+  else if(lastChecked >= 0 && lastChecked < int(bullet.size()))
+    bullet[lastChecked]->setChecked(true);
+}
+
+void ABulletList::drawBullets(IGUIDrawer& drawer) const
+{
+  for(unsigned long i = 0; i < bullet.size(); i++)
+  {
+    bullet[i]->draw(drawer);
+  }
+}
+
+int ABulletList::check()
+{
+  return lastChecked;
+}
+
+void ABulletList::addText(const std::string& text, unsigned long i)
+{
+  if(i < bullet.size()) bullet[i]->addText(text);
+}
+
+std::string ABulletList::getText(unsigned long i) const
+{
+  std::string result;
+  if(i < bullet.size()) result = bullet[i]->getText();
+  return result;
+}
+
+const std::string& ABulletList::getCurrentText() const
+{
+  return bullet[lastChecked]->getText();
+}
+
+void ABulletList::set(unsigned long i)
+{
+  /*if(i >= 0 && i < bullet.size()) bullet[i].checked = true;
+  if(!enabled) lastChecked = i;*/
+
+  for(unsigned long j = 0; j < bullet.size(); j++)
+  {
+    if(i != j) bullet[j]->setChecked(false);
+    else bullet[j]->setChecked(true);
+  }
+  
+  lastChecked = i;
+  
+  //handle(input);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 /*
 The BulletList
 
@@ -2594,10 +2823,6 @@ style you  want!
 BulletList::BulletList()
 {
   this->enabled = 0;
-  this->lastChecked = -1;
-  
-  this->prototype.make(0, 0, 0, 0);
-  this->prototype.setCustomGUIParts(GP_BULLET_ON, GP_BULLET_OFF);
 }
 
 BulletList::~BulletList()
@@ -2613,26 +2838,7 @@ void BulletList::clear()
 
 void BulletList::make(int x, int y, unsigned long amount, int xDiff, int yDiff)
 {
-  this->x0 = x;
-  this->y0 = y;
-  this->xDiff = xDiff;
-  this->yDiff = yDiff;
-  this->setEnabled(true);
-
-  clear();
-  for(unsigned long i = 0; i < amount; i++)
-  {
-    bullet.push_back(new Checkbox);
-    bullet.back()->make(0,0,0,0);
-    bullet.back()->setCustomGUIParts(GP_BULLET_ON, GP_BULLET_OFF);
-    bullet.back()->moveTo(x + xDiff * i, y + yDiff * i);
-    addSubElement(bullet.back());
-  }
-    
-  
-  //NOTE: DIT IS NIET CORRECT, DEZE FORMULES
-  this->setSizeX(amount * xDiff + prototype.getSizeX());
-  this->setSizeY(amount * yDiff + prototype.getSizeY());
+  make(x, y, amount, xDiff, yDiff, 1);
 }
 
 void BulletList::make(int x, int y, unsigned long amount, int xDiff, int yDiff, unsigned long amountx)
@@ -2683,76 +2889,18 @@ void BulletList::setCorrectSize()
   this->setSizeY(maxy - miny);
 }
 
+
+    
+void BulletList::drawImpl(IGUIDrawer& drawer) const
+{
+  drawBullets(drawer);
+}
+
 void BulletList::handleImpl(const IInput& input)
 {
   if(!mouseOver(input)) return; //some speed gain, don't do all those loops if the mouse isn't over this widget
-  
-  for(unsigned long i = 0; i < bullet.size(); i++)
-  {
-    bullet[i]->handle(input);
-  }
 
-  int newChecked = -1;
-  
-  for(size_t i = 0; i < bullet.size(); i++)
-  {
-    if(bullet[i]->isChecked() && int(i) != lastChecked) newChecked = i;
-    bullet[i]->setChecked(false);
-  }
-
-  if(newChecked >= 0)
-  {
-    bullet[newChecked]->setChecked(true);
-    lastChecked = newChecked;
-  }
-  else if(lastChecked >= 0 && lastChecked < int(bullet.size()))
-    bullet[lastChecked]->setChecked(true);
-}
-
-void BulletList::drawImpl(IGUIDrawer& drawer) const
-{
-  for(unsigned long i = 0; i < bullet.size(); i++)
-  {
-    bullet[i]->draw(drawer);
-  }
-}
-
-int BulletList::check()
-{
-  return lastChecked;
-}
-
-void BulletList::addText(const std::string& text, unsigned long i)
-{
-  if(i < bullet.size()) bullet[i]->addText(text);
-}
-
-std::string BulletList::getText(unsigned long i) const
-{
-  std::string result;
-  if(i < bullet.size()) result = bullet[i]->getText();
-  return result;
-}
-
-const std::string& BulletList::getCurrentText() const
-{
-  return bullet[lastChecked]->getText();
-}
-
-void BulletList::set(unsigned long i)
-{
-  /*if(i >= 0 && i < bullet.size()) bullet[i].checked = true;
-  if(!enabled) lastChecked = i;*/
-
-  for(unsigned long j = 0; j < bullet.size(); j++)
-  {
-    if(i != j) bullet[j]->setChecked(false);
-    else bullet[j]->setChecked(true);
-  }
-  
-  lastChecked = i;
-  
-  //handle(input);
+  handleBullets(input);
 }
 
 const Element* BulletList::hitTest(const IInput& input) const
@@ -2877,10 +3025,10 @@ void Tabs::generateTabSizes()
   {
     tabs[i]->resize(x0 + (dx * i) / num, y0, x0 + (dx * (i + 1)) / num, TABHEIGHT);
     //ic.updateRelativeSize(tabs[i], this);
-    ic.setSticky(tabs[i], Sticky(i * (1.0 / tabs.size()), 0, 0.0, 0, (i + 1) * (1.0 / tabs.size()), 0, 0.0, TABHEIGHT), this);
+    my_ic.setSticky(tabs[i], Sticky(i * (1.0 / tabs.size()), 0, 0.0, 0, (i + 1) * (1.0 / tabs.size()), 0, 0.0, TABHEIGHT), this);
     tabs[i]->container.resize(x0, TABHEIGHT, x1, y1);
     //ic.updateRelativeSize(&tabs[i]->container, this);
-    ic.setSticky(&tabs[i]->container, Sticky(0.0, 0, 0.0, TABHEIGHT, 1.0, 0, 1.0, 0), this);
+    my_ic.setSticky(&tabs[i]->container, Sticky(0.0, 0, 0.0, TABHEIGHT, 1.0, 0, 1.0, 0), this);
   }
 }
 

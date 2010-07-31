@@ -483,6 +483,8 @@ class AMenu : public Element
     bool itemClicked(size_t i, const IInput& input) const; //returns whether item with given index is clicked
     size_t itemClicked(const IInput& input) const; //returns index of item that is clicked if some item is clicked, an invalid index (>= getNumItems()) otherwise.
     
+    int findSubMenu(const std::string& name); //returns -1 if no such submenu is found
+    AMenu* getSubMenu(size_t index); //returns null pointer if there's no submenu at that index
     
     void disableMenu();
 };
@@ -617,6 +619,23 @@ class DropDownList : public Element
     
     bool hasChanged(); //the first one who calls this after the change gets true, then it resets back to false
 
+};
+
+class ProgressBarDialog : public lpi::gui::Dialog
+{
+  private:
+    Button cancel;
+    double progress;
+    bool isdone;
+    Dummy bar;
+  
+  public:
+  
+    ProgressBarDialog( const IGUIDrawer& geom);
+    virtual void handleImpl(const lpi::IInput& input);
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual bool done() const;
+    virtual void setProgress(double val);
 };
 
 //Utility functions to quickly show and use modal dialogs

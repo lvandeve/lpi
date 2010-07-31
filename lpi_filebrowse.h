@@ -64,7 +64,7 @@ class IFileBrowse
     virtual std::string getDefaultDir(DefaultDir dd) const = 0; //returns the path of one of the default dirs, or empty string if none available
 };
 
-#if defined(LPI_WIN32)
+#if defined(LPI_OS_WINDOWS)
 
 class FileBrowseWin32 : public IFileBrowse
 {
@@ -100,7 +100,7 @@ class FileBrowseWin32WithDrives : public FileBrowseWin32
 
 typedef FileBrowseWin32WithDrives FileBrowse;
 
-#elif defined(LPI_LINUX)
+#elif defined(LPI_OS_LINUX)
 
 class FileBrowseLinux : public IFileBrowse
 {
@@ -123,6 +123,30 @@ class FileBrowseLinux : public IFileBrowse
 };
 
 typedef FileBrowseLinux FileBrowse;
+
+#elif defined(LPI_OS_AMIGA) || defined(LPI_OS_AROS)
+
+class FileBrowseAmiga : public IFileBrowse
+{
+  public:
+  virtual bool isDirectory(const std::string& filename) const;
+  
+  virtual void getFiles(std::vector<std::string>& files, const std::string& directory) const;
+  virtual void getDirectories(std::vector<std::string>& dirs, const std::string& directory) const;
+  
+  virtual bool fileExists(const std::string& filename) const;
+  
+  virtual std::string getParent(const std::string& path) const;
+  
+  virtual void createDirectory(const std::string& path);
+
+  virtual void ensureDirectoryEndSlash(std::string& path) const;
+  virtual void fixSlashes(std::string& path) const;
+  
+  virtual std::string getDefaultDir(DefaultDir dd) const;
+};
+
+typedef FileBrowseAmiga FileBrowse;
 
 #elif defined(HAVEGOTBOOSTFILESYSTEM)
 

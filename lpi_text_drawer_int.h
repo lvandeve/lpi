@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2010 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -67,18 +67,16 @@ Needs an ITextureFactory to create the textures of the correct type for that wha
 */
 class InternalGlyphs
 {
-  friend class InternalTextDrawer;
+  public:
+    struct Glyphs
+    {
+      std::vector<ITexture*> texture; //256 images
+      int height;
+      int width;
+      
+      ~Glyphs();
+    };
   
-  struct Glyphs
-  {
-    std::vector<ITexture*> texture; //256 images
-    int height;
-    int width;
-    
-    ~Glyphs();
-  };
-  
-  private:
     static const int NUMFONT = 256;
     
     Glyphs glyphs8x8;
@@ -86,10 +84,9 @@ class InternalGlyphs
     Glyphs glyphs6x6;
     Glyphs glyphs4x5;
     
-    void initBuiltInFontTextures(const ITextureFactory* factory);
+    void initBuiltInFontTextures(const ITextureFactory* factory, bool allInOneBigTexture);
   
-  public:
-    InternalGlyphs(const ITextureFactory* factory);
+    InternalGlyphs(const ITextureFactory* factory, bool allInOneBigTexture);
     ~InternalGlyphs();
 };
 

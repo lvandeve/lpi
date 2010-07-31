@@ -272,10 +272,10 @@ ColorRGBd operator|(const ColorRGBd& color, const ColorRGBd& color2)
 ColorRGBd operator&(const ColorRGBd& color, double a)
 {
   ColorRGBd c;
-  c.r = int(color.r * a);
-  c.g = int(color.g * a);
-  c.b = int(color.b * a);
-  c.a = int(color.a * a);
+  c.r = color.r * a;
+  c.g = color.g * a;
+  c.b = color.b * a;
+  c.a = color.a * a;
   return c;
 }
 
@@ -283,10 +283,10 @@ ColorRGBd operator&(const ColorRGBd& color, double a)
 ColorRGBd operator&(double a, const ColorRGBd& color)
 {
   ColorRGBd c;
-  c.r = int(color.r * a);
-  c.g = int(color.g * a);
-  c.b = int(color.b * a);
-  c.a = int(color.a * a);
+  c.r = color.r * a;
+  c.g = color.g * a;
+  c.b = color.b * a;
+  c.a = color.a * a;
   return c;
 }
 
@@ -388,10 +388,10 @@ ColorRGBf operator|(const ColorRGBf& color, const ColorRGBf& color2)
 ColorRGBf operator&(const ColorRGBf& color, double a)
 {
   ColorRGBf c;
-  c.r = int(color.r * a);
-  c.g = int(color.g * a);
-  c.b = int(color.b * a);
-  c.a = int(color.a * a);
+  c.r = color.r * a;
+  c.g = color.g * a;
+  c.b = color.b * a;
+  c.a = color.a * a;
   return c;
 }
 
@@ -399,10 +399,10 @@ ColorRGBf operator&(const ColorRGBf& color, double a)
 ColorRGBf operator&(double a, const ColorRGBf& color)
 {
   ColorRGBf c;
-  c.r = int(color.r * a);
-  c.g = int(color.g * a);
-  c.b = int(color.b * a);
-  c.a = int(color.a * a);
+  c.r = color.r * a;
+  c.g = color.g * a;
+  c.b = color.b * a;
+  c.a = color.a * a;
   return c;
 }
 

@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include "lpi_gui_text.h"
 
 #include "lodepng.h"
@@ -72,13 +71,11 @@ InputLine::InputLine()
   entered = 0;
 }
 
-void InputLine::make(int x, int y, unsigned long l, const Font& font, int type, const std::string& title, const Font& titleFont)
+void InputLine::make(int x, int y, unsigned long l, int type)
 {
   this->x0 = x;
   this->y0 = y;
   this->l = l;
-  this->font = font;
-  this->titleFont = titleFont;
   this->type = type;
   this->title = title;
   
@@ -111,30 +108,39 @@ bool InputLine::enteringDone() const
 void InputLine::drawImpl(IGUIDrawer& drawer) const
 {
   static const int FONTSIZE = 8; //TODO: use drawer to find out cursor position in text and such
-  drawer.drawText(title, x0, (y0 + y1) / 2, titleFont, TextAlign(HA_LEFT, VA_CENTER));
+
+  if(type == 0) drawer.drawGUIPartText(GPT_TEXTINPUTLINE_TITLE, title, x0, y0, x1, y1);
   
   int titlew, titleh;
-  drawer.calcTextRectSize(titlew, titleh, title, titleFont);
+  //drawer.calcTextRectSize(titlew, titleh, title, titleFont);
+  titlew = FONTSIZE * title.size();
+  titleh = FONTSIZE;
 
   int inputX = x0 + titlew;
   int inputY = (y0 + y1) / 2;
-  if(type == 0) drawer.drawText(text, inputX, inputY, font, TextAlign(HA_LEFT, VA_CENTER));
+  if(type == 0) drawer.drawGUIPartText(GPT_TEXTINPUTLINE, text, inputX, y0, x1, y1);
   else if(type == 1) //password
   {
+    std::string s;
     unsigned long p = 0;
     while(p < text.length() && p < l)
     {
-      drawer.drawText("*", inputX + p * FONTSIZE, inputY, font, TextAlign(HA_LEFT, VA_CENTER));
+      s += "*";
       p++;
     }
+    drawer.drawGUIPartText(GPT_TEXTINPUTLINE, s, inputX, y0, x1, y1);
   }
-  else if(type == 2) drawer.print(getInteger(), inputX, inputY, font, TextAlign(HA_LEFT, VA_CENTER));
+  else if(type == 2)
+  {
+    std::string s = valtostr(getInteger());
+    drawer.drawGUIPartText(GPT_TEXTINPUTLINE, s, inputX, y0, x1, y1);
+  }
   
   //draw the cursor if active
   if(control_active && (int((draw_time - last_draw_time) * 2.0) % 2 == 0 || mouseDown(drawer.getInput())))
   {
     int cursorXDraw = inputX + cursor * FONTSIZE - 1;
-    drawer.drawLine(cursorXDraw, inputY - FONTSIZE / 2, cursorXDraw, inputY + FONTSIZE / 2, font.color);
+    drawer.drawLine(cursorXDraw, inputY - FONTSIZE / 2, cursorXDraw, inputY + FONTSIZE / 2, /*font.color*/RGB_Black);
   }
   
   //draw selection, if any
@@ -238,6 +244,7 @@ void InputLine::handleImpl(const IInput& input) //both check if you pressed ente
         }
       }
     }
+
     if(ctrl)
     {
       if(input.keyPressed(SDLK_v))
@@ -263,6 +270,12 @@ void InputLine::handleImpl(const IInput& input) //both check if you pressed ente
         if(sel0 != sel1)
         {
           std::string copyText;
+		  if ((int)sel1 < (int)sel0)
+		  {
+		    int tmp = sel0;
+			sel0 = sel1;
+			sel1 = tmp;
+		  }
           for(int i = (int)sel0; i < (int)sel1; i++)
           {
             if(i < 0) { i = -1; continue; }
@@ -453,6 +466,8 @@ ISpinner::ISpinner()
 
 void ISpinner::drawImpl(IGUIDrawer& drawer) const
 {
+  drawer.drawRectangle(getX0(), getY0(), getX1(), getY1(), RGB_White, true);
+  drawer.drawRectangle(getX0(), getY0(), getX1(), getY1(), RGB_Grey, false);
   line.draw(drawer);
   drawer.drawGUIPart(GP_SPINNER_UP, x1 - SPINNERW, y0, x1, (y0 + y1) / 2);
   drawer.drawGUIPart(GP_SPINNER_DOWN, x1 - SPINNERW, (y0 + y1) / 2, x1, y1);
@@ -481,6 +496,25 @@ bool ISpinner::hasChanged()
   return result || line.enteringDone();
 }
 
+bool ISpinner::isControlActive() const
+{
+  return line.isControlActive();
+}
+
+void ISpinner::activate(bool i_active)
+{
+  line.activate(i_active);
+}
+
+void ISpinner::selectAll()
+{
+  line.selectAll();
+}
+
+void ISpinner::selectNone()
+{
+  line.selectNone();
+}
 
 //////////////////////////////////////////////////////////////////////////////////
 ////MultiLineText class

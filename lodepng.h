@@ -1,5 +1,5 @@
 /*
-LodePNG version 20100314
+LodePNG version 20100705
 
 Copyright (c) 2005-2010 Lode Vandevenne
 
@@ -1613,6 +1613,7 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 05 jul 2010: fixed bug thanks to warnings in the new gcc version.
 *) 14 mar 2010: fixed bug where too much memory was allocated for char buffers.
 *) 02 sep 2008: fixed bug where it could create empty tree that linux apps could
     read by ignoring the problem but windows apps couldn't.
@@ -1707,5 +1708,5 @@ Domain: gmail dot com.
 Account: lode dot vandevenne.
 
 
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2010 Lode Vandevenne
 */

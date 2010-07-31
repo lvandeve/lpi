@@ -355,7 +355,7 @@ int main(int, char*[]) //the arguments have to be given here, or DevC++ can't li
   tval6.make(0, 0, &dyn_value6);
   tabs.getTabContent(1).pushTopAt(&tval6, 10, 200);
 
-  lpi::gui::HueDiskEditor_HSL_HS huecircle;
+  lpi::gui::HueDiskEditor_HSL_HS huecircle(true);
   huecircle.resize(0,0,120,120);
   tabs.getTabContent(2).pushTopAt(&huecircle, 20, 20, lpi::gui::Sticky(0.01,0, 0.0,0, 0.45,0, 0.45,0));
   lpi::gui::ColorSlidersRGB rgb;

@@ -23,11 +23,11 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 #include "lpi_file.h"
 #include <iostream>
 
-#if defined(LPI_WIN32)
+#if defined(LPI_OS_WINDOWS)
 #include <windows.h>
 #include <Shlobj.h>
 #include "lpi_filebrowse.h"
-#elif defined(LPI_LINUX)
+#elif defined(LPI_OS_LINUX) || defined(LPI_OS_AMIGA) || defined(LPI_OS_AROS)
 #include "lpi_filebrowse.h"
 #include <cstdio>
 #include <cstdlib>
@@ -121,7 +121,7 @@ void APersist::readFromXML(const std::string& xml)
   }
 }
 
-#if defined(LPI_WIN32)
+#if defined(LPI_OS_WINDOWS)
 
 PersistWin32::PersistWin32(const std::string& appuid, bool global)
 : APersist(appuid, global)
@@ -179,7 +179,7 @@ void PersistWin32::load()
   }
 }
 
-#elif defined(LPI_LINUX)
+#elif defined(LPI_OS_LINUX)
 
 PersistLinux::PersistLinux(const std::string& appuid, bool global)
 : APersist(appuid, global)
@@ -239,6 +239,66 @@ void PersistLinux::load()
   }
 }
 
+#elif defined(LPI_OS_AMIGA) || defined(LPI_OS_AROS)
+
+PersistAmiga::PersistAmiga(const std::string& appuid, bool global)
+: APersist(appuid, global)
+{
+  load();
+}
+
+PersistAmiga::~PersistAmiga()
+{
+  save();
+}
+
+std::string PersistAmiga::getPath() const
+{
+ if(global) return "PROGDIR:" + appuid + "settings.txt";
+ else
+ {
+   std::string path;
+   char* c = "PROGDIR:"; // std::getenv("XDG_CONFIG_HOME");
+   if(c != 0) path = c;
+   if(!path.empty()) lpi::ensureDirectoryEndSlash(path);
+   if(path.empty())
+   {
+     char* c = "PROGDIR:";
+     if(c != 0) path = c;
+     if(!path.empty())
+     {
+       lpi::ensureDirectoryEndSlash(path);
+       path += ".config/";
+     }
+   }
+   return path + appuid + "settings.txt";
+
+ }
+}
+
+void PersistAmiga::save() const
+{
+ std::string path = "PROGDIR:settings.txt"; //getPath();
+ if(!path.empty())
+ {
+   std::string xml;
+   writeToXML(xml);
+   FileBrowse browse;
+   browse.createDirectory(path);
+   saveFile(xml, path);
+ }
+}
+
+void PersistAmiga::load()
+{
+ std::string path = "PROGDIR:settings.txt"; //getPath();
+ if(!path.empty())
+ {
+   std::string xml;
+   loadFile(xml, path);
+   if(!xml.empty()) readFromXML(xml);
+ }
+}
 #endif
 
 } //namespace lpi

@@ -208,7 +208,7 @@ FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser, bool save, 
     {
       std::string home = browser->getDefaultDir(lpi::IFileBrowse::DD_HOME);
       if(!home.empty()) persist->add(home);
-#ifdef LPI_WIN32
+#ifdef LPI_OS_WINDOWS
       persist->add("C:\\");
 #else
       persist->add("/");
@@ -235,7 +235,7 @@ FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser, bool save, 
   
   if(REMEMBER_PATH.empty())
   {
-#ifdef LPI_WIN32
+#ifdef LPI_OS_WINDOWS
     setPath("C:\\");
 #else
     setPath("/");
@@ -253,7 +253,11 @@ FileDialog::FileDialog(const IGUIDrawer& geom, IFileBrowse* browser, bool save, 
 FileDialog::~FileDialog()
 {
   std::string temp = getPath();
-  if(!temp.empty()) REMEMBER_PATH = temp;
+  if(!temp.empty())
+  {
+    browser->ensureDirectoryEndSlash(temp);
+    REMEMBER_PATH = temp;
+  }
 }
 
 void FileDialog::drawImpl(IGUIDrawer& drawer) const
@@ -455,13 +459,16 @@ void FileDialog::setPath(const std::string& path)
 
 size_t FileDialog::getNumFiles() const
 {
-  if(multiselection) return selectedFiles.size();
+  if(multiselection)
+  {
+    return selectedFiles.empty() ? 1 : selectedFiles.size();
+  }
   else return 1;
 }
 
 std::string FileDialog::getFileName(size_t i)
 {
-  if(multiselection) return browser->getChild(path.getText(), selectedFiles[i]);
+  if(multiselection && !selectedFiles.empty()) return browser->getChild(path.getText(), selectedFiles[i]);
   else return browser->getChild(path.getText(), file.getText());
 }
 

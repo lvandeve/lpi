@@ -36,33 +36,35 @@ namespace gui
 
 void drawCheckerBackground(IGUIDrawer& drawer, int x0, int y0, int x1, int y1, int w, int h, const ColorRGB& c0, const ColorRGB& c1)
 {
-  static HTexture texture0;
-  static HTexture texture1;
-  if(texture0.texture == 0)
-  {
-    texture0.texture = drawer.createTexture();
-    texture0.texture->setSize(2, 2);
-    setPixel(texture0.texture, 0, 0, RGB_White);
-    setPixel(texture0.texture, 0, 1, RGB_Invisible);
-    setPixel(texture0.texture, 1, 0, RGB_Invisible);
-    setPixel(texture0.texture, 1, 1, RGB_White);
-    texture0.texture->update();
-  }
-  if(texture1.texture == 0)
-  {
-    texture1.texture = drawer.createTexture();
-    texture1.texture->setSize(2, 2);
-    setPixel(texture1.texture, 0, 0, RGB_Invisible);
-    setPixel(texture1.texture, 0, 1, RGB_White);
-    setPixel(texture1.texture, 1, 0, RGB_White);
-    setPixel(texture1.texture, 1, 1, RGB_Invisible);
-    texture1.texture->update();
-  }
-  drawer.convertTextureIfNeeded(texture0.texture);
-  drawer.convertTextureIfNeeded(texture1.texture);
+  //These get never deleted. But that is for a reason: at the time they'll be deleted, the GL context is already deleted, so better never delete them at all (the program quits anyway at that time, it's not really a bad leak)
+  static ITexture* texture0 = 0;
+  static ITexture* texture1 = 0;
   
-  drawer.drawTextureSizedRepeated(texture0.texture, x0, y0, x1, y1, w * 2, h * 2, c0);
-  drawer.drawTextureSizedRepeated(texture1.texture, x0, y0, x1, y1, w * 2, h * 2, c1);
+  if(texture0 == 0)
+  {
+    texture0 = drawer.createTexture();
+    texture0->setSize(2, 2);
+    setPixel(texture0, 0, 0, RGB_White);
+    setPixel(texture0, 0, 1, RGB_Invisible);
+    setPixel(texture0, 1, 0, RGB_Invisible);
+    setPixel(texture0, 1, 1, RGB_White);
+    texture0->update();
+  }
+  if(texture1 == 0)
+  {
+    texture1 = drawer.createTexture();
+    texture1->setSize(2, 2);
+    setPixel(texture1, 0, 0, RGB_Invisible);
+    setPixel(texture1, 0, 1, RGB_White);
+    setPixel(texture1, 1, 0, RGB_White);
+    setPixel(texture1, 1, 1, RGB_Invisible);
+    texture1->update();
+  }
+  drawer.convertTextureIfNeeded(texture0);
+  drawer.convertTextureIfNeeded(texture1);
+  
+  drawer.drawTextureSizedRepeated(texture0, x0, y0, x1, y1, w * 2, h * 2, c0);
+  drawer.drawTextureSizedRepeated(texture1, x0, y0, x1, y1, w * 2, h * 2, c1);
   
   
   //Rectangle method below is too slow.
@@ -89,9 +91,6 @@ void drawCheckerBackground(IGUIDrawer& drawer, int x0, int y0, int x1, int y1, i
   }*/
 }
 
-PartialEditor::PartialEditor()
-{
-}
 
 ColorRGB getIndicatorColor(const ColorRGB& color) //returns a color that is always well visible on the given background color
 {
@@ -102,14 +101,83 @@ ColorRGB getIndicatorColor(const ColorRGB& color) //returns a color that is alwa
   result.b = (color.b + 128) % 256;
   result.a = 255;
   return result;*/
-  
+
   //algorithm two. Very well visible. Not continuous, but better than algorithm one at this.
-  ColorRGB result;
+  /*ColorRGB result;
   if(color.r < 128) result.r = 255; else result.r = 0;
   if(color.g < 128) result.g = 255; else result.g = 0;
   if(color.b < 128) result.b = 255; else result.b = 0;
   result.a = 255;
-  return result;
+  return result;*/
+
+  //algorithm three. Turns out black and white are always most visible
+  /*if((color.r + color.g + color.b) / 3 < 128) return lpi::RGB_White;
+  else return lpi::RGB_Black;*/
+
+  //Algorithm four: similar to three, but uses lightness calculation more close to the human eye
+  if((0.299 * color.r + 0.587 * color.g + 0.114 * color.b) < 128.0) return lpi::RGB_White;
+  else return lpi::RGB_Black;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+
+ColorChangeable::ColorChangeable()
+: changed(false)
+{
+}
+
+ColorChangeable::~ColorChangeable()
+{
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+
+ColorEditorMainOrOnePlane::ColorEditorMainOrOnePlane()
+: isPlane(false)
+{
+}
+
+//main color: a single color, not associated to any mouse button (not even the first or left one)
+bool ColorEditorMainOrOnePlane::isMainColorGettable() const
+{
+  return !isPlane;
+}
+
+bool ColorEditorMainOrOnePlane::isMultiColorGettable(Plane plane) const
+{
+  return isPlane && plane == this->plane;
+}
+
+void ColorEditorMainOrOnePlane::getMultiColor(ColorRGBd& color, Plane plane) const
+{
+  if(plane == this->plane) getColor(color);
+}
+
+void ColorEditorMainOrOnePlane::setMultiColor(Plane plane, const ColorRGBd& color)
+{
+  if(plane == this->plane) setColor(color);
+}
+
+void ColorEditorMainOrOnePlane::setMain()
+{
+  isPlane = false;
+}
+void ColorEditorMainOrOnePlane::setPlane(Plane plane)
+{
+  this->plane = plane;
+  isPlane = true;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+PartialEditor::PartialEditor()
+{
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -117,15 +185,26 @@ ColorRGB getIndicatorColor(const ColorRGB& color) //returns a color that is alwa
 ChannelSlider::ChannelSlider()
 : dir(H)
 , value(0.5)
+, texture(new HTexture)
+, textureuptodate(false)
 , drawalpha(true)
 , outofrangeaction(WARNING)
 {
+}
+
+ChannelSlider::~ChannelSlider()
+{
+  delete texture;
 }
 
 
 void ChannelSlider::drawImpl(IGUIDrawer& drawer) const
 {
   (void)drawer;
+  
+  if(texture->texture == 0) (texture->texture) = drawer.createTexture();
+  if(!textureuptodate) generateTexture();
+  drawer.convertTextureIfNeeded(texture->texture);
   
   ColorRGB indicator;
   getDrawColor(indicator, value);
@@ -149,29 +228,53 @@ void ChannelSlider::drawImpl(IGUIDrawer& drawer) const
   drawer.drawRectangle(x0, y0, x1, y1, RGB_Black, false);
 }
 
-void ChannelSlider::drawBackgroundH(IGUIDrawer& drawer) const
+void ChannelSlider::generateTexture() const
 {
-  static const size_t NUM = 32;
+  if(!texture->texture) return;
+  
   ColorRGB c;
   
-  if(drawalpha) drawCheckerBackground(drawer, x0, y0, x1, y1, 4, 4, RGB_White, RGB_Black);
+  if(dir == H) texture->texture->setSize(NUM, 1);
+  else texture->texture->setSize(1, NUM);
   
   for(size_t i = 0; i < NUM; i++)
   {
-    int xa = 1 + x0 + ((i * getSizeX()) / NUM);
-    int xb = 1 + x0 + (((i + 1) * getSizeX()) / NUM);
-    if(i == NUM - 1) xb = x1 - 1;
-    double v = (double)((xa + xb) / 2 - x0) / (getSizeX() - 2);
+    double v = (double)i / (double)(NUM - 1);
     getDrawColor(c, v);
     if(!drawalpha) c.a = 255;
-    bool outofrange = !(c.r >= 0 && c.r <= 255 && c.g >= 0 && c.g <= 255 && c.b >= 0 && c.b <= 255);
+    outofrange[i] = !(c.r >= 0 && c.r <= 255 && c.g >= 0 && c.g <= 255 && c.b >= 0 && c.b <= 255);
     c.clamp();
-    if(!outofrange || outofrangeaction == DRAW)
-      drawer.drawRectangle(xa, y0, xb, y1, c, true);
-    else if(outofrange && outofrangeaction == WARNING)
+    
+    if(!outofrange[i] || outofrangeaction != HIDE)
     {
+      if(dir == H) setPixel(texture->texture, i, 0, c);
+      else setPixel(texture->texture, 0, NUM - 1 - i, c);
+    }
+    else
+    {
+      if(dir == H) setPixel(texture->texture, i, 0, lpi::RGB_Invisible);
+      else setPixel(texture->texture, 0, NUM - 1 - i, lpi::RGB_Invisible);
+    }
+  }
+
+  texture->texture->update();
+  textureuptodate = true;
+}
+
+void ChannelSlider::drawBackgroundH(IGUIDrawer& drawer) const
+{
+  if(drawalpha) drawCheckerBackground(drawer, x0, y0, x1, y1, 4, 4, RGB_White, RGB_Black);
+  drawer.drawTextureSized(texture->texture, x0, y0, getSizeX(), getSizeY());
+  
+  for(size_t i = 0; i < NUM; i++)
+  {
+    if(outofrange[i] && outofrangeaction == WARNING)
+    {
+      int xa = 1 + x0 + ((i * getSizeX()) / NUM);
+      int xb = 1 + x0 + (((i + 1) * getSizeX()) / NUM);
+      if(i == NUM - 1) xb = x1 - 1;
+
       int yi = y0 + (3 * (y1 - y0)) / 4;
-      drawer.drawRectangle(xa, y0, xb, yi, c, true);
       ColorRGB w = RGB_Red;//c; w.clamp(); w.negateRGB();
       drawer.drawRectangle(xa, yi, xb, y1, w, true);
       drawer.drawLine(xa, yi, xb, yi, RGB_Yellow);
@@ -181,25 +284,19 @@ void ChannelSlider::drawBackgroundH(IGUIDrawer& drawer) const
 
 void ChannelSlider::drawBackgroundV(IGUIDrawer& drawer) const
 {
-  static const size_t NUM = 32;
   ColorRGB c;
   
   if(drawalpha) drawCheckerBackground(drawer, x0, y0, x1, y1, 4, 4, RGB_White, RGB_Black);
+  drawer.drawTextureSized(texture->texture, x0, y0, getSizeX(), getSizeY());
   
   for(size_t i = 0; i < NUM; i++)
   {
-    int ya = 1 + y0 + ((i * getSizeY()) / NUM);
-    int yb = 1 + y0 + (((i + 1) * getSizeY()) / NUM);
-    if(i == NUM - 1) yb = y1 - 1;
-    double v = 1.0 - (double)((ya + yb) / 2 - y0) / (getSizeY() - 2);
-    getDrawColor(c, v);
-    if(!drawalpha) c.a = 255;
-    bool outofrange = !(c.r >= 0 && c.r <= 255 && c.g >= 0 && c.g <= 255 && c.b >= 0 && c.b <= 255);
-    c.clamp();
-    if(!outofrange || outofrangeaction == DRAW)
-      drawer.drawRectangle(x0, ya, x1, yb, c, true);
-    else if(outofrange && outofrangeaction == WARNING)
+    if(outofrange[i] && outofrangeaction == WARNING)
     {
+      int ya = 1 + y0 + ((i * getSizeY()) / NUM);
+      int yb = 1 + y0 + (((i + 1) * getSizeY()) / NUM);
+      if(i == NUM - 1) yb = y1 - 1;
+
       int xi = x0 + (3 * (x1 - x0)) / 4;
       drawer.drawRectangle(x0, ya, xi, yb, c, true);
       ColorRGB w = RGB_Red;//c; w.clamp(); w.negateRGB();
@@ -224,6 +321,42 @@ void ChannelSlider::handleImpl(const IInput& input)
     setChanged();
   }
 }
+
+double ChannelSlider::getValue() const
+{
+  return value;
+}
+
+void ChannelSlider::setValue(double value)
+{
+  if(this->value != value) textureuptodate = false;
+  this->value = value;
+}
+
+void ChannelSlider::setAdaptiveColor(const ColorRGBd& color)
+{
+  if(this->color != color) textureuptodate = false;
+  this->color = color;
+}
+
+void ChannelSlider::setDrawAlpha(bool drawalpha)
+{
+  if(this->drawalpha != drawalpha) textureuptodate = false;
+  this->drawalpha = drawalpha;
+}
+
+void ChannelSlider::setDrawOutOfRangeRGBColors(OutOfRangeAction action)
+{
+  if(this->outofrangeaction != outofrangeaction) textureuptodate = false;
+  this->outofrangeaction = action;
+}
+
+void ChannelSlider::setDirection(Direction dir)
+{
+  if(this->dir != dir) textureuptodate = false;
+  this->dir = dir;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -495,8 +628,8 @@ void ChannelSliderType::decrementType()
 void ChannelSliderType::handleImpl(const IInput& input)
 {
   ChannelSlider::handleImpl(input);
-  if(mouseDoubleClicked(input, LMB)) incrementType();
-  if(mouseDoubleClicked(input, RMB)) decrementType();
+  //if(mouseDoubleClicked(input, LMB)) incrementType();
+  //if(mouseDoubleClicked(input, RMB)) decrementType();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -517,13 +650,13 @@ ChannelSliderEx::ChannelSliderEx(ChannelSlider* slider, const std::string& label
   this->label.make(0, 3, label, FONT_Shadow);
   int LABELSIZEX = this->label.getSizeX();
   resize(0, 0, LABELSIZEX + EDITBOXSIZEX, EDITBOXSIZEY);
-  input.make(0, 0, 5, FONT_Black);
+  input.make(0, 0, 5);
   input.resize(LABELSIZEX + 6, 2, LABELSIZEX + EDITBOXSIZEX - 1, EDITBOXSIZEY - 1);
   slider->resize(LABELSIZEX, 0, LABELSIZEX, EDITBOXSIZEY);
   addSubElement(&this->label, Sticky(0.0, 0, 0.5, -this->label.getSizeY() / 2, 0.0, this->label.getSizeX(), 0.5, this->label.getSizeY() / 2));
   addSubElement(&input, Sticky(1.0, -input.getSizeX(), 0.5, -input.getSizeY() / 2, 1.0, 0, 0.5, input.getSizeY() / 2));
   addSubElement(slider);
-  ic.setStickyFull(slider, this);
+  my_ic.setStickyFull(slider, this);
 }
 
 void ChannelSliderEx::fixUpSizes()
@@ -602,7 +735,7 @@ void ColorSliders::fixUpSizes()
   {
     sliders[i]->resize(x0, y0 + 4 * i, x1, y0 + 4 * i + 3);
     //ic.updateRelativeSize(sliders[i], this);
-    ic.setStickyRelative(sliders[i], this);
+    my_ic.setStickyRelative(sliders[i], this);
   }
   resize(x0, y0, x1, origsizey);
   
@@ -657,6 +790,8 @@ void ColorSliders::handleImpl(const IInput& input)
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 ColorSlidersRGB::ColorSlidersRGB(bool with_alpha)
 {
   addSlider(new ChannelSliderExType(CC_RGB_R, "R:"));
@@ -679,8 +814,27 @@ void ColorSlidersRGB::setColor(const ColorRGBd& color)
   sliders[0]->setValue(color.r);
   sliders[1]->setValue(color.g);
   sliders[2]->setValue(color.b);
-  sliders[3]->setValue(color.a);
+  if(with_alpha) sliders[3]->setValue(color.a);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+ColorSlidersA::ColorSlidersA()
+{
+  addAlpha("A:");
+}
+
+void ColorSlidersA::getColor(ColorRGBd& color) const
+{
+  color.a = sliders[0]->getValue();
+}
+
+void ColorSlidersA::setColor(const ColorRGBd& color)
+{
+  sliders[0]->setValue(color.a);
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 ColorSlidersHSV::ColorSlidersHSV(bool with_alpha)
 {
@@ -707,8 +861,10 @@ void ColorSlidersHSV::setColor(const ColorRGBd& color)
   sliders[0]->setValue(convert.h);
   sliders[1]->setValue(convert.s);
   sliders[2]->setValue(convert.v);
-  sliders[3]->setValue(convert.a);
+  if(with_alpha) sliders[3]->setValue(convert.a);
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 ColorSlidersHSL::ColorSlidersHSL(bool with_alpha)
 {
@@ -735,8 +891,10 @@ void ColorSlidersHSL::setColor(const ColorRGBd& color)
   sliders[0]->setValue(convert.h);
   sliders[1]->setValue(convert.s);
   sliders[2]->setValue(convert.l);
-  sliders[3]->setValue(convert.a);
+  if(with_alpha) sliders[3]->setValue(convert.a);
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 ColorSlidersCMY::ColorSlidersCMY(bool with_alpha)
 {
@@ -763,8 +921,10 @@ void ColorSlidersCMY::setColor(const ColorRGBd& color)
   sliders[0]->setValue(convert.c);
   sliders[1]->setValue(convert.m);
   sliders[2]->setValue(convert.y);
-  sliders[3]->setValue(convert.a);
+  if(with_alpha) sliders[3]->setValue(convert.a);
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 ColorSlidersCMYK::ColorSlidersCMYK(bool with_alpha)
 {
@@ -783,7 +943,7 @@ void ColorSlidersCMYK::getColor(ColorRGBd& color) const
   convert.m = sliders[1]->getValue();
   convert.y = sliders[2]->getValue();
   convert.k = sliders[3]->getValue();
-  convert.a = sliders[4]->getValue();
+  convert.a = with_alpha ? sliders[4]->getValue() : color.a;
   color = lpi::CMYKtoRGB(convert);
 }
 
@@ -794,8 +954,10 @@ void ColorSlidersCMYK::setColor(const ColorRGBd& color)
   sliders[1]->setValue(convert.m);
   sliders[2]->setValue(convert.y);
   sliders[3]->setValue(convert.k);
-  sliders[4]->setValue(convert.a);
+  if(with_alpha) sliders[4]->setValue(convert.a);
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 ColorSlidersCIEXYZ::ColorSlidersCIEXYZ(bool with_alpha)
 {
@@ -822,8 +984,10 @@ void ColorSlidersCIEXYZ::setColor(const ColorRGBd& color)
   sliders[0]->setValue(convert.x);
   sliders[1]->setValue(convert.y);
   sliders[2]->setValue(convert.z);
-  sliders[3]->setValue(convert.alpha);
+  if(with_alpha) sliders[3]->setValue(convert.alpha);
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 ColorSlidersCIELab::ColorSlidersCIELab(bool with_alpha)
 {
@@ -850,10 +1014,10 @@ void ColorSlidersCIELab::setColor(const ColorRGBd& color)
   sliders[0]->setValue(convert.l);
   sliders[1]->setValue((convert.a) / 2.0 + 0.5);
   sliders[2]->setValue((convert.b) / 2.0 + 0.5);
-  sliders[3]->setValue(convert.alpha);
+  if(with_alpha) sliders[3]->setValue(convert.alpha);
 }
 
-////
+////////////////////////////////////////////////////////////////////////////////
 
 ColorSlidersYPbPr::ColorSlidersYPbPr(bool with_alpha)
 {
@@ -880,8 +1044,10 @@ void ColorSlidersYPbPr::setColor(const ColorRGBd& color)
   sliders[0]->setValue(convert.y);
   sliders[1]->setValue(convert.pb + 0.5);
   sliders[2]->setValue(convert.pr + 0.5);
-  sliders[3]->setValue(convert.alpha);
+  if(with_alpha) sliders[3]->setValue(convert.alpha);
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 ColorSlidersYCbCr::ColorSlidersYCbCr(bool with_alpha)
 {
@@ -908,7 +1074,7 @@ void ColorSlidersYCbCr::setColor(const ColorRGBd& color)
   sliders[0]->setValue(convert.y);
   sliders[1]->setValue(convert.cb);
   sliders[2]->setValue(convert.cr);
-  sliders[3]->setValue(convert.alpha);
+  if(with_alpha) sliders[3]->setValue(convert.alpha);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -920,37 +1086,68 @@ void ColorSlidersYCbCr::setColor(const ColorRGBd& color)
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-  
 PartialEditorSquare::PartialEditorSquare()
-: drawalpha(true)
+: texture(new HTexture)
+, textureuptodate(false)
+, drawalpha(true)
 , outofrangeaction(WARNING)
 {
 }
 
+PartialEditorSquare::~PartialEditorSquare()
+{
+  delete texture;
+}
+
 void PartialEditorSquare::drawBackground(IGUIDrawer& drawer) const
 {
-  static const size_t NUMX = 16;
-  static const size_t NUMY = 16;
+  static const size_t NUMX = 128;
+  static const size_t NUMY = 128;
   
-  for(size_t y = 0; y < NUMY; y++)
-  for(size_t x = 0; x < NUMX; x++)
+  if(texture->texture == 0) (texture->texture) = drawer.createTexture();
+  if(!textureuptodate)
   {
-    int drawx0 = x0 + (getSizeX() * x) / NUMX;
-    int drawy0 = y0 + (getSizeY() * y) / NUMY;
-    int drawx1 = x0 + (getSizeX() * (x + 1)) / NUMX;
-    int drawy1 = y0 + (getSizeY() * (y + 1)) / NUMY;
-    
-    ColorRGB color = RGBdtoRGB(this->color);
-    getDrawColor(color, (double)x / (double)NUMX, (double)y / (double)NUMY);
-    bool outofrange = !(color.r >= 0 && color.r <= 255 && color.g >= 0 && color.g <= 255 && color.b >= 0 && color.b <= 255);
-    color.clamp();
-    
-    if(!outofrange || outofrangeaction == DRAW || outofrangeaction == WARNING)
-      drawer.drawRectangle(drawx0, drawy0, drawx1, drawy1, color, true);
-    if(outofrange && outofrangeaction == WARNING)
+    coloroutofrange.resize(NUMX * NUMY);
+    texture->texture->setSize(NUMX, NUMY);
+    for(size_t y = 0; y < NUMY; y++)
+    for(size_t x = 0; x < NUMX; x++)
     {
-      drawer.drawLine(drawx0, drawy0, drawx1, drawy1, RGB_Red);
-      drawer.drawLine(drawx0, drawy1, drawx1, drawy0, RGB_Yellow);
+      size_t i = y * NUMX + x;
+      
+      ColorRGB color = RGBdtoRGB(this->color);
+      getDrawColor(color, (double)x / (double)NUMX, 1.0 - (double)y / (double)NUMY);
+      coloroutofrange[i] = !(color.r >= 0 && color.r <= 255 && color.g >= 0 && color.g <= 255 && color.b >= 0 && color.b <= 255);
+      if(coloroutofrange[i])
+      {
+        if(outofrangeaction == DRAW || outofrangeaction == WARNING) color.clamp();
+        else color = lpi::ColorRGB(0,0,0,0);
+      }
+
+      setPixel(texture->texture, x, y, color);
+    }
+    texture->texture->update();
+    textureuptodate = true;
+  }
+  
+  drawer.convertTextureIfNeeded(texture->texture);
+  drawer.drawTextureSized(texture->texture, x0, y0, x1 - x0, y1 - y0);
+
+  if(outofrangeaction == WARNING)
+  {
+    for(size_t y = 0; y < NUMY; y++)
+    for(size_t x = 0; x < NUMX; x++)
+    {
+      size_t i = y * NUMX + x;
+      if(coloroutofrange[i])
+      {
+        int drawx0 = x0 + (getSizeX() * x) / NUMX;
+        int drawy0 = y0 + (getSizeY() * y) / NUMY;
+        int drawx1 = x0 + (getSizeX() * (x + 1)) / NUMX;
+        int drawy1 = y0 + (getSizeY() * (y + 1)) / NUMY;
+
+        drawer.drawLine(drawx0, drawy0, drawx1, drawy1, RGB_Red);
+        drawer.drawLine(drawx0, drawy1, drawx1, drawy0, RGB_Yellow);
+      }
     }
   }
 }
@@ -958,11 +1155,42 @@ void PartialEditorSquare::drawBackground(IGUIDrawer& drawer) const
 void PartialEditorSquare::drawImpl(IGUIDrawer& drawer) const
 {
   drawBackground(drawer);
+  
+  drawer.drawRectangle(x0, y0, x1, y1, RGB_Black, false);
+  
+  int x = x0 + (int)(getSizeX() * value_x);
+  int y = y0 + (int)(getSizeY() * (1.0 - value_y));
+  ColorRGB indicator;
+  getDrawColor(indicator, value_x, value_y);
+  indicator = getIndicatorColor(indicator);
+  drawer.drawCircle(x, y, 4, indicator, false);
 }
 
 void PartialEditorSquare::handleImpl(const IInput& input)
 {
-  (void)input;
+  if(getSizeX() <= 0 || getSizeY() <= 0) return; //avoid divisions through 0
+  
+  if(mouseGrabbed(input))
+  {
+    value_x = (double)(mouseGetRelPosX(input)) / getSizeX();
+    value_y = 1.0 - (double)(mouseGetRelPosY(input)) / getSizeY();
+
+    if(value_x < 0.0) value_x = 0.0;
+    if(value_x > 1.0) value_x = 1.0;
+    if(value_y < 0.0) value_y = 0.0;
+    if(value_y > 1.0) value_y = 1.0;
+
+    setChanged();
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+PartialEditorSquareType::PartialEditorSquareType(ColorChannelType typex, ColorChannelType typey)
+: typex(typex)
+, typey(typey)
+{
 }
 
 void PartialEditorSquareType::getDrawColor(ColorRGB& o_color, double value_x, double value_y) const
@@ -971,6 +1199,166 @@ void PartialEditorSquareType::getDrawColor(ColorRGB& o_color, double value_x, do
   getColorDynamic(temp, color, value_x, typex);
   getColorDynamic(o_color, temp, value_y, typey);
 }
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+HueSquareEditor::HueSquareEditor()
+: square(0)
+, sliderc(0)
+, slidera(0)
+{
+}
+
+HueSquareEditor::~HueSquareEditor()
+{
+  delete square;
+  delete sliderc;
+  if(slidera) delete slidera;
+}
+
+void HueSquareEditor::init()
+{
+  if(slidera)
+  {
+    addSubElement(square, Sticky(0.0, 0, 0.0, 0, 0.9, -4, 0.9, -4));
+    sliderc->setDirection(V);
+    addSubElement(sliderc, Sticky(0.9, 0, 0.0, 0, 1.0, 0, 0.9, -4));
+    addSubElement(slidera, Sticky(0.0, 0, 0.9, 0, 0.9, -4, 1.0, 0));
+  }
+  else
+  {
+    addSubElement(square, Sticky(0.0, 0, 0.0, 0, 0.9, -4, 1.0, -4));
+    sliderc->setDirection(V);
+    addSubElement(sliderc, Sticky(0.9, 0, 0.0, 0, 1.0, 0, 1.0, -4));
+  }
+}
+
+void HueSquareEditor::drawImpl(IGUIDrawer& drawer) const
+{
+  square->draw(drawer);
+  sliderc->draw(drawer);
+  if(slidera) slidera->draw(drawer);
+}
+
+void HueSquareEditor::handleImpl(const IInput& input)
+{
+  square->handle(input);
+  sliderc->handle(input);
+  if(slidera) slidera->handle(input);
+  if(square->hasChanged()) setChanged();
+  if(sliderc->hasChanged()) setChanged();
+  if(slidera) { if(slidera->hasChanged()) setChanged(); }
+  ColorRGBd adaptive;
+  getColor(adaptive);
+  //square->setAdaptiveColor(adaptive);
+  sliderc->setAdaptiveColor(adaptive);
+  if(slidera) slidera->setAdaptiveColor(adaptive);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+HueSquareEditor_HSV_HS::HueSquareEditor_HSV_HS(bool alpha)
+{
+  square = new PartialEditorSquareType(CC_HSV_H, CC_HSV_S);
+  sliderc = new ChannelSliderType(CC_HSV_V);
+  if(alpha) slidera = new ChannelSliderType(CC_A);
+  square->setAdaptiveColor(ColorRGBd(1.0,1.0,1.0));
+  init();
+}
+
+void HueSquareEditor_HSV_HS::getColor(ColorRGBd& color) const
+{
+  color = HSVtoRGB(ColorHSVd(square->getValueX(), square->getValueY(), sliderc->getValue(), color.a));
+  if(slidera) color.a = slidera->getValue();
+}
+
+void HueSquareEditor_HSV_HS::setColor(const ColorRGBd& color)
+{
+  ColorHSVd hsv = RGBtoHSV(color);
+  square->setValueX(hsv.h);
+  square->setValueY(hsv.s);
+  sliderc->setValue(hsv.v);
+  if(slidera) slidera->setValue(hsv.a);
+}
+
+HueSquareEditor_HSV_HV::HueSquareEditor_HSV_HV(bool alpha)
+{
+  square = new PartialEditorSquareType(CC_HSV_H, CC_HSV_V);
+  sliderc = new ChannelSliderType(CC_HSV_S);
+  if(alpha) slidera = new ChannelSliderType(CC_A);
+  square->setAdaptiveColor(ColorRGBd(1.0,1.0,1.0));
+  init();
+}
+
+void HueSquareEditor_HSV_HV::getColor(ColorRGBd& color) const
+{
+  color = HSVtoRGB(ColorHSVd(square->getValueX(), sliderc->getValue(), square->getValueY(), color.a));
+  if(slidera) color.a = slidera->getValue();
+}
+
+void HueSquareEditor_HSV_HV::setColor(const ColorRGBd& color)
+{
+  ColorHSVd hsv = RGBtoHSV(color);
+  square->setValueX(hsv.h);
+  sliderc->setValue(hsv.s);
+  square->setValueY(hsv.v);
+  if(slidera) slidera->setValue(hsv.a);
+}
+
+HueSquareEditor_HSL_HS::HueSquareEditor_HSL_HS(bool alpha)
+{
+  square = new PartialEditorSquareType(CC_HSL_H, CC_HSL_S);
+  sliderc = new ChannelSliderType(CC_HSL_L);
+  if(alpha) slidera = new ChannelSliderType(CC_A);
+  square->setAdaptiveColor(ColorRGBd(1.0,0.0,0.0));
+  init();
+}
+
+void HueSquareEditor_HSL_HS::getColor(ColorRGBd& color) const
+{
+  color = HSLtoRGB(ColorHSLd(square->getValueX(), square->getValueY(), sliderc->getValue(), color.a));
+  if(slidera) color.a = slidera->getValue();
+}
+
+void HueSquareEditor_HSL_HS::setColor(const ColorRGBd& color)
+{
+  ColorHSLd hsl = RGBtoHSL(color);
+  square->setValueX(hsl.h);
+  square->setValueY(hsl.s);
+  sliderc->setValue(hsl.l);
+  if(slidera) slidera->setValue(hsl.a);
+}
+
+HueSquareEditor_HSL_HL::HueSquareEditor_HSL_HL(bool alpha)
+{
+  square = new PartialEditorSquareType(CC_HSL_H, CC_HSL_L);
+  sliderc = new ChannelSliderType(CC_HSL_S);
+  if(alpha) slidera = new ChannelSliderType(CC_A);
+  square->setAdaptiveColor(ColorRGBd(1.0,0.0,0.0));
+  init();
+}
+
+void HueSquareEditor_HSL_HL::getColor(ColorRGBd& color) const
+{
+  color = HSLtoRGB(ColorHSLd(square->getValueX(), sliderc->getValue(), square->getValueY(), color.a));
+  if(slidera) color.a = slidera->getValue();
+}
+
+void HueSquareEditor_HSL_HL::setColor(const ColorRGBd& color)
+{
+  ColorHSLd hsl = RGBtoHSL(color);
+  square->setValueX(hsl.h);
+  sliderc->setValue(hsl.s);
+  square->setValueY(hsl.l);
+  if(slidera) slidera->setValue(hsl.a);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -1103,7 +1491,132 @@ HueDiskEditor::~HueDiskEditor()
 {
   delete circle;
   delete sliderc;
-  delete slidera;
+  if(slidera) delete slidera;
+}
+
+void HueDiskEditor::init()
+{
+  addSubElement(circle, Sticky(0.0, 0, 0.0, 0, 0.9, 0, 0.9, 0));
+  sliderc->setDirection(V);
+  addSubElement(sliderc, Sticky(0.9, 0, 0.0, 0, 1.0, 0, 0.9, 0));
+  if(slidera) addSubElement(slidera, Sticky(0.0, 0, 0.9, 0, 0.9, 0, 1.0, 0));
+}
+
+void HueDiskEditor::drawImpl(IGUIDrawer& drawer) const
+{
+  circle->draw(drawer);
+  sliderc->draw(drawer);
+  if(slidera) slidera->draw(drawer);
+}
+
+void HueDiskEditor::handleImpl(const IInput& input)
+{
+  circle->handle(input);
+  sliderc->handle(input);
+  if(slidera) slidera->handle(input);
+  if(circle->hasChanged()) setChanged();
+  if(sliderc->hasChanged()) setChanged();
+  if(slidera) { if(slidera->hasChanged()) setChanged(); }
+  ColorRGBd adaptive;
+  getColor(adaptive);
+  circle->setAdaptiveColor(adaptive);
+  sliderc->setAdaptiveColor(adaptive);
+  if(slidera) slidera->setAdaptiveColor(adaptive);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+HueDiskEditor_HSV_HS::HueDiskEditor_HSV_HS(bool alpha)
+{
+  circle = new PartialEditorHueDisk_HSV_HS();
+  sliderc = new ChannelSliderType(CC_HSV_V);
+  if(alpha) slidera = new ChannelSliderType(CC_A);
+  init();
+}
+
+void HueDiskEditor_HSV_HS::getColor(ColorRGBd& color) const
+{
+  color = HSVtoRGB(ColorHSVd(circle->getValueAngle(), circle->getValueAxial(), sliderc->getValue(), color.a));
+  if(slidera) color.a = slidera->getValue();
+}
+
+void HueDiskEditor_HSV_HS::setColor(const ColorRGBd& color)
+{
+  ColorHSVd hsv = RGBtoHSV(color);
+  circle->setValueAngle(hsv.h);
+  circle->setValueAxial(hsv.s);
+  sliderc->setValue(hsv.v);
+  if(slidera) slidera->setValue(hsv.a);
+}
+
+HueDiskEditor_HSV_HV::HueDiskEditor_HSV_HV(bool alpha)
+{
+  circle = new PartialEditorHueDisk_HSV_HV();
+  sliderc = new ChannelSliderType(CC_HSV_S);
+  if(alpha) slidera = new ChannelSliderType(CC_A);
+  init();
+}
+
+void HueDiskEditor_HSV_HV::getColor(ColorRGBd& color) const
+{
+  color = HSVtoRGB(ColorHSVd(circle->getValueAngle(), sliderc->getValue(), circle->getValueAxial(), color.a));
+  if(slidera) color.a = slidera->getValue();
+}
+
+void HueDiskEditor_HSV_HV::setColor(const ColorRGBd& color)
+{
+  ColorHSVd hsv = RGBtoHSV(color);
+  circle->setValueAngle(hsv.h);
+  sliderc->setValue(hsv.s);
+  circle->setValueAxial(hsv.v);
+  if(slidera) slidera->setValue(hsv.a);
+}
+
+HueDiskEditor_HSL_HS::HueDiskEditor_HSL_HS(bool alpha)
+{
+  circle = new PartialEditorHueDisk_HSL_HS();
+  sliderc = new ChannelSliderType(CC_HSL_L);
+  if(alpha) slidera = new ChannelSliderType(CC_A);
+  init();
+}
+
+void HueDiskEditor_HSL_HS::getColor(ColorRGBd& color) const
+{
+  color = HSLtoRGB(ColorHSLd(circle->getValueAngle(), circle->getValueAxial(), sliderc->getValue(), color.a));
+  if(slidera) color.a = slidera->getValue();
+}
+
+void HueDiskEditor_HSL_HS::setColor(const ColorRGBd& color)
+{
+  ColorHSLd hsl = RGBtoHSL(color);
+  circle->setValueAngle(hsl.h);
+  circle->setValueAxial(hsl.s);
+  sliderc->setValue(hsl.l);
+  if(slidera) slidera->setValue(hsl.a);
+}
+
+HueDiskEditor_HSL_HL::HueDiskEditor_HSL_HL(bool alpha)
+{
+  circle = new PartialEditorHueDisk_HSL_HL();
+  sliderc = new ChannelSliderType(CC_HSL_S);
+  if(alpha) slidera = new ChannelSliderType(CC_A);
+  init();
+}
+
+void HueDiskEditor_HSL_HL::getColor(ColorRGBd& color) const
+{
+  color = HSLtoRGB(ColorHSLd(circle->getValueAngle(), sliderc->getValue(), circle->getValueAxial(), color.a));
+  if(slidera) color.a = slidera->getValue();
+}
+
+void HueDiskEditor_HSL_HL::setColor(const ColorRGBd& color)
+{
+  ColorHSLd hsl = RGBtoHSL(color);
+  circle->setValueAngle(hsl.h);
+  sliderc->setValue(hsl.s);
+  circle->setValueAxial(hsl.l);
+  if(slidera) slidera->setValue(hsl.a);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1323,6 +1836,20 @@ void FGBGColor::manageHoverImpl(IHoverManager& hover)
     hover.addHoverElement(dialog);
 }
 
+void FGBGColor::setMultiColorLink(Plane plane)
+{
+  if(plane == FG)
+  {
+    fg.selected = true;
+    bg.selected = false;
+  }
+  else if(plane == BG)
+  {
+    fg.selected = false;
+    bg.selected = true;
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 ColorEditorSynchronizer::ColorEditorSynchronizer()
@@ -1369,8 +1896,8 @@ void ColorEditorSynchronizer::handle()
         {
           if(j != i)
           {
-            editors[j]->setColor(mainColor);
-            editors[j]->setMultiColor(mainColorLink, mainColor);
+            if(editors[j]->isMultiColorGettable(mainColorLink)) editors[j]->setMultiColor(mainColorLink, mainColor);
+            else if(editors[j]->isMainColorGettable()) editors[j]->setColor(mainColor);
           }
         }
         
@@ -1385,8 +1912,8 @@ void ColorEditorSynchronizer::handle()
         {
           if(j != i)
           {
-            editors[j]->setMultiColor(ColorEditor::FG, mainFG);
-            if(mainColorLink == ColorEditor::FG) editors[j]->setColor(mainFG);
+            if(editors[j]->isMultiColorGettable(ColorEditor::FG)) editors[j]->setMultiColor(ColorEditor::FG, mainFG);
+            else if(editors[j]->isMainColorGettable() && mainColorLink == ColorEditor::FG) editors[j]->setColor(mainFG);
           }
         }
         mainColor = mainFG;
@@ -1398,8 +1925,8 @@ void ColorEditorSynchronizer::handle()
         {
           if(j != i)
           {
-            editors[j]->setMultiColor(ColorEditor::MG, mainMG);
-            if(mainColorLink == ColorEditor::MG) editors[j]->setColor(mainMG);
+            if(editors[j]->isMultiColorGettable(ColorEditor::MG)) editors[j]->setMultiColor(ColorEditor::MG, mainMG);
+            else if(editors[j]->isMainColorGettable() && mainColorLink == ColorEditor::MG) editors[j]->setColor(mainMG);
           }
         }
         mainColor = mainMG;
@@ -1411,8 +1938,8 @@ void ColorEditorSynchronizer::handle()
         {
           if(j != i)
           {
-            editors[j]->setMultiColor(ColorEditor::BG, mainBG);
-            if(mainColorLink == ColorEditor::BG) editors[j]->setColor(mainBG);
+            if(editors[j]->isMultiColorGettable(ColorEditor::BG)) editors[j]->setMultiColor(ColorEditor::BG, mainBG);
+            else if(editors[j]->isMainColorGettable() && mainColorLink == ColorEditor::BG) editors[j]->setColor(mainBG);
           }
         }
         mainColor = mainBG;
@@ -1441,7 +1968,7 @@ void ColorEditorSynchronizer::setMultiColor(ColorEditor::Plane plane, const Colo
     ColorEditor* editor = editors[i];
     if(editor->isMultiColorGettable(plane))
       editors[i]->setMultiColor(plane, color);
-    else if(mainColorLink == plane) editor->setColor(color);
+    else if(mainColorLink == plane && editor->isMainColorGettable()) editor->setColor(color);
   }
 }
 
@@ -1539,6 +2066,141 @@ HUaH4wbtwbc3is+79Be/z857TNox2cfkD1/gTTo56eXqAAAAAElFTkSuQmCC\n\
   }
 }
 
+
+
+void AColorPalette::generateSimple8x2()
+{
+  setPaletteSize(8, 2);
+
+  setColor(0, ColorRGBd(0,0,0));
+  setColor(1, ColorRGBd(0,0,0.5));
+  setColor(2, ColorRGBd(0,0.5,0));
+  setColor(3, ColorRGBd(0,0.5,0.5));
+  setColor(4, ColorRGBd(0.5,0,0));
+  setColor(5, ColorRGBd(0.5,0,0.5));
+  setColor(6, ColorRGBd(0.5,0.5,0));
+  setColor(7, ColorRGBd(0.5,0.5,0.5));
+  setColor(8, ColorRGBd(0.25,0.25,0.25));
+  setColor(9, ColorRGBd(0,0,1.0));
+  setColor(10, ColorRGBd(0,1.0,0));
+  setColor(11, ColorRGBd(0,1.0,1.0));
+  setColor(12, ColorRGBd(1.0,0,0));
+  setColor(13, ColorRGBd(1.0,0,1.0));
+  setColor(14, ColorRGBd(1.0,1.0,0));
+  setColor(15, ColorRGBd(1.0,1.0,1.0));
+}
+void AColorPalette::generateSimple9x2()
+{
+  setPaletteSize(9, 2);
+
+  setColor(0, ColorRGBd(0,0,0));
+  setColor(1, ColorRGBd(0.5,0.5,0.5));
+  setColor(2, ColorRGBd(0.825,0.825,0.825));
+  setColor(9, ColorRGBd(0.25,0.25,0.25));
+  setColor(10, ColorRGBd(0.75,0.75,0.75));
+  setColor(11, ColorRGBd(1,1,1));
+
+  setColor(3, ColorRGBd(0,0,0.5));
+  setColor(4, ColorRGBd(0,0.5,0));
+  setColor(5, ColorRGBd(0,0.5,0.5));
+  setColor(6, ColorRGBd(0.5,0,0));
+  setColor(7, ColorRGBd(0.5,0,0.5));
+  setColor(8, ColorRGBd(0.5,0.5,0));
+
+  setColor(12, ColorRGBd(0,0,1.0));
+  setColor(13, ColorRGBd(0,1.0,0));
+  setColor(14, ColorRGBd(0,1.0,1.0));
+  setColor(15, ColorRGBd(1.0,0,0));
+  setColor(16, ColorRGBd(1.0,0,1.0));
+  setColor(17, ColorRGBd(1.0,1.0,0));
+}
+
+void AColorPalette::generateSimple10x2()
+{
+  setPaletteSize(10, 2);
+
+  setColor(0, ColorRGBd(0,0,0));
+  setColor(1, ColorRGBd(0.5,0.5,0.5));
+  setColor(2, ColorRGBd(0.825,0.825,0.825));
+  setColor(10, ColorRGBd(0.25,0.25,0.25));
+  setColor(11, ColorRGBd(0.75,0.75,0.75));
+  setColor(12, ColorRGBd(1,1,1));
+
+  setColor(3, ColorRGBd(0,0,0.5));
+  setColor(4, ColorRGBd(0,0.5,0));
+  setColor(5, ColorRGBd(0,0.5,0.5));
+  setColor(6, ColorRGBd(0.5,0,0));
+  setColor(7, ColorRGBd(0.5,0,0.5));
+  setColor(8, ColorRGBd(0.5,0.5,0));
+  setColor(9, ColorRGBd(0.5,0.24,0));
+
+  setColor(13, ColorRGBd(0,0,1.0));
+  setColor(14, ColorRGBd(0,1.0,0));
+  setColor(15, ColorRGBd(0,1.0,1.0));
+  setColor(16, ColorRGBd(1.0,0,0));
+  setColor(17, ColorRGBd(1.0,0,1.0));
+  setColor(18, ColorRGBd(1.0,1.0,0));
+  setColor(19, ColorRGBd(1.0,0.5,0.25));
+}
+
+void AColorPalette::generateSimple12x2()
+{
+  setPaletteSize(12, 2);
+
+  setColor(0, ColorRGBd(0,0,0));
+  setColor(1, ColorRGBd(0.5,0.5,0.5));
+  setColor(2, ColorRGBd(0.825,0.825,0.825));
+  setColor(12, ColorRGBd(0.25,0.25,0.25));
+  setColor(13, ColorRGBd(0.75,0.75,0.75));
+  setColor(14, ColorRGBd(1,1,1));
+
+  setColor(3, ColorRGBd(0,0,0.5));
+  setColor(4, ColorRGBd(0,0.5,0));
+  setColor(5, ColorRGBd(0,0.5,0.5));
+  setColor(6, ColorRGBd(0.5,0,0));
+  setColor(7, ColorRGBd(0.5,0,0.5));
+  setColor(8, ColorRGBd(0.5,0.5,0));
+  setColor(9, ColorRGBd(0.5,0.24,0));
+  setColor(10, ColorRGBd(1.0,0.5,0.5));
+  setColor(11, ColorRGBd(0.5,0.5,1.0));
+
+  setColor(15, ColorRGBd(0,0,1.0));
+  setColor(16, ColorRGBd(0,1.0,0));
+  setColor(17, ColorRGBd(0,1.0,1.0));
+  setColor(18, ColorRGBd(1.0,0,0));
+  setColor(19, ColorRGBd(1.0,0,1.0));
+  setColor(20, ColorRGBd(1.0,1.0,0));
+  setColor(21, ColorRGBd(1.0,0.5,0.25));
+  setColor(22, ColorRGBd(0.5,1.0,0.5));
+  setColor(23, ColorRGBd(1.0,1.0,0.5));
+}
+
+void AColorPalette::generateSimple6x3()
+{
+  setPaletteSize(6, 3);
+
+  setColor(0, ColorRGBd(0,0,0));
+  setColor(1, ColorRGBd(0.25,0.25,0.25));
+  setColor(2, ColorRGBd(0.5,0.5,0.5));
+  setColor(3, ColorRGBd(0.75,0.75,0.75));
+  setColor(4, ColorRGBd(0.825,0.825,0.825));
+  setColor(5, ColorRGBd(1,1,1));
+
+  setColor(6, ColorRGBd(0,0,0.5));
+  setColor(7, ColorRGBd(0,0.5,0));
+  setColor(8, ColorRGBd(0,0.5,0.5));
+  setColor(9, ColorRGBd(0.5,0,0));
+  setColor(10, ColorRGBd(0.5,0,0.5));
+  setColor(11, ColorRGBd(0.5,0.5,0));
+
+  setColor(12, ColorRGBd(0,0,1.0));
+  setColor(13, ColorRGBd(0,1.0,0));
+  setColor(14, ColorRGBd(0,1.0,1.0));
+  setColor(15, ColorRGBd(1.0,0,0));
+  setColor(16, ColorRGBd(1.0,0,1.0));
+  setColor(17, ColorRGBd(1.0,1.0,0));
+}
+
 void AColorPalette::setColorChoosingDialog(AColorDialog* dialog)
 {
   this->dialog = dialog;
@@ -1551,88 +2213,132 @@ void AColorPalette::manageHoverImpl(IHoverManager& hover)
     hover.addHoverElement(dialog);
 }
 
+void AColorPalette::setColor255(int i, const ColorRGB& color)
+{
+  setColor(i, lpi::RGBtoRGBd(color));
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 ColorPalette::ColorPalette()
+: texture(new HTexture)
+, m(0)
+, n(0)
+, textureuptodate(false)
+, selected(-1)
 {
-  selected = -1;
 }
 
 ColorPalette::~ColorPalette()
 {
-  clear();
+  delete texture;
+}
+
+const ColorRGBd& ColorPalette::getInternalColor(int i) const
+{
+  return colors[i];
 }
 
 void ColorPalette::clear()
 {
-  clearSubElements();
-  for(size_t i = 0; i < colors.size(); i++)
-  {
-    delete colors[i];
-  }
-  colors.clear();
   selected = -1;
+  n = m = 0;
+  colors.clear();
+  textureuptodate = false;
 }
 
 
 void ColorPalette::setPaletteSize(size_t n, size_t m)
 {
-  clear();
-  for(size_t y = 0; y < m; y++)
-  for(size_t x = 0; x < n; x++)
-  {
-    colors.push_back(new InternalColorPlane);
-    double x0 = (double)(x + 0) / (double)n;
-    double y0 = (double)(y + 0) / (double)m;
-    double x1 = (double)(x + 1) / (double)n;
-    double y1 = (double)(y + 1) / (double)m;
-    addSubElement(colors.back(), Sticky(x0, 0, y0, 0, x1, 0, y1, 0));
-  }
+  this->n = n;
+  this->m = m;
+  colors.resize(n * m);
+  textureuptodate = false;
 }
 
 void ColorPalette::setColor(int i, const ColorRGBd& color)
 {
-  colors[i]->color = color;
+  colors[i] = color;
+  textureuptodate = false;
 }
 
 
 void ColorPalette::drawImpl(IGUIDrawer& drawer) const
 {
-  for(size_t i = 0; i < colors.size(); i++) colors[i]->draw(drawer);
+  if(m == 0 || n == 0) return;
+  
+  drawCheckerBackground(drawer, x0, y0, x1, y1, 4, 4);
+  
+  if(texture->texture == 0) (texture->texture) = drawer.createTexture();
+  if(!textureuptodate) generateTexture();
+  drawer.convertTextureIfNeeded(texture->texture);
+  drawer.drawTextureSized(texture->texture, x0, y0, x1 - x0, y1 - y0);
+  if(n > 0 && m > 0 && getSizeX() / n > 4 && getSizeY() / m > 4)
+  {
+    for(size_t x = 0; x <= n; x++) drawer.drawLine(x0 + (getSizeX() * x) / n, y0, x0 + (getSizeX() * x) / n, y1, RGB_Grey);
+    for(size_t y = 0; y <= m; y++) drawer.drawLine(x0, y0 + (getSizeY() * y) / m, x1, y0 + (getSizeY() * y) / m, RGB_Grey);
+  }
+  
+  if(selected >= 0)
+  {
+    int rx0 = 1 + x0 + ((selected % n) * getSizeX()) / n;
+    int rx1 = x0 + ((selected % n + 1) * getSizeX()) / n;
+    int ry0 = 1 + y0 + ((selected / n) * getSizeY()) / m;
+    int ry1 = y0 + ((selected / n + 1) * getSizeY()) / m;
+    
+    drawer.drawRectangle(rx0, ry0, rx1, ry1, RGB_Black, false);
+    drawer.drawRectangle(rx0 + 1, ry0 + 1, rx1 - 1, ry1 - 1, RGB_White, false);
+  }
+}
+
+void ColorPalette::generateTexture() const
+{
+  if(!texture->texture) return;
+
+  texture->texture->setSize(n, m);
+  for(size_t y = 0; y < m; y++)
+  for(size_t x = 0; x < n; x++)
+  {
+    size_t i = y * n + x;
+    ColorRGB rgb = RGBdtoRGB(colors[i]);
+    setPixel(texture->texture, x, y, rgb);
+  }
+  texture->texture->update();
+  textureuptodate = true;
 }
 
 void ColorPalette::handleImpl(const IInput& input)
 {
-  if(dialog && dialog->isEnabled())
+  if(getSizeX() <= 0 || getSizeY() <= 0) return; //avoid divisions through 0
+  
+  if(n > 0 && m > 0)
   {
-    if(dialog->pressedOk(input))
+    if(dialog && dialog->isEnabled())
     {
-      dialog->setEnabled(false);
-      if(selected >= 0)
+      if(dialog->pressedOk(input))
       {
-        ColorRGBd temp;
-        dialog->getColor(temp);
-        setColor(selected, temp);
-      }
-      setChanged();
-    }
-  }
-  else
-  {
-    for(size_t i = 0; i < colors.size(); i++)
-    {
-      if(colors[i]->pressed(input))
-      {
-        if(selected >= 0) colors[selected]->selected = false;
-        colors[i]->selected = true;
-        selected = i;
+        dialog->setEnabled(false);
+        if(selected >= 0)
+        {
+          ColorRGBd temp;
+          dialog->getColor(temp);
+          setColor(selected, temp);
+        }
         setChanged();
-        break;
       }
-      if(dialog && colors[i]->mouseDoubleClicked(input, LMB))
+    }
+    else
+    {
+      size_t x = ((input.mouseX() - x0) * n) / getSizeX();
+      size_t y = ((input.mouseY() - y0) * m) / getSizeY();
+      size_t i = y * n + x;
+
+      if(pressed(input, LMB)) { selected = i; setChanged(); }
+
+      if(dialog && mouseDoubleClicked(input, LMB))
       {
         selected = i;
-        dialog->setColor(colors[i]->color);
+        dialog->setColor(colors[i]);
         dialog->setEnabled(true);
       }
     }
@@ -1643,14 +2349,14 @@ void ColorPalette::handleImpl(const IInput& input)
 void ColorPalette::getColor(ColorRGBd& color) const
 {
   double alpha = color.a;
-  if(selected >= 0) color = colors[selected]->color;
+  if(selected >= 0) color = colors[selected];
   if(dontAffectAlpha) color.a = alpha;
 }
 
 void ColorPalette::setColor(const ColorRGBd& color)
 {
   (void)color; //ignore setColor! Palette has only a limited amount of colors.
-  if(selected >= 0) colors[selected]->selected = false;
+  selected = -1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1675,6 +2381,11 @@ MultiColorPalette::~MultiColorPalette()
   delete texture;
 }
 
+const ColorRGBd& MultiColorPalette::getInternalColor(int i) const
+{
+  return colors[i];
+}
+
 void MultiColorPalette::clear()
 {
   selectedfg = -1;
@@ -1688,6 +2399,7 @@ void MultiColorPalette::clear()
 
 void MultiColorPalette::drawImpl(IGUIDrawer& drawer) const
 {
+  drawCheckerBackground(drawer, x0, y0, x1, y1, 4, 4);
   if(texture->texture == 0) (texture->texture) = drawer.createTexture();
   if(!textureuptodate) generateTexture();
   drawer.convertTextureIfNeeded(texture->texture);
@@ -1731,6 +2443,8 @@ void MultiColorPalette::setColor(int i, const ColorRGBd& color)
 
 void MultiColorPalette::handleImpl(const IInput& input)
 {
+  if(getSizeX() <= 0 || getSizeY() <= 0) return; //avoid divisions through 0
+  
   if(n > 0 && m > 0)
   {
     if(dialog && dialog->isEnabled())
@@ -1923,12 +2637,14 @@ void ColorDialogSmall::setColor(const ColorRGBd& color)
 ////////////////////////////////////////////////////////////////////////////////
 
 ColorDialog::ColorDialog(const IGUIDrawer& geom)
+: rgb(true)
+, hsl(false)
 {
   addTop(geom);
   addTitle("Color");
   addResizer(geom);
   
-  palette.generateVibrant8x8();
+  palette.generateSimple12x2();
   palette.setDontAffectAlpha(true);
   
   ok.makeTextPanel(0, 0, "Ok", 64, 24);
@@ -1939,13 +2655,13 @@ ColorDialog::ColorDialog(const IGUIDrawer& geom)
   pushTop(&tabs, Sticky(0.0,0, 0.0,0, 1.0,0, 1.0,0));
   tabs.addTab("Basic");
   tabs.addTab("Advanced");
-  
+
+  tabs.getTabContent(0).pushTop(&hsl, Sticky(0.0,4, 0.0,4, 0.5,-4, 0.825,0));
+  tabs.getTabContent(0).pushTop(&palette, Sticky(0.0,4, 0.825,4, 0.5,-4, 1.0,-4));
   tabs.getTabContent(0).pushTop(&ok, Sticky(1.0, -100, 1.0,-20, 1.0,-16, 1.0,-4));
   tabs.getTabContent(0).pushTop(&html, Sticky(1.0, -100, 1.0,-40, 1.0,-16, 1.0,-24));
-  tabs.getTabContent(0).pushTop(&rgb, Sticky(0.05,0, 0.75,0, 0.49,0, 0.99,0));
-  tabs.getTabContent(0).pushTop(&plane, Sticky(0.5,4, 0.75,4, 0.75,-4, 1.0,-4));
-  tabs.getTabContent(0).pushTop(&hsl, Sticky(0.05,0, 0.05,0, 0.49,0, 0.74,0));
-  tabs.getTabContent(0).pushTop(&palette, Sticky(0.5,4, 0.0,4, 1.0,-4, 0.75,-4));
+  tabs.getTabContent(0).pushTop(&rgb, Sticky(0.5,4, 0.0,4, 1.0,-4, 0.5,-4));
+  tabs.getTabContent(0).pushTop(&plane, Sticky(0.5,4, 0.825,4, 0.75,-4, 1.0,-4));
   
   synchronizer.add(&rgb);
   synchronizer.add(&hsl);
@@ -1954,15 +2670,16 @@ ColorDialog::ColorDialog(const IGUIDrawer& geom)
   synchronizer.add(&html);
   
   tabs.getTabContent(1).pushTop(&ok2, Sticky(1.0, -80, 1.0,-20, 1.0,-16, 1.0,-4));
-  tabs.getTabContent(1).pushTop(&plane2, Sticky(0.66,4, 0.66,4, 1.0,-84, 1.0,-4));
-  tabs.getTabContent(1).pushTop(&rgb2, Sticky(0.0,4, 0.0,4, 0.33,-4, 0.33,-4));
-  tabs.getTabContent(1).pushTop(&hsl2, Sticky(0.0,4, 0.33,4, 0.33,-4, 0.66,-4));
-  tabs.getTabContent(1).pushTop(&hsv2, Sticky(0.0,4, 0.66,4, 0.33,-4, 1.0,-4));
-  tabs.getTabContent(1).pushTop(&cmyk2, Sticky(0.33,4, 0.0,4, 0.66,-4, 0.33,-4));
-  tabs.getTabContent(1).pushTop(&ypbpr2, Sticky(0.33,4, 0.33,4, 0.66,-4, 0.66,-4));
-  tabs.getTabContent(1).pushTop(&ycbcr2, Sticky(0.33,4, 0.66,4, 0.66,-4, 1.0,-4));
-  tabs.getTabContent(1).pushTop(&cielab2, Sticky(0.66,4, 0.0,4, 1.0,-4, 0.33,-4));
-  tabs.getTabContent(1).pushTop(&ciexyz2, Sticky(0.66,4, 0.33,4, 1.0,-4, 0.66,-4));
+  tabs.getTabContent(1).pushTop(&plane2, Sticky(0.66, 4, 0.8,0, 1.0, -84, 1.0,-4));
+  tabs.getTabContent(1).pushTop(&rgb2,    Sticky(0.0, 4, 0.0, 8, 0.33,-4, 0.33,-8));
+  tabs.getTabContent(1).pushTop(&hsl2,    Sticky(0.0, 4, 0.33,8, 0.33,-4, 0.66,-8));
+  tabs.getTabContent(1).pushTop(&hsv2,    Sticky(0.0, 4, 0.66,8, 0.33,-4, 1.0, -8));
+  tabs.getTabContent(1).pushTop(&cmyk2,   Sticky(0.33,4, 0.0, 8, 0.66,-4, 0.33,-8));
+  tabs.getTabContent(1).pushTop(&ypbpr2,  Sticky(0.33,4, 0.33,8, 0.66,-4, 0.66,-8));
+  tabs.getTabContent(1).pushTop(&ycbcr2,  Sticky(0.33,4, 0.66,8, 0.66,-4, 1.0, -8));
+  tabs.getTabContent(1).pushTop(&cielab2, Sticky(0.66,4, 0.0, 8, 1.0, -4, 0.33,-8));
+  tabs.getTabContent(1).pushTop(&ciexyz2, Sticky(0.66,4, 0.33,8, 1.0, -4, 0.66,-8));
+  tabs.getTabContent(1).pushTop(&a2,      Sticky(0.66,4, 0.66,8, 1.0, -4, 0.8,-4));
 
   synchronizer.add(&plane2);
   synchronizer.add(&rgb2);
@@ -1974,6 +2691,10 @@ ColorDialog::ColorDialog(const IGUIDrawer& geom)
   synchronizer.add(&cielab2);
   synchronizer.add(&ciexyz2);
 
+}
+
+ColorDialog::~ColorDialog()
+{
 }
 
 void ColorDialog::handleImpl(const IInput& input)

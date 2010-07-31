@@ -92,15 +92,32 @@ on the drawer given to its draw function, a different type of texture is support
 and the ITexture* pointer may be assigned to a new texture created by the drawer.
 So for icons and such in GUI, in GUI elements that use the icon, use a HTexture*
 inside the element (not a HTexture but a HTexture*).
+
+Example of drawing one with a IDrawer2D:
+
+HTexture* icon = ........;
+if(icon && icon->texture)
+{
+  drawer.convertTextureIfNeeded(icon->texture);
+  drawer.drawTexture(icon->texture, x, y);
+}
+
+Never copy a HTexture directly if the texture member isn't NULL. It has a
+refcount but is far from as powerful as a shared pointer. Treat it as
+an auto_ptr. It works in std::vectors however, which is the point of the refcount.
 */
 class HTexture
 {
+  private:
+    int* refcount;
+    
   public:
 
-  ITexture* texture;
+    ITexture* texture;
   
-  HTexture() : texture(0) {};
-  ~HTexture() { if(texture) delete texture; }
+    HTexture();
+    HTexture(const HTexture& other);
+    ~HTexture();
 };
 
 /*
@@ -205,8 +222,6 @@ void applyAlphaEffect(ITexture* texture, const AlphaEffect& effect); //uses the 
 
 void loadTextures(std::vector<unsigned char>& buffer, std::vector<ITexture*>& textures, const ITextureFactory* factory, int widths, int heights, int w, int h, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
 void loadTextures(const std::string& filename, std::vector<ITexture*>& textures, const ITextureFactory* factory, int widths, int heights, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
-void loadTexturesAlpha(std::vector<unsigned char>& buffer, std::vector<ITexture>& textures, int widths, int heights, int w, int h);
-void loadTexturesAlpha(const std::string& filename, std::vector<ITexture>& textures, int widths, int heights);
 void loadTexturesFromBase64PNG(std::vector<ITexture*>& textures, const ITextureFactory* factory, const std::string& base64, int widths, int heights, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
 void loadTextureFromBase64PNG(ITexture* texture, const std::string& base64, const AlphaEffect& effect = AlphaEffect(0, 0, RGB_Black));
 

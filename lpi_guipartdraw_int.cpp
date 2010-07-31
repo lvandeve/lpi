@@ -362,13 +362,13 @@ void GUIPartDrawerInternal::initBuiltInGuiTextures(const ITextureFactory& factor
   makeTextureFromBuffer(builtInTexture[36], &dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 220, 76, 236);
   builtInGuiSet.bullet[1] = builtInTexture[36];
   
-  //horizontal line
+  //slider horizontal line
   makeTextureFromBuffer(builtInTexture[41], &dataBuffer[0], GDW, GDH, AE_PinkKey, 20, 140, 24, 144);
   makeTextureFromBuffer(builtInTexture[42], &dataBuffer[0], GDW, GDH, AE_PinkKey, 26, 140, 30, 144);
   makeTextureFromBuffer(builtInTexture[43], &dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 140, 36, 144);
   for(size_t i = 0; i < 3; i++) builtInGuiSet.hline[i] = builtInTexture[i + 41];
   
-  //vertical line
+  //slider vertical line
   makeTextureFromBuffer(builtInTexture[44], &dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 140, 64, 144);
   makeTextureFromBuffer(builtInTexture[45], &dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 146, 64, 150);
   makeTextureFromBuffer(builtInTexture[46], &dataBuffer[0], GDW, GDH, AE_PinkKey, 60, 152, 64, 156);
@@ -434,7 +434,7 @@ void GUIPartDrawerInternal::initBuiltInGuiTextures(const ITextureFactory& factor
   builtInGuiSet.smallCheckBox[1] = builtInTexture[79];
   
   //horizontal small slider button
-  makeTextureFromBuffer(builtInTexture[80], &dataBuffer[0], GDW, GDH, AE_PinkKey, 40, 160, 45, 171);
+  makeTextureFromBuffer(builtInTexture[80], &dataBuffer[0], GDW, GDH, AE_PinkKey, 40, 160, 48, 171);
   builtInGuiSet.smallSliderH = builtInTexture[80];
   
   //border panel
@@ -480,6 +480,41 @@ void GUIPartDrawerInternal::initBuiltInGuiTextures(const ITextureFactory& factor
   makeTextureFromBuffer(builtInTexture[134], &dataBuffer[0], GDW, GDH, AE_PinkKey, 66, 292, 70, 296);
   makeTextureFromBuffer(builtInTexture[135], &dataBuffer[0], GDW, GDH, AE_PinkKey, 72, 292, 76, 296);  for(size_t i = 0; i < 9; i++) builtInGuiSet.invisibleButtonTextures[i] = builtInTexture[i + 118];
   for(size_t i = 0; i < 9; i++) builtInGuiSet.invisibleButtonDownTextures[i] = builtInTexture[i + 127];
+  
+
+  //hor menu panel
+  makeTextureFromBuffer(builtInTexture[136], &dataBuffer[0], GDW, GDH, AE_PinkKey, 20, 300, 24, 304);
+  makeTextureFromBuffer(builtInTexture[137], &dataBuffer[0], GDW, GDH, AE_PinkKey, 26, 300, 30, 304);
+  makeTextureFromBuffer(builtInTexture[138], &dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 300, 36, 304);
+  makeTextureFromBuffer(builtInTexture[139], &dataBuffer[0], GDW, GDH, AE_PinkKey, 20, 306, 24, 310);
+  makeTextureFromBuffer(builtInTexture[140], &dataBuffer[0], GDW, GDH, AE_PinkKey, 26, 306, 30, 310);
+  makeTextureFromBuffer(builtInTexture[141], &dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 306, 36, 310);
+  makeTextureFromBuffer(builtInTexture[142], &dataBuffer[0], GDW, GDH, AE_PinkKey, 20, 312, 24, 316);
+  makeTextureFromBuffer(builtInTexture[143], &dataBuffer[0], GDW, GDH, AE_PinkKey, 26, 312, 30, 316);
+  makeTextureFromBuffer(builtInTexture[144], &dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 312, 36, 316);
+  for(size_t i = 0; i < 9; i++) builtInGuiSet.horMenuPanelTextures[i] = builtInTexture[i + 136];
+  
+  //ver menu panel
+  makeTextureFromBuffer(builtInTexture[145], &dataBuffer[0], GDW, GDH, AE_PinkKey, 20, 320, 24, 324);
+  makeTextureFromBuffer(builtInTexture[146], &dataBuffer[0], GDW, GDH, AE_PinkKey, 26, 320, 30, 324);
+  makeTextureFromBuffer(builtInTexture[147], &dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 320, 36, 324);
+  makeTextureFromBuffer(builtInTexture[148], &dataBuffer[0], GDW, GDH, AE_PinkKey, 20, 326, 24, 330);
+  makeTextureFromBuffer(builtInTexture[149], &dataBuffer[0], GDW, GDH, AE_PinkKey, 26, 326, 30, 330);
+  makeTextureFromBuffer(builtInTexture[150], &dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 326, 36, 330);
+  makeTextureFromBuffer(builtInTexture[151], &dataBuffer[0], GDW, GDH, AE_PinkKey, 20, 332, 24, 336);
+  makeTextureFromBuffer(builtInTexture[152], &dataBuffer[0], GDW, GDH, AE_PinkKey, 26, 332, 30, 336);
+  makeTextureFromBuffer(builtInTexture[153], &dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 332, 36, 336);
+  for(size_t i = 0; i < 9; i++) builtInGuiSet.verMenuPanelTextures[i] = builtInTexture[i + 145];
+  
+  //small slider horizontal line
+  makeTextureFromBuffer(builtInTexture[154], &dataBuffer[0], GDW, GDH, AE_PinkKey, 20, 160, 24, 164);
+  makeTextureFromBuffer(builtInTexture[155], &dataBuffer[0], GDW, GDH, AE_PinkKey, 26, 160, 30, 164);
+  makeTextureFromBuffer(builtInTexture[156], &dataBuffer[0], GDW, GDH, AE_PinkKey, 32, 160, 36, 164);
+  
+  //ver menu seperator slider vertical line
+  makeTextureFromBuffer(builtInTexture[157], &dataBuffer[0], GDW, GDH, AE_PinkKey, 40, 320, 44, 324);
+  makeTextureFromBuffer(builtInTexture[158], &dataBuffer[0], GDW, GDH, AE_PinkKey, 46, 320, 50, 324);
+  makeTextureFromBuffer(builtInTexture[159], &dataBuffer[0], GDW, GDH, AE_PinkKey, 52, 320, 56, 324);
 
   
   //panels
@@ -504,21 +539,29 @@ void GUIPartDrawerInternal::initBuiltInGuiTextures(const ITextureFactory& factor
   builtInGuiSet.invisibleButtonOverPanel = &builtInPanel[12];
   builtInPanel[13].makeTextured(&builtInGuiSet.invisibleButtonDownTextures[0]/*, RGB_Grey*/);
   builtInGuiSet.invisibleButtonDownPanel = &builtInPanel[13];
+  builtInPanel[14].makeTextured(&builtInGuiSet.horMenuPanelTextures[0]/*, RGB_White*/);
+  builtInGuiSet.horMenuPanel = &builtInPanel[14];
+  builtInPanel[15].makeTextured(&builtInGuiSet.verMenuPanelTextures[0]/*, RGB_White*/);
+  builtInGuiSet.verMenuPanel = &builtInPanel[15];
 
   //rules (= 1D versions of panels)
   builtInRule[0].makeHorizontal(builtInTexture[41], builtInTexture[42], builtInTexture[43]);
   builtInGuiSet.sliderHRule = &builtInRule[0];
   builtInRule[1].makeVertical(builtInTexture[44], builtInTexture[45], builtInTexture[46]);
   builtInGuiSet.sliderVRule = &builtInRule[1];
-  builtInGuiSet.smallSliderHRule = &builtInRule[0]; //TODO: give it its own rule, which uses the other texture in the GUI texture set
   builtInRule[2].makeHorizontal(builtInTexture[47], builtInTexture[48], builtInTexture[49]);
   builtInGuiSet.windowTopRule = &builtInRule[2];
+  builtInRule[3].makeHorizontal(builtInTexture[154], builtInTexture[155], builtInTexture[156]);
+  builtInGuiSet.smallSliderHRule = &builtInRule[3];
+  builtInRule[4].makeHorizontal(builtInTexture[157], builtInTexture[158], builtInTexture[159]);
+  builtInGuiSet.verMenuSeparator = &builtInRule[4];
   
   //colors
   builtInGuiSet.mainColor = RGB_White;
   builtInGuiSet.mouseOverColor = RGB_Brightred;
   builtInGuiSet.mouseDownColor = RGB_Grey;
   builtInGuiSet.windowTopColor = RGB_Lightblue;
+  builtInGuiSet.barColor = RGB_Grey;
   
   //font
   builtInGuiSet.defaultFont.color = RGB_Black;
@@ -543,10 +586,7 @@ void GUIPartDrawerInternal::initBuiltInGuiTextures(const ITextureFactory& factor
   builtInGuiSet.tooltipFont = Font("lpi6", RGB_Black);
   
   //menu panels and separators
-  builtInGuiSet.horMenuPanel = builtInGuiSet.buttonPanel;
-  builtInGuiSet.verMenuPanel = builtInGuiSet.buttonPanel;
   builtInGuiSet.horMenuSeparator = builtInGuiSet.sliderVRule;
-  builtInGuiSet.verMenuSeparator = builtInGuiSet.sliderHRule;
 }
 
 void GUIPartDrawerInternal::setDefaultTypeFace(const std::string& typeface)
@@ -598,6 +638,8 @@ void GUIPartDrawerInternal::initBuiltInIcons(const std::vector<unsigned char>& p
 //BACKPANEL/////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+bool panelGradient = true; //TODO: make this a separate setting per panel
+
 /*
 The BackPanel functions.
 BackPanel is a class containing 9 textures, being able to draw textured panels of any size with those.
@@ -606,40 +648,41 @@ See the .h file for meaning of vareous variables of the classes
 
 //Constructors
 BackPanel::BackPanel()
+: enableSides(false)
+, enableCenter(false)
+//, gradient(true)
 {
-  this->enableSides = 0;
-  this->enableCenter = 0;
-  this->t00 = getDefaultEmptyTexture();
-  this->t01 = getDefaultEmptyTexture();
-  this->t02 = getDefaultEmptyTexture();
-  this->t10 = getDefaultEmptyTexture();
-  this->t11 = getDefaultEmptyTexture();
-  this->t12 = getDefaultEmptyTexture();
-  this->t20 = getDefaultEmptyTexture();
-  this->t21 = getDefaultEmptyTexture();
-  this->t22 = getDefaultEmptyTexture();
+  t00 = getDefaultEmptyTexture();
+  t01 = getDefaultEmptyTexture();
+  t02 = getDefaultEmptyTexture();
+  t10 = getDefaultEmptyTexture();
+  t11 = getDefaultEmptyTexture();
+  t12 = getDefaultEmptyTexture();
+  t20 = getDefaultEmptyTexture();
+  t21 = getDefaultEmptyTexture();
+  t22 = getDefaultEmptyTexture();
 }
 
 
 void BackPanel::makeUntextured()
 {
-  this->enableSides = 0;
-  this->enableCenter = 0;
-  this->t00 = getDefaultEmptyTexture();
-  this->t01 = getDefaultEmptyTexture();
-  this->t02 = getDefaultEmptyTexture();
-  this->t10 = getDefaultEmptyTexture();
-  this->t11 = getDefaultEmptyTexture();
-  this->t12 = getDefaultEmptyTexture();
-  this->t20 = getDefaultEmptyTexture();
-  this->t21 = getDefaultEmptyTexture();
-  this->t22 = getDefaultEmptyTexture();
+  enableSides = false;
+  enableCenter = false;
+  t00 = getDefaultEmptyTexture();
+  t01 = getDefaultEmptyTexture();
+  t02 = getDefaultEmptyTexture();
+  t10 = getDefaultEmptyTexture();
+  t11 = getDefaultEmptyTexture();
+  t12 = getDefaultEmptyTexture();
+  t20 = getDefaultEmptyTexture();
+  t21 = getDefaultEmptyTexture();
+  t22 = getDefaultEmptyTexture();
 }
 
 void BackPanel::makeTextured9(const ITexture* t00, const ITexture* t01, const ITexture* t02, const ITexture* t10, const ITexture* t11, const ITexture* t12, const ITexture* t20, const ITexture* t21, const ITexture* t22)
 {
-  this->enableSides = 1;
-  this->enableCenter = 1;
+  enableSides = true;
+  enableCenter = true;
   this->t00 = t00;
   this->t01 = t01;
   this->t02 = t02;
@@ -671,33 +714,74 @@ non-tiled at the positions needed to get a window at the correct position
 with the correct size*/
 void BackPanel::draw(IDrawer2D& drawer, int x, int y, int width, int height, const ColorRGB& colorMod) const
 {
-  //draw rectangle  
-  if(!enableCenter)
+  if(/*gradient*/panelGradient)
   {
-    drawer.drawRectangle(x, y, x + width, y + height, colorMod, true);
+#define G 232
+    static ColorRGB c00 = RGB_White;
+    static ColorRGB c01 = ColorRGB(G,G,G);
+    static ColorRGB c10 = RGB_White;
+    static ColorRGB c11 = ColorRGB(G,G,G);
+    const ColorRGB& c = colorMod;
+    
+    //draw rectangle  
+    if(!enableCenter)
+    {
+      drawer.drawGradientRectangle(x, y, x + width, y + height, c*c00, c*c10, c*c11, c*c10);
+    }
+    //if center texture enabled, draw center texture instead, as repeated texture. MUST HAVE POWER OF TWO SIDES TO LOOK AS SUPPOSED!
+    else
+    {
+      if(t11 != 0) drawer.drawTextureRepeatedGradient(t11, x + t00->getU(), y + t00->getV(), x + width - t02->getU(), y + height - t20->getV(), c*c00, c*c01, c*c10, c*c11);
+    }
+    
+    //draw sides
+    if(enableSides)
+    {
+      drawer.drawTextureRepeatedGradient(t01, x + t00->getU(),         y                       , x + width - t02->getU(), y + t00->getV()         , c*c00, c*c00, c*c10, c*c10);
+      drawer.drawTextureRepeatedGradient(t21, x + t00->getU(),         y + height - t20->getV(), x + width - t02->getU(), y + height              , c*c01, c*c01, c*c11, c*c11);
+      drawer.drawTextureRepeatedGradient(t10, x,                       y + t00->getV()         , x + t00->getU()        , y + height - t20->getV(), c*c00, c*c01, c*c00, c*c01);
+      drawer.drawTextureRepeatedGradient(t12, x + width - t02->getU(), y + t00->getV()         , x + width              , y + height - t20->getV(), c*c10, c*c11, c*c10, c*c11);
+    }
+      
+    //draw corners
+    if(enableSides)
+    {
+      drawer.drawTexture(t00, x                      , y                       , c*c00); //top left 
+      drawer.drawTexture(t02, x + width - t02->getU(), y                       , c*c10); //top right
+      drawer.drawTexture(t20, x                      , y + height - t20->getV(), c*c01); //bottom left
+      drawer.drawTexture(t22, x + width - t02->getU(), y + height - t20->getV(), c*c11); //bottom right
+    }
   }
-  //if center texture enabled, draw center texture instead, as repeated texture. MUST HAVE POWER OF TWO SIDES TO LOOK AS SUPPOSED!
   else
   {
-    if(t11 != 0) drawer.drawTextureRepeated(t11, x + t00->getU(), y + t00->getV(), x + width - t02->getU(), y + height - t20->getV(), colorMod);
-  }
-  
-  //draw sides
-  if(enableSides)
-  {
-    drawer.drawTextureRepeated(t01, x + t00->getU(),         y                       , x + width - t02->getU(), y + t00->getV()         , colorMod);
-    drawer.drawTextureRepeated(t21, x + t00->getU(),         y + height - t20->getV(), x + width - t02->getU(), y + height              , colorMod);
-    drawer.drawTextureRepeated(t10, x,                       y + t00->getV()         , x + t00->getU()        , y + height - t20->getV(), colorMod);
-    drawer.drawTextureRepeated(t12, x + width - t02->getU(), y + t00->getV()         , x + width              , y + height - t20->getV(), colorMod);
-  }
+    //draw rectangle  
+    if(!enableCenter)
+    {
+      drawer.drawRectangle(x, y, x + width, y + height, colorMod, true);
+    }
+    //if center texture enabled, draw center texture instead, as repeated texture. MUST HAVE POWER OF TWO SIDES TO LOOK AS SUPPOSED!
+    else
+    {
+      if(t11 != 0) drawer.drawTextureRepeated(t11, x + t00->getU(), y + t00->getV(), x + width - t02->getU(), y + height - t20->getV(), colorMod);
+    }
     
-  //draw corners
-  if(enableSides)
-  {
-    drawer.drawTexture(t00, x                      , y                       , colorMod); //top left 
-    drawer.drawTexture(t02, x + width - t02->getU(), y                       , colorMod); //top right
-    drawer.drawTexture(t20, x                      , y + height - t20->getV(), colorMod); //bottom left
-    drawer.drawTexture(t22, x + width - t02->getU(), y + height - t20->getV(), colorMod); //bottom right
+    //draw sides
+    if(enableSides)
+    {
+      drawer.drawTextureRepeated(t01, x + t00->getU(),         y                       , x + width - t02->getU(), y + t00->getV()         , colorMod);
+      drawer.drawTextureRepeated(t21, x + t00->getU(),         y + height - t20->getV(), x + width - t02->getU(), y + height              , colorMod);
+      drawer.drawTextureRepeated(t10, x,                       y + t00->getV()         , x + t00->getU()        , y + height - t20->getV(), colorMod);
+      drawer.drawTextureRepeated(t12, x + width - t02->getU(), y + t00->getV()         , x + width              , y + height - t20->getV(), colorMod);
+    }
+      
+    //draw corners
+    if(enableSides)
+    {
+      drawer.drawTexture(t00, x                      , y                       , colorMod); //top left 
+      drawer.drawTexture(t02, x + width - t02->getU(), y                       , colorMod); //top right
+      drawer.drawTexture(t20, x                      , y + height - t20->getV(), colorMod); //bottom left
+      drawer.drawTexture(t22, x + width - t02->getU(), y + height - t20->getV(), colorMod); //bottom right
+    }
   }
 }
 
@@ -792,7 +876,7 @@ GUIPartDrawerInternal::GUIPartDrawerInternal(const ITextureFactory& factory, IDr
 : drawer(drawer)
 , textdrawer(textdrawer)
 {
-  builtInTexture.resize(160);
+  builtInTexture.resize(180);
   for(size_t i = 0; i < builtInTexture.size(); i++) builtInTexture[i] = factory.createNewTexture();
   initBuiltInGui(factory);
   initBuiltInIcons();
@@ -940,9 +1024,9 @@ void GUIPartDrawerInternal::drawGUIPart(GUIPart part, int x0, int y0, int x1, in
  
     case GP_SMALL_SLIDER_HBACK:
     {
-      int rulerCenter = guiset->sliderHRule->t0->getV() / 2;
+      int rulerCenter = guiset->smallSliderHRule->t0->getV() / 2;
       int centerPos = (y0 + y1) / 2;
-      guiset->sliderHRule->draw(*drawer, x0, centerPos - rulerCenter, x1 - x0);
+      guiset->smallSliderHRule->draw(*drawer, x0, centerPos - rulerCenter, x1 - x0);
       break;
     }
     case GP_SMALL_SLIDER_VBACK:
@@ -1052,12 +1136,12 @@ void GUIPartDrawerInternal::drawGUIPart(GUIPart part, int x0, int y0, int x1, in
     {
       if(mod.mousedown) guiset->buttonDownPanel->draw(*drawer, x0+1, y0+1, x1 - x0 - 2, y1 - y0 - 2);
       else if(mod.mouseover) guiset->buttonOverPanel->draw(*drawer, x0+1, y0+1, x1 - x0 - 2, y1 - y0 - 2);
-      else drawer->drawRectangle(x0+1, y0+1, x1-1, y1-1, RGB_Grey, true);
+      //else drawer->drawRectangle(x0+1, y0+1, x1-1, y1-1, guiset->barColor, true);
       break;
     }
     case GP_STATUSBAR:
     {
-      drawer->drawRectangle(x0, y0, x1, y1, RGB_Grey, true);
+      drawer->drawRectangle(x0, y0, x1, y1, guiset->barColor, true);
       drawer->drawRectangle(x0, y0, x1, y1, RGB_White, false);
       break;
     }
@@ -1211,8 +1295,130 @@ void GUIPartDrawerInternal::drawGUIPartText(GUIPart part, const std::string& tex
       textdrawer->drawText(text, x0, (y0 + y1) / 2, guiset->defaultFont, TextAlign(HA_LEFT, VA_CENTER));
       break;
     }
+    case GPT_TEXTINPUTLINE:
+    {
+      x0 += 2;
+      textdrawer->drawText(text, x0, (y0 + y1) / 2, guiset->textInputLineFont, TextAlign(HA_LEFT, VA_CENTER));
+      break;
+    }
+    case GPT_TEXTINPUTLINE_TITLE:
+    {
+      x0 += 2;
+      textdrawer->drawText(text, x0, (y0 + y1) / 2, guiset->textInputLineTitleFont, TextAlign(HA_LEFT, VA_CENTER));
+      break;
+    }
+    
     default:
       return;
+  }
+}
+
+void GUIPartDrawerInternal::getGUIPartTextSize(int& w, int& h, GUIPart part, const std::string& text) const
+{
+  switch(part)
+  {
+    case GPT_TEXT_BUTTON_TEXT:
+    {
+      textdrawer->calcTextRectSize(w, h, text, guiset->textButtonFont[0]);
+      break;
+    }
+    case GPT_PANEL_BUTTON_TEXT:
+    {
+      textdrawer->calcTextRectSize(w, h, text, guiset->panelButtonFont[0]);
+      break;
+    }
+    case GPT_WINDOW_TITLE:
+    {
+      textdrawer->calcTextRectSize(w, h, text, guiset->windowTopFont);
+      break;
+    }
+    case GPT_TOOLTIP:
+    {
+      textdrawer->calcTextRectSize(w, h, text, guiset->tooltipFont);
+      break;
+    }
+    case GPT_DEFAULT_TEXT00:
+    {
+      textdrawer->calcTextRectSize(w, h, text, guiset->defaultFont);
+      break;
+    }
+    case GPT_DEFAULT_TEXT01:
+    {
+      textdrawer->calcTextRectSize(w, h, text, guiset->defaultFont);
+      break;
+    }
+    case GPT_DEFAULT_TEXT02:
+    {
+      textdrawer->calcTextRectSize(w, h, text, guiset->defaultFont);
+      break;
+    }
+    case GPT_DEFAULT_TEXT10:
+    {
+      textdrawer->calcTextRectSize(w, h, text, guiset->defaultFont);
+      break;
+    }
+    case GPT_DEFAULT_TEXT11:
+    {
+      textdrawer->calcTextRectSize(w, h, text, guiset->defaultFont);
+      break;
+    }
+    case GPT_DEFAULT_TEXT12:
+    {
+      textdrawer->calcTextRectSize(w, h, text, guiset->defaultFont);
+      break;
+    }
+    case GPT_DEFAULT_TEXT20:
+    {
+      textdrawer->calcTextRectSize(w, h, text, guiset->defaultFont);
+      break;
+    }
+    case GPT_DEFAULT_TEXT21:
+    {
+      textdrawer->calcTextRectSize(w, h, text, guiset->defaultFont);
+      break;
+    }
+    case GPT_DEFAULT_TEXT22:
+    {
+      textdrawer->calcTextRectSize(w, h, text, guiset->defaultFont);
+      break;
+    }
+    case GPT_MESSAGE_TEXT:
+    {
+      textdrawer->calcTextRectSize(w, h, text, guiset->messageFont);
+      break;
+    }
+    case GPT_HMENU_TEXT:
+    case GPT_HMENU_SUBMENUTEXT:
+    {
+      textdrawer->calcTextRectSize(w, h, text, guiset->menuFont[0]);
+      break;
+    }
+    case GPT_VMENU_TEXT:
+    {
+      textdrawer->calcTextRectSize(w, h, text, guiset->menuFont[0]);
+      break;
+    }
+    case GPT_VMENU_SUBMENUTEXT:
+    {
+      textdrawer->calcTextRectSize(w, h, text, guiset->menuFont[0]);
+      break;
+    }
+    case GPT_STATUSBAR_TEXT:
+    {
+      textdrawer->calcTextRectSize(w, h, text, guiset->defaultFont);
+      break;
+    }
+    case GPT_TEXTINPUTLINE:
+    {
+      textdrawer->calcTextRectSize(w, h, text, guiset->textInputLineFont);
+      break;
+    }
+    case GPT_TEXTINPUTLINE_TITLE:
+    {
+      textdrawer->calcTextRectSize(w, h, text, guiset->textInputLineTitleFont);
+      break;
+    }
+    default: w = h = 0; break;
   }
 }
 
@@ -1228,7 +1434,7 @@ size_t GUIPartDrawerInternal::getGUIPartSizeX(GUIPart part) const
     //case GP_SMALL_SLIDER_VBUTTON: return guiset->smallSliderV->getU();
     case GP_SLIDER_HBACK: return guiset->sliderHRule->t0->getU();
     case GP_SLIDER_VBACK: return guiset->sliderVRule->t0->getU();
-    case GP_SMALL_SLIDER_HBACK: return guiset->sliderHRule->t0->getU();
+    case GP_SMALL_SLIDER_HBACK: return guiset->smallSliderHRule->t0->getU();
     case GP_SMALL_SLIDER_VBACK: return guiset->sliderVRule->t0->getU();
     case GP_SCROLLBAR_N: return guiset->arrowN->getU();
     case GP_SCROLLBAR_E: return guiset->arrowE->getU();
@@ -1256,7 +1462,7 @@ size_t GUIPartDrawerInternal::getGUIPartSizeY(GUIPart part) const
     //case GP_SMALL_SLIDER_VBUTTON: return guiset->smallSliderV->getV();
     case GP_SLIDER_HBACK: return guiset->sliderHRule->t0->getV();
     case GP_SLIDER_VBACK: return guiset->sliderVRule->t0->getV();
-    case GP_SMALL_SLIDER_HBACK: return guiset->sliderHRule->t0->getV();
+    case GP_SMALL_SLIDER_HBACK: return guiset->smallSliderHRule->t0->getV();
     case GP_SMALL_SLIDER_VBACK: return guiset->sliderVRule->t0->getV();
     case GP_SCROLLBAR_N: return guiset->arrowN->getV();
     case GP_SCROLLBAR_E: return guiset->arrowE->getV();

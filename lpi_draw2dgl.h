@@ -43,10 +43,13 @@ class Drawer2DGL : public ADrawer2D
     
   private:
     void recursive_bezier(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, int n);
-    void prepareDrawUntextured(bool filledGeometry);
-    void prepareDrawTextured();
     void drawLineInternal(int x0, int y0, int x1, int y1); //doesn't call "prepareDraw", to be used by other things that draw multiple lines
     
+  public:
+  
+    void prepareDrawUntextured(bool filledGeometry);
+    void prepareDrawTextured();
+
   public:
     Drawer2DGL(ScreenGL* screen);
     ~Drawer2DGL();
@@ -88,6 +91,10 @@ class Drawer2DGL : public ADrawer2D
     virtual void drawTextureSized(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureSizedRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White);
+    virtual void drawTextureGradient(const ITexture* texture, int x, int y
+                                   , const ColorRGB& color00, const ColorRGB& color01, const ColorRGB& color10, const ColorRGB& color11);
+    virtual void drawTextureRepeatedGradient(const ITexture* texture, int x0, int y0, int x1, int y1
+                                           , const ColorRGB& color00, const ColorRGB& color01, const ColorRGB& color10, const ColorRGB& color11);
 
     
   public:
