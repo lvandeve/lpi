@@ -112,6 +112,10 @@ class IDrawer2D
     virtual void drawTextureSizedCentered(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White) = 0;
     virtual void drawTextureRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, const ColorRGB& colorMod = RGB_White) = 0;
     virtual void drawTextureSizedRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White) = 0;
+    virtual void drawTextureGradient(const ITexture* texture, int x, int y
+                                   , const ColorRGB& color00, const ColorRGB& color01, const ColorRGB& color10, const ColorRGB& color11) = 0;
+    virtual void drawTextureRepeatedGradient(const ITexture* texture, int x0, int y0, int x1, int y1
+                                           , const ColorRGB& color00, const ColorRGB& color01, const ColorRGB& color10, const ColorRGB& color11) = 0;
 
     ////"matrix" is 2x2 matrix given as an array of 4 doubles: topleft element, topright element, bottomleft element, bottomright element. The matrix has column vectors for doing the transformation (the OpenGL convention, not the Direct3D convention).
     //virtual void drawTextureTransformed(const ITexture* texture, int x, int y, const double* matrix, const ColorRGB& colorMod = RGB_White) = 0; //transformed around the top left corner of the texture

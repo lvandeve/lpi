@@ -40,13 +40,14 @@ TODO:
 [ ] progress bar (and a good multilevel one)
 [X] menu (both menu bar and right click popup menus)
 [ ] minimizable windows (and bar to dock them in?)
+[ ] maximizable windows
 [X] spinner (value with up and down button)
 [X] dropdown list
 [ ] tree (and flat list and table)
 [X] file dialog
 [X] toolbar (just a bunch of image buttons, not hard to make)
 [ ] textfield with multiple lines
-[ ] status bar in windows
+[X] status bar in windows
 
 Hint:
 When executing the GUI in a gameloop, when you have put all elements in a MainContainer, you have to
@@ -109,45 +110,71 @@ class IHoverManager
     virtual void addHoverElement(Element* element) = 0;
 };
 
-class InternalContainer //container inside elements, for elements that contain sub elements to work (e.g. scrollbar exists out of background and 3 buttons)
+class AInternalContainer //container inside elements, for elements that contain sub elements to work (e.g. scrollbar exists out of background and 3 buttons)
 {
-  private:
+  protected:
     std::vector<Element*> elements;
-    
-    std::map<Element*, Sticky> sticky;
+    bool elementOver;
   
   public:
+  
+    AInternalContainer();
   
     const std::vector<Element*>& getElements() const { return elements; }
     std::vector<Element*>& getElements() { return elements; }
     
-    void resize(const Pos<int>& oldPos, const Pos<int>& newPos); //this resizes the 2D size of elements, not the amount of elements
+    virtual void resize(const Pos<int>& oldPos, const Pos<int>& newPos) = 0; //this resizes the 2D size of elements, not the amount of elements
     void move(int x, int  y);
     void setElementOver(bool state); //this says to all elements whether or not another element is in front of it in Z order, causing mouse to not work
     void manageHover(IHoverManager& hover);
     void setBasicMouseInfo(const IInput& input);
     const Element* hitTest(const IInput& input) const;
+    
+    Element* getElement(size_t i) const { return elements[i]; }
+    
+    size_t findElementIndex(Element* element);
+    
+    int getKeyboardFocus() const;
+};
+
+class InternalContainer : public AInternalContainer //container inside elements, for elements that contain sub elements to work (e.g. scrollbar exists out of background and 3 buttons)
+{
+  private:
+    std::map<Element*, Sticky> sticky;
+  
+  public:
+  
+    
+    virtual void resize(const Pos<int>& oldPos, const Pos<int>& newPos); //this resizes the 2D size of elements, not the amount of elements
 
     void addSubElement(Element* element, const Sticky& sticky, Element* parent);
     void insertSubElement(size_t index, Element* element, const Sticky& sticky, Element* parent);
     void clearSubElements();
     
-    Element* getElement(size_t i) const { return elements[i]; }
-    
-    size_t findElementIndex(Element* element);
-    void removeElement(Element* element);
-    
-    int getKeyboardFocus() const;
-    
     Sticky getSticky(Element* element) const;
     void setSticky(Element* element, const Sticky& sticky, Element* parent);
     void setStickyRelative(Element* element, Element* parent); //automatically calculates the sticky for completely relative position, based on the current sizes
     void setStickyFull(Element* element, Element* parent); //automatically calculates the sticky for "full" behaviour, sides will follow parent's corresponding size, compared to current position
+
+    void removeElement(Element* element);
   
   private:
     void initSubElement(Element* element, const Sticky& sticky, Element* parent);
     void setStickyElementSize(Element* element, Element* parent);
     void setStickyElementSize(Element* element, const Pos<int>& newPos);
+};
+
+class InternalContainerWrapping : public AInternalContainer //container inside elements, for elements that contain sub elements to work (e.g. scrollbar exists out of background and 3 buttons)
+{
+  
+  public:
+  
+    virtual void resize(const Pos<int>& oldPos, const Pos<int>& newPos); //this resizes the 2D size of elements, not the amount of elements
+
+    void addSubElement(Element* element);
+    void clearSubElements();
+    
+    void removeElement(Element* element);
 };
 
 enum KeyMod
@@ -266,22 +293,31 @@ class Element : public ElementRectangular
     virtual int getKeyboardFocus() const { return 0; }
 };
 
-class ElementComposite : public Element //element with "internal container" to automatically handle child elements for you
+class AElementComposite : public Element //element with "internal container" to automatically handle child elements for you
 {
   protected:
-    InternalContainer ic;
-
-  protected:
-    void addSubElement(Element* element, const Sticky& sticky = STICKYDEFAULT); //only used for INTERNAL parts of the gui element, such as the buttons in a scrollbar, hence this function is protected
-    void clearSubElements();
+    AInternalContainer& ic;
 
   public:
+    AElementComposite(AInternalContainer& ic) : ic(ic) {}
+  
     virtual void move(int x, int y);
     virtual void setElementOver(bool state);
     virtual void resize(int x0, int y0, int x1, int y1);
     virtual void manageHoverImpl(IHoverManager& hover);
     //virtual const Element* hitTest(const IInput& input);
     virtual int getKeyboardFocus() const;
+};
+
+class ElementComposite : public AElementComposite //element with "internal container" to automatically handle child elements for you
+{
+  protected:
+    InternalContainer my_ic;
+
+  protected:
+    ElementComposite() : AElementComposite(my_ic) {};
+    void addSubElement(Element* element, const Sticky& sticky = STICKYDEFAULT); //only used for INTERNAL parts of the gui element, such as the buttons in a scrollbar, hence this function is protected
+    void clearSubElements();
 };
 
 /*
@@ -535,10 +571,10 @@ class Slider : public ElementComposite
     virtual void handleImpl(const IInput& input);
 };
 
-class Container : public Element
+class AContainer : public Element
 {
   protected:
-    InternalContainer elements;
+    AInternalContainer* elements;
 
   protected:
     
@@ -547,11 +583,43 @@ class Container : public Element
     
   public:
     
-    Container();
-    Container(IGUIDrawer& drawer); //drawer is used to initialize the size of the container to the full screen size of the drawer
+    AContainer(AInternalContainer* ic);
+    AContainer(AInternalContainer* ic, IGUIDrawer& drawer); //drawer is used to initialize the size of the container to the full screen size of the drawer
     virtual void handleImpl(const IInput& input); //you're supposed to handle() before you draw()
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void manageHoverImpl(IHoverManager& hover);
+    
+    Element* getElement(size_t i) const { return elements->getElement(i); }
+    unsigned long size() const;
+    
+    void bringToTop(Element* element); //precondition: element must already be in the list
+    
+    void centerElement(Element* element); //TODO: remove this function from this class, if necessary put it somewhere else as utility function
+
+    void putInside(unsigned long i);
+    virtual void moveImpl(int x, int y);
+    void make(int x, int y, int sizex, int sizey);
+    
+    void getRelativeElementPos(Element& element, int& ex, int& ey) const;
+    virtual void resizeImpl(const Pos<int>& newPos);
+    
+    virtual void setElementOver(bool state);
+    virtual const Element* hitTest(const IInput& input) const;
+    
+    void setSizeToElements(); //makes the size of the container as big as the elements. This resizes the container in a non-sticky way: no element is affected
+    
+    virtual int getKeyboardFocus() const;
+};
+
+class Container : public AContainer
+{
+  protected:
+    InternalContainer elements_ic;
+    
+  public:
+    
+    Container();
+    Container(IGUIDrawer& drawer); //drawer is used to initialize the size of the container to the full screen size of the drawer
     
     //push the element without affecting absolute position
     void pushTop(Element* element, const Sticky& sticky = STICKYDEFAULT);
@@ -567,29 +635,25 @@ class Container : public Element
     void pushTopAt(Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT);
     void pushBottomAt(Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT);
     void insertAt(size_t pos, Element* element, int x, int y, const Sticky& sticky = STICKYDEFAULT);
-    
-    Element* getElement(size_t i) const { return elements.getElement(i); }
-    unsigned long size() const;
-    
-    void bringToTop(Element* element); //precondition: element must already be in the list
-    
-    void centerElement(Element* element); //TODO: remove this function from this class, if necessary put it somewhere else as utility function
 
     void remove(Element* element);
     void clear(); //clears all the elements
-    void putInside(unsigned long i);
-    virtual void moveImpl(int x, int y);
-    void make(int x, int y, int sizex, int sizey);
+};
+
+class ContainerWrapping : public AContainer
+{
+  protected:
+    InternalContainerWrapping elements_ic;
     
-    void getRelativeElementPos(Element& element, int& ex, int& ey) const;
-    virtual void resizeImpl(const Pos<int>& newPos);
+  public:
     
-    virtual void setElementOver(bool state);
-    virtual const Element* hitTest(const IInput& input) const;
+    ContainerWrapping();
+    ContainerWrapping(IGUIDrawer& drawer); //drawer is used to initialize the size of the container to the full screen size of the drawer
     
-    void setSizeToElements(); //makes the size of the container as big as the elements. This resizes the container in a non-sticky way: no element is affected
-    
-    virtual int getKeyboardFocus() const;
+    //push the element without affecting absolute position
+    void pushTop(Element* element);
+    void remove(Element* element);
+    void clear(); //clears all the elements
 };
 
 
@@ -800,6 +864,7 @@ class Window : public ElementComposite
   public:
 
     Window();
+    ~Window();
     //push the element without affecting absolute position
     void pushTop(Element* element, const Sticky& sticky = STICKYDEFAULT);
     void pushBottom(Element* element, const Sticky& sticky = STICKYDEFAULT);
@@ -926,33 +991,48 @@ class Checkbox : public Element, public Label
 
 //The bulletlist, a list of checkboxes where only one can be selected (radio buttons)
 //TODO: improve this interface
-class BulletList : public ElementComposite
+class ABulletList
 {
   public:
     std::vector <Checkbox*> bullet; //todo: make private
-    Checkbox prototype;
     
-    BulletList();
-    ~BulletList();
-    void clear();
-    virtual void drawImpl(IGUIDrawer& drawer) const;
-    virtual void handleImpl(const IInput& input);
-    void make(int x, int y, unsigned long amount, int xDiff, int yDiff); //diff = the location difference between successive checkboxes
-    void make(int x, int y, unsigned long amount, int xDiff, int yDiff, unsigned long amountx); //make in 2D pattern
-    void setCorrectSize();
-    //set style of the bullets by using prototype.make([checkbox parameters where x and y will be ignored])
+    ABulletList();
+    ~ABulletList();
+    
+    void drawBullets(IGUIDrawer& drawer) const;
+    void handleBullets(const IInput& input);
+
     int check(); //returns which one is checked
-    int xDiff; //just added for "book keeping"
-    int yDiff; //just added for "book keeping"
 
     std::string getText(unsigned long i) const;
     const std::string& getCurrentText() const;
     void addText(const std::string& text, unsigned long i);
     void set(unsigned long i);
-    virtual const Element* hitTest(const IInput& input) const;
     
   private:
     int lastChecked; //remember which one was checked, so it can know when a new one is checked, which one that is
+};
+
+//The bulletlist, a list of checkboxes where only one can be selected (radio buttons)
+//TODO: improve this interface
+class BulletList : public ABulletList, public ElementComposite
+{
+  public:
+    
+    BulletList();
+    ~BulletList();
+    void clear();
+
+    void make(int x, int y, unsigned long amount, int xDiff, int yDiff); //diff = the location difference between successive checkboxes
+    void make(int x, int y, unsigned long amount, int xDiff, int yDiff, unsigned long amountx); //make in 2D pattern
+    void setCorrectSize();
+
+    int xDiff; //just added for "book keeping"
+    int yDiff; //just added for "book keeping"
+    
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IInput& input);
+    virtual const Element* hitTest(const IInput& input) const;
 };
 
 class Text : public Element

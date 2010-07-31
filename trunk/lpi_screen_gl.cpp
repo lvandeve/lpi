@@ -19,6 +19,7 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 */
 
 #include "lpi_screen_gl.h"
+#include "lpi_os.h"
 
 #include <GL/gl.h>
 #include <iostream>
@@ -34,7 +35,7 @@ This also inits everything else of the lpi application, so lpi::screen currently
 */
 ScreenGL::ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, bool resizable, const char* text, bool print_debug_messages)
 : screenMode(-1)
-, openGLContextDestroyedNumber(0)
+, print_debug_messages(print_debug_messages)
 , glsmoothing(false)
 {
   w = width;
@@ -47,7 +48,6 @@ ScreenGL::ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, boo
     SDL_Quit();
     std::exit(1);
   }
-  atexit(SDL_Quit); //TODO: do this in the destructor of ScreenGL or elsewhere, instead of here
   if(print_debug_messages) std::cout<<"info: SDL inited"<<std::endl;
   
   SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
@@ -63,9 +63,15 @@ ScreenGL::ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, boo
     std::exit(1);
   }
   
-  if(print_debug_messages) std::cout<< "info: OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
-  if(print_debug_messages) std::cout<< "info: OpenGL Renderer: " << glGetString(GL_RENDERER) << std::endl;
-  if(print_debug_messages) std::cout<< "info: OpenGL Vendor: " << glGetString(GL_VENDOR) << std::endl;
+  if(print_debug_messages)
+  {
+    const SDL_version* sdl_version = SDL_Linked_Version();
+
+    std::cout<< "info: SDL Version: " << (int)sdl_version->major << "." << (int)sdl_version->minor << "." << (int)sdl_version->patch << std::endl;
+    std::cout<< "info: OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
+    std::cout<< "info: OpenGL Renderer: " << glGetString(GL_RENDERER) << std::endl;
+    std::cout<< "info: OpenGL Vendor: " << glGetString(GL_VENDOR) << std::endl;
+  }
   
   if(print_debug_messages) std::cout<<"info: initing GL"<<std::endl;
   initGL();
@@ -84,6 +90,13 @@ ScreenGL::ScreenGL(int width, int height, bool fullscreen, bool enable_fsaa, boo
   cls();
   
   //plane.create(RGB_Black, w, h);
+}
+
+ScreenGL::~ScreenGL()
+{
+  if(print_debug_messages) std::cout << "info: Quitting SDL" << std::endl;
+  SDL_Quit();
+  if(print_debug_messages) std::cout << "info: SDL Quit" << std::endl;
 }
 
 bool ScreenGL::setVideoMode(int width, int height, bool fullscreen, bool enable_fsaa, bool resizable, const char* text, bool print_debug_messages)
@@ -131,6 +144,18 @@ bool ScreenGL::setVideoMode(int width, int height, bool fullscreen, bool enable_
   if(print_debug_messages) std::cout<<"info: screen inited"<<std::endl;
   if(fullscreen) lock();
   SDL_WM_SetCaption(text, NULL);
+
+  if(!context.isActive())
+  {
+    context.onNewGLContext();
+  }
+  else
+  {
+#if defined(LPI_OS_WINDOWS) //if the opengl context is destroyed by SDL setVideoMode
+  //since SDL version 1.2.14, this is not needed anymore and the behaviour is the same as on Linux: GL context not destroyed by calling SDL_SetVideoMode after a resize event!
+  //context.onNewGLContext();
+#endif
+  }
   
   return true;
 }
@@ -142,10 +167,6 @@ void ScreenGL::changeResolution(int width, int height, bool fullscreen, bool ena
   
   setVideoMode(width, height, fullscreen, enable_fsaa, resizable, text, print_debug_messages);
   
-#if defined(_WIN32) //if the opengl context is destroyed by SDL setVideoMode
-  openGLContextDestroyedNumber++;
-#endif
-
   if(print_debug_messages) std::cout<<"info: initing GL"<<std::endl;
   glViewport(0, 0, w, h);
   screenMode = -1;
@@ -204,7 +225,7 @@ void ScreenGL::set2DScreen(int w, int h, bool filledGeometry)
   //Values to try: 0.0; 0.5; 0.375
   static const double TWIDDLEX = 0.375;
   static const double TWIDDLEY = 0.375;
-  
+
   if(filledGeometry)
   {
     if(screenMode == 1) return;
@@ -217,7 +238,7 @@ void ScreenGL::set2DScreen(int w, int h, bool filledGeometry)
     if(screenMode == 1) { glTranslated(TWIDDLEX, TWIDDLEY, 0); screenMode = 0; return; }
     screenMode = 0;
   }
-  
+
   //the official code for "Setting Your Raster Position to a Pixel Location" (i.e. set up an oldskool 2D screen)
   glViewport(0, 0, w, h);
   glMatrixMode(GL_PROJECTION);
@@ -229,7 +250,7 @@ void ScreenGL::set2DScreen(int w, int h, bool filledGeometry)
   {
     glTranslated(TWIDDLEX, TWIDDLEY, 0);
   }
-  
+
   enableTwoSided(); //important, without this, 2D stuff might not be drawn if only one side is enabled
   disableZBuffer();
   disableSmoothing();
@@ -306,6 +327,16 @@ void ScreenGL::initGL()
 
 void ScreenGL::set2DScreen(bool filledGeometry)
 {
+  /*
+  This check is an optimization to avoid the glGetIntegerv call, but, it's very strange:
+  in Windows, it uses a LOT more CPU if this check is done. So disable it. This check
+  is also done in the other set2DScreen that's being called, and there it increases
+  performance. But why does calling glGetIntegerv here make it faster on Windows even
+  though the returned info isn't actually used??
+  */
+  //if(filledGeometry && screenMode == 1) return;
+  //if(!filledGeometry && screenMode == 0) return;
+
   GLint array[4];
   glGetIntegerv(GL_VIEWPORT, array); //get viewport size from OpenGL
   set2DScreen(array[2], array[3], filledGeometry);
@@ -313,6 +344,8 @@ void ScreenGL::set2DScreen(bool filledGeometry)
 
 void ScreenGL::set3DScreen(double near, double far)
 {
+  if(screenMode == 2) return;
+  
   GLint array[4];
   glGetIntegerv(GL_VIEWPORT, array); //get viewport size from OpenGL
   set3DScreen(near, far, array[2], array[3]);
@@ -417,6 +450,11 @@ void ScreenGL::disableSmoothing()
 bool ScreenGL::isSmoothingEnabled()
 {
   return glsmoothing;
+}
+
+GLContext* ScreenGL::getGLContext()
+{
+  return &context;
 }
 
 } //end of namespace lpi

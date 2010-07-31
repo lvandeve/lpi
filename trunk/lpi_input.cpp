@@ -32,6 +32,17 @@ IInputClick::IInputClick()
     doubleClickTime[i] = 0;
     doubleClickX[i] = 0;
     doubleClickY[i] = 0;
+    tripleClickState[i] = 0;
+    tripleClickTime[i] = 0;
+    tripleClickX[i] = 0;
+    tripleClickY[i] = 0;
+    quadrupleClickState[i] = 0;
+    quadrupleClickTime[i] = 0;
+    quadrupleClickX[i] = 0;
+    quadrupleClickY[i] = 0;
+    keyReleased[i] = false;
+    keyWarmedUp[i] = false;
+    lastTime[i] = 0;
   }
 }
 

@@ -103,6 +103,7 @@ void loadTextures(std::vector<unsigned char>& buffer, std::vector<HTexture>& tex
     heights = h;
   }
   
+  textures.clear(); //call the destructors of possible earlier HTextures in it, to avoid memory leaks
   textures.resize(numx * numy);
   
   //the order is row per row, column per column
@@ -134,55 +135,6 @@ void loadTextures(const std::string& filename, std::vector<HTexture>& textures, 
   
   loadTextures(image, textures, factory, widths, heights, pngdec.getWidth(), pngdec.getHeight(), effect);
 }
-
-void loadTexturesAlpha(std::vector<unsigned char>& buffer, std::vector<ITexture>& textures, int widths, int heights, int w, int h)
-{
-  int numx, numy;
-   
-  if(widths > 0 && heights > 0)
-  {
-    numx = w / widths;
-    numy = h / heights;
-  }
-  else
-  {
-    numx = 1;
-    numy = 1;
-    widths = w;
-    heights = h;
-  }
-  
-  //the order is row per row, column per column
-  int index = 0;
-  for(int y = 0; y < numy; y++)
-  for(int x = 0; x < numx; x++)
-  {
-    makeTextureAlphaFromBuffer(&textures[index], &buffer[0], w, h, x * widths, y * heights, (x + 1) * widths, (y + 1) * heights);
-    index++;
-  }
-} 
-
-/*
-*/
-void loadTexturesAlpha(const std::string& filename, std::vector<ITexture>& textures, int widths, int heights)
-{
-  LodePNG::Decoder pngdec;
-  
-  std::vector<unsigned char> file;
-  LodePNG::loadFile(file, filename);
-
-  std::vector<unsigned char> image;
-  
-  //load the png and if it gives an error return it
-  pngdec.decode(image, file);
-  if(pngdec.hasError())
-  {
-    std::cout << "\npng loading error " << pngdec.getError() << " in file " << filename;
-    return;
-  }
-  
-  loadTexturesAlpha(image, textures, widths, heights, pngdec.getWidth(), pngdec.getHeight());
-} 
 
 //****************************************************************************//
 ////////////////////////////////////////////////////////////////////////////////
@@ -837,6 +789,48 @@ ColorRGB getPixel(const ITexture* texture, int x, int y)
   return result;
 }
 
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+HTexture::HTexture()
+: refcount(new int(1))
+, texture(0)
+{
+}
+
+HTexture::HTexture(const HTexture& other)
+: refcount(0)
+, texture(0)
+{
+  if(other.texture != 0)
+  {
+    refcount = other.refcount;
+    texture = other.texture;
+    (*refcount)++;
+    if((*refcount) > 2)
+    {
+      static bool warningGiven = false;
+      if(!warningGiven) std::cout << "Warning: unintended usage of HTexture (this warning is displayed only once)" << std::endl;
+      warningGiven = true;
+    }
+  }
+  else refcount = new int(1);
+}
+
+HTexture::~HTexture()
+{
+  (*refcount)--;
+  if(*refcount == 0)
+  {
+    if(texture) delete texture;
+    delete refcount;
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////

@@ -890,6 +890,19 @@ void ADrawer2DBuffer::drawTextureSizedRepeated(const ITexture* texture, int x0, 
   }
 }
 
+void ADrawer2DBuffer::drawTextureGradient(const ITexture* texture, int x, int y
+                                        , const ColorRGB& color00, const ColorRGB& color01, const ColorRGB& color10, const ColorRGB& color11)
+{
+  drawTexture(texture, x, y, (color00+color01+color10+color11)/4);
+}
+
+void ADrawer2DBuffer::drawTextureRepeatedGradient(const ITexture* texture, int x0, int y0, int x1, int y1
+                                                , const ColorRGB& color00, const ColorRGB& color01, const ColorRGB& color10, const ColorRGB& color11)
+{
+  drawTextureRepeated(texture, x0, y0, x1, y1, (color00+color01+color10+color11)/4);
+}
+
+
 /*void ADrawer2DBuffer::cls(const ColorRGB& color)
 {
   size_t w = getWidth();

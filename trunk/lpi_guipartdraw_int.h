@@ -33,7 +33,9 @@ namespace lpi
 namespace gui
 {
 
-  const std::string& getBuiltInGuiTextureData();
+const std::string& getBuiltInGuiTextureData();
+
+extern bool panelGradient; //TODO: make this a separate setting per panel
 
 /*
 a BackPanel is a collection of 9 textures that should be tileable (except the corners)
@@ -49,6 +51,7 @@ class BackPanel
   */
   bool enableSides;
   bool enableCenter;
+  //bool gradient;
   
   //pointers to the 9 different textures making up a panel that can have any size
   const ITexture* t00; //top left corner
@@ -148,6 +151,8 @@ struct GuiSet //GuiSet is a bit of a LEGACY lpi concept. Currently it's just use
   const ITexture* invisibleButtonTextures[9];
   const ITexture* invisibleButtonOverTextures[9];
   const ITexture* invisibleButtonDownTextures[9];
+  const ITexture* horMenuPanelTextures[9];
+  const ITexture* verMenuPanelTextures[9];
   
   const BackPanel* windowPanel;
   const BackPanel* buttonPanel;
@@ -174,7 +179,8 @@ struct GuiSet //GuiSet is a bit of a LEGACY lpi concept. Currently it's just use
   ColorRGB mouseDownColor; //this isn't for panel buttons, but for image buttons like the arrows of a scrollbar, ...
   
   ColorRGB windowTopColor;
-  
+  ColorRGB barColor; //Affects toolbar buttons and status bars. It is supposed to be for menu bar, tool bar and status bar, but other colors of those come from the GUI texture.
+
   Font defaultFont; //font for anything else that isn't in the list below
   Font messageFont; //font for in message boxes
   Font menuFont[2]; //font for (sub)menus
@@ -182,6 +188,8 @@ struct GuiSet //GuiSet is a bit of a LEGACY lpi concept. Currently it's just use
   Font textButtonFont[3]; //font for buttons
   Font windowTopFont; //font for the title bar or a window
   Font tooltipFont; //font for tooltips
+  Font textInputLineFont;
+  Font textInputLineTitleFont;
 };
 
 struct BuiltInIcons
@@ -209,8 +217,8 @@ class GUIPartDrawerInternal : public IGUIPartDrawer
     BuiltInIcons icons;
     
     std::vector<ITexture*> builtInTexture;
-    BackPanel builtInPanel[14];
-    BackRule builtInRule[3];
+    BackPanel builtInPanel[16];
+    BackRule builtInRule[5];
     GuiSet builtInGuiSet;
     
     void initBuiltInGui(const ITextureFactory& factory);
@@ -229,6 +237,7 @@ class GUIPartDrawerInternal : public IGUIPartDrawer
     virtual void drawGUIPartText(GUIPart part, const std::string& text, int x0, int y0, int x1, int y1, const GUIPartMod& mod = GPM_Default);
     virtual size_t getGUIPartSizeX(GUIPart part) const;
     virtual size_t getGUIPartSizeY(GUIPart part) const;
+    virtual void getGUIPartTextSize(int& w, int& h, GUIPart part, const std::string& text) const;
     
     virtual void createIcon(ITexture& texture, GUIIcon icon, int size = 16) const;
     

@@ -161,7 +161,7 @@ class APersist : public IPersist
     ~APersist();
 };
 
-#if defined(LPI_WIN32)
+#if defined(LPI_OS_WINDOWS)
 
 class PersistWin32 : public APersist
 {
@@ -179,7 +179,7 @@ class PersistWin32 : public APersist
 
 typedef PersistWin32 Persist;
 
-#elif defined(LPI_LINUX)
+#elif defined(LPI_OS_LINUX)
 
 class PersistLinux : public APersist
 {
@@ -197,6 +197,24 @@ class PersistLinux : public APersist
 };
 
 typedef PersistLinux Persist;
+#elif defined(LPI_OS_AMIGA) || defined(LPI_OS_AROS)
+
+class PersistAmiga : public APersist
+{
+  protected:
+    std::string getPath() const;
+
+  public:
+    PersistAmiga(const std::string& appuid, bool global);
+    ~PersistAmiga();
+    
+    virtual void save() const;
+    virtual void load();
+    
+    virtual std::string getURLIndicationForUser() const { return getPath(); }
+};
+
+typedef PersistAmiga Persist;
 #endif
 
 } //namespace lpi

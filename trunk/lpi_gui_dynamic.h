@@ -38,11 +38,22 @@ namespace gui
 
 //TODO: consider doing "controlToValue" always in the handle function of the controls that edit the value a pointer points to
 
+const static int TITLEHEIGHT = 14;
+const static int CONTROLHEIGHT = 14;
+
 class IDynamicControl : public ElementComposite
 {
   public:
+  
+    virtual ~IDynamicControl() {}
+  
     virtual void controlToValue() = 0;
     virtual void valueToControl() = 0;
+    
+    virtual bool canTab() const { return false; }
+    virtual bool tabIsActive() const { return false; }
+    virtual void tabActivate() {}
+    virtual void tabDeActivate() {}
 };
 
 template<typename T>
@@ -62,6 +73,7 @@ class TDymamicPageControl : public IDynamicControl
     TDymamicPageControl()
     : bind(0)
     {
+      this->resize(0, 0, 20, CONTROLHEIGHT);
     }
     
     void bindValue(T* value)
@@ -88,6 +100,69 @@ class TDymamicPageControl : public IDynamicControl
   
 };
 
+template<typename T>
+class DynamicValue : public TDymamicPageControl<T>
+{
+  private:
+    InputLine line;
+    
+    void ctor()
+    {
+      this->resize(0, 0, 20, CONTROLHEIGHT);
+      line.make(this->x0, this->y0, 256);
+      line.move(0, (this->getSizeY() - line.getSizeY()) / 2);
+      this->addSubElement(&line, Sticky(0.0, 0, 0.5,  -line.getSizeY() / 2, 1.0, 0, 0.5, line.getSizeY() / 2));
+
+    }
+  
+  public:
+  
+    DynamicValue()
+    {
+      ctor();
+    }
+    
+    DynamicValue(T* value)
+    {
+      TDymamicPageControl<T>::bind = value;
+      ctor();
+      line.setText(valtostr<T>(*value));
+    }
+  
+    virtual void getValue(T* value)
+    {
+      *value = strtoval<T>(line.getText());
+    }
+    
+    virtual void setValue(T* value)
+    {
+      line.setText(valtostr<T>(*value));
+    }
+    
+    virtual void handleImpl(const IInput& input)
+    {
+      line.handle(input);
+    }
+
+    virtual void drawImpl(IGUIDrawer& drawer) const
+    {
+      line.draw(drawer);
+    }
+    
+    virtual bool canTab() const { return true; }
+    virtual bool tabIsActive() const { return line.isControlActive(); }
+    virtual void tabActivate()
+    {
+      line.activate(true);
+      line.selectAll();
+    }
+    virtual void tabDeActivate()
+    {
+      line.activate(false);
+      line.selectNone();
+    }
+};
+
 class DynamicCheckbox : public TDymamicPageControl<bool>
 {
   private:
@@ -95,7 +170,7 @@ class DynamicCheckbox : public TDymamicPageControl<bool>
     
     void ctor()
     {
-      this->resize(0, 0, 20, 20);
+      this->resize(0, 0, 20, CONTROLHEIGHT);
       box.makeSmall(0, 0);
       box.move(0, (getSizeY() - box.getSizeY()) / 2);
       this->addSubElement(&box, Sticky(0.0, 0, 0.5, -box.getSizeY() / 2, 0.0, box.getSizeX(), 0.5, box.getSizeY() / 2));
@@ -136,6 +211,72 @@ class DynamicCheckbox : public TDymamicPageControl<bool>
     }
 };
 
+class DynamicCheckboxes : public IDynamicControl
+{
+  private:
+  
+    std::vector<Checkbox> checkBoxes;
+    std::vector<bool*> values;
+    
+    void ctor()
+    {
+      this->resize(0, 0, checkBoxes.size() * 20, CONTROLHEIGHT);
+      
+      for(size_t i = 0; i < checkBoxes.size(); i++)
+      {
+        checkBoxes[i].makeSmall(0, 0);
+        addSubElement(&checkBoxes[i], Sticky(0.0, checkBoxes[i].getSizeX() * i, 0.5, -checkBoxes[i].getSizeY() / 2, 0.0, checkBoxes[i].getSizeX() * (i + 1), 0.5, checkBoxes[i].getSizeY() / 2));
+      }
+    }
+    
+  public:
+    
+    DynamicCheckboxes(const std::vector<bool*>& values)
+    : values(values)
+    {
+      checkBoxes.resize(values.size());
+      
+      ctor();
+      
+      for(size_t i = 0; i < checkBoxes.size(); i++)
+      {
+        checkBoxes[i].setChecked(*values[i]);
+      }
+    }
+  
+    virtual void controlToValue()
+    {
+      for(size_t i = 0; i < checkBoxes.size(); i++)
+      {
+        *values[i] = checkBoxes[i].isChecked();
+      }
+    }
+    
+    virtual void valueToControl()
+    {
+      for(size_t i = 0; i < checkBoxes.size(); i++)
+      {
+        checkBoxes[i].setChecked(*values[i]);
+      }
+    }
+    
+    virtual void handleImpl(const IInput& input)
+    {
+      for(size_t i = 0; i < checkBoxes.size(); i++)
+      {
+        checkBoxes[i].handle(input);
+      }
+    }
+    
+    virtual void drawImpl(IGUIDrawer& drawer) const
+    {
+      for(size_t i = 0; i < checkBoxes.size(); i++)
+      {
+        checkBoxes[i].draw(drawer);
+      }
+    }
+};
+
 template<typename T>
 class DynamicSlider : public TDymamicPageControl<T>
 {
@@ -150,7 +291,7 @@ class DynamicSlider : public TDymamicPageControl<T>
       this->valmin = valmin;
       this->valmax = valmax;
       static const int TEXTSIZE = 64;
-      this->resize(0, 0, TEXTSIZE * 2, 20);
+      this->resize(0, 0, TEXTSIZE * 2, CONTROLHEIGHT);
       
       slider.makeSmallHorizontal(0, 0, this->getSizeX() - TEXTSIZE, 1.0, geom);
       slider.move(0, (this->getSizeY() - slider.getSizeY()) / 2);
@@ -215,55 +356,18 @@ class DynamicSlider : public TDymamicPageControl<T>
       line.draw(drawer);
       slider.draw(drawer);
     }
-};
-
-template<typename T>
-class DynamicValue : public TDymamicPageControl<T>
-{
-  private:
-    InputLine line;
     
-    void ctor()
+    virtual bool canTab() const { return true; }
+    virtual bool tabIsActive() const { return line.isControlActive(); }
+    virtual void tabActivate()
     {
-      this->resize(0, 0, 20, 20);
-      line.make(this->x0, this->y0, 256);
-      line.move(0, (this->getSizeY() - line.getSizeY()) / 2);
-      this->addSubElement(&line, Sticky(0.0, 0, 0.5,  -line.getSizeY() / 2, 1.0, 0, 0.5, line.getSizeY() / 2));
-
+      line.activate(true);
+      line.selectAll();
     }
-  
-  public:
-  
-    DynamicValue()
+    virtual void tabDeActivate()
     {
-      ctor();
-    }
-    
-    DynamicValue(T* value)
-    {
-      TDymamicPageControl<T>::bind = value;
-      ctor();
-      line.setText(valtostr<T>(*value));
-    }
-  
-    virtual void getValue(T* value)
-    {
-      *value = strtoval<T>(line.getText());
-    }
-    
-    virtual void setValue(T* value)
-    {
-      line.setText(valtostr<T>(*value));
-    }
-    
-    virtual void handleImpl(const IInput& input)
-    {
-      line.handle(input);
-    }
-
-    virtual void drawImpl(IGUIDrawer& drawer) const
-    {
-      line.draw(drawer);
+      line.activate(false);
+      line.selectNone();
     }
 };
 
@@ -275,7 +379,7 @@ class DynamicSpinner : public TDymamicPageControl<T>
     
     void ctor()
     {
-      this->resize(0, 0, 20, 20);
+      this->resize(0, 0, 20, CONTROLHEIGHT);
       spinner.move(0, (this->getSizeY() - spinner.getSizeY()) / 2);
       this->addSubElement(&spinner, Sticky(0.0,0, 0.0,0, 1.0,0, 1.0,0));
     }
@@ -315,6 +419,19 @@ class DynamicSpinner : public TDymamicPageControl<T>
     {
       spinner.draw(drawer);
     }
+    
+    virtual bool canTab() const { return true; }
+    virtual bool tabIsActive() const { return spinner.isControlActive(); }
+    virtual void tabActivate()
+    {
+      spinner.activate(true);
+      spinner.selectAll();
+    }
+    virtual void tabDeActivate()
+    {
+      spinner.activate(false);
+      spinner.selectNone();
+    }
 };
 
 /*
@@ -330,6 +447,7 @@ class DynamicSliderSpinner : public TDymamicPageControl<T>
     T slidervalmax;
     T spinnervalmin;
     T spinnervalmax;
+    T step;
     
     void ctor(T slidervalmin, T slidervalmax, T spinnervalmin, T spinnervalmax, const IGUIDrawer& geom)
     {
@@ -338,7 +456,7 @@ class DynamicSliderSpinner : public TDymamicPageControl<T>
       this->spinnervalmin = spinnervalmin;
       this->spinnervalmax = spinnervalmax;
       static const int TEXTSIZE = 64;
-      this->resize(0, 0, TEXTSIZE * 2, 20);
+      this->resize(0, 0, TEXTSIZE * 2, CONTROLHEIGHT);
       
       slider.makeSmallHorizontal(0, 0, this->getSizeX() - TEXTSIZE, 1.0, geom);
       slider.move(0, (this->getSizeY() - slider.getSizeY()) / 2);
@@ -366,6 +484,7 @@ class DynamicSliderSpinner : public TDymamicPageControl<T>
     
     DynamicSliderSpinner(T* value, T valmin, T valmax, T step, const IGUIDrawer& geom)
     : spinner(step, true, valmin, true, valmax)
+    , step(step)
     {
       TDymamicPageControl<T>::bind = value;
       ctor(valmin, valmax, valmin, valmax, geom);
@@ -374,6 +493,7 @@ class DynamicSliderSpinner : public TDymamicPageControl<T>
   
     DynamicSliderSpinner(T* value, T slidervalmin, T slidervalmax, T spinnervalmin, T spinnervalmax, T step, const IGUIDrawer& geom)
     : spinner(step, true, spinnervalmin, true, spinnervalmax)
+    , step(step)
     {
       TDymamicPageControl<T>::bind = value;
       ctor(slidervalmin, slidervalmax, spinnervalmin, spinnervalmax, geom);
@@ -387,7 +507,7 @@ class DynamicSliderSpinner : public TDymamicPageControl<T>
     
     virtual void setValue(T* value)
     {
-      spinner.setValue(*value);
+      if(!spinner.isControlActive()) spinner.setValue(*value);
       setSliderValue(*value);
     }
     
@@ -398,7 +518,16 @@ class DynamicSliderSpinner : public TDymamicPageControl<T>
       if(spinner.hasChanged())
         setSliderValue(spinner.getValue());
       if(slider.mouseGrabbed(input))
-        spinner.setValue(getSliderValue());
+      {
+        //Lock the slider to increments according to step. This avoids unwanted long numbers like "1.654174165" popping up in the text box, making nicely rounded numbers instead.
+        T v = getSliderValue();
+        v /= step;
+        v = (int)v;
+        v *= step;
+        setSliderValue(v);
+        
+        spinner.setValue(v);
+      }
     }
     
     virtual void drawImpl(IGUIDrawer& drawer) const
@@ -406,6 +535,84 @@ class DynamicSliderSpinner : public TDymamicPageControl<T>
       spinner.draw(drawer);
       slider.draw(drawer);
     }
+    
+    virtual bool canTab() const { return true; }
+    virtual bool tabIsActive() const { return spinner.isControlActive(); }
+    virtual void tabActivate()
+    {
+      spinner.activate(true);
+      spinner.selectAll();
+    }
+    virtual void tabDeActivate()
+    {
+      spinner.activate(false);
+      spinner.selectNone();
+    }
+};
+
+/*
+DynamicWrappedInteger gives T floating point value in the range 0.0-1.0 to the programmer, but
+an integer from 0-SomeValue to the user of the GUI.
+To allow using non-whole values, the fake int isn't even an actual integer but a double!
+But since the step is set to 1, a user who doesn't know it's possible to enter real numbers, won't
+notice it.
+*/
+template<typename T>
+class DynamicFakeInteger : public TDymamicPageControl<double>
+{
+  private:
+    DynamicSliderSpinner<double> ss;
+    double fakeInt;
+    T range;
+    
+    double* getInitializedValue() //avoids "Conditional jump or move depends on uninitialised value(s)"
+    {
+      fakeInt = 0.0;
+      return &fakeInt;
+    }
+    
+  protected:
+  
+  public:
+    
+    DynamicFakeInteger(T* value, T range, const IGUIDrawer& geom)
+    : ss(getInitializedValue(), 0, range, 1, geom)
+    , range(range)
+    {
+      TDymamicPageControl<T>::bind = value;
+      setValue(value);
+      this->addSubElement(&ss, Sticky(0.0,0, 0.0,0, 1.0,0, 1.0,0));
+      this->resize(0, 0, 20, CONTROLHEIGHT);
+    }
+  
+    virtual void getValue(T* value)
+    {
+      double temp;
+      ss.getValue(&temp);
+      *value = temp / range;
+    }
+    
+    virtual void setValue(T* value)
+    {
+      double temp = *value;
+      temp *= range;
+      ss.setValue(&temp);
+    }
+    
+    virtual void handleImpl(const IInput& input)
+    {
+      ss.handle(input);
+    }
+    
+    virtual void drawImpl(IGUIDrawer& drawer) const
+    {
+      ss.draw(drawer);
+    }
+    
+    virtual bool canTab() const { return true; }
+    virtual bool tabIsActive() const { return ss.tabIsActive(); }
+    virtual void tabActivate() { ss.tabActivate(); }
+    virtual void tabDeActivate() { ss.tabDeActivate(); }
 };
 
 template<typename T>
@@ -417,9 +624,10 @@ class DynamicEnum : public TDymamicPageControl<T>
     std::map<size_t, T> indextoenum;
 
   public:
-    DynamicEnum(T* value, const std::vector<std::string>& names, const std::vector<T> values, const IGUIDrawer& geom)
+    DynamicEnum(T* value, const std::vector<std::string>& names, const std::vector<T>& values, const IGUIDrawer& geom)
     : list(geom)
     {
+      this->resize(0, 0, 20, CONTROLHEIGHT);
       TDymamicPageControl<T>::bind = value;
       list.setItems(names);
       for(size_t i = 0; i < values.size(); i++)
@@ -428,7 +636,7 @@ class DynamicEnum : public TDymamicPageControl<T>
         indextoenum[i] = values[i];
       }
       
-      list.resize(0, 0, 1, 16);
+      list.resize(0, 0, 1, this->getSizeY());
       this->addSubElement(&list, Sticky(0.0, 0, 0.5,  -list.getSizeY() / 2, 1.0, 0, 0.5, list.getSizeY() / 2));
       setValue(value);
     }
@@ -464,11 +672,12 @@ class DynamicDropDownBool : public TDymamicPageControl<bool>
     DynamicDropDownBool(bool* value, const std::string& nameFalse, const std::string& nameTrue, const IGUIDrawer& geom)
     : list(geom)
     {
+      this->resize(0, 0, 20, CONTROLHEIGHT);
       TDymamicPageControl<bool>::bind = value;
       std::vector<std::string> names; names.push_back(nameFalse); names.push_back(nameTrue);
       list.setItems(names);
       
-      list.resize(0, 0, 1, 16);
+      list.resize(0, 0, 1, getSizeY());
       this->addSubElement(&list, Sticky(0.0, 0, 0.5,  -list.getSizeY() / 2, 1.0, 0, 0.5, list.getSizeY() / 2));
       setValue(value);
     }
@@ -525,6 +734,7 @@ class DynamicColord : public TDymamicPageControl<ColorRGBd>
   public:
 
     DynamicColord(ColorRGBd* value, const IGUIDrawer& geom);
+    ~DynamicColord();
     virtual void getValue(ColorRGBd* value);
     virtual void setValue(ColorRGBd* value);
     virtual void handleImpl(const IInput& input);
@@ -549,6 +759,19 @@ class DynamicFile : public TDymamicPageControl<std::string>
     virtual void handleImpl(const IInput& input);
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void manageHoverImpl(IHoverManager& hover);
+    
+    virtual bool canTab() const { return true; }
+    virtual bool tabIsActive() const { return line.isControlActive(); }
+    virtual void tabActivate()
+    {
+      line.activate(true);
+      line.selectAll();
+    }
+    virtual void tabDeActivate()
+    {
+      line.activate(false);
+      line.selectNone();
+    }
 };
 
 class DynamicControlDummy : public IDynamicControl
@@ -572,17 +795,19 @@ class DynamicPage : public ElementComposite
         virtual void manageHover(IHoverManager& hover) { (void)hover; }
         
         std::string tooltip;
+        
+        virtual ~IDynamicRow() {}
     };
     
     class RowControl : public IDynamicRow
     {
       public:
         RowControl(IDynamicControl* control, const std::string& name) : control(control), name(name) {}
-        ~RowControl();
+        virtual ~RowControl();
         IDynamicControl* control;
         std::string name;
 
-        virtual int getHeight() const { return CONTROLHEIGHT; }
+        virtual int getHeight() const { return /*CONTROLHEIGHT*/control->getSizeY(); }
         virtual void draw(int x0, int y0, int x1, int y1, IGUIDrawer& drawer) const;
         virtual void handle(const IInput& input) { control->handle(input); }
         virtual void controlToValue() {control->controlToValue();}
@@ -604,13 +829,20 @@ class DynamicPage : public ElementComposite
     bool enableTitle;
     std::string title; //title on top of this page
 
-    const static int CONTROLHEIGHT = 16;
-    const static int TITLEHEIGHT = 16;
+    
+    mutable int activeNumber;
+    
+    IDynamicControl* getControl(size_t index) const; //returns the IDynamicControl* at the row with given index, or 0 if this row has no control
+    int getActiveNumber() const;
+    
+    int totalSizeY;
   
   public:
   
     DynamicPage();
     ~DynamicPage();
+    
+    void clear();
 
     void controlToValue();
     void valueToControl();
@@ -631,6 +863,9 @@ class DynamicPage : public ElementComposite
     virtual void handleImpl(const IInput& input);
     
     virtual void drawToolTip(IGUIDrawer& drawer) const;
+    virtual int getKeyboardFocus() const;
+    
+    int mouseToRow(int mouseY) const;
 };
 
 } //namespace gui

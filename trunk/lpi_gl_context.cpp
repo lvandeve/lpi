@@ -18,43 +18,42 @@ You should have received a copy of the GNU General Public License
 along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "lpi_gl_context.h"
+
 #include <iostream>
-
-#include "lpi_gui_drawer_gl.h"
-
-#include "lpi_draw2dgl.h"
-#include "lpi_draw2d.h"
-#include "lpi_file.h"
-#include "lpi_xml.h"
-#include "lpi_texture_gl.h"
-
-#include "lpi_input_sdl.h"
 
 namespace lpi
 {
-namespace gui
-{
 
-////////////////////////////////////////////////////////////////////////////////
-
-GUIDrawerGL::GUIDrawerGL(ScreenGL* screen)
-: drawer(screen)
-, textdrawer(TextureFactoryGL(screen->getGLContext()), &drawer)
-, guidrawer(TextureFactoryGL(screen->getGLContext()), &drawer, &textdrawer)
+GLContext::GLContext()
+: active(false)
+, index(-1)
 {
 }
 
-IInput& GUIDrawerGL::getInput()
+GLContext::~GLContext()
 {
-  return input;
 }
 
-void GUIDrawerGL::loadGUITextures(const std::vector<unsigned char>& png)
+bool GLContext::isActive() const
 {
-  guidrawer.initBuiltInGuiTextures(TextureFactoryGL(getScreen()->getGLContext()), png);
+  return active;
 }
 
-} //namespace gui
-} //namespace lpi
+int GLContext::getID() const
+{
+  return index;
+}
 
+void GLContext::onNewGLContext()
+{
+  active = true;
+  index++;
+}
 
+void GLContext::onGLContextDestroyed()
+{
+  active = false;
+}
+
+} //end of namespace lpi

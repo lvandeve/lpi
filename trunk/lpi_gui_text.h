@@ -54,9 +54,6 @@ class InputLine : public Element //input text line
     
   protected:
     unsigned long l; //max length
-
-    Font font;
-    Font titleFont;
     
     /*
     types:
@@ -73,9 +70,7 @@ class InputLine : public Element //input text line
   public:
         
     InputLine();
-    void make(int x, int y, unsigned long l,
-              const Font& font = FONT_Default,
-              int type = 0, const std::string& title = "", const Font& titleFont = FONT_Default);
+    void make(int x, int y, unsigned long l, int type = 0);
     
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
@@ -121,6 +116,10 @@ class ISpinner : public ElementComposite
     
     bool hasChanged();
     
+    bool isControlActive() const;
+    void activate(bool i_active = true);
+    void selectAll();
+    void selectNone();
 
 };
 

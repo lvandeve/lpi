@@ -31,7 +31,7 @@ namespace lpi
 Drawer2DGL::Drawer2DGL(ScreenGL* screen)
 : screen(screen)
 {
-  TextureFactory<TextureGL> factory;
+  //TextureFactoryGL factory(screen->getGLContext());
 }
 
 Drawer2DGL::~Drawer2DGL()
@@ -412,12 +412,12 @@ bool Drawer2DGL::supportsTexture(ITexture* texture)
 
 ITexture* Drawer2DGL::createTexture() const
 {
-  return new TextureGL();
+  return new TextureGL(screen->getGLContext());
 }
 
 ITexture* Drawer2DGL::createTexture(ITexture* texture) const
 {
-  TextureGL* gl = new TextureGL();
+  TextureGL* gl = new TextureGL(screen->getGLContext());
   makeTextureFromBuffer(gl
                       , texture->getBuffer(), texture->getU2(), texture->getV2()
                       , AE_Nothing
@@ -439,7 +439,7 @@ void Drawer2DGL::drawTextureSized(const ITexture* texture, int x, int y, size_t 
   if(!texturegl) return;
 
   prepareDrawTextured();
-  texturegl->updateForNewOpenGLContextIfNeeded(screen->getOpenGLContextDestroyedNumber());
+  texturegl->updateForNewOpenGLContextIfNeeded();
   glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
   
   if(texturegl->getNumParts() == 1)
@@ -451,10 +451,10 @@ void Drawer2DGL::drawTextureSized(const ITexture* texture, int x, int y, size_t 
 
     //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
     glBegin(GL_QUADS);
-      glTexCoord2d(0.0, 0.0); glVertex2d(x +          0, y +          0);
-      glTexCoord2d(+u3, 0.0); glVertex2d(x + (int)sizex, y +          0);
-      glTexCoord2d(+u3, +v3); glVertex2d(x + (int)sizex, y + (int)sizey);
-      glTexCoord2d(0.0, +v3); glVertex2d(x +          0, y + (int)sizey);
+      glTexCoord2d(0.0, 0.0); glVertex2f(x +          0, y +          0);
+      glTexCoord2d(+u3, 0.0); glVertex2f(x + (int)sizex, y +          0);
+      glTexCoord2d(+u3, +v3); glVertex2f(x + (int)sizex, y + (int)sizey);
+      glTexCoord2d(0.0, +v3); glVertex2f(x +          0, y + (int)sizey);
     glEnd();
   }
   else
@@ -494,7 +494,7 @@ void Drawer2DGL::drawTextureRepeated(const ITexture* texture, int x0, int y0, in
   if(!texturegl) return;
   
   prepareDrawTextured();
-  texturegl->updateForNewOpenGLContextIfNeeded(screen->getOpenGLContextDestroyedNumber());
+  texturegl->updateForNewOpenGLContextIfNeeded();
 
   glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
   texturegl->bind(screen->isSmoothingEnabled(), 0);
@@ -522,7 +522,6 @@ void Drawer2DGL::drawTextureRepeated(const ITexture* texture, int x0, int y0, in
     int numx = (x1 - x0) / texture->getU();
     int numy = (y1 - y0) / texture->getV();
     
-    //TODO: this is just a very lazy implementation because I was doing something else. Fix the TODO's below!!!
     //TODO: make this more efficient, e.g. quadstrip...
     //TODO: also add the extra textures at the edge (I mean, now I only have the full tiles, at the sides are possibly also partial tiles)!!!!
     for(int x = 0; x < numx; x++)
@@ -557,7 +556,7 @@ void Drawer2DGL::drawTextureSizedRepeated(const ITexture* texture, int x0, int y
   if(!texturegl) return;
 
   prepareDrawTextured();
-  texturegl->updateForNewOpenGLContextIfNeeded(screen->getOpenGLContextDestroyedNumber());
+  texturegl->updateForNewOpenGLContextIfNeeded();
 
   glColor4ub(colorMod.r, colorMod.g, colorMod.b, colorMod.a);
   texturegl->bind(screen->isSmoothingEnabled(), 0);
@@ -587,7 +586,6 @@ void Drawer2DGL::drawTextureSizedRepeated(const ITexture* texture, int x0, int y
     int numx = (x1 - x0) / texture->getU();
     int numy = (y1 - y0) / texture->getV();
 
-    //TODO: this is just a very lazy implementation because I was doing something else. Fix the TODO's below!!!
     //TODO: make this more efficient, e.g. quadstrip...
     //TODO: also add the extra textures at the edge (I mean, now I only have the full tiles, at the sides are possibly also partial tiles)!!!!
     //TODO: the scaling of sizex and sizey are ignored here, implement that too!!!!
@@ -615,6 +613,116 @@ void Drawer2DGL::drawTextureSizedRepeated(const ITexture* texture, int x0, int y
   }
 
 }
+
+
+
+
+void Drawer2DGL::drawTextureGradient(const ITexture* texture, int x, int y
+                                   , const ColorRGB& color00, const ColorRGB& color01, const ColorRGB& color10, const ColorRGB& color11)
+{
+  const TextureGL* texturegl = dynamic_cast<const TextureGL*>(texture);
+  if(!texturegl) return;
+  
+  int sizex = texture->getU();
+  int sizey = texture->getV();
+
+  prepareDrawTextured();
+  texturegl->updateForNewOpenGLContextIfNeeded();
+  
+  if(texturegl->getNumParts() == 1)
+  {
+    texturegl->bind(screen->isSmoothingEnabled(), 0);
+
+    double u3 = (double)texturegl->getU() / (double)texturegl->getU2();
+    double v3 = (double)texturegl->getV() / (double)texturegl->getV2();
+
+    //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
+    glBegin(GL_QUADS);
+      glColor4ub(color00.r, color00.g, color00.b, color00.a); glTexCoord2d(0.0, 0.0); glVertex2d(x +          0, y +          0);
+      glColor4ub(color10.r, color10.g, color10.b, color10.a); glTexCoord2d(+u3, 0.0); glVertex2d(x + (int)sizex, y +          0);
+      glColor4ub(color11.r, color11.g, color11.b, color11.a); glTexCoord2d(+u3, +v3); glVertex2d(x + (int)sizex, y + (int)sizey);
+      glColor4ub(color01.r, color01.g, color01.b, color01.a); glTexCoord2d(0.0, +v3); glVertex2d(x +          0, y + (int)sizey);
+    glEnd();
+  }
+  else
+  {
+    //TODO
+  }
+}
+
+void Drawer2DGL::drawTextureRepeatedGradient(const ITexture* texture, int x0, int y0, int x1, int y1
+                                           , const ColorRGB& color00, const ColorRGB& color01, const ColorRGB& color10, const ColorRGB& color11)
+{
+  if(x0 == x1 || y0 == y1) return;
+  
+  const TextureGL* texturegl = dynamic_cast<const TextureGL*>(texture);
+  if(!texturegl) return;
+  
+  prepareDrawTextured();
+  texturegl->updateForNewOpenGLContextIfNeeded();
+
+  texturegl->bind(screen->isSmoothingEnabled(), 0);
+  
+  bool simple = true;
+  if(x1 - x0 > (int)texture->getU() && texture->getU() != texture->getU2()) simple = false;
+  if(y1 - y0 > (int)texture->getV() && texture->getV() != texture->getV2()) simple = false;
+  if(texturegl->getNumParts() != 1) simple = false;
+  
+  if(simple)
+  {
+    double coorx = (double(x1 - x0) / texturegl->getU());
+    double coory = (double(y1 - y0) / texturegl->getV());
+
+    //note how in the texture coordinates x and y are swapped because the texture buffers are 90 degrees rotated
+    glBegin(GL_QUADS);
+      glColor4ub(color00.r, color00.g, color00.b, color00.a); glTexCoord2d(0.0,       0.0); glVertex2f(x0, y0);
+      glColor4ub(color01.r, color01.g, color01.b, color01.a); glTexCoord2d(0.0,    +coory); glVertex2f(x0, y1);
+      glColor4ub(color11.r, color11.g, color11.b, color11.a); glTexCoord2d(+coorx, +coory); glVertex2f(x1, y1);
+      glColor4ub(color10.r, color10.g, color10.b, color10.a); glTexCoord2d(+coorx,    0.0); glVertex2f(x1, y0);
+    glEnd();
+  }
+  else if(texturegl->getNumParts() == 1) //need to tile manually, slow!!
+  {
+    int numx = (x1 - x0) / texture->getU();
+    int numy = (y1 - y0) / texture->getV();
+    
+    //TODO: make this more efficient, e.g. quadstrip...
+    //TODO: also add the extra textures at the edge (I mean, now I only have the full tiles, at the sides are possibly also partial tiles)!!!!
+    for(int x = 0; x < numx; x++)
+    {
+      for(int y = 0; y < numy; y++)
+      {
+        int xb0 = x0 + x * texture->getU();
+        int yb0 = y0 + y * texture->getV();
+        int xb1 = xb0 + texture->getU();
+        int yb1 = yb0 + texture->getV();
+        
+        double xf0 = (xb0 - x0) / (double)(x1 - x0);
+        double yf0 = (yb0 - y0) / (double)(y1 - y0);
+        double xf1 = (xb1 - x0) / (double)(x1 - x0);
+        double yf1 = (yb1 - y0) / (double)(y1 - y0);
+        
+        ColorRGB c00 = (color00 * (1.0-xf0) + color10 * xf0) * (1.0-yf0) + (color01 * (1.0-xf0) + color11 * xf0) * yf0;
+        ColorRGB c01 = (color00 * (1.0-xf0) + color10 * xf0) * (1.0-yf1) + (color01 * (1.0-xf0) + color11 * xf0) * yf1;
+        ColorRGB c10 = (color00 * (1.0-xf1) + color10 * xf1) * (1.0-yf0) + (color01 * (1.0-xf1) + color11 * xf1) * yf0;
+        ColorRGB c11 = (color00 * (1.0-xf1) + color10 * xf1) * (1.0-yf1) + (color01 * (1.0-xf1) + color11 * xf1) * yf1;
+        
+        glBegin(GL_QUADS);
+          glTexCoord2d(0.0, 0.0); glVertex2f(xb0, yb0);
+          glTexCoord2d(0.0, 1.0); glVertex2f(xb0, yb1);
+          glTexCoord2d(1.0, 1.0); glVertex2f(xb1, yb1);
+          glTexCoord2d(1.0, 0.0); glVertex2f(xb1, yb0);
+        glEnd();
+      }
+    }
+  }
+  else
+  {
+    //TODO: larger than max size textures
+  }
+}
+
+
 
 
 } //end of namespace lpi

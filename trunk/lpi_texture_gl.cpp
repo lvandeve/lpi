@@ -29,22 +29,23 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 namespace lpi
 {
 
-TextureGL::Part::Part()
-: generated(false)
+TextureGL::Part::Part(GLContext* context)
+: generated_id(-1)
+, context(context)
 {
 }
 
 TextureGL::Part::~Part()
 {
-  if(generated) glDeleteTextures(1, &texture);
+  if(context->isActive() && context->getID() == generated_id) glDeleteTextures(1, &texture);
 }
 
-TextureGL::TextureGL()
+TextureGL::TextureGL(GLContext* context)
 : u(0)
 , v(0)
 , u2(0)
 , v2(0)
-, openGLContextDestroyedNumber(-1)
+, context(context)
 {
 }
 
@@ -70,7 +71,7 @@ void TextureGL::makeBuffer()
     while(v2 < v) v2 *= 2;
     
     parts.clear(); //always clear before resizing, a Part can't be correctly copied
-    parts.resize(1);
+    parts.push_back(Part(context));
     Part& part = parts[0];
     part.shiftx = 0;
     part.shifty = 0;
@@ -85,7 +86,7 @@ void TextureGL::makeBuffer()
     size_t partsy = (v + MAXY - 1) / MAXY; //num parts in y direction
 
     parts.clear(); //always clear before resizing, a Part can't be correctly copied
-    parts.resize(partsx * partsy);
+    for(size_t i = 0; i < partsx * partsy; i++) parts.push_back(Part(context));
 
     for(size_t y = 0; y < partsy; y++)
     for(size_t x = 0; x < partsx; x++)
@@ -124,7 +125,7 @@ void TextureGL::uploadPartial(int x0, int y0, int x1, int y1)
   
   for(size_t i = 0; i < parts.size(); i++)
   {
-    if(!parts[i].generated)
+    if(parts[i].generated_id < 0)
     {
       upload();
       return;
@@ -184,15 +185,17 @@ void TextureGL::uploadPartial(int x0, int y0, int x1, int y1)
 //This generates the OpenGL texture so that OpenGL can use it, also use after changing the texture buffer
 void TextureGL::upload() const
 {
+  if(!context->isActive()) return;
+  
   if(parts.empty()) return;
   
   for(size_t i = 0; i < parts.size(); i++)
   {
     Part& part = parts[i];
-    if(!part.generated)
+    if(part.generated_id < 0)
     {
       glGenTextures(1, &part.texture);
-      part.generated = true;
+      part.generated_id = context->getID();
     }
   }
   
@@ -222,14 +225,7 @@ void TextureGL::upload() const
 
 void TextureGL::reupload() const
 {
-  for(size_t i = 0; i < parts.size(); i++)
-  {
-    if(parts[i].generated)
-    {
-      //glDeleteTextures(1, &parts[i].texture);
-      parts[i].generated = false;
-    }
-  }
+  parts.clear();
   upload();
 }
 
@@ -267,39 +263,19 @@ void TextureGL::setTextAlignedBuffer(const std::vector<unsigned char>& in)
   }
 }
 
-bool TextureGL::updateForNewOpenGLContextIfNeeded(int number) const
+bool TextureGL::updateForNewOpenGLContextIfNeeded() const
 {
   if(parts.empty()) return false;
-  
-  if(openGLContextDestroyedNumber == -1 && number == 0) //no resizes ever happened so far and the texture should be initialized
+
+  if(!context->isActive()) return false;
+
+  if(parts[0].generated_id != context->getID())
   {
-    openGLContextDestroyedNumber = number;
-    return false;
-  }
-  //something mysterious goes wrong in Windows with a small number of random textures when resizing. reuploading twice fixes this problem apparently. Hence the "-2" stuff below.
-  //TODO: find out what the actual cause of this is. Find out if this isn't an indication of memory corruption or so.
-  else if(openGLContextDestroyedNumber == -2)
-  {
-    openGLContextDestroyedNumber = number;
     reupload();
     return true;
   }
-  else if(openGLContextDestroyedNumber != number)
-  {
-    openGLContextDestroyedNumber = -2;
-    reupload();
-    return true;
-  }
-//  else if(openGLContextDestroyedNumber != number)
-//  {
-//    openGLContextDestroyedNumber = number;
-//    reupload();
-//    return true;
-//  }
-  else
-  {
-    return false;
-  }
+
+  return false;
 }
 
 

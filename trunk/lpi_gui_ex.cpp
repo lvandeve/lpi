@@ -955,6 +955,21 @@ size_t AMenu::addSeparator(const IGUIDrawer& geom)
   return getNumItems() - 1;
 }
 
+int AMenu::findSubMenu(const std::string& name)
+{
+  for(size_t i = 0; i < items.size(); i++)
+  {
+    if(items[i].type == SUBMENU && items[i].name == name) return i;
+  }
+  return -1;
+}
+
+AMenu* AMenu::getSubMenu(size_t index)
+{
+  if(items[index].type == SUBMENU) return items[index].submenu;
+  return 0;
+}
+
 void AMenu::clear()
 {
   onClear();
@@ -1034,9 +1049,17 @@ void AMenu::handleImpl(const IInput& input)
     }
   }
   
-  if(!stay && mouseJustDownElsewhere(input) && !(parent != 0 && parent->mouseDown(input)))
+  bool temp_left = !stay && mouseJustDownElsewhere(input) && !(parent != 0 && parent->mouseDown(input));
+  bool temp_right = !stay && mouseJustDownElsewhere(input, lpi::RMB) && !(parent != 0 && parent->mouseDown(input, lpi::RMB));
+  
+  if(temp_left || temp_right)
   {
-    if(openedsubmenu >= getNumItems()) setEnabled(false);
+    if(openedsubmenu >= getNumItems())
+    {
+      //setEnabled(false);
+      disableMenu();
+      disableParents();
+    }
   }
   
   if(openedsubmenu < getNumItems() && !items[openedsubmenu].submenu->isEnabled())
@@ -1409,6 +1432,64 @@ size_t ToolBar::itemClicked(const IInput& input, MouseButton button) const
   return result;
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+
+  
+ProgressBarDialog::ProgressBarDialog(const IGUIDrawer& geom)
+: progress(0.0)
+, isdone(false)
+{
+  resize(0, 0, 300, 100);
+  addTop(geom);
+  addTitle("Progress");
+  addCloseButton(geom);
+  setColorMod(lpi::ColorRGB(255,255,255,224));
+
+  cancel.makeTextPanel(0, 0, "cancel");
+  
+  pushTop(&cancel, Sticky(0.5,-40, 1.0,-24, 0.5,40, 1.0,-4));
+  pushTop(&bar, Sticky(0.0,20, 0.4,-10, 1.0,-20, 0.4,10));
+}
+
+void ProgressBarDialog::handleImpl(const lpi::IInput& input)
+{
+  cancel.setEnabled(progress > 0);
+  Dialog::handleImpl(input);
+  if(cancel.clicked(input) || closeButtonClicked(input)) { result = CANCEL; isdone = true; }
+}
+
+void ProgressBarDialog::drawImpl(IGUIDrawer& drawer) const
+{
+  Dialog::drawImpl(drawer);
+  //drawer.drawText(lpi::valtostr(progress.getProgress()), x0 + 8, y0 + 20);
+  
+  
+  if(progress > 0)
+  {
+    int px = (int)(bar.getX0() + progress * (bar.getX1() - bar.getX0()));
+    drawer.drawRectangle(bar.getX0(), bar.getY0(), px, bar.getY1(), lpi::RGB_Blue, true);
+    drawer.drawRectangle(bar.getX0(), bar.getY0(), bar.getX1(), bar.getY1(), lpi::RGB_Black, false);
+  }
+  else
+  {
+    int value = (int)(drawer.getInput().getSeconds() * 43) % 256;
+    ColorRGB c = HSVtoRGB(ColorHSV(value, 128, 128));
+    drawer.drawRectangle(bar.getX0(), bar.getY0(), bar.getX1(), bar.getY1(), c, true);
+    drawer.drawRectangle(bar.getX0(), bar.getY0(), bar.getX1(), bar.getY1(), lpi::RGB_Black, false);
+  }
+}
+
+bool ProgressBarDialog::done() const
+{
+  return isdone;
+}
+
+void ProgressBarDialog::setProgress(double val)
+{
+  progress = val;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -1421,7 +1502,7 @@ void DropDownList::handleImpl(const IInput& input)
     list.setEnabled(!list.isEnabled());
     if(list.isEnabled())
     {
-      list.resize(x0, list.getY0(), x1, list.getY0() + 80);
+      list.resize(x0, list.getY0(), x1, list.getY0() + 120);
     }
   }
   if(list.clickedOnItem(input))
@@ -1438,7 +1519,7 @@ void DropDownList::drawImpl(IGUIDrawer& drawer) const
   drawer.drawRectangle(x0, y0, x1, y1, RGB_White, true);
   drawer.drawRectangle(x0, y0, x1, y1, RGB_Black, false);
   if(list.getSelectedItem() < list.getNumItems())
-    drawer.drawText(list.getValue(list.getSelectedItem()), x0, (y0 + y1) / 2, FONT_Default, ALIGN_05);
+    drawer.drawText(list.getValue(list.getSelectedItem()), x0 + 2, (y0 + y1) / 2, FONT_Default, ALIGN_05);
   drawer.drawGUIPart(GP_DROPDOWN_BUTTON, x1 - 15, y0 + 1, x1 - 1, y1 - 1);
 }
 
@@ -1510,12 +1591,19 @@ void showMessageBox(MainContainer& c, IModalFrameHandler& frame, const std::stri
   
   lpi::gui::MessageBox dialog(frame.getDrawer(), text, title);
   
-  int numlines = 0;
+  /*int numlines = 0;
   for(size_t i = 0; i < text.size(); i++) if(text[i] == 10) numlines++;
   int height = std::max(200, numlines * 9 + 64);
+  int width = 16 + 7 * getTextWidth(text);
+  if(width > 800) width = 800;*/
+  
+  int width, height;
+  frame.getDrawer().getGUIPartTextSize(width, height, lpi::gui::GPT_MESSAGE_TEXT, text);
+  height += 64;
+  width += 8;
   
   //TODO: make the size of the dialog depend on the text size
-  dialog.resize(0, 0, 500, height);
+  dialog.resize(0, 0, width, height);
   dialog.moveCenterTo((x0+x1)/2, (y0+y1)/2);
   c.doModalDialog(dialog, frame);
 }

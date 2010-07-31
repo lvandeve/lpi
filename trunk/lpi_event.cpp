@@ -254,7 +254,7 @@ int unicodeKey(double time, double warmupTime, double repTime, KeyState* state)
 {
   if(!state) state = &static_state;
   
-  SDL_Event event;
+  SDL_Event event = {0};
   bool event_found = false;
   for(size_t i = 0; i < events.size(); i++)
   {

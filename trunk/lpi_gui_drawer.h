@@ -185,6 +185,8 @@ enum GUIPart
   GPT_VMENU_SUBMENUTEXT,
   GPT_MESSAGE_TEXT,
   GPT_STATUSBAR_TEXT,
+  GPT_TEXTINPUTLINE,
+  GPT_TEXTINPUTLINE_TITLE,
   
   GP_END_DONT_USE //don't use this, it's placed here to have an element without comma at the end of the enumarator list.
 };
@@ -248,6 +250,7 @@ class IGUIPartDrawer
     */
     virtual size_t getGUIPartSizeX(GUIPart part) const = 0;
     virtual size_t getGUIPartSizeY(GUIPart part) const = 0;
+    virtual void getGUIPartTextSize(int& w, int& h, GUIPart part, const std::string& text) const = 0;
     
     virtual void createIcon(ITexture& texture, GUIIcon icon, int size = 16) const = 0; //size is just an indication of roughly the size you want it to be, it can be ignored by the drawer if it only supports a certain size
 };
@@ -310,7 +313,11 @@ class AGUIDrawer : public IGUIDrawer //abstract GUI drawer which already wraps a
     virtual void drawTextureSized(const ITexture* texture, int x, int y, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, const ColorRGB& colorMod = RGB_White);
     virtual void drawTextureSizedRepeated(const ITexture* texture, int x0, int y0, int x1, int y1, size_t sizex, size_t sizey, const ColorRGB& colorMod = RGB_White);
-    
+    virtual void drawTextureGradient(const ITexture* texture, int x, int y
+                                   , const ColorRGB& color00, const ColorRGB& color01, const ColorRGB& color10, const ColorRGB& color11);
+    virtual void drawTextureRepeatedGradient(const ITexture* texture, int x0, int y0, int x1, int y1
+                                           , const ColorRGB& color00, const ColorRGB& color01, const ColorRGB& color10, const ColorRGB& color11);
+
     virtual void pushScissor(int x0, int y0, int x1, int y1);
     virtual void pushSmallestScissor(int x0, int y0, int x1, int y1);
     virtual void popScissor();
@@ -326,6 +333,7 @@ class AGUIDrawer : public IGUIDrawer //abstract GUI drawer which already wraps a
     virtual void drawGUIPartText(GUIPart part, const std::string& text, int x0, int y0, int x1, int y1, const GUIPartMod& mod = GPM_Default);
     virtual size_t getGUIPartSizeX(GUIPart part) const;
     virtual size_t getGUIPartSizeY(GUIPart part) const;
+    virtual void getGUIPartTextSize(int& w, int& h, GUIPart part, const std::string& text) const;
     virtual void createIcon(ITexture& texture, GUIIcon icon, int size = 16) const;
     
 };

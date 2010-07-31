@@ -1,5 +1,5 @@
 /*
-LodePNG version 20100314
+LodePNG version 20100705
 
 Copyright (c) 2005-2010 Lode Vandevenne
 
@@ -30,7 +30,7 @@ You are free to name this file lodepng.cpp or lodepng.c depending on your usage.
 
 #include "lodepng.h"
 
-#define VERSION_STRING "20100314"
+#define VERSION_STRING "20100705"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Tools For C                                                            / */
@@ -2875,7 +2875,7 @@ static void decodeGeneric(LodePNG_Decoder* decoder, unsigned char** out, size_t*
       {
         if(chunkLength != 1) { decoder->error = 43; break; } /*error: this chunk must be 1 byte for indexed color image*/
         decoder->infoPng.background_defined = 1;
-        decoder->infoPng.background_r = decoder->infoPng.background_g = decoder->infoPng.background_g = data[0];
+        decoder->infoPng.background_r = decoder->infoPng.background_g = decoder->infoPng.background_b = data[0];
       }
       else if(decoder->infoPng.color.colorType == 0 || decoder->infoPng.color.colorType == 4)
       {

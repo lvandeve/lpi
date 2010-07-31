@@ -188,4 +188,24 @@ bool equalsIgnoreCase(const std::string& a, const std::string& b)
   return true;
 }
 
+
+void splitString(std::vector<std::string>& out, const std::string& in, char delimiter)
+{
+  for(size_t i = 0; i < in.size(); i++)
+  {
+    if(in[i] == delimiter)
+    {
+      if(!out.empty() && !out.back().empty())
+      {
+        out.resize(out.size() + 1);
+      }
+    }
+    else
+    {
+      if(out.empty()) out.resize(out.size() + 1);
+      out.back() += in[i];
+    }
+  }
+}
+
 } //namespace lpi

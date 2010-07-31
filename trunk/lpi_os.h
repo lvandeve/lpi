@@ -24,15 +24,31 @@ along with Lode's Programming Interface.  If not, see <http://www.gnu.org/licens
 This file defines macros for identifying the target operating system. Currently
 only Win32 and Linux are supported here.
 
-Detect win32 with "#if defined(LPI_WIN32)"
+Detect win32 with "#if defined(LPI_OS_WINDOWS)"
 Detect Linux with "#if defined(LPI_LINUX)"
 
 TODO: 64-bit variants, Mac, ...
+
+based on: http://predef.sourceforge.net/preos.html
 */
 
 
-#if defined(_WIN32)
-#define LPI_WIN32
+#if defined(_WIN32) //despite its name, this is also true for 64-bit windows
+#define LPI_OS_WINDOWS
+
 #elif defined(linux) || defined(__linux) || defined(__linux__) || defined(__GNU__) || defined(__GLIBC__)
-#define LPI_LINUX
+#define LPI_OS_LINUX
+
+//AmigaOS4 and AROS are defined separately because both have a few differences in libraries
+#elif defined(__amigaos4__)
+#define LPI_OS_AMIGA
+
+//AmigaOS4 and AROS are defined separately because both have a few differences in libraries
+#elif defined(__AROS__)
+#define LPI_OS_AROS
+
+#elif defined(__APPLE__) && defined(__MACH__)
+#define LPI_OS_MACOSX
+
+
 #endif

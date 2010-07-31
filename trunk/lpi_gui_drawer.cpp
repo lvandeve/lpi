@@ -175,6 +175,19 @@ void AGUIDrawer::drawTextureSizedRepeated(const ITexture* texture, int x0, int y
   getDrawer().drawTextureSizedRepeated(texture, x0, y0, x1, y1, sizex, sizey, colorMod);
 }
 
+void AGUIDrawer::drawTextureGradient(const ITexture* texture, int x, int y
+                                        , const ColorRGB& color00, const ColorRGB& color01, const ColorRGB& color10, const ColorRGB& color11)
+{
+  getDrawer().drawTextureGradient(texture, x, y, color00, color01, color10, color11);
+}
+
+void AGUIDrawer::drawTextureRepeatedGradient(const ITexture* texture, int x0, int y0, int x1, int y1
+                                                , const ColorRGB& color00, const ColorRGB& color01, const ColorRGB& color10, const ColorRGB& color11)
+{
+  getDrawer().drawTextureRepeatedGradient(texture, x0, y0, x1, y1, color00, color01, color10, color11);
+}
+
+
 void AGUIDrawer::calcTextRectSize(int& w, int& h, const std::string& text, const Font& font) const
 {
   return getTextDrawer().calcTextRectSize(w, h, text, font);
@@ -221,6 +234,12 @@ size_t AGUIDrawer::getGUIPartSizeY(GUIPart part) const
 {
   return getGUIPartDrawer().getGUIPartSizeY(part);
 }
+
+void AGUIDrawer::getGUIPartTextSize(int& w, int& h, GUIPart part, const std::string& text) const
+{
+  return getGUIPartDrawer().getGUIPartTextSize(w, h, part, text);
+}
+
 
 void AGUIDrawer::createIcon(ITexture& texture, GUIIcon icon, int size) const
 {

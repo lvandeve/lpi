@@ -1,7 +1,7 @@
 #pragma once
 
 /*
-Copyright (c) 2005-2008 Lode Vandevenne
+Copyright (c) 2005-2010 Lode Vandevenne
 All rights reserved.
 
 This file is part of Lode's Programming Interface.
@@ -102,5 +102,7 @@ void searchAndReplace(std::string& o_text, const std::string& i_text, const std:
 void searchAndReplace(std::string& io_text, const std::string& from, const std::string& to, const std::vector<std::string>& exclude);
 
 bool equalsIgnoreCase(const std::string& a, const std::string& b);
+
+void splitString(std::vector<std::string>& out, const std::string& in, char delimiter);
 
 } //namespace lpi

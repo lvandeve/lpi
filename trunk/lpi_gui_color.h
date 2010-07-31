@@ -45,7 +45,8 @@ class ColorChangeable
   public:
     bool hasChanged() { bool temp = changed; changed = false; return temp; }
     
-    ColorChangeable() : changed(false) {};
+    ColorChangeable();
+    virtual ~ColorChangeable();
 };
 
 //base class for all color editing classes that edit a full color (not just a few channels of it), to make them work together
@@ -87,6 +88,30 @@ class ColorEditor : public ColorChangeable
     */
 };
 
+//color editor which can be easily programatically be chosen to be main color editor or single-plane color editor
+//main: which plane it edits is chosen by some multi color linker
+//plane: it always edits fixed plane, not the one dictated by multi color linker
+class ColorEditorMainOrOnePlane : public ColorEditor
+{
+  protected:
+
+    bool isPlane;
+    Plane plane;
+
+  public:
+    ColorEditorMainOrOnePlane();
+    
+    //main color: a single color, not associated to any mouse button (not even the first or left one)
+    virtual bool isMainColorGettable() const;
+
+    virtual bool isMultiColorGettable(Plane plane) const;
+    virtual void getMultiColor(ColorRGBd& color, Plane plane) const;
+    virtual void setMultiColor(Plane plane, const ColorRGBd& color);
+    
+    void setMain();
+    void setPlane(Plane plane);
+};
+
 
 class PartialEditor : public ColorChangeable
 {
@@ -109,8 +134,14 @@ class PartialEditor : public ColorChangeable
 class ChannelSlider : public PartialEditor, public Element
 {
   protected:
+    static const size_t NUM = 128;
+
     Direction dir;
     double value; //value on the slider, always in range 0.0-1.0, even if it's a color model with a channel going from -0.5 to +0.5 or whatever. Do this conversion in getDrawColor and elsewhere instead.
+    
+    HTexture* texture;
+    mutable bool textureuptodate;
+    mutable bool outofrange[NUM];
     
     void drawBackgroundH(IGUIDrawer& drawer) const;
     void drawBackgroundV(IGUIDrawer& drawer) const;
@@ -119,22 +150,25 @@ class ChannelSlider : public PartialEditor, public Element
     ColorRGBd color; //this color is used as base color, e.g. when it's a lightness slider, the darkest is black, the brightest is this color. Can be used to show the effect of this slider on the current color.
     bool drawalpha; //if true, draws alpha channel of color, if false, always draws it opaque (this depends on whether or not you want the adaptive color to show alpha channel too)
     OutOfRangeAction outofrangeaction;
+    
+    void generateTexture() const;
   
   public:
   
     ChannelSlider();
+    virtual ~ChannelSlider();
   
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
     
-    double getValue() const { return value; }
-    void setValue(double value) { this->value = value; }
+    double getValue() const;
+    void setValue(double value);
     
-    virtual void setAdaptiveColor(const ColorRGBd& color) { this->color = color; }
-    virtual void setDrawAlpha(bool drawalpha) { this->drawalpha = drawalpha; }
-    virtual void setDrawOutOfRangeRGBColors(OutOfRangeAction action) { this->outofrangeaction = action; }
+    virtual void setAdaptiveColor(const ColorRGBd& color);
+    virtual void setDrawAlpha(bool drawalpha);
+    virtual void setDrawOutOfRangeRGBColors(OutOfRangeAction action);
     
-    void setDirection(Direction dir) { this->dir = dir; }
+    void setDirection(Direction dir);
 };
 
 enum ColorChannelType //for dynamic sliders
@@ -241,7 +275,7 @@ class ChannelSliderExType : public ChannelSliderEx
     }
 };
 
-class ColorSliders : public ColorEditor, public ElementComposite
+class ColorSliders : public ColorEditorMainOrOnePlane, public ElementComposite
 {
   /*
   ColorSliders: multiple sliders, together forming one color, e.g. an R,G,B,A bar, or, a C,M,Y,K,A bar
@@ -270,7 +304,15 @@ class ColorSliders : public ColorEditor, public ElementComposite
 class ColorSlidersRGB : public ColorSliders
 {
   public:
-    ColorSlidersRGB(bool with_alpha = true);
+    ColorSlidersRGB(bool with_alpha = false);
+    virtual void getColor(ColorRGBd& color) const;
+    virtual void setColor(const ColorRGBd& color);
+};
+
+class ColorSlidersA : public ColorSliders
+{
+  public:
+    ColorSlidersA();
     virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 };
@@ -278,7 +320,7 @@ class ColorSlidersRGB : public ColorSliders
 class ColorSlidersHSV : public ColorSliders
 {
   public:
-    ColorSlidersHSV(bool with_alpha = true);
+    ColorSlidersHSV(bool with_alpha = false);
     virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 };
@@ -286,7 +328,7 @@ class ColorSlidersHSV : public ColorSliders
 class ColorSlidersHSL : public ColorSliders
 {
   public:
-    ColorSlidersHSL(bool with_alpha = true);
+    ColorSlidersHSL(bool with_alpha = false);
     virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 };
@@ -294,7 +336,7 @@ class ColorSlidersHSL : public ColorSliders
 class ColorSlidersCMY : public ColorSliders
 {
   public:
-    ColorSlidersCMY(bool with_alpha = true);
+    ColorSlidersCMY(bool with_alpha = false);
     virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 };
@@ -302,7 +344,7 @@ class ColorSlidersCMY : public ColorSliders
 class ColorSlidersCMYK : public ColorSliders
 {
   public:
-    ColorSlidersCMYK(bool with_alpha = true);
+    ColorSlidersCMYK(bool with_alpha = false);
     virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 };
@@ -310,7 +352,7 @@ class ColorSlidersCMYK : public ColorSliders
 class ColorSlidersCIEXYZ : public ColorSliders
 {
   public:
-    ColorSlidersCIEXYZ(bool with_alpha = true);
+    ColorSlidersCIEXYZ(bool with_alpha = false);
     virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 };
@@ -318,7 +360,7 @@ class ColorSlidersCIEXYZ : public ColorSliders
 class ColorSlidersCIELab : public ColorSliders
 {
   public:
-    ColorSlidersCIELab(bool with_alpha = true);
+    ColorSlidersCIELab(bool with_alpha = false);
     virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 };
@@ -326,7 +368,7 @@ class ColorSlidersCIELab : public ColorSliders
 class ColorSlidersYPbPr : public ColorSliders
 {
   public:
-    ColorSlidersYPbPr(bool with_alpha = true);
+    ColorSlidersYPbPr(bool with_alpha = false);
     virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 };
@@ -334,7 +376,7 @@ class ColorSlidersYPbPr : public ColorSliders
 class ColorSlidersYCbCr : public ColorSliders
 {
   public:
-    ColorSlidersYCbCr(bool with_alpha = true);
+    ColorSlidersYCbCr(bool with_alpha = false);
     virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
 };
@@ -345,6 +387,10 @@ class PartialEditorSquare : public PartialEditor, public Element
 
     double value_x;
     double value_y;
+
+    HTexture* texture; //for speed, palette is presented on a texture (double pointer due to a const-correctness situation)
+    mutable bool textureuptodate;
+    mutable std::vector<bool> coloroutofrange;
     
     void drawBackground(IGUIDrawer& drawer) const;
     virtual void getDrawColor(ColorRGB& o_color, double value_x, double value_y) const = 0;
@@ -356,6 +402,7 @@ class PartialEditorSquare : public PartialEditor, public Element
   public:
   
     PartialEditorSquare();
+    virtual ~PartialEditorSquare();
   
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual void handleImpl(const IInput& input);
@@ -379,9 +426,66 @@ class PartialEditorSquareType : public PartialEditorSquare
     virtual void getDrawColor(ColorRGB& o_color, double value_x, double value_y) const;
   
   public:
-    PartialEditorSquareType() {}
-    PartialEditorSquareType(ColorChannelType typex, ColorChannelType typey) : typex(typex), typey(typey) {}
+    PartialEditorSquareType(ColorChannelType typex, ColorChannelType typey);
     void setChannels(ColorChannelType typex, ColorChannelType typey) { this->typex = typex; this->typey = typey; }
+};
+
+//HueDiskEditor: a full color editor, with hue circle, a vertical bar to the right, and a horizontal alpha channel bar below.
+class HueSquareEditor : public ColorEditor, public ElementComposite
+{
+  protected:
+    PartialEditorSquare* square;
+    ChannelSlider* sliderc; //the slider for third component of the color
+    ChannelSlider* slidera; //the slider for alpha channel (set to 0 for no alpha slider)
+
+  public:
+    HueSquareEditor();
+    virtual ~HueSquareEditor();
+
+    void init();
+
+    virtual void drawImpl(IGUIDrawer& drawer) const;
+    virtual void handleImpl(const IInput& input);
+};
+
+class HueSquareEditor_HSV_HS : public HueSquareEditor
+{
+  public:
+    HueSquareEditor_HSV_HS(bool alpha);
+
+    virtual void getColor(ColorRGBd& color) const;
+
+    virtual void setColor(const ColorRGBd& color);
+};
+
+class HueSquareEditor_HSV_HV : public HueSquareEditor
+{
+  public:
+    HueSquareEditor_HSV_HV(bool alpha);
+
+    virtual void getColor(ColorRGBd& color) const;
+
+    virtual void setColor(const ColorRGBd& color);
+};
+
+class HueSquareEditor_HSL_HS : public HueSquareEditor
+{
+  public:
+    HueSquareEditor_HSL_HS(bool alpha);
+
+    virtual void getColor(ColorRGBd& color) const;
+
+    virtual void setColor(const ColorRGBd& color);
+};
+
+class HueSquareEditor_HSL_HL : public HueSquareEditor
+{
+  public:
+    HueSquareEditor_HSL_HL(bool alpha);
+
+    virtual void getColor(ColorRGBd& color) const;
+
+    virtual void setColor(const ColorRGBd& color);
 };
 
 class PartialEditorHueDisk : public PartialEditor, public Element
@@ -441,145 +545,57 @@ class HueDiskEditor : public ColorEditor, public ElementComposite
   protected:
     PartialEditorHueDisk* circle;
     ChannelSlider* sliderc; //the slider for third component of the color
-    ChannelSlider* slidera; //the slider for alpha channel
-    
+    ChannelSlider* slidera; //the slider for alpha channel (set to 0 for no alpha slider)
+
   public:
     HueDiskEditor();
     virtual ~HueDiskEditor();
     
-    void init()
-    {
-      addSubElement(circle, Sticky(0.0, 0, 0.0, 0, 0.9, 0, 0.9, 0));
-      sliderc->setDirection(V);
-      addSubElement(sliderc, Sticky(0.9, 0, 0.0, 0, 1.0, 0, 0.9, 0));
-      addSubElement(slidera, Sticky(0.0, 0, 0.9, 0, 0.9, 0, 1.0, 0));
-    }
+    void init();
     
-    virtual void drawImpl(IGUIDrawer& drawer) const
-    {
-      circle->draw(drawer);
-      sliderc->draw(drawer);
-      slidera->draw(drawer);
-    }
+    virtual void drawImpl(IGUIDrawer& drawer) const;
 
-    virtual void handleImpl(const IInput& input)
-    {
-      circle->handle(input);
-      sliderc->handle(input);
-      slidera->handle(input);
-      if(circle->hasChanged()) setChanged();
-      if(sliderc->hasChanged()) setChanged();
-      if(slidera->hasChanged()) setChanged();
-      ColorRGBd adaptive;
-      getColor(adaptive);
-      circle->setAdaptiveColor(adaptive);
-      sliderc->setAdaptiveColor(adaptive);
-      slidera->setAdaptiveColor(adaptive);
-    }
+    virtual void handleImpl(const IInput& input);
 };
 
 class HueDiskEditor_HSV_HS : public HueDiskEditor
 {
   public:
-    HueDiskEditor_HSV_HS()
-    {
-      circle = new PartialEditorHueDisk_HSV_HS();
-      sliderc = new ChannelSliderType(CC_HSV_V);
-      slidera = new ChannelSliderType(CC_A);
-      init();
-    }
+    HueDiskEditor_HSV_HS(bool alpha);
     
-    virtual void getColor(ColorRGBd& color) const
-    {
-      color = HSVtoRGB(ColorHSVd(circle->getValueAngle(), circle->getValueAxial(), sliderc->getValue(), slidera->getValue()));
-    }
+    virtual void getColor(ColorRGBd& color) const;
     
-    virtual void setColor(const ColorRGBd& color)
-    {
-      ColorHSVd hsv = RGBtoHSV(color);
-      circle->setValueAngle(hsv.h);
-      circle->setValueAxial(hsv.s);
-      sliderc->setValue(hsv.v);
-      slidera->setValue(hsv.a);
-    }
+    virtual void setColor(const ColorRGBd& color);
 };
 
 class HueDiskEditor_HSV_HV : public HueDiskEditor
 {
   public:
-    HueDiskEditor_HSV_HV()
-    {
-      circle = new PartialEditorHueDisk_HSV_HV();
-      sliderc = new ChannelSliderType(CC_HSV_S);
-      slidera = new ChannelSliderType(CC_A);
-      init();
-    }
+    HueDiskEditor_HSV_HV(bool alpha);
 
-    virtual void getColor(ColorRGBd& color) const
-    {
-      color = HSVtoRGB(ColorHSVd(circle->getValueAngle(), sliderc->getValue(), circle->getValueAxial(), slidera->getValue()));
-    }
+    virtual void getColor(ColorRGBd& color) const;
 
-    virtual void setColor(const ColorRGBd& color)
-    {
-      ColorHSVd hsv = RGBtoHSV(color);
-      circle->setValueAngle(hsv.h);
-      sliderc->setValue(hsv.s);
-      circle->setValueAxial(hsv.v);
-      slidera->setValue(hsv.a);
-    }
+    virtual void setColor(const ColorRGBd& color);
 };
 
 class HueDiskEditor_HSL_HS : public HueDiskEditor
 {
   public:
-    HueDiskEditor_HSL_HS()
-    {
-      circle = new PartialEditorHueDisk_HSL_HS();
-      sliderc = new ChannelSliderType(CC_HSL_L);
-      slidera = new ChannelSliderType(CC_A);
-      init();
-    }
+    HueDiskEditor_HSL_HS(bool alpha);
 
-    virtual void getColor(ColorRGBd& color) const
-    {
-      color = HSLtoRGB(ColorHSLd(circle->getValueAngle(), circle->getValueAxial(), sliderc->getValue(), slidera->getValue()));
-    }
+    virtual void getColor(ColorRGBd& color) const;
 
-    virtual void setColor(const ColorRGBd& color)
-    {
-      ColorHSLd hsl = RGBtoHSL(color);
-      circle->setValueAngle(hsl.h);
-      circle->setValueAxial(hsl.s);
-      sliderc->setValue(hsl.l);
-      slidera->setValue(hsl.a);
-    }
+    virtual void setColor(const ColorRGBd& color);
 };
 
 class HueDiskEditor_HSL_HL : public HueDiskEditor
 {
   public:
-    HueDiskEditor_HSL_HL()
-    {
-      circle = new PartialEditorHueDisk_HSL_HL();
-      sliderc = new ChannelSliderType(CC_HSL_S);
-      slidera = new ChannelSliderType(CC_A);
-      init();
-    }
+    HueDiskEditor_HSL_HL(bool alpha);
 
-    virtual void getColor(ColorRGBd& color) const
-    {
-      color = HSLtoRGB(ColorHSLd(circle->getValueAngle(), sliderc->getValue(), circle->getValueAxial(), slidera->getValue()));
-    }
+    virtual void getColor(ColorRGBd& color) const;
 
-    virtual void setColor(const ColorRGBd& color)
-    {
-      ColorHSLd hsl = RGBtoHSL(color);
-      circle->setValueAngle(hsl.h);
-      sliderc->setValue(hsl.s);
-      circle->setValueAxial(hsl.l);
-      slidera->setValue(hsl.a);
-    }
+    virtual void setColor(const ColorRGBd& color);
 };
 
 class PColorPlane : public Element
@@ -717,19 +733,7 @@ class FGBGColor : public ColorEditor, public ElementComposite
     //multi color linker: choose which of the multi-colors is linked to the main color
     bool isMultiColorLinker() const { return true; }
     virtual Plane getMultiColorLink() const { return selectedFG() ? FG : BG; }
-    void setMultiColorLink(Plane plane)
-    {
-      if(plane == FG)
-      {
-        fg.selected = true;
-        bg.selected = false;
-      }
-      else if(plane == BG)
-      {
-        fg.selected = false;
-        bg.selected = true;
-      }
-    }
+    void setMultiColorLink(Plane plane);
     
     void setColorChoosingDialog(AColorDialog* dialog);
     virtual void manageHoverImpl(IHoverManager& hover);
@@ -767,11 +771,18 @@ class AColorPalette : public ColorEditor, public ElementComposite
     AColorPalette();
     virtual ~AColorPalette();
     virtual void setPaletteSize(size_t n, size_t m) = 0;
+    virtual int getPaletteSize() = 0;
     virtual void setColor(int i, const ColorRGBd& color) = 0;
+    void setColor255(int i, const ColorRGB& color);
     void generateDefault();
     void generateVibrant16x16();
     void generateVibrant8x8();
     void generateVibrant6x6();
+    void generateSimple8x2();
+    void generateSimple9x2();
+    void generateSimple10x2();
+    void generateSimple12x2();
+    void generateSimple6x3();
     void setColorChoosingDialog(AColorDialog* dialog);
     virtual void manageHoverImpl(IHoverManager& hover);
     void setDontAffectAlpha(bool set) { dontAffectAlpha = set; }
@@ -784,7 +795,11 @@ It only uses the left mouse button.
 class ColorPalette : public AColorPalette
 {
   protected:
-    std::vector<InternalColorPlane*> colors;
+    HTexture* texture; //for speed, palette is presented on a texture (double pointer due to a const-correctness situation)
+    std::vector<ColorRGBd> colors;
+    size_t m;
+    size_t n;
+    mutable bool textureuptodate;
     int selected;
 
   public:
@@ -793,12 +808,16 @@ class ColorPalette : public AColorPalette
     ~ColorPalette();
     void clear();
     virtual void setPaletteSize(size_t n, size_t m);
+    virtual int getPaletteSize() { return n * m; }
     virtual void setColor(int i, const ColorRGBd& color);
     virtual void drawImpl(IGUIDrawer& drawer) const;
+    void generateTexture() const;
     virtual void handleImpl(const IInput& input);
     //these are from the ColorEditor interface, returns the currently selected color
     virtual void getColor(ColorRGBd& color) const;
     virtual void setColor(const ColorRGBd& color);
+    
+    const ColorRGBd& getInternalColor(int i) const;
 };
 
 /*
@@ -832,6 +851,7 @@ class MultiColorPalette : public AColorPalette
     virtual void drawImpl(IGUIDrawer& drawer) const;
     void generateTexture() const;
     virtual void setPaletteSize(size_t n, size_t m);
+    virtual int getPaletteSize() { return n * m; }
     virtual void setColor(int i, const ColorRGBd& color);
     virtual void handleImpl(const IInput& input);
     //these are from the ColorEditor interface, returns the currently selected color
@@ -841,6 +861,8 @@ class MultiColorPalette : public AColorPalette
     bool isMultiColorGettable(Plane plane) const;
     virtual void getMultiColor(ColorRGBd& color, Plane plane) const;
     virtual void setMultiColor(Plane plane, const ColorRGBd& color);
+
+    const ColorRGBd& getInternalColor(int i) const;
 };
 
 
@@ -922,7 +944,7 @@ class ColorDialog : public AColorDialog
     Button ok;
     ColorPlaned plane;
     ColorSlidersRGB rgb;
-    HueDiskEditor_HSL_HS hsl;
+    HueSquareEditor_HSL_HS hsl;
     ColorPalette palette;
     //TODO: HTML code color controller
     ColorEditorSynchronizer synchronizer;
@@ -939,9 +961,11 @@ class ColorDialog : public AColorDialog
     ColorSlidersYCbCr ycbcr2;
     ColorSlidersCIELab cielab2;
     ColorSlidersCIEXYZ ciexyz2;
+    ColorSlidersA a2;
     
   public:
     ColorDialog(const IGUIDrawer& geom);
+    ~ColorDialog();
     virtual void handleImpl(const IInput& input);
     virtual void drawImpl(IGUIDrawer& drawer) const;
     virtual bool pressedOk(const IInput& input);
