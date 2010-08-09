@@ -1,5 +1,5 @@
 /*
-LodePNG version 20100705
+LodePNG version 20100808
 
 Copyright (c) 2005-2010 Lode Vandevenne
 
@@ -30,7 +30,7 @@ You are free to name this file lodepng.cpp or lodepng.c depending on your usage.
 
 #include "lodepng.h"
 
-#define VERSION_STRING "20100705"
+#define VERSION_STRING "20100808"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Tools For C                                                            / */

@@ -1,5 +1,5 @@
 /*
-LodePNG version 20100705
+LodePNG version 20100808
 
 Copyright (c) 2005-2010 Lode Vandevenne
 
@@ -1443,11 +1443,9 @@ supported by LodePNG.
 
 *) Visual Studio 2005 and Visual C++ 2005 Express Edition
 
-Versions 20070604 up to 20080107 have been tested on VS2005 and work. There are no
-warnings, except two warnings about 'fopen' being deprecated. 'fopen' is a function
-required by the C standard, so this warning is the fault of VS2005, it's nice of
-them to enforce secure code, however the multiplatform LodePNG can't follow their
-non-standard extensions. LodePNG is fully ISO C90 compliant.
+Versions 20070604 up to 20080107 have been tested on VS2005 and work. Visual
+studio may give warnings about 'fopen' being deprecated. A multiplatform library
+can't support the proposed Visual Studio alternative however.
 
 If you're using LodePNG in VS2005 and don't want to see the deprecated warnings,
 put this on top of lodepng.h before the inclusions: #define _CRT_SECURE_NO_DEPRECATE
@@ -1465,10 +1463,8 @@ at http://www.comeaucomputing.com/tryitout in both C90 and C++ mode.
 
 *) Compilers on Macintosh
 
-I'd love to support Macintosh but don't have one available to test it on.
-If it doesn't work with your compiler, maybe it can be gotten to work with the
-gcc compiler for Macintosh. Someone reported that it doesn't work well at all
-for Macintosh. All information on attempts to get it to work on Mac is welcome.
+LodePNG has been reported to work both with the gcc and LLVM for Macintosh, both
+for C and C++.
 
 *) Other Compilers
 
@@ -1613,6 +1609,7 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 08 aug 2010: only changed some comments and external samples.
 *) 05 jul 2010: fixed bug thanks to warnings in the new gcc version.
 *) 14 mar 2010: fixed bug where too much memory was allocated for char buffers.
 *) 02 sep 2008: fixed bug where it could create empty tree that linux apps could
