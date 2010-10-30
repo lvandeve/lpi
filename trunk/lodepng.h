@@ -1,5 +1,5 @@
 /*
-LodePNG version 20101026
+LodePNG version 20101030
 
 Copyright (c) 2005-2010 Lode Vandevenne
 
@@ -1789,6 +1789,7 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 30 okt 2010: made decoding slightly faster
 *) 26 okt 2010: (!) changed some C function and struct names (more consistent).
      Reorganized the documentation and the declaration order in the header.
 *) 08 aug 2010: only changed some comments and external samples.
