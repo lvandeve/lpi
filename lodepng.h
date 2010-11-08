@@ -1,5 +1,5 @@
 /*
-LodePNG version 20101030
+LodePNG version 20101107
 
 Copyright (c) 2005-2010 Lode Vandevenne
 
@@ -53,6 +53,7 @@ Also, some text editors allow expanding/collapsing #ifdef sections.
 #define LODEPNG_COMPILE_DISK             /*the optional built in harddisk file loading and saving functions*/
 #define LODEPNG_COMPILE_ANCILLARY_CHUNKS /*any code or struct datamember related to chunks other than IHDR, IDAT, PLTE, tRNS, IEND*/
 #define LODEPNG_COMPILE_UNKNOWN_CHUNKS   /*handling of unknown chunks*/
+#define LODEPNG_COMPILE_ERROR_TEXT       /*ability to convert error numerical codes to English text string*/
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* Simple Functions                                                           */
@@ -295,6 +296,16 @@ namespace LodePNG
 } //namespace LodePNG
 #endif /*__cplusplus*/
 #endif /*LODEPNG_COMPILE_PNG*/
+
+#ifdef LODEPNG_COMPILE_ERROR_TEXT
+
+/*
+error_text: returns a textual description of the error code, in English. The
+numerical value of the code itself is not included in this description.
+*/
+const char* LodePNG_error_text(unsigned code);
+
+#endif /*LODEPNG_COMPILE_ERROR_TEXT*/
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* Inflate & Deflate Setting Structs                                          */
@@ -1411,88 +1422,14 @@ not the first bit of a new byte.
 ---------------
 
 All functions in LodePNG that return an error code, return 0 if everything went 
-OK, or one of the codes described below if there was an error.
+OK, or one of the code defined by LodePNG if there was an error.
 
-This are meanings of the LodePNG error values:
+The meaning of the LodePNG error values can be retrieved with the function
+LodePNG_error_text: given the numerical error code, it returns a description
+of the error in English as a string.
 
-*) 0: no error, everything went ok
-*) 1: the Encoder/Decoder has done nothing yet, so error checking makes no sense yet
-*) 10: while huffman decoding: end of input memory reached without endcode
-*) 11: while huffman decoding: error in code tree made it jump outside of tree
-*) 13: problem while processing dynamic deflate block
-*) 14: problem while processing dynamic deflate block
-*) 15: problem while processing dynamic deflate block
-*) 16: unexisting code while processing dynamic deflate block
-*) 17: while inflating: end of out buffer memory reached
-*) 18: while inflating: invalid distance code
-*) 19: while inflating: end of out buffer memory reached
-*) 20: invalid deflate block BTYPE encountered while decoding
-*) 21: NLEN is not ones complement of LEN in a deflate block
-*) 22: while inflating: end of out buffer memory reached.
-   This can happen if the inflated deflate data is longer than the amount of bytes required to fill up
-   all the pixels of the image, given the color depth and image dimensions. Something that doesn't
-   happen in a normal, well encoded, PNG image.
-*) 23: while inflating: end of in buffer memory reached
-*) 24: invalid FCHECK in zlib header
-*) 25: invalid compression method in zlib header
-*) 26: FDICT encountered in zlib header while it's not used for PNG
-*) 27: PNG file is smaller than a PNG header
-*) 28: incorrect PNG signature (the first 8 bytes of the PNG file)
-   Maybe it's not a PNG, or a PNG file that got corrupted so that the header indicates the corruption.
-*) 29: first chunk is not the header chunk
-*) 30: chunk length too large, chunk broken off at end of file
-*) 31: illegal PNG color type or bpp
-*) 32: illegal PNG compression method
-*) 33: illegal PNG filter method
-*) 34: illegal PNG interlace method
-*) 35: chunk length of a chunk is too large or the chunk too small
-*) 36: illegal PNG filter type encountered
-*) 37: illegal bit depth for this color type given
-*) 38: the palette is too big (more than 256 colors)
-*) 39: more palette alpha values given in tRNS, than there are colors in the palette
-*) 40: tRNS chunk has wrong size for greyscale image
-*) 41: tRNS chunk has wrong size for RGB image
-*) 42: tRNS chunk appeared while it was not allowed for this color type
-*) 43: bKGD chunk has wrong size for palette image
-*) 44: bKGD chunk has wrong size for greyscale image
-*) 45: bKGD chunk has wrong size for RGB image
-*) 46: value encountered in indexed image is larger than the palette size (bitdepth == 8). Is the palette too small?
-*) 47: value encountered in indexed image is larger than the palette size (bitdepth < 8). Is the palette too small?
-*) 48: the input data is empty. Maybe a PNG file you tried to load doesn't exist or is in the wrong path.
-*) 49: jumped past memory while generating dynamic huffman tree
-*) 50: jumped past memory while generating dynamic huffman tree
-*) 51: jumped past memory while inflating huffman block
-*) 52: jumped past memory while inflating
-*) 53: size of zlib data too small
-*) 55: jumped past tree while generating huffman tree, this could be when the
-       tree will have more leaves than symbols after generating it out of the
-       given lenghts. They call this an oversubscribed dynamic bit lengths tree in zlib.
-*) 56: given output image colorType or bitDepth not supported for color conversion
-*) 57: invalid CRC encountered (checking CRC can be disabled)
-*) 58: invalid ADLER32 encountered (checking ADLER32 can be disabled)
-*) 59: conversion to unexisting color mode or color mode conversion not supported.
-*) 60: invalid window size given in the settings of the encoder (must be 0-32768)
-*) 61: invalid BTYPE given in the settings of the encoder (only 0, 1 and 2 are allowed)
-*) 62: conversion from non-greyscale color to greyscale color requested by encoder or decoder. LodePNG
-       leaves the choice of RGB to greyscale conversion formula to the user.
-*) 63: length of a chunk too long, max allowed for PNG is 2147483647 bytes per chunk (2^31-1)
-*) 64: the length of the "end" symbol 256 in the Huffman tree is 0, resulting in the inability of a deflated
-       block to ever contain an end code. It must be at least 1.
-*) 66: the length of a text chunk keyword given to the encoder is longer than the maximum 79 bytes.
-*) 67: the length of a text chunk keyword given to the encoder is smaller than the minimum 1 byte.
-*) 68: tried to encode a PLTE chunk with a palette that has less than 1 or more than 256 colors
-*) 69: unknown chunk type with "critical" flag encountered by the decoder
-*) 71: unexisting interlace mode given to encoder (must be 0 or 1)
-*) 72: while decoding, unexisting compression method encountering in zTXt or iTXt chunk (it must be 0)
-*) 73: invalid tIME chunk size
-*) 74: invalid pHYs chunk size
-*) 75: no null termination char found while decoding any kind of text chunk, or wrong length
-*) 76: iTXt chunk too short to contain required bytes
-*) 77: integer overflow in buffer size happened somewhere
-*) 78: file doesn't exist or couldn't be opened for reading
-*) 79: file couldn't be opened for writing
-*) 80: tried creating a tree for 0 symbols
-*) 9900-9999: out of memory while allocating chunk of memory somewhere
+Check the implementation of LodePNG_error_text to see the meaning of each error code.
+
 
 8. chunks and PNG editing
 -------------------------
@@ -1691,7 +1628,7 @@ int main(int argc, char *argv[])
   decoder.decode(image, buffer.size() ? &buffer[0] : 0, (unsigned)buffer.size()); //decode the png
   
   //if there's an error, display it
-  if(decoder.hasError()) std::cout << "error: " << decoder.getError() << std::endl;
+  if(decoder.hasError()) std::cout << "error " << decoder.getError() << ": " << LodePNG_error_text(decoder.getError()) << std::endl;
   
   int width = decoder.getWidth(); //get the width in pixels
   int height = decoder.getHeight(); //get the height in pixels
@@ -1709,7 +1646,7 @@ int main(int argc, char *argv[])
   unsigned error = LodePNG::decode(image, width, height, filename);
   
   //if there's an error, display it
-  if(error != 0) std::cout << "error: " << error << std::endl;
+  if(error != 0) std::cout << "error " << error << ": " << LodePNG_error_text(error) << std::endl;
   
   //the pixels are now in the vector "image", 4 bytes per pixel, ordered RGBARGBA..., use it as texture, draw it, ...
 }
@@ -1774,6 +1711,8 @@ int main(int argc, char *argv[])
   
   error = LodePNG_decode32_file(&image, &width, &height, filename);
   
+  if(error != 0) printf("error %u: %s\n", error, LodePNG_error_text(error));
+  
   //use image here
   
   free(image);
@@ -1789,6 +1728,7 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 7 nov 2010: added LodePNG_error_text function to get error code description.
 *) 30 okt 2010: made decoding slightly faster
 *) 26 okt 2010: (!) changed some C function and struct names (more consistent).
      Reorganized the documentation and the declaration order in the header.
