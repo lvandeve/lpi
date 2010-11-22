@@ -1,5 +1,5 @@
 /*
-LodePNG version 20101107
+LodePNG version 20101121
 
 Copyright (c) 2005-2010 Lode Vandevenne
 
@@ -30,7 +30,15 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 
 #include "lodepng.h"
 
-#define VERSION_STRING "20101107"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#ifdef __cplusplus
+#include <fstream>
+#endif /*__cplusplus*/
+
+#define VERSION_STRING "20101121"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Tools For C                                                            / */
@@ -2218,6 +2226,27 @@ unsigned LodePNG_InfoColor_isGreyscaleType(const LodePNG_InfoColor* info)
 unsigned LodePNG_InfoColor_isAlphaType(const LodePNG_InfoColor* info)
 {
   return (info->colorType & 4) != 0;
+}
+
+unsigned LodePNG_InfoColor_isPaletteType(const LodePNG_InfoColor* info)
+{
+  return info->colorType == 3;
+}
+
+unsigned LodePNG_InfoColor_hasPaletteAlpha(const LodePNG_InfoColor* info)
+{
+  for(size_t i = 0; i < info->palettesize; i++)
+  {
+    if(info->palette[i * 4 + 3] < 255) return true;
+  }
+  return false;
+}
+
+unsigned LodePNG_InfoColor_canHaveAlpha(const LodePNG_InfoColor* info)
+{
+  return info->key_defined
+      || LodePNG_InfoColor_isAlphaType(info)
+      || LodePNG_InfoColor_hasPaletteAlpha(info);
 }
 
 unsigned LodePNG_InfoColor_equal(const LodePNG_InfoColor* info1, const LodePNG_InfoColor* info2)
