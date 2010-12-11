@@ -1,5 +1,5 @@
 /*
-LodePNG version 20101121
+LodePNG version 20101211
 
 Copyright (c) 2005-2010 Lode Vandevenne
 
@@ -1740,8 +1740,10 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 11 dec 2010: encoding is made faster, based on suggestion by Peter Eastman
+    to optimize long sequences of zeros.
 *) 13 nov 2010: added LodePNG_InfoColor_hasPaletteAlpha and
-     LodePNG_InfoColor_canHaveAlpha functions for convenience.
+    LodePNG_InfoColor_canHaveAlpha functions for convenience.
 *) 7 nov 2010: added LodePNG_error_text function to get error code description.
 *) 30 okt 2010: made decoding slightly faster
 *) 26 okt 2010: (!) changed some C function and struct names (more consistent).
