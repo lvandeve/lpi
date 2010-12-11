@@ -1,5 +1,5 @@
 /*
-LodePNG version 20101121
+LodePNG version 20101211
 
 Copyright (c) 2005-2010 Lode Vandevenne
 
@@ -38,7 +38,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*__cplusplus*/
 
-#define VERSION_STRING "20101121"
+#define VERSION_STRING "20101211"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Tools For C                                                            / */
@@ -1246,12 +1246,25 @@ static unsigned getHash(const unsigned char* data, size_t size, size_t pos)
   return result % HASH_NUM_VALUES;
 }
 
+static unsigned countInitialZeros(const unsigned char* data, size_t size, size_t pos)
+{
+  size_t max_count = MAX_SUPPORTED_DEFLATE_LENGTH;
+  if(max_count > size - pos) max_count = size - pos;
+  for(size_t i = 0; i < max_count; i++)
+  {
+    if(data[pos + i] != 0)
+      return i;
+  }
+  return max_count;
+}
+
 /*LZ77-encode the data using a hash table technique to let it encode faster. Return value is error code*/
 static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize, unsigned windowSize)
 {
   /**generate hash table**/
   vector table; /*HASH_NUM_VALUES uivectors; this represents what would be an std::vector<std::vector<unsigned> > in C++*/
   uivector tablepos1, tablepos2;
+  uivector initialZerosTable; /*hash == 0 indicates a possible common case of a long sequence of zeros, store and use the amount here for a speedup*/
   unsigned pos, i, error = 0;
   
   vector_init(&table, sizeof(uivector));
@@ -1262,9 +1275,11 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
     uivector_init(v);
   }
 
-  /*remember start and end positions in the tables to searching in*/
+  /*remember start and end positions in the tables to search in*/
   uivector_init(&tablepos1);
   uivector_init(&tablepos2);
+  uivector_init(&initialZerosTable);
+  
   if(!uivector_resizev(&tablepos1, HASH_NUM_VALUES, 0)) error = 9918;
   if(!uivector_resizev(&tablepos2, HASH_NUM_VALUES, 0)) error = 9919;
   
@@ -1279,7 +1294,13 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
       /*/search for the longest string*/
       /*first find out where in the table to start (the first value that is in the range from "pos - max_offset" to "pos")*/
       unsigned hash = getHash(in, insize, pos);
+      unsigned initialZeros = countInitialZeros(in, insize, pos);
       if(!uivector_push_back((uivector*)vector_get(&table, hash), pos))
+      {
+        error = 9920; /*memory allocation failed*/
+        break;
+      }
+      if(hash == 0 && !uivector_push_back(&initialZerosTable, initialZeros))
       {
         error = 9920; /*memory allocation failed*/
         break;
@@ -1300,16 +1321,23 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
         unsigned current_offset = pos - backpos;
 
         /*test the next characters*/
-        unsigned current_length = 0;
-        unsigned backtest = backpos;
-        unsigned foretest = pos;
-        while(foretest < insize && in[backtest] == in[foretest] && current_length < MAX_SUPPORTED_DEFLATE_LENGTH) /*maximum supporte length by deflate is max length*/
+        const unsigned char* foreptr = &in[pos];
+        const unsigned char* backptr = &in[backpos];
+        if(hash == 0)
         {
-          if(backpos >= pos) backpos -= current_offset; /*continue as if we work on the decoded bytes after pos by jumping back before pos*/
-          current_length++;
-          backtest++;
-          foretest++;
+          unsigned skip = initialZerosTable.data[tablepos];
+          if(skip > initialZeros) skip = initialZeros;
+          if(skip > insize - pos) skip = insize - pos;
+          backptr += skip;
+          foreptr += skip;
         }
+        const unsigned char* lastptr = &in[insize < pos + MAX_SUPPORTED_DEFLATE_LENGTH ? insize : pos + MAX_SUPPORTED_DEFLATE_LENGTH];
+        while(foreptr != lastptr && *backptr == *foreptr) /*maximum supported length by deflate is max length*/
+        {
+          ++backptr;
+          ++foreptr;
+        }
+        unsigned current_length = (unsigned)(foreptr - &in[pos]);
         if(current_length > length)
         {
           length = current_length; /*the longest length*/
@@ -1334,7 +1362,13 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
         for(j = 0; j < length - 1; j++)
         {
           pos++;
-          if(!uivector_push_back((uivector*)vector_get(&table, getHash(in, insize, pos)), pos))
+          unsigned local_hash = getHash(in, insize, pos);
+          if(!uivector_push_back((uivector*)vector_get(&table, local_hash), pos))
+          {
+            error = 9922; /*memory allocation failed*/
+            break;
+          }
+          if(local_hash == 0 && !uivector_push_back(&initialZerosTable, countInitialZeros(in, insize, pos)))
           {
             error = 9922; /*memory allocation failed*/
             break;
@@ -1353,6 +1387,7 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
   vector_cleanup(&table);
   uivector_cleanup(&tablepos1);
   uivector_cleanup(&tablepos2);
+  uivector_cleanup(&initialZerosTable);
   return error;
 }
 
