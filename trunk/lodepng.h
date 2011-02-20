@@ -1,7 +1,7 @@
 /*
-LodePNG version 20101211
+LodePNG version 20110220
 
-Copyright (c) 2005-2010 Lode Vandevenne
+Copyright (c) 2005-2011 Lode Vandevenne
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any damages
@@ -872,7 +872,7 @@ namespace LodeZlib
   unsigned compress(std::vector<unsigned char>& out, const std::vector<unsigned char>& in, const LodeZlib_CompressSettings& settings = LodeZlib_defaultCompressSettings);
 
 #endif //LODEPNG_COMPILE_ENCODER
-}
+} //namespace LodeZlib
 #endif //LODEPNG_COMPILE_ZLIB
 
 #ifdef LODEPNG_COMPILE_PNG
