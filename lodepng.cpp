@@ -1,7 +1,7 @@
 /*
-LodePNG version 20101211
+LodePNG version 20110220
 
-Copyright (c) 2005-2010 Lode Vandevenne
+Copyright (c) 2005-2011 Lode Vandevenne
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any damages
@@ -38,7 +38,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*__cplusplus*/
 
-#define VERSION_STRING "20101211"
+#define VERSION_STRING "20110220"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Tools For C                                                            / */
@@ -1922,12 +1922,14 @@ be the size of the useful data in bytes, not the alloc size.
 #ifdef LODEPNG_COMPILE_DECODER
 static unsigned LodePNG_decompress(unsigned char** out, size_t* outsize, const unsigned char* in, size_t insize, const LodeZlib_DecompressSettings* settings)
 {
+  /*replace this by custom function call to use an alterntive zlib codec*/
   return LodeZlib_decompress(out, outsize, in, insize, settings);
 }
 #endif /*LODEPNG_COMPILE_DECODER*/
 #ifdef LODEPNG_COMPILE_ENCODER
 static unsigned LodePNG_compress(unsigned char** out, size_t* outsize, const unsigned char* in, size_t insize, const LodeZlib_CompressSettings* settings)
 {
+  /*replace this by custom function call to use an alterntive zlib codec*/
   return LodeZlib_compress(out, outsize, in, insize, settings);
 }
 #endif /*LODEPNG_COMPILE_ENCODER*/
@@ -4885,11 +4887,13 @@ namespace LodeZlib
     return compress(out, in.empty() ? 0 : &in[0], in.size(), settings);
   }
 #endif //LODEPNG_COMPILE_ENCODER
-}
+} //namespace LodeZlib
 #endif //LODEPNG_COMPILE_ZLIB
 
+#ifdef LODEPNG_COMPILE_PNG
 namespace LodePNG
 {
+#ifdef LODEPNG_COMPILE_DECODER
   Decoder::Decoder()
   {
     LodePNG_Decoder_init(this);
@@ -5021,8 +5025,12 @@ namespace LodePNG
     error = LodePNG_InfoRaw_copy(&this->infoRaw, &info);
   }
   
+#endif //LODEPNG_COMPILE_DECODER
+
   /* ////////////////////////////////////////////////////////////////////////// */
   
+#ifdef LODEPNG_COMPILE_ENCODER
+
   Encoder::Encoder()
   {
     LodePNG_Encoder_init(this);
@@ -5148,6 +5156,8 @@ namespace LodePNG
     error = LodePNG_InfoRaw_copy(&this->infoRaw, &info);
   }
   
+#endif //LODEPNG_COMPILE_ENCODER
+
   /* ////////////////////////////////////////////////////////////////////////// */
   
 #ifdef LODEPNG_COMPILE_DISK
@@ -5174,8 +5184,10 @@ namespace LodePNG
   }
   
 #endif /*LODEPNG_COMPILE_DISK*/
-  
+
   /* ////////////////////////////////////////////////////////////////////////// */
+  
+#ifdef LODEPNG_COMPILE_DECODER
   
   unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h, const unsigned char* in, size_t insize, unsigned colorType, unsigned bitDepth)
   {
@@ -5200,7 +5212,12 @@ namespace LodePNG
     loadFile(buffer, filename);
     return decode(out, w, h, buffer, colorType, bitDepth);
   }
+  
+#endif //LODEPNG_COMPILE_DECODER
+
 #endif /*LODEPNG_COMPILE_DISK*/
+
+#ifdef LODEPNG_COMPILE_ENCODER
   
   unsigned encode(std::vector<unsigned char>& out, const unsigned char* in, unsigned w, unsigned h, unsigned colorType, unsigned bitDepth)
   {
@@ -5234,5 +5251,10 @@ namespace LodePNG
   }
 #endif /*LODEPNG_COMPILE_DISK*/
 
-}
+#endif //LODEPNG_COMPILE_ENCODER
+
+} //namespace LodePNG
+
+#endif //LODEPNG_COMPILE_PNG
+
 #endif /*__cplusplus C++ RAII wrapper*/
