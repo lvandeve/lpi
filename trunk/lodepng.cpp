@@ -1,5 +1,5 @@
 /*
-LodePNG version 20110220
+LodePNG version 20110221
 
 Copyright (c) 2005-2011 Lode Vandevenne
 
@@ -32,13 +32,12 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #ifdef __cplusplus
 #include <fstream>
 #endif /*__cplusplus*/
 
-#define VERSION_STRING "20110220"
+#define VERSION_STRING "20110221"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Tools For C                                                            / */
@@ -126,6 +125,7 @@ static void* vector_get(vector* p, size_t index)
 {
   return &((char*)p->data)[index * p->typesize];
 }
+
 #endif /*LODEPNG_COMPILE_ENCODER*/
 #endif /*LODEPNG_COMPILE_ZLIB*/
 
@@ -1249,8 +1249,9 @@ static unsigned getHash(const unsigned char* data, size_t size, size_t pos)
 static unsigned countInitialZeros(const unsigned char* data, size_t size, size_t pos)
 {
   size_t max_count = MAX_SUPPORTED_DEFLATE_LENGTH;
+  size_t i;
   if(max_count > size - pos) max_count = size - pos;
-  for(size_t i = 0; i < max_count; i++)
+  for(i = 0; i < max_count; i++)
   {
     if(data[pos + i] != 0)
       return i;
@@ -1285,16 +1286,20 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
   
   if(!error)
   {
+    unsigned length, offset, tablepos, max_offset;
+    unsigned hash, initialZeros;
+    unsigned backpos, current_offset, t1, t2, skip, current_length;
+    const unsigned char *lastptr, *foreptr, *backptr;
+    
     for(pos = 0; pos < insize; pos++)
     {
-      unsigned length = 0, offset = 0; /*the length and offset found for the current position*/
-      unsigned max_offset = pos < windowSize ? pos : windowSize; /*how far back to test*/
-      unsigned tablepos;
-    
+      length = 0, offset = 0; /*the length and offset found for the current position*/
+      max_offset = pos < windowSize ? pos : windowSize; /*how far back to test*/
+      
       /*/search for the longest string*/
       /*first find out where in the table to start (the first value that is in the range from "pos - max_offset" to "pos")*/
-      unsigned hash = getHash(in, insize, pos);
-      unsigned initialZeros = countInitialZeros(in, insize, pos);
+      hash = getHash(in, insize, pos);
+      initialZeros = countInitialZeros(in, insize, pos);
       if(!uivector_push_back((uivector*)vector_get(&table, hash), pos))
       {
         error = 9920; /*memory allocation failed*/
@@ -1315,29 +1320,34 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
         tablepos2.data[hash]++; /*it now points to the first value in the table for which the index is larger than or equal to pos*/
       }
 
-      for(tablepos = tablepos2.data[hash] - 1; tablepos >= tablepos1.data[hash] && tablepos < tablepos2.data[hash]; tablepos--)
+      t1 = tablepos1.data[hash];
+      t2 = tablepos2.data[hash];
+
+      lastptr = &in[insize < pos + MAX_SUPPORTED_DEFLATE_LENGTH ? insize : pos + MAX_SUPPORTED_DEFLATE_LENGTH];
+
+      for(tablepos = tablepos2.data[hash] - 1; tablepos >= t1 && tablepos < t2; tablepos--)
       {
-        unsigned backpos = ((uivector*)vector_get(&table, hash))->data[tablepos];
-        unsigned current_offset = pos - backpos;
+        backpos = ((uivector*)vector_get(&table, hash))->data[tablepos];
+        current_offset = pos - backpos;
 
         /*test the next characters*/
-        const unsigned char* foreptr = &in[pos];
-        const unsigned char* backptr = &in[backpos];
+        foreptr = &in[pos];
+        backptr = &in[backpos];
+
         if(hash == 0)
         {
-          unsigned skip = initialZerosTable.data[tablepos];
+          skip = initialZerosTable.data[tablepos];
           if(skip > initialZeros) skip = initialZeros;
           if(skip > insize - pos) skip = insize - pos;
           backptr += skip;
           foreptr += skip;
         }
-        const unsigned char* lastptr = &in[insize < pos + MAX_SUPPORTED_DEFLATE_LENGTH ? insize : pos + MAX_SUPPORTED_DEFLATE_LENGTH];
         while(foreptr != lastptr && *backptr == *foreptr) /*maximum supported length by deflate is max length*/
         {
           ++backptr;
           ++foreptr;
         }
-        unsigned current_length = (unsigned)(foreptr - &in[pos]);
+        current_length = (unsigned)(foreptr - &in[pos]);
         if(current_length > length)
         {
           length = current_length; /*the longest length*/
@@ -1357,12 +1367,12 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
       }
       else
       {
-        unsigned j;
+        unsigned j, local_hash;
         addLengthDistance(out, length, offset);
         for(j = 0; j < length - 1; j++)
         {
           pos++;
-          unsigned local_hash = getHash(in, insize, pos);
+          local_hash = getHash(in, insize, pos);
           if(!uivector_push_back((uivector*)vector_get(&table, local_hash), pos))
           {
             error = 9922; /*memory allocation failed*/
@@ -2272,11 +2282,12 @@ unsigned LodePNG_InfoColor_isPaletteType(const LodePNG_InfoColor* info)
 
 unsigned LodePNG_InfoColor_hasPaletteAlpha(const LodePNG_InfoColor* info)
 {
-  for(size_t i = 0; i < info->palettesize; i++)
+  size_t i;
+  for(i = 0; i < info->palettesize; i++)
   {
-    if(info->palette[i * 4 + 3] < 255) return true;
+    if(info->palette[i * 4 + 3] < 255) return 1;
   }
-  return false;
+  return 0;
 }
 
 unsigned LodePNG_InfoColor_canHaveAlpha(const LodePNG_InfoColor* info)
@@ -4057,7 +4068,7 @@ static void filterScanline(unsigned char* out, const unsigned char* scanline, co
         for(i = bytewidth; i <    length; i++) out[i] = (scanline[i] - scanline[i - bytewidth]); /*paethPredictor(scanline[i - bytewidth], 0, 0) is always scanline[i - bytewidth]*/
       }
       break;
-  default: return; /*unexisting filter type given*/
+    default: return; /*unexisting filter type given*/
   }
 }
 
