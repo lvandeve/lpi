@@ -1,5 +1,5 @@
 /*
-LodePNG version 20110220
+LodePNG version 20110221
 
 Copyright (c) 2005-2011 Lode Vandevenne
 
@@ -25,6 +25,8 @@ freely, subject to the following restrictions:
 
 #ifndef LODEPNG_H
 #define LODEPNG_H
+
+#include <string.h> /*for size_t*/
 
 #ifdef __cplusplus
 #include <vector>
@@ -1090,7 +1092,7 @@ extra functionality.
 
 LodePNG exists out of two files:
 -lodepng.h: the header file for both C and C++
--lodepng.c(pp): give it the name lodepng.c or lodepng.cpp depending on your usage
+-lodepng.c(pp): give it the name lodepng.c or lodepng.cpp (or .cc) depending on your usage
 
 If you want to start using LodePNG right away without reading this doc, get the
 files lodepng_examples.c or lodepng_examples.cpp to see how to use it in code,
@@ -1740,6 +1742,7 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 21 feb 2011: fixed compiling for C90. Fixed compiling with sections disabled.
 *) 11 dec 2010: encoding is made faster, based on suggestion by Peter Eastman
     to optimize long sequences of zeros.
 *) 13 nov 2010: added LodePNG_InfoColor_hasPaletteAlpha and
@@ -1844,5 +1847,5 @@ Domain: gmail dot com.
 Account: lode dot vandevenne.
 
 
-Copyright (c) 2005-2010 Lode Vandevenne
+Copyright (c) 2005-2011 Lode Vandevenne
 */
