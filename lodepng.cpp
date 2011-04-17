@@ -1,5 +1,5 @@
 /*
-LodePNG version 20110411
+LodePNG version 20110417
 
 Copyright (c) 2005-2011 Lode Vandevenne
 
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*__cplusplus*/
 
-#define VERSION_STRING "20110411"
+#define VERSION_STRING "20110417"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Tools For C                                                            / */
