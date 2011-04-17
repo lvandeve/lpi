@@ -1,5 +1,5 @@
 /*
-LodePNG version 20110221
+LodePNG version 20110417
 
 Copyright (c) 2005-2011 Lode Vandevenne
 
@@ -1029,6 +1029,7 @@ TODO:
 [ ] check compatibility with vareous compilers  - done but needs to be redone for every newer version
 [ ] don't stop decoding on errors like 69, 57, 58 (make warnings that the decoder stores in the error at the very end? and make some errors just let it stop with this one chunk but still do the next ones)
 [ ] make option to choose if the raw image with non multiple of 8 bits per scanline should have padding bits or not, if people like storing raw images that way
+[ ] let the C++ wrapper catch exceptions coming from the standard library and return LodePNG error codes instead, like the C version does. This is about std::vector allocations and about the saveFile and loadFile functions.
 */
 
 #endif
