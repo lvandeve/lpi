@@ -4738,7 +4738,7 @@ unsigned LodePNG_loadFile(unsigned char** out, size_t* outsize, const char* file
   if(size && (*out)) (*outsize) = fread(*out, 1, (size_t)size, file);
 
   fclose(file);
-  if(!(*out) && size) return 80; /*the above malloc failed*/
+  if(!(*out) && size) return 9900; /*the above malloc failed*/
   return 0;
 }
 
