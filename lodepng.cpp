@@ -1,5 +1,5 @@
 /*
-LodePNG version 20110221
+LodePNG version 20110417
 
 Copyright (c) 2005-2011 Lode Vandevenne
 
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*__cplusplus*/
 
-#define VERSION_STRING "20110221"
+#define VERSION_STRING "20110417"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Tools For C                                                            / */
@@ -4648,7 +4648,7 @@ unsigned LodePNG_encode(unsigned char** out, size_t* outsize, const unsigned cha
 
 unsigned LodePNG_encode32(unsigned char** out, size_t* outsize, const unsigned char* image, unsigned w, unsigned h)
 {
-  return LodePNG_encode(out, outsize, image, w, h, 6, 8);;
+  return LodePNG_encode(out, outsize, image, w, h, 6, 8);
 }
 
 #ifdef LODEPNG_COMPILE_DISK
@@ -4657,14 +4657,14 @@ unsigned LodePNG_encode_file(const char* filename, const unsigned char* image, u
   unsigned char* buffer;
   size_t buffersize;
   unsigned error = LodePNG_encode(&buffer, &buffersize, image, w, h, colorType, bitDepth);
-  LodePNG_saveFile(buffer, buffersize, filename);
+  if(!error) error = LodePNG_saveFile(buffer, buffersize, filename);
   free(buffer);
   return error;
 }
 
 unsigned LodePNG_encode32_file(const char* filename, const unsigned char* image, unsigned w, unsigned h)
 {
-  return LodePNG_encode_file(filename, image, w, h, 6, 8);;
+  return LodePNG_encode_file(filename, image, w, h, 6, 8);
 }
 #endif /*LODEPNG_COMPILE_DISK*/
 
