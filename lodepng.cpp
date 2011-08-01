@@ -1,5 +1,5 @@
 /*
-LodePNG version 20110417
+LodePNG version 20110801
 
 Copyright (c) 2005-2011 Lode Vandevenne
 
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*__cplusplus*/
 
-#define VERSION_STRING "20110417"
+#define VERSION_STRING "20110801"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* / Tools For C                                                            / */
@@ -1150,7 +1150,7 @@ unsigned LodeFlate_inflate(ucvector* out, const unsigned char* in, size_t insize
 #ifdef LODEPNG_COMPILE_ENCODER
 
 /* ////////////////////////////////////////////////////////////////////////// */
-/* / Deflator                                                               / */
+/* / Deflator (Compressor)                                                  / */
 /* ////////////////////////////////////////////////////////////////////////// */
 
 static const size_t MAX_SUPPORTED_DEFLATE_LENGTH = 258;
@@ -1285,7 +1285,15 @@ static unsigned countInitialZeros(const unsigned char* data, size_t size, size_t
   return max_count;
 }
 
-/*LZ77-encode the data using a hash table technique to let it encode faster. Return value is error code*/
+/*
+LZ77-encode the data. Return value is error code. The input are raw bytes, the output
+is in the form of unsigned integers with codes representing for example literal bytes, or
+length/distance pairs.
+It uses a hash table technique to let it encode faster. When doing LZ77 encoding, a
+sliding window (of windowSize) is used, and all past bytes in that window can be used as
+the "dictionary". A brute force search through all possible distances would be slow, and
+this hash technique is one out of several ways to speed this up.
+*/
 static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize, unsigned windowSize)
 {
   /**generate hash table**/
@@ -1312,7 +1320,8 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
 
   if(!error)
   {
-    unsigned length, offset, tablepos, max_offset;
+    unsigned offset, max_offset; /*the offset represents the distance in LZ77 terminology*/
+    unsigned length, tablepos;
     unsigned hash, initialZeros;
     unsigned backpos, current_offset, t1, t2, skip, current_length;
     const unsigned char *lastptr, *foreptr, *backptr;
@@ -1322,7 +1331,7 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
       length = 0, offset = 0; /*the length and offset found for the current position*/
       max_offset = pos < windowSize ? pos : windowSize; /*how far back to test*/
 
-      /*/search for the longest string*/
+      /*search for the longest string*/
       /*first find out where in the table to start (the first value that is in the range from "pos - max_offset" to "pos")*/
       hash = getHash(in, insize, pos);
       initialZeros = countInitialZeros(in, insize, pos);
