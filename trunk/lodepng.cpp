@@ -4462,7 +4462,6 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
   /*choose heuristic as described above*/
   if(info->colorType == 3 || info->bitDepth < 8) heuristic = 0;
   else heuristic = 1;
-  heuristic = 2;
 
   if(heuristic == 0) /*None filtertype for everything*/
   {
