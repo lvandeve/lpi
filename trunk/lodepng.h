@@ -1,5 +1,5 @@
 /*
-LodePNG version 20110816
+LodePNG version 20110817
 
 Copyright (c) 2005-2011 Lode Vandevenne
 
@@ -42,7 +42,10 @@ The following #defines are used to create code sections. They can be disabled
 to disable code sections, which can give faster compile time and smaller binary.
 */
 
-/*deflate&zlib encoder and deflate&zlib decoder*/
+/*deflate&zlib encoder and deflate&zlib decoder.
+If this is disabled, you need to implement the dummy LodePNG_zlib_compress and
+LodePNG_zlib_decompress functions in the #else belonging to this #define in the
+source file.*/
 #define LODEPNG_COMPILE_ZLIB
 /*png encoder and png decoder*/
 #define LODEPNG_COMPILE_PNG
@@ -283,13 +286,13 @@ PNG files. Typically you won't need these directly.
 */
 
 #ifdef LODEPNG_COMPILE_DECODER
-typedef struct LodeZlib_DecompressSettings
+typedef struct LodePNG_DecompressSettings
 {
   unsigned ignoreAdler32; /*if 1, continue and don't give an error message if the Adler32 checksum is corrupted*/
-} LodeZlib_DecompressSettings;
+} LodePNG_DecompressSettings;
 
-extern const LodeZlib_DecompressSettings LodeZlib_defaultDecompressSettings;
-void LodeZlib_DecompressSettings_init(LodeZlib_DecompressSettings* settings);
+extern const LodePNG_DecompressSettings LodePNG_defaultDecompressSettings;
+void LodePNG_DecompressSettings_init(LodePNG_DecompressSettings* settings);
 #endif /*LODEPNG_COMPILE_DECODER*/
 
 #ifdef LODEPNG_COMPILE_ENCODER
@@ -297,16 +300,16 @@ void LodeZlib_DecompressSettings_init(LodeZlib_DecompressSettings* settings);
 Compression settings. Tweaking these settings tweaks the balance between
 speed and compression ratio.
 */
-typedef struct LodeZlib_CompressSettings /*deflate = compress*/
+typedef struct LodePNG_CompressSettings /*deflate = compress*/
 {
   /*LZ77 related settings*/
   unsigned btype; /*the block type for LZ (0, 1, 2 or 3, see zlib standard). Should be 2 for proper compression.*/
   unsigned useLZ77; /*whether or not to use LZ77. Should be 1 for proper compression.*/
   unsigned windowSize; /*the maximum is 32768, higher gives more compression but is slower. Typical value: 2048.*/
-} LodeZlib_CompressSettings;
+} LodePNG_CompressSettings;
 
-extern const LodeZlib_CompressSettings LodeZlib_defaultCompressSettings;
-void LodeZlib_CompressSettings_init(LodeZlib_CompressSettings* settings);
+extern const LodePNG_CompressSettings LodePNG_defaultCompressSettings;
+void LodePNG_CompressSettings_init(LodePNG_CompressSettings* settings);
 #endif /*LODEPNG_COMPILE_ENCODER*/
 
 #ifdef LODEPNG_COMPILE_PNG
@@ -611,7 +614,7 @@ decoder, but not the Info settings from the Info structs.
 */
 typedef struct LodePNG_DecodeSettings
 {
-  LodeZlib_DecompressSettings zlibsettings; /*in here is the setting to ignore Adler32 checksums*/
+  LodePNG_DecompressSettings zlibsettings; /*in here is the setting to ignore Adler32 checksums*/
 
   unsigned ignoreCrc; /*ignore CRC checksums*/
   unsigned color_convert; /*whether to convert the PNG to the color type you want. Default: yes*/
@@ -672,7 +675,7 @@ void LodePNG_Decoder_inspect(LodePNG_Decoder* decoder, const unsigned char* in, 
 /*Settings for the encoder.*/
 typedef struct LodePNG_EncodeSettings
 {
-  LodeZlib_CompressSettings zlibsettings; /*settings for the zlib encoder, such as window size, ...*/
+  LodePNG_CompressSettings zlibsettings; /*settings for the zlib encoder, such as window size, ...*/
 
   /*automatically use color type without alpha instead of given one, if given image is opaque*/
   unsigned autoLeaveOutAlphaChannel;
@@ -794,25 +797,27 @@ unsigned LodePNG_create_chunk(unsigned char** out, size_t* outlength, unsigned l
 /* ////////////////////////////////////////////////////////////////////////// */
 
 /*
-This is "LodeZlib". A C++ wrapper is available further on.
-
-LodeZlib can be used to zlib compress and decompress a buffer. It cannot be
-used to create gzip files however, and it only supports the part of zlib
-that is required for PNG, it does not support dictionaries.
+This zlib part can be used independently to zlib compress and decompress a
+buffer. It cannot be used to create gzip files however, and it only supports the
+part of zlib that is required for PNG, it does not support dictionaries.
 */
 
 #ifdef LODEPNG_COMPILE_DECODER
-/*Decompresses Zlib data. Reallocates the out buffer and appends the data.
-Either, *out must be NULL and *outsize must be 0, or, *out must be a valid buffer and *outsize its size in bytes.*/
-unsigned LodeZlib_decompress(unsigned char** out, size_t* outsize,
-                             const unsigned char* in, size_t insize, const LodeZlib_DecompressSettings* settings);
+/*Decompresses Zlib data. Reallocates the out buffer and appends the data. The
+data must be according to the zlib specification.
+Either, *out must be NULL and *outsize must be 0, or, *out must be a valid
+buffer and *outsize its size in bytes. out must be freed by user after usage.*/
+unsigned LodePNG_zlib_decompress(unsigned char** out, size_t* outsize,
+                                 const unsigned char* in, size_t insize, const LodePNG_DecompressSettings* settings);
 #endif /*LODEPNG_COMPILE_DECODER*/
 
 #ifdef LODEPNG_COMPILE_ENCODER
 /*Compresses data with Zlib. Reallocates the out buffer and appends the data.
-Either, *out must be NULL and *outsize must be 0, or, *out must be a valid buffer and *outsize its size in bytes.*/
-unsigned LodeZlib_compress(unsigned char** out, size_t* outsize,
-                           const unsigned char* in, size_t insize, const LodeZlib_CompressSettings* settings);
+The data is output in the format of the zlib specification.
+Either, *out must be NULL and *outsize must be 0, or, *out must be a valid
+buffer and *outsize its size in bytes. out must be freed by user after usage.*/
+unsigned LodePNG_zlib_compress(unsigned char** out, size_t* outsize,
+                               const unsigned char* in, size_t insize, const LodePNG_CompressSettings* settings);
 #endif /*LODEPNG_COMPILE_ENCODER*/
 #endif /*LODEPNG_COMPILE_ZLIB*/
 
@@ -828,7 +833,8 @@ return value: error code (0 means ok)
 unsigned LodePNG_loadFile(unsigned char** out, size_t* outsize, const char* filename);
 
 /*
-Save a file from buffer to disk. Warning, this function overwrites the file without warning!
+Save a file from buffer to disk. Warning, if it exists, this function overwrites
+the file without warning!
 buffer: the buffer to write
 buffersize: size of the buffer to write
 filename: the path to the file to save to
@@ -846,36 +852,32 @@ unsigned LodePNG_saveFile(const unsigned char* buffer, size_t buffersize, const 
 //instead of manual init and cleanup functions, and uses std::vectors instead of
 //manually allocated memory buffers.
 
-#ifdef LODEPNG_COMPILE_ZLIB
-//The C++ wrapper for LodeZlib
-namespace LodeZlib
+namespace LodePNG
 {
+#ifdef LODEPNG_COMPILE_ZLIB
+//The C++ wrapper for the zlib part
 #ifdef LODEPNG_COMPILE_DECODER
   //Zlib-decompress an unsigned char buffer
   unsigned decompress(std::vector<unsigned char>& out, const unsigned char* in, size_t insize,
-                      const LodeZlib_DecompressSettings& settings = LodeZlib_defaultDecompressSettings);
+                      const LodePNG_DecompressSettings& settings = LodePNG_defaultDecompressSettings);
 
   //Zlib-decompress an std::vector
   unsigned decompress(std::vector<unsigned char>& out, const std::vector<unsigned char>& in,
-                      const LodeZlib_DecompressSettings& settings = LodeZlib_defaultDecompressSettings);
+                      const LodePNG_DecompressSettings& settings = LodePNG_defaultDecompressSettings);
 #endif //LODEPNG_COMPILE_DECODER
 
 #ifdef LODEPNG_COMPILE_ENCODER
   //Zlib-compress an unsigned char buffer
   unsigned compress(std::vector<unsigned char>& out, const unsigned char* in, size_t insize,
-                    const LodeZlib_CompressSettings& settings = LodeZlib_defaultCompressSettings);
+                    const LodePNG_CompressSettings& settings = LodePNG_defaultCompressSettings);
 
   //Zlib-compress an std::vector
   unsigned compress(std::vector<unsigned char>& out, const std::vector<unsigned char>& in,
-                    const LodeZlib_CompressSettings& settings = LodeZlib_defaultCompressSettings);
+                    const LodePNG_CompressSettings& settings = LodePNG_defaultCompressSettings);
 #endif //LODEPNG_COMPILE_ENCODER
-} //namespace LodeZlib
 #endif //LODEPNG_COMPILE_ZLIB
 
 #ifdef LODEPNG_COMPILE_PNG
-namespace LodePNG
-{
-
 #ifdef LODEPNG_COMPILE_DECODER
   /*
   Class to decode a PNG image. Before decoding, settings can be set and
@@ -1006,8 +1008,8 @@ namespace LodePNG
   */
   void saveFile(const std::vector<unsigned char>& buffer, const std::string& filename);
 #endif //LODEPNG_COMPILE_DISK
-} //namespace LodePNG
 #endif //LODEPNG_COMPILE_PNG
+} //namespace LodePNG
 #endif /*end of __cplusplus wrapper*/
 
 /*
@@ -1755,7 +1757,8 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
-*) 16 aug 2011: made the code less wide (max 120 characters per line)
+*) 17 aug 2011 (!): changed some C zlib related function names.
+*) 16 aug 2011: made the code less wide (max 120 characters per line).
 *) 17 apr 2011: code cleanup. Bugfixes. Convert low to 16-bit per sample colors.
 *) 21 feb 2011: fixed compiling for C90. Fixed compiling with sections disabled.
 *) 11 dec 2010: encoding is made faster, based on suggestion by Peter Eastman
