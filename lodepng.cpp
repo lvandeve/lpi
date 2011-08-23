@@ -1,5 +1,5 @@
 /*
-LodePNG version 20110817
+LodePNG version 20110823
 
 Copyright (c) 2005-2011 Lode Vandevenne
 
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*__cplusplus*/
 
-#define VERSION_STRING "20110817"
+#define VERSION_STRING "20110823"
 
 /*
 This source file is built up in the following large parts. The code sections
@@ -529,71 +529,6 @@ static const unsigned CLCL_ORDER[NUM_CODE_LENGTH_CODES]
 
 /* ////////////////////////////////////////////////////////////////////////// */
 
-#ifdef LODEPNG_COMPILE_ENCODER
-/*
-A coin, this is the terminology used for the package-merge algorithm and the
-coin collector's problem. This is used to generate the huffman tree.
-A coin can be multiple coins (when they're merged)
-*/
-typedef struct Coin
-{
-  uivector symbols;
-  float weight; /*the sum of all weights in this coin*/
-} Coin;
-
-static void Coin_init(Coin* c)
-{
-  uivector_init(&c->symbols);
-}
-
-/*argument c is void* so that this dtor can be given as function pointer to the vector resize function*/
-static void Coin_cleanup(void* c)
-{
-  uivector_cleanup(&((Coin*)c)->symbols);
-}
-
-static void Coin_copy(Coin* c1, const Coin* c2)
-{
-  c1->weight = c2->weight;
-  uivector_copy(&c1->symbols, &c2->symbols);
-}
-
-static void addCoins(Coin* c1, const Coin* c2)
-{
-  size_t i;
-  for(i = 0; i < c2->symbols.size; i++) uivector_push_back(&c1->symbols, c2->symbols.data[i]);
-  c1->weight += c2->weight;
-}
-
-/*
-Coin_sort: This uses a simple combsort to sort the data. This function is not critical for
-overall encoding speed and the data amount isn't that large.
-*/
-static void Coin_sort(Coin* data, size_t amount)
-{
-  size_t gap = amount;
-  unsigned char swapped = 0;
-  while((gap > 1) || swapped)
-  {
-    size_t i;
-    gap = (gap * 10) / 13; /*shrink factor 1.3*/
-    if(gap == 9 || gap == 10) gap = 11; /*combsort11*/
-    if(gap < 1) gap = 1;
-    swapped = 0;
-    for(i = 0; i < amount - gap; i++)
-    {
-      size_t j = i + gap;
-      if(data[j].weight < data[i].weight)
-      {
-        float temp = data[j].weight; data[j].weight = data[i].weight; data[i].weight = temp;
-        uivector_swap(&data[i].symbols, &data[j].symbols);
-        swapped = 1;
-      }
-    }
-  }
-}
-#endif /*LODEPNG_COMPILE_ENCODER*/
-
 /*
 Huffman tree struct, containing multiple representations of the tree
 */
@@ -750,6 +685,70 @@ static unsigned HuffmanTree_makeFromLengths(HuffmanTree* tree, const unsigned* b
 }
 
 #ifdef LODEPNG_COMPILE_ENCODER
+
+/*
+A coin, this is the terminology used for the package-merge algorithm and the
+coin collector's problem. This is used to generate the huffman tree.
+A coin can be multiple coins (when they're merged)
+*/
+typedef struct Coin
+{
+  uivector symbols;
+  float weight; /*the sum of all weights in this coin*/
+} Coin;
+
+static void Coin_init(Coin* c)
+{
+  uivector_init(&c->symbols);
+}
+
+/*argument c is void* so that this dtor can be given as function pointer to the vector resize function*/
+static void Coin_cleanup(void* c)
+{
+  uivector_cleanup(&((Coin*)c)->symbols);
+}
+
+static void Coin_copy(Coin* c1, const Coin* c2)
+{
+  c1->weight = c2->weight;
+  uivector_copy(&c1->symbols, &c2->symbols);
+}
+
+static void addCoins(Coin* c1, const Coin* c2)
+{
+  size_t i;
+  for(i = 0; i < c2->symbols.size; i++) uivector_push_back(&c1->symbols, c2->symbols.data[i]);
+  c1->weight += c2->weight;
+}
+
+/*
+Coin_sort: This uses a simple combsort to sort the data. This function is not critical for
+overall encoding speed and the data amount isn't that large.
+*/
+static void Coin_sort(Coin* data, size_t amount)
+{
+  size_t gap = amount;
+  unsigned char swapped = 0;
+  while((gap > 1) || swapped)
+  {
+    size_t i;
+    gap = (gap * 10) / 13; /*shrink factor 1.3*/
+    if(gap == 9 || gap == 10) gap = 11; /*combsort11*/
+    if(gap < 1) gap = 1;
+    swapped = 0;
+    for(i = 0; i < amount - gap; i++)
+    {
+      size_t j = i + gap;
+      if(data[j].weight < data[i].weight)
+      {
+        float temp = data[j].weight; data[j].weight = data[i].weight; data[i].weight = temp;
+        uivector_swap(&data[i].symbols, &data[j].symbols);
+        swapped = 1;
+      }
+    }
+  }
+}
+
 static unsigned HuffmanTree_fillInCoins(vector* coins, const unsigned* frequencies, unsigned numcodes, size_t sum)
 {
   unsigned i;
@@ -1326,7 +1325,7 @@ static void addLengthDistance(uivector* values, size_t length, size_t distance)
 
 #if 0
 /*the "brute force" version of the encodeLZ7 algorithm, not used anymore, kept here for reference*/
-static void encodeLZ77_brute(uivector* out, const unsigned char* in, size_t insize, unsigned windowSize)
+static unsigned encodeLZ77_brute(uivector* out, const unsigned char* in, size_t insize, unsigned windowSize)
 {
   size_t pos;
   for(pos = 0; pos < insize; pos++)
@@ -1378,24 +1377,33 @@ static void encodeLZ77_brute(uivector* out, const unsigned char* in, size_t insi
       pos += (length - 1);
     }
   } /*end of the loop through each character of input*/
+  return 0;
 }
 #endif
 
-static const unsigned HASH_NUM_VALUES = 65536;
-static const unsigned HASH_NUM_CHARACTERS = 6;
+static const unsigned HASH_NUM_VALUES = 2048;
+static const unsigned HASH_NUM_CHARACTERS = 3;
 static const unsigned HASH_SHIFT = 2;
 /*
-Good and fast values: HASH_NUM_VALUES=65536, HASH_NUM_CHARACTERS=6, HASH_SHIFT=2
-making HASH_NUM_CHARACTERS larger (like 8), makes the file size larger but is a bit faster
-making HASH_NUM_CHARACTERS smaller (like 3), makes the file size smaller but is slower
+The HASH_NUM_CHARACTERS value is used to make encoding faster by using longer
+sequences to generate a hash value from the stream bytes. Setting it to 3
+gives exactly the same compression as the brute force method, since deflate's
+run length encoding starts with lengths of 3. Setting it to higher values,
+like 6, can make the encoding faster (not always though!), but will cause the
+encoding to miss any length between 3 and this value, so that the compression
+may be worse (but this can vary too depending on the image, sometimes it is
+even a bit better instead).
+The HASH_NUM_VALUES is the amount of unique possible hash values that
+combinations of bytes can give, the higher it is the more memory is needed, but
+if it's too low the advantage of hashing is gone.
 */
 
-static unsigned getHash(const unsigned char* data, size_t size, size_t pos)
+static unsigned getHash(const unsigned char* data, size_t size, size_t pos, size_t num)
 {
   unsigned result = 0;
   size_t amount, i;
   if(pos >= size) return 0;
-  amount = HASH_NUM_CHARACTERS;
+  amount = num;
   if(pos + amount >= size) amount = size - pos;
   for(i = 0; i < amount; i++) result ^= (data[pos + i] << (i * HASH_SHIFT));
   return result % HASH_NUM_VALUES;
@@ -1414,6 +1422,30 @@ static unsigned countInitialZeros(const unsigned char* data, size_t size, size_t
   return max_count;
 }
 
+/*push a value to the vector in a circular way. This is to do as if we're extending
+the vector's size forever, but instead the size is limited to maxsize and it wraps
+around, to avoid too large memory size. The pos pointer gets updated to the current
+end (unless updatepos is false, in that case pos is only used to know the current
+value). returns 1 on success, 0 if fail*/
+static unsigned push_circular(uivector* v, unsigned* pos, unsigned value, size_t maxsize, unsigned updatepos)
+{
+  if(v->size < maxsize)
+  {
+    if(!uivector_push_back(v, value)) return 0;
+    if(updatepos) (*pos)++;
+  }
+  else
+  {
+    if(updatepos)
+    {
+      (*pos)++;
+      if((*pos) > maxsize) (*pos) = 1;
+    }
+    v->data[(*pos) - 1] = value;
+  }
+  return 1;
+}
+
 /*
 LZ77-encode the data. Return value is error code. The input are raw bytes, the output
 is in the form of unsigned integers with codes representing for example literal bytes, or
@@ -1426,11 +1458,17 @@ this hash technique is one out of several ways to speed this up.
 static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize, unsigned windowSize)
 {
   /**generate hash table**/
+  /*
+  The hash table is 2-dimensional. For every possible hash value, it contains a list of positions
+  in the data where this hash occured.
+  tablepos1 and tablepos2 remember the last used start and end index in the hash table for each hash value.
+  */
   vector table; /*HASH_NUM_VALUES uivectors; this is what would be an std::vector<std::vector<unsigned> > in C++*/
   uivector tablepos1, tablepos2;
   /*hash 0 indicates a possible common case of a long sequence of zeros, store and use the amount here for a speedup*/
   uivector initialZerosTable;
   unsigned pos, i, error = 0;
+  unsigned hash_num_characters = HASH_NUM_CHARACTERS;
 
   vector_init(&table, sizeof(uivector));
   if(!vector_resize(&table, HASH_NUM_VALUES)) return 9917; /*alloc fail*/
@@ -1452,9 +1490,12 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
   {
     unsigned offset, max_offset; /*the offset represents the distance in LZ77 terminology*/
     unsigned length, tablepos;
-    unsigned hash, initialZeros;
-    unsigned backpos, current_offset, t1, t2, skip, current_length;
+    unsigned hash, initialZeros = 0;
+    unsigned backpos, current_offset, t1, t2, t11, current_length;
     const unsigned char *lastptr, *foreptr, *backptr;
+    uivector* v; /*vector from the hash table we're currently working on*/
+    unsigned hashWindow = windowSize;
+    unsigned numones = 0;
 
     for(pos = 0; pos < insize; pos++)
     {
@@ -1463,43 +1504,45 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
 
       /*search for the longest string. First find out where in the table to start
       (the first value that is in the range from "pos - max_offset" to "pos")*/
-      hash = getHash(in, insize, pos);
-      initialZeros = countInitialZeros(in, insize, pos);
-      if(!uivector_push_back((uivector*)vector_get(&table, hash), pos)) ERROR_BREAK(9920 /*alloc fail*/);
+      hash = getHash(in, insize, pos, hash_num_characters);
+      v = (uivector*)vector_get(&table, hash);
+      if(!push_circular(v, &tablepos2.data[hash], pos, hashWindow, 1)) ERROR_BREAK(9920 /*alloc fail*/);
+      
       if(hash == 0)
       {
-        if(!uivector_push_back(&initialZerosTable, initialZeros)) ERROR_BREAK(9920 /*alloc fail*/);
+        initialZeros = countInitialZeros(in, insize, pos);
+        if(!push_circular(&initialZerosTable, &tablepos2.data[hash], initialZeros, hashWindow, 0))
+          ERROR_BREAK(9920 /*alloc fail*/);
       }
-
-      while(((uivector*)vector_get(&table, hash))->data[tablepos1.data[hash]] < pos - max_offset)
+      
+      while(v->data[tablepos1.data[hash]] < pos - max_offset)
       {
         /*it now points to the first value in the table for which the index is
         larger than or equal to pos - max_offset*/
         tablepos1.data[hash]++;
-      }
-      while(((uivector*)vector_get(&table, hash))->data[tablepos2.data[hash]] < pos)
-      {
-        /*it now points to the first value in the table for which the index is larger than or equal to pos*/
-        tablepos2.data[hash]++;
+        if(tablepos1.data[hash] >= hashWindow) tablepos1.data[hash] = 0;
       }
 
       t1 = tablepos1.data[hash];
-      t2 = tablepos2.data[hash];
+      t2 = tablepos2.data[hash] - 1;
+      if(tablepos2.data[hash] == 0) t2 = hashWindow - 1;
 
       lastptr = &in[insize < pos + MAX_SUPPORTED_DEFLATE_LENGTH ? insize : pos + MAX_SUPPORTED_DEFLATE_LENGTH];
 
-      for(tablepos = tablepos2.data[hash] - 1; tablepos >= t1 && tablepos < t2; tablepos--)
+      t11 = t1 == 0 ? hashWindow - 1 : t1 - 1;
+      for(tablepos = t2 == 0 ? hashWindow - 1 : t2 - 1;
+          tablepos != t2 && tablepos != t11 && tablepos < v->size;
+          tablepos = tablepos == 0 ? hashWindow - 1 : tablepos - 1)
       {
-        backpos = ((uivector*)vector_get(&table, hash))->data[tablepos];
+        backpos = v->data[tablepos];
         current_offset = pos - backpos;
-
         /*test the next characters*/
         foreptr = &in[pos];
         backptr = &in[backpos];
 
         if(hash == 0)
         {
-          skip = initialZerosTable.data[tablepos];
+          unsigned skip = initialZerosTable.data[tablepos];
           if(skip > initialZeros) skip = initialZeros;
           if(skip > insize - pos) skip = insize - pos;
           backptr += skip;
@@ -1519,7 +1562,7 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
           if(current_length == MAX_SUPPORTED_DEFLATE_LENGTH) break;
         }
       }
-
+      
       /**encode it as length/distance pair or literal value**/
       if(length < 3) /*only lengths of 3 or higher are supported as length/distance pair*/
       {
@@ -1531,13 +1574,33 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
         addLengthDistance(out, length, offset);
         for(j = 0; j < length - 1; j++)
         {
+          unsigned* t2p; /*pointer to current tablepos2 element*/
           pos++;
-          local_hash = getHash(in, insize, pos);
-          if(!uivector_push_back((uivector*)vector_get(&table, local_hash), pos)) ERROR_BREAK(9922 /*alloc fail*/);
+          local_hash = getHash(in, insize, pos, hash_num_characters);
+          t2p = &tablepos2.data[local_hash];
+          v = (uivector*)vector_get(&table, local_hash);
+          if(!push_circular(v, t2p, pos, hashWindow, 1)) ERROR_BREAK(9920 /*alloc fail*/);
+          
           if(local_hash == 0)
           {
-            if(!uivector_push_back(&initialZerosTable, countInitialZeros(in, insize, pos)))
+            initialZeros = countInitialZeros(in, insize, pos);
+            if(!push_circular(&initialZerosTable, t2p, initialZeros, hashWindow, 0))
               ERROR_BREAK(9922 /*alloc fail*/);
+          }
+          if(local_hash == 1 && hash_num_characters == 3)
+          {
+            /*
+            If many hash values are getting grouped together in hash value 1, 4, 16, 20, ...,
+            it indicates there are many near-zero values. This is not zero enough to benefit from a speed
+            increase from the initialZerosTable, and makes it very slow. For that case only, switch to
+            hash_num_characters = 6. Value 6 is experimentally found to be fastest. For this particular type
+            of file, the compression isn't even worse, despite the fact that lengths < 6 are now no longer
+            found, and that by changing hash_num_characters not all previously found hash values are still valid.
+            Almost all images compress fast enough and smaller with hash_num_characters = 3, except sine plasma
+            images. Those benefit a lot from this heuristic.
+            */
+            if(numones > 8192 && numones > pos / 16) hash_num_characters = 6;
+            else numones++;
           }
         }
       }
@@ -1759,7 +1822,7 @@ static unsigned deflateDynamic(ucvector* out, const unsigned char* data, size_t 
         for(k = 0; k < num; k++)
         {
           uivector_push_back(&bitlen_lld_e, 16);
-          uivector_push_back(&bitlen_lld_e,    6 - 3);
+          uivector_push_back(&bitlen_lld_e, 6 - 3);
         }
         if(rest >= 3)
         {
@@ -2096,15 +2159,18 @@ static unsigned LodePNG_zlib_compress(unsigned char** out, size_t* outsize, cons
 
 #ifdef LODEPNG_COMPILE_ENCODER
 
+/*this is a good tradeoff between speed and compression ratio*/
+#define DEFAULT_WINDOWSIZE 2048
+
 void LodePNG_CompressSettings_init(LodePNG_CompressSettings* settings)
 {
   /*compress with dynamic huffman tree (not in the mathematical sense, just not the predefined one)*/
   settings->btype = 2;
   settings->useLZ77 = 1;
-  settings->windowSize = 2048; /*this is a good tradeoff between speed and compression ratio*/
+  settings->windowSize = DEFAULT_WINDOWSIZE;
 }
 
-const LodePNG_CompressSettings LodePNG_defaultCompressSettings = {2, 1, 2048};
+const LodePNG_CompressSettings LodePNG_defaultCompressSettings = {2, 1, DEFAULT_WINDOWSIZE};
 
 #endif /*LODEPNG_COMPILE_ENCODER*/
 
@@ -4414,10 +4480,10 @@ static void filterScanline(unsigned char* out, const unsigned char* scanline, co
   size_t i;
   switch(filterType)
   {
-    case 0:
+    case 0: /*None*/
       for(i = 0; i < length; i++) out[i] = scanline[i];
       break;
-    case 1:
+    case 1: /*Sub*/
       if(prevline)
       {
         for(i = 0; i < bytewidth; i++) out[i] = scanline[i];
@@ -4429,7 +4495,7 @@ static void filterScanline(unsigned char* out, const unsigned char* scanline, co
         for(i = bytewidth; i <    length; i++) out[i] = scanline[i] - scanline[i - bytewidth];
       }
       break;
-    case 2:
+    case 2: /*Up*/
       if(prevline)
       {
         for(i = 0; i < length; i++) out[i] = scanline[i] - prevline[i];
@@ -4439,7 +4505,7 @@ static void filterScanline(unsigned char* out, const unsigned char* scanline, co
         for(i = 0; i < length; i++) out[i] = scanline[i];
       }
       break;
-    case 3:
+    case 3: /*Average*/
       if(prevline)
       {
         for(i = 0; i < bytewidth; i++) out[i] = scanline[i] - prevline[i] / 2;
@@ -4451,7 +4517,7 @@ static void filterScanline(unsigned char* out, const unsigned char* scanline, co
         for(i = bytewidth; i < length; i++) out[i] = scanline[i] - scanline[i - bytewidth] / 2;
       }
       break;
-    case 4:
+    case 4: /*Paeth*/
       if(prevline)
       {
         /*paethPredictor(0, prevline[i], 0) is always prevline[i]*/
@@ -4473,21 +4539,12 @@ static void filterScanline(unsigned char* out, const unsigned char* scanline, co
 }
 
 static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, unsigned h,
-                       const LodePNG_InfoColor* info)
+                       const LodePNG_InfoColor* info, const LodePNG_EncodeSettings* settings)
 {
   /*
   For PNG filter method 0
   out must be a buffer with as size: h + (w * h * bpp + 7) / 8, because there are
   the scanlines with 1 extra byte per scanline
-
-  There is a nice heuristic described here: http://www.cs.toronto.edu/~cosmin/pngtech/optipng.html:
-   *  If the image type is Palette, or the bit depth is smaller than 8, then do not filter the image (i.e.
-      use fixed filtering, with the filter None).
-   * (The other case) If the image type is Grayscale or RGB (with or without Alpha), and the bit depth is
-      not smaller than 8, then use adaptive filtering heuristic as follows: independently for each row, apply
-      all five filters and select the filter that produces the smallest sum of absolute values per row.
-
-  Here the above method is used mostly, even though there are cases where adaptive is better for palette too...
   */
 
   unsigned bpp = LodePNG_InfoColor_getBpp(info);
@@ -4497,88 +4554,105 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
   size_t bytewidth = (bpp + 7) / 8;
   const unsigned char* prevline = 0;
   unsigned x, y;
-  unsigned heuristic;
   unsigned error = 0;
 
   if(bpp == 0) return 31; /*error: invalid color type*/
 
-  /*choose heuristic as described above*/
-  if(info->colorType == 3 || info->bitDepth < 8) heuristic = 0;
-  else heuristic = 1;
-
-  if(heuristic == 0) /*None filtertype for everything*/
+  if(!settings->bruteForceFilters)
   {
-    for(y = 0; y < h; y++)
-    {
-      size_t outindex = (1 + linebytes) * y; /*the extra filterbyte added to each row*/
-      size_t inindex = linebytes * y;
-      const unsigned TYPE = 0;
-      out[outindex] = TYPE; /*filter type byte*/
-      filterScanline(&out[outindex + 1], &in[inindex], prevline, linebytes, bytewidth, TYPE);
-      prevline = &in[inindex];
-    }
-  }
-  else if(heuristic == 1) /*adaptive filtering*/
-  {
-    size_t sum[5];
-    ucvector attempt[5]; /*five filtering attempts, one for each filter type*/
-    size_t smallest = 0;
-    unsigned type, bestType = 0;
-
-    for(type = 0; type < 5; type++) ucvector_init(&attempt[type]);
-    for(type = 0; type < 5; type++)
-    {
-      if(!ucvector_resize(&attempt[type], linebytes)) ERROR_BREAK(9949 /*alloc fail*/);
-    }
-
-    if(!error)
+    /*
+    There is a heuristic called the minimum sum of absolute differences heuristic, suggested by the PNG standard:
+       *  If the image type is Palette, or the bit depth is smaller than 8, then do not filter the image (i.e.
+          use fixed filtering, with the filter None).
+       * (The other case) If the image type is Grayscale or RGB (with or without Alpha), and the bit depth is
+         not smaller than 8, then use adaptive filtering heuristic as follows: independently for each row, apply
+         all five filters and select the filter that produces the smallest sum of absolute values per row.
+    */
+    if(info->colorType == 3 || info->bitDepth < 8) /*None filtertype for everything*/
     {
       for(y = 0; y < h; y++)
       {
-        /*try the 5 filter types*/
-        for(type = 0; type < 5; type++)
-        {
-          filterScanline(attempt[type].data, &in[y * linebytes], prevline, linebytes, bytewidth, type);
-
-          /*calculate the sum of the result*/
-          sum[type] = 0;
-          /*note that not all pixels are checked to speed this up while still having probably the best choice*/
-          for(x = 0; x < attempt[type].size; x+=3) sum[type] += attempt[type].data[x];
-
-          /*check if this is smallest sum (or if type == 0 it's the first case so always store the values)*/
-          if(type == 0 || sum[type] < smallest)
-          {
-            bestType = type;
-            smallest = sum[type];
-          }
-        }
-
-        prevline = &in[y * linebytes];
-
-        /*now fill the out values*/
-        out[y * (linebytes + 1)] = bestType; /*the first byte of a scanline will be the filter type*/
-        for(x = 0; x < linebytes; x++) out[y * (linebytes + 1) + 1 + x] = attempt[bestType].data[x];
+        size_t outindex = (1 + linebytes) * y; /*the extra filterbyte added to each row*/
+        size_t inindex = linebytes * y;
+        const unsigned TYPE = 0;
+        out[outindex] = TYPE; /*filter type byte*/
+        filterScanline(&out[outindex + 1], &in[inindex], prevline, linebytes, bytewidth, TYPE);
+        prevline = &in[inindex];
       }
     }
+    else /*adaptive filtering*/
+    {
+      size_t sum[5];
+      ucvector attempt[5]; /*five filtering attempts, one for each filter type*/
+      size_t smallest = 0;
+      unsigned type, bestType = 0;
 
-    for(type = 0; type < 5; type++) ucvector_cleanup(&attempt[type]);
+      for(type = 0; type < 5; type++) ucvector_init(&attempt[type]);
+      for(type = 0; type < 5; type++)
+      {
+        if(!ucvector_resize(&attempt[type], linebytes)) ERROR_BREAK(9949 /*alloc fail*/);
+      }
+
+      if(!error)
+      {
+        for(y = 0; y < h; y++)
+        {
+          /*try the 5 filter types*/
+          for(type = 0; type < 5; type++)
+          {
+            filterScanline(attempt[type].data, &in[y * linebytes], prevline, linebytes, bytewidth, type);
+
+            /*calculate the sum of the result*/
+            sum[type] = 0;
+            /*note that not all pixels are checked to speed this up while still having probably the best choice*/
+            for(x = 0; x < attempt[type].size; x+=3)
+            {
+              /*For differences, each byte should be treated as signed, values above 127 are negative
+              (converted to signed char). Filtertype 0 isn't a difference though, so use unsigned there.
+              This means filtertype 0 is almost never chosen, but that is justified.*/
+              if(type == 0) sum[type] += (unsigned char)(attempt[type].data[x]);
+              else
+              {
+                signed char s = (signed char)(attempt[type].data[x]);
+                sum[type] += s < 0 ? -s : s;
+              }
+            }
+
+            /*check if this is smallest sum (or if type == 0 it's the first case so always store the values)*/
+            if(type == 0 || sum[type] < smallest)
+            {
+              bestType = type;
+              smallest = sum[type];
+            }
+          }
+
+          prevline = &in[y * linebytes];
+
+          /*now fill the out values*/
+          out[y * (linebytes + 1)] = bestType; /*the first byte of a scanline will be the filter type*/
+          for(x = 0; x < linebytes; x++) out[y * (linebytes + 1) + 1 + x] = attempt[bestType].data[x];
+        }
+      }
+
+      for(type = 0; type < 5; type++) ucvector_cleanup(&attempt[type]);
+    }
   }
-#if 0
-  /*disabled experiment:
-  deflate the scanline with a fixed tree after every filter attempt to see which one deflates best.
-  This is very slow and gives only slightly smaller, sometimes even larger, result*/
-  else if(heuristic == 2) /*adaptive filtering by using deflate*/
+  else
   {
+    /*brute force filter chooser.
+    deflate the scanline after every filter attempt to see which one deflates best.
+    This is very slow and gives only slightly smaller, sometimes even larger, result*/
     size_t size[5];
     ucvector attempt[5]; /*five filtering attempts, one for each filter type*/
     size_t smallest;
     unsigned type = 0, bestType = 0;
     unsigned char* dummy;
-    LodePNG_CompressSettings deflatesettings = LodePNG_defaultCompressSettings;
+    LodePNG_CompressSettings zlibsettings = settings->zlibsettings;
     /*use fixed tree on the attempts so that the tree is not adapted to the filtertype on purpose,
     to simulate the true case where the tree is the same for the whole image. Sometimes it gives
-    better result with dynamic tree anyway.*/
-    /*deflatesettings.btype = 1;*/
+    better result with dynamic tree anyway. Using the fixed tree sometimes gives worse, but in rare
+    cases better compression. It does make this a bit less slow, so it's worth doing this.*/
+    zlibsettings.btype = 1;
     for(type = 0; type < 5; type++)
     {
       ucvector_init(&attempt[type]);
@@ -4588,10 +4662,14 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
     {
       for(type = 0; type < 5; type++)
       {
+        unsigned testsize = attempt[type].size;
+        /*unsigned testsize = attempt[type].size / 8;*/ /*it already works good enough by testing a part of the row*/
+        /*if(testsize == 0) testsize = attempt[type].size;*/
+
         filterScanline(attempt[type].data, &in[y * linebytes], prevline, linebytes, bytewidth, type);
         size[type] = 0;
         dummy = 0;
-        LodePNG_zlib_compress(&dummy, &size[type], attempt[type].data, attempt[type].size, &deflatesettings);
+        LodePNG_zlib_compress(&dummy, &size[type], attempt[type].data, testsize, &zlibsettings);
         free(dummy);
         /*check if this is smallest size (or if type == 0 it's the first case so always store the values)*/
         if(type == 0 || size[type] < smallest)
@@ -4606,7 +4684,6 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
     }
     for(type = 0; type < 5; type++) ucvector_cleanup(&attempt[type]);
   }
-#endif
 
   return error;
 }
@@ -4687,7 +4764,7 @@ static void Adam7_interlace(unsigned char* out, const unsigned char* in, unsigne
 /*out must be buffer big enough to contain uncompressed IDAT chunk data, and in must contain the full image.
 return value is error**/
 static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const unsigned char* in,
-                                    const LodePNG_InfoPng* infoPng)
+                                    const LodePNG_InfoPng* infoPng, const LodePNG_EncodeSettings* settings)
 {
   /*
   This function converts the pure 2D image with the PNG's colortype, into filtered-padded-interlaced data. Steps:
@@ -4716,14 +4793,14 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
         if(!error)
         {
           addPaddingBits(padded.data, in, ((w * bpp + 7) / 8) * 8, w * bpp, h);
-          error = filter(*out, padded.data, w, h, &infoPng->color);
+          error = filter(*out, padded.data, w, h, &infoPng->color, settings);
         }
         ucvector_cleanup(&padded);
       }
       else
       {
         /*we can immediatly filter into the out buffer, no other steps needed*/
-        error = filter(*out, in, w, h, &infoPng->color);
+        error = filter(*out, in, w, h, &infoPng->color, settings);
       }
     }
   }
@@ -4758,7 +4835,7 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
             addPaddingBits(&padded.data[padded_passstart[i]], &adam7[passstart[i]],
                            ((passw[i] * bpp + 7) / 8) * 8, passw[i] * bpp, passh[i]);
             error = filter(&(*out)[filter_passstart[i]], &padded.data[padded_passstart[i]],
-                           passw[i], passh[i], &infoPng->color);
+                           passw[i], passh[i], &infoPng->color, settings);
           }
 
           ucvector_cleanup(&padded);
@@ -4766,7 +4843,7 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
         else
         {
           error = filter(&(*out)[filter_passstart[i]], &adam7[padded_passstart[i]],
-                         passw[i], passh[i], &infoPng->color);
+                         passw[i], passh[i], &infoPng->color, settings);
         }
       }
 
@@ -4920,10 +4997,10 @@ void LodePNG_Encoder_encode(LodePNG_Encoder* encoder, unsigned char** out, size_
     {
       encoder->error = LodePNG_convert(converted, image, &info.color, &encoder->infoRaw.color, w, h);
     }
-    if(!encoder->error) preProcessScanlines(&data, &datasize, converted, &info);
+    if(!encoder->error) preProcessScanlines(&data, &datasize, converted, &info, &encoder->settings);
     free(converted);
   }
-  else preProcessScanlines(&data, &datasize, image, &info);
+  else preProcessScanlines(&data, &datasize, image, &info, &encoder->settings);
 
   ucvector_init(&outv);
   while(!encoder->error) /*while only executed once, to break on error*/
@@ -5114,6 +5191,7 @@ unsigned LodePNG_encode24_file(const char* filename, const unsigned char* image,
 void LodePNG_EncodeSettings_init(LodePNG_EncodeSettings* settings)
 {
   LodePNG_CompressSettings_init(&settings->zlibsettings);
+  settings->bruteForceFilters = 0;
   settings->autoLeaveOutAlphaChannel = 1;
   settings->force_palette = 0;
 #ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
