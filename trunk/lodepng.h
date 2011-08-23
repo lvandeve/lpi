@@ -1,5 +1,5 @@
 /*
-LodePNG version 20110817
+LodePNG version 20110823
 
 Copyright (c) 2005-2011 Lode Vandevenne
 
@@ -72,6 +72,14 @@ Further on in the header file are the more advanced functions allowing custom be
 */
 
 #ifdef LODEPNG_COMPILE_PNG
+
+/*constants for the PNG color types. "LCT" = "LodePNG Color Type"*/
+#define LCT_GREY 0 /*PNG color type greyscale*/
+#define LCT_RGB 2 /*PNG color type RGB*/
+#define LCT_PALETTE 3 /*PNG color type palette*/
+#define LCT_GREY_ALPHA 4 /*PNG color type greyscale with alpha*/
+#define LCT_RGBA 6 /*PNG color type RGB with alpha*/
+
 #ifdef LODEPNG_COMPILE_DECODER
 /*
 Converts PNG data in memory to raw pixel data.
@@ -192,14 +200,14 @@ namespace LodePNG
   Return value: LodePNG error code (0 means no error).
   */
   unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h,
-                  const unsigned char* in, size_t insize, unsigned colorType = 6, unsigned bitDepth = 8);
+                  const unsigned char* in, size_t insize, unsigned colorType = LCT_RGBA, unsigned bitDepth = 8);
 
   /*
   Same as the decode function that takes a unsigned char buffer, but instead of giving
   a pointer and a size, this takes the input buffer as an std::vector.
   */
   unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h,
-                  const std::vector<unsigned char>& in, unsigned colorType = 6, unsigned bitDepth = 8);
+                  const std::vector<unsigned char>& in, unsigned colorType = LCT_RGBA, unsigned bitDepth = 8);
 #ifdef LODEPNG_COMPILE_DISK
   /*
   Converts PNG file from disk to raw pixel data in memory.
@@ -214,7 +222,7 @@ namespace LodePNG
   Return value: LodePNG error code (0 means no error).
   */
   unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h,
-                  const std::string& filename, unsigned colorType = 6, unsigned bitDepth = 8);
+                  const std::string& filename, unsigned colorType = LCT_RGBA, unsigned bitDepth = 8);
 #endif //LODEPNG_COMPILE_DISK
 #endif //LODEPNG_COMPILE_DECODER
 
@@ -232,14 +240,14 @@ namespace LodePNG
   Return value: LodePNG error code (0 means no error).
   */
   unsigned encode(std::vector<unsigned char>& out, const unsigned char* in,
-                  unsigned w, unsigned h, unsigned colorType = 6, unsigned bitDepth = 8);
+                  unsigned w, unsigned h, unsigned colorType = LCT_RGBA, unsigned bitDepth = 8);
 
   /*
   Same as the encode function that takes a unsigned char buffer, but instead of giving
   a pointer and a size, this takes the input buffer as an std::vector.
   */
   unsigned encode(std::vector<unsigned char>& out, const std::vector<unsigned char>& in,
-                  unsigned w, unsigned h, unsigned colorType = 6, unsigned bitDepth = 8);
+                  unsigned w, unsigned h, unsigned colorType = LCT_RGBA, unsigned bitDepth = 8);
 #ifdef LODEPNG_COMPILE_DISK
   /*
   Converts 32-bit RGBA raw pixel data into a PNG file on disk.
@@ -254,14 +262,14 @@ namespace LodePNG
   Return value: LodePNG error code (0 means no error).
   */
   unsigned encode(const std::string& filename, const unsigned char* in,
-                  unsigned w, unsigned h, unsigned colorType = 6, unsigned bitDepth = 8);
+                  unsigned w, unsigned h, unsigned colorType = LCT_RGBA, unsigned bitDepth = 8);
 
   /*
   Same as the encode function that takes a unsigned char buffer, but instead of giving
   a pointer and a size, this takes the input buffer as an std::vector.
   */
   unsigned encode(const std::string& filename, const std::vector<unsigned char>& in,
-                  unsigned w, unsigned h, unsigned colorType = 6, unsigned bitDepth = 8);
+                  unsigned w, unsigned h, unsigned colorType = LCT_RGBA, unsigned bitDepth = 8);
 #endif //LODEPNG_COMPILE_DISK
 #endif //LODEPNG_COMPILE_ENCODER
 } //namespace LodePNG
@@ -676,6 +684,16 @@ void LodePNG_Decoder_inspect(LodePNG_Decoder* decoder, const unsigned char* in, 
 typedef struct LodePNG_EncodeSettings
 {
   LodePNG_CompressSettings zlibsettings; /*settings for the zlib encoder, such as window size, ...*/
+
+  /*Brute-force-search PNG filters by compressing each filter for each scanline.
+  This gives better compression, at the cost of being super slow.
+  Don't enable this for normal image saving, compression can take minutes
+  instead of seconds. This is experimental. If enabled, compression still isn't
+  as good as some other PNG encoders and optimizers, except for some images.
+  If you enable this, also consider setting zlibsettings.windowSize to 32768, and consider
+  using a less than 24-bit per pixel colorType if the image has <= 256 colors, for optimal compression.
+  Default: 0 (false)*/
+  unsigned bruteForceFilters;
 
   /*automatically use color type without alpha instead of given one, if given image is opaque*/
   unsigned autoLeaveOutAlphaChannel;
@@ -1375,8 +1393,9 @@ The Encoder assumes by default that the raw input you give it is a 32-bit RGBA
 buffer and will store the PNG as either 32 bit or 24 bit depending on whether
 or not any translucent pixels were detected in it.
 
-To get the default behaviour, don't change the values of LodePNG_InfoRaw and LodePNG_InfoPng of
-the encoder, and don't change the values of LodePNG_InfoRaw of the decoder.
+To get the default behaviour, don't change the values of LodePNG_InfoRaw and
+LodePNG_InfoPng of the encoder, and don't change the values of LodePNG_InfoRaw
+of the decoder.
 
 6.3. Color Conversions
 ----------------------
@@ -1757,6 +1776,10 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 23 aug 2011: tweaked the zlib compression parameters after benchmarking.
+    A bug with the PNG filtertype heuristic was fixed, so that it chooses much
+    better ones (it's quite significant). A setting to do an experimental, slow,
+    brute force search for PNG filter types is added.
 *) 17 aug 2011 (!): changed some C zlib related function names.
 *) 16 aug 2011: made the code less wide (max 120 characters per line).
 *) 17 apr 2011: code cleanup. Bugfixes. Convert low to 16-bit per sample colors.
