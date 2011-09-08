@@ -1,5 +1,5 @@
 /*
-LodePNG version 20110823
+LodePNG version 20110908
 
 Copyright (c) 2005-2011 Lode Vandevenne
 
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*__cplusplus*/
 
-#define VERSION_STRING "20110823"
+#define VERSION_STRING "20110908"
 
 /*
 This source file is built up in the following large parts. The code sections
@@ -1446,6 +1446,11 @@ static unsigned push_circular(uivector* v, unsigned* pos, unsigned value, size_t
   return 1;
 }
 
+/*Enable to use lazy instead of greedy matghing. It looks one byte further
+to see if that one gives a longer distance. This gives slightly better compression, at the cost
+of a speed loss.*/
+#define LAZY_MATCHING
+
 /*
 LZ77-encode the data. Return value is error code. The input are raw bytes, the output
 is in the form of unsigned integers with codes representing for example literal bytes, or
@@ -1490,6 +1495,10 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
   {
     unsigned offset, max_offset; /*the offset represents the distance in LZ77 terminology*/
     unsigned length, tablepos;
+#ifdef LAZY_MATCHING
+    unsigned lazy = 0;
+    unsigned lazylength, lazyoffset;
+#endif /*LAZY_MATCHING*/
     unsigned hash, initialZeros = 0;
     unsigned backpos, current_offset, t1, t2, t11, current_length;
     const unsigned char *lastptr, *foreptr, *backptr;
@@ -1562,6 +1571,32 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
           if(current_length == MAX_SUPPORTED_DEFLATE_LENGTH) break;
         }
       }
+
+#ifdef LAZY_MATCHING
+      if(!lazy && length >= 3 && length < MAX_SUPPORTED_DEFLATE_LENGTH)
+      {
+        lazylength = length;
+        lazyoffset = offset;
+        lazy = 1;
+        continue;
+      }
+      if(lazy)
+      {
+        if(pos == 0) ERROR_BREAK(81);
+        lazy = 0;
+        if(length > lazylength + 1)
+        {
+          /*push the previous character as literal*/
+          if(!uivector_push_back(out, in[pos - 1])) ERROR_BREAK(9921 /*alloc fail*/);
+        }
+        else
+        {
+          length = lazylength;
+          offset = lazyoffset;
+          pos--;
+        }
+      }
+#endif /*LAZY_MATCHING*/
       
       /**encode it as length/distance pair or literal value**/
       if(length < 3) /*only lengths of 3 or higher are supported as length/distance pair*/
@@ -5327,6 +5362,7 @@ const char* LodePNG_error_text(unsigned code)
     case 78: return "failed to open file for reading"; /*file doesn't exist or couldn't be opened for reading*/
     case 79: return "failed to open file for writing";
     case 80: return "tried creating a tree of 0 symbols";
+    case 81: return "lazy matching at pos 0 is impossible";
     default: ; /*nothing to do here, checks for other error values are below*/
   }
 
