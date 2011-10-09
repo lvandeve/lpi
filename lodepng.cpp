@@ -1,5 +1,5 @@
 /*
-LodePNG version 20110908
+LodePNG version 20111009
 
 Copyright (c) 2005-2011 Lode Vandevenne
 
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*__cplusplus*/
 
-#define VERSION_STRING "20110908"
+#define VERSION_STRING "20111009"
 
 /*
 This source file is built up in the following large parts. The code sections
@@ -1381,7 +1381,7 @@ static unsigned encodeLZ77_brute(uivector* out, const unsigned char* in, size_t 
 }
 #endif
 
-static const unsigned HASH_NUM_VALUES = 2048;
+static const unsigned HASH_NUM_VALUES = 65536;
 static const unsigned HASH_NUM_CHARACTERS = 3;
 static const unsigned HASH_SHIFT = 2;
 /*
@@ -1398,18 +1398,18 @@ combinations of bytes can give, the higher it is the more memory is needed, but
 if it's too low the advantage of hashing is gone.
 */
 
-static unsigned getHash(const unsigned char* data, size_t size, size_t pos, size_t num)
+static unsigned getHash(const unsigned char* data, size_t size, size_t pos)
 {
   unsigned result = 0;
   size_t amount, i;
   if(pos >= size) return 0;
-  amount = num;
+  amount = HASH_NUM_CHARACTERS;
   if(pos + amount >= size) amount = size - pos;
   for(i = 0; i < amount; i++) result ^= (data[pos + i] << (i * HASH_SHIFT));
   return result % HASH_NUM_VALUES;
 }
 
-static unsigned countInitialZeros(const unsigned char* data, size_t size, size_t pos)
+static unsigned countZeros(const unsigned char* data, size_t size, size_t pos)
 {
   size_t max_count = MAX_SUPPORTED_DEFLATE_LENGTH;
   size_t i;
@@ -1422,31 +1422,16 @@ static unsigned countInitialZeros(const unsigned char* data, size_t size, size_t
   return max_count;
 }
 
-/*push a value to the vector in a circular way. This is to do as if we're extending
-the vector's size forever, but instead the size is limited to maxsize and it wraps
-around, to avoid too large memory size. The pos pointer gets updated to the current
-end (unless updatepos is false, in that case pos is only used to know the current
-value). returns 1 on success, 0 if fail*/
-static unsigned push_circular(uivector* v, unsigned* pos, unsigned value, size_t maxsize, unsigned updatepos)
+void updateHashChain(unsigned short* hashchain, int* hashhead, int* hashval,
+                     size_t pos, int hash, unsigned windowSize)
 {
-  if(v->size < maxsize)
-  {
-    if(!uivector_push_back(v, value)) return 0;
-    if(updatepos) (*pos)++;
-  }
-  else
-  {
-    if(updatepos)
-    {
-      (*pos)++;
-      if((*pos) > maxsize) (*pos) = 1;
-    }
-    v->data[(*pos) - 1] = value;
-  }
-  return 1;
+  unsigned wpos = pos % windowSize;
+  hashval[wpos] = hash;
+  if(hashhead[hash] != -1) hashchain[wpos] = hashhead[hash];
+  hashhead[hash] = wpos;
 }
 
-/*Enable to use lazy instead of greedy matghing. It looks one byte further
+/*Enable to use lazy instead of greedy matching. It looks one byte further
 to see if that one gives a longer distance. This gives slightly better compression, at the cost
 of a speed loss.*/
 #define LAZY_MATCHING
@@ -1462,128 +1447,113 @@ this hash technique is one out of several ways to speed this up.
 */
 static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize, unsigned windowSize)
 {
-  /**generate hash table**/
-  /*
-  The hash table is 2-dimensional. For every possible hash value, it contains a list of positions
-  in the data where this hash occured.
-  tablepos1 and tablepos2 remember the last used start and end index in the hash table for each hash value.
-  */
-  vector table; /*HASH_NUM_VALUES uivectors; this is what would be an std::vector<std::vector<unsigned> > in C++*/
-  uivector tablepos1, tablepos2;
-  /*hash 0 indicates a possible common case of a long sequence of zeros, store and use the amount here for a speedup*/
-  uivector initialZerosTable;
+  int* hashhead = (int*)malloc(sizeof(int) * HASH_NUM_VALUES);
+  int* hashval = (int*)malloc(sizeof(int) * windowSize);
+  unsigned short* hashchain = (unsigned short*)malloc(sizeof(unsigned short) * windowSize);
+  unsigned short* hashzeros = (unsigned short*)malloc(sizeof(unsigned short) * windowSize);
+  unsigned short numzeros = 0;
+  unsigned numones = 0;
+
   unsigned pos, i, error = 0;
-  unsigned hash_num_characters = HASH_NUM_CHARACTERS;
 
-  vector_init(&table, sizeof(uivector));
-  if(!vector_resize(&table, HASH_NUM_VALUES)) return 9917; /*alloc fail*/
-  for(i = 0; i < HASH_NUM_VALUES; i++)
-  {
-    uivector* v = (uivector*)vector_get(&table, i);
-    uivector_init(v);
-  }
-
-  /*remember start and end positions in the tables to search in*/
-  uivector_init(&tablepos1);
-  uivector_init(&tablepos2);
-  uivector_init(&initialZerosTable);
-
-  if(!uivector_resizev(&tablepos1, HASH_NUM_VALUES, 0)) error = 9918; /*alloc fail*/
-  if(!uivector_resizev(&tablepos2, HASH_NUM_VALUES, 0)) error = 9919; /*alloc fail*/
+  if(!hashhead || !hashval || !hashchain || !hashzeros) error = 9918; /*alloc fail*/
 
   if(!error)
   {
-    unsigned offset, max_offset; /*the offset represents the distance in LZ77 terminology*/
-    unsigned length, tablepos;
+    unsigned offset; /*the offset represents the distance in LZ77 terminology*/
+    unsigned length;
 #ifdef LAZY_MATCHING
     unsigned lazy = 0;
     unsigned lazylength, lazyoffset;
 #endif /*LAZY_MATCHING*/
-    unsigned hash, initialZeros = 0;
-    unsigned backpos, current_offset, t1, t2, t11, current_length;
+    unsigned hash;
+    unsigned current_offset, current_length;
     const unsigned char *lastptr, *foreptr, *backptr;
-    uivector* v; /*vector from the hash table we're currently working on*/
-    unsigned hashWindow = windowSize;
-    unsigned numones = 0;
+    unsigned short hashpos, prevpos;
+
+    /*initialize hash table*/
+    for(i = 0; i < HASH_NUM_VALUES; i++) hashhead[i] = -1;
+    for(i = 0; i < windowSize; i++) hashval[i] = -1;
+    for(i = 0; i < windowSize; i++) hashchain[i] = i; /*same value as index indicates uninitialized*/
 
     for(pos = 0; pos < insize; pos++)
     {
-      length = 0, offset = 0; /*the length and offset found for the current position*/
-      max_offset = pos < windowSize ? pos : windowSize; /*how far back to test*/
-
-      /*search for the longest string. First find out where in the table to start
-      (the first value that is in the range from "pos - max_offset" to "pos")*/
-      hash = getHash(in, insize, pos, hash_num_characters);
-      v = (uivector*)vector_get(&table, hash);
-      if(!push_circular(v, &tablepos2.data[hash], pos, hashWindow, 1)) ERROR_BREAK(9920 /*alloc fail*/);
+      size_t wpos = pos % windowSize; /*position for in 'circular' hash buffers*/
       
+      hash = getHash(in, insize, pos);
+      updateHashChain(hashchain, hashhead, hashval, pos, hash, windowSize);
       if(hash == 0)
       {
-        initialZeros = countInitialZeros(in, insize, pos);
-        if(!push_circular(&initialZerosTable, &tablepos2.data[hash], initialZeros, hashWindow, 0))
-          ERROR_BREAK(9920 /*alloc fail*/);
+        numzeros = countZeros(in, insize, pos);
+        hashzeros[wpos] = numzeros;
       }
       
-      while(v->data[tablepos1.data[hash]] < pos - max_offset)
-      {
-        /*it now points to the first value in the table for which the index is
-        larger than or equal to pos - max_offset*/
-        tablepos1.data[hash]++;
-        if(tablepos1.data[hash] >= hashWindow) tablepos1.data[hash] = 0;
-      }
+      length = 0, offset = 0; /*the length and offset found for the current position*/
 
-      t1 = tablepos1.data[hash];
-      t2 = tablepos2.data[hash] - 1;
-      if(tablepos2.data[hash] == 0) t2 = hashWindow - 1;
-
+      prevpos = hashhead[hash];
+      hashpos = hashchain[prevpos];
+        
       lastptr = &in[insize < pos + MAX_SUPPORTED_DEFLATE_LENGTH ? insize : pos + MAX_SUPPORTED_DEFLATE_LENGTH];
 
-      t11 = t1 == 0 ? hashWindow - 1 : t1 - 1;
-      for(tablepos = t2 == 0 ? hashWindow - 1 : t2 - 1;
-          tablepos != t2 && tablepos != t11 && tablepos < v->size;
-          tablepos = tablepos == 0 ? hashWindow - 1 : tablepos - 1)
+      /*search for the longest string*/
+      if(hashval[wpos] == (int)hash)
       {
-        backpos = v->data[tablepos];
-        current_offset = pos - backpos;
-        /*test the next characters*/
-        foreptr = &in[pos];
-        backptr = &in[backpos];
+        for(;;)
+        {
+          /*stop when went completely around the circular buffer*/
+          if(prevpos < wpos && hashpos > prevpos && hashpos <= wpos) break;
+          if(prevpos > wpos && (hashpos <= wpos || hashpos > prevpos)) break;
 
-        if(hash == 0)
-        {
-          unsigned skip = initialZerosTable.data[tablepos];
-          if(skip > initialZeros) skip = initialZeros;
-          if(skip > insize - pos) skip = insize - pos;
-          backptr += skip;
-          foreptr += skip;
-        }
-        while(foreptr != lastptr && *backptr == *foreptr) /*maximum supported length by deflate is max length*/
-        {
-          ++backptr;
-          ++foreptr;
-        }
-        current_length = (unsigned)(foreptr - &in[pos]);
-        if(current_length > length)
-        {
-          length = current_length; /*the longest length*/
-          offset = current_offset; /*the offset that is related to this longest length*/
-          /*you can jump out of this for loop once a length of max length is found (gives significant speed gain)*/
-          if(current_length == MAX_SUPPORTED_DEFLATE_LENGTH) break;
+          current_offset = hashpos <= wpos ? wpos - hashpos : wpos - hashpos + windowSize;
+
+          if(current_offset > 0) {
+            /*test the next characters*/
+            foreptr = &in[pos];
+            backptr = &in[pos - current_offset];
+            if(hash == 0 && hashval[hashpos] == 0 /*hashval[hashpos] may be out of date*/)
+            {
+              /*common case in PNGs is lots of zeros. Quickly skip over them as a speedup*/
+              unsigned skip = hashzeros[hashpos];
+              if(skip > numzeros) skip = numzeros;
+              if(skip > insize - pos) skip = insize - pos;
+              backptr += skip;
+              foreptr += skip;
+            }
+            while(foreptr != lastptr && *backptr == *foreptr) /*maximum supported length by deflate is max length*/
+            {
+              ++backptr;
+              ++foreptr;
+            }
+            current_length = (unsigned)(foreptr - &in[pos]);
+
+            if(current_length > length)
+            {
+              length = current_length; /*the longest length*/
+              offset = current_offset; /*the offset that is related to this longest length*/
+              /*jump out once a length of max length is found (speed gain)*/
+              if(current_length == MAX_SUPPORTED_DEFLATE_LENGTH) break;
+            }
+          }
+
+          if(hashpos == hashchain[hashpos]) break;
+
+          prevpos = hashpos;
+          hashpos = hashchain[hashpos];
         }
       }
 
 #ifdef LAZY_MATCHING
       if(!lazy && length >= 3 && length < MAX_SUPPORTED_DEFLATE_LENGTH)
       {
+        lazy = 1;
         lazylength = length;
         lazyoffset = offset;
-        lazy = 1;
         continue;
       }
       if(lazy)
       {
-        if(pos == 0) ERROR_BREAK(81);
         lazy = 0;
+        if(pos == 0) ERROR_BREAK(81);
         if(length > lazylength + 1)
         {
           /*push the previous character as literal*/
@@ -1593,6 +1563,7 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
         {
           length = lazylength;
           offset = lazyoffset;
+          hashhead[hash] = -1; /*the same hashchain update will be done, this ensures no wrong alteration*/
           pos--;
         }
       }
@@ -1605,53 +1576,48 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
       }
       else
       {
-        unsigned j, local_hash;
-        addLengthDistance(out, length, offset);
-        for(j = 0; j < length - 1; j++)
+        if(length == 3 && offset > 2048)
         {
-          unsigned* t2p; /*pointer to current tablepos2 element*/
+          /*compensate for the fact that longer offsets have more extra bits, a
+          length of only 3 may be not worth it then*/
+          if(!uivector_push_back(out, in[pos + 0])) ERROR_BREAK(9921 /*alloc fail*/);
+          if(!uivector_push_back(out, in[pos + 1])) ERROR_BREAK(9921 /*alloc fail*/);
+          if(!uivector_push_back(out, in[pos + 2])) ERROR_BREAK(9921 /*alloc fail*/);
+        }
+        else
+        {
+          addLengthDistance(out, length, offset);
+        }
+        for(i = 1; i < length; i++)
+        {
           pos++;
-          local_hash = getHash(in, insize, pos, hash_num_characters);
-          t2p = &tablepos2.data[local_hash];
-          v = (uivector*)vector_get(&table, local_hash);
-          if(!push_circular(v, t2p, pos, hashWindow, 1)) ERROR_BREAK(9920 /*alloc fail*/);
-          
-          if(local_hash == 0)
+          hash = getHash(in, insize, pos);
+          updateHashChain(hashchain, hashhead, hashval, pos, hash, windowSize);
+          if(hash == 0)
           {
-            initialZeros = countInitialZeros(in, insize, pos);
-            if(!push_circular(&initialZerosTable, t2p, initialZeros, hashWindow, 0))
-              ERROR_BREAK(9922 /*alloc fail*/);
+            hashzeros[pos % windowSize] = countZeros(in, insize, pos);
           }
-          if(local_hash == 1 && hash_num_characters == 3)
+          else if(hash == 1)
           {
+            numones++;
             /*
             If many hash values are getting grouped together in hash value 1, 4, 16, 20, ...,
             it indicates there are many near-zero values. This is not zero enough to benefit from a speed
-            increase from the initialZerosTable, and makes it very slow. For that case only, switch to
-            hash_num_characters = 6. Value 6 is experimentally found to be fastest. For this particular type
-            of file, the compression isn't even worse, despite the fact that lengths < 6 are now no longer
-            found, and that by changing hash_num_characters not all previously found hash values are still valid.
-            Almost all images compress fast enough and smaller with hash_num_characters = 3, except sine plasma
-            images. Those benefit a lot from this heuristic.
+            increase from numzeros, and makes it very slow. For that case switch to a different
+            hash scheme which is way faster for this specific case but results in slightly worse compression.
             */
-            if(numones > 8192 && numones > pos / 16) hash_num_characters = 6;
-            else numones++;
+            if(numones == 8192 && numones > pos / 16) windowSize = windowSize < 256 ? windowSize : 256;
           }
         }
       }
+
     } /*end of the loop through each character of input*/
   } /*end of "if(!error)"*/
-
-  /*cleanup*/
-  for(i = 0; i < table.size; i++)
-  {
-    uivector* v = (uivector*)vector_get(&table, i);
-    uivector_cleanup(v);
-  }
-  vector_cleanup(&table);
-  uivector_cleanup(&tablepos1);
-  uivector_cleanup(&tablepos2);
-  uivector_cleanup(&initialZerosTable);
+  
+  free(hashhead);
+  free(hashval);
+  free(hashchain);
+  free(hashzeros);
   return error;
 }
 
