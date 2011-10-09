@@ -1,5 +1,5 @@
 /*
-LodePNG version 20110908
+LodePNG version 20111009
 
 Copyright (c) 2005-2011 Lode Vandevenne
 
@@ -1776,6 +1776,8 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+
+*) 9 okt 2011: simpler hash chain implementation for the encoder.
 *) 8 sep 2011: lz77 encoder lazy matching instead of greedy matching.
 *) 23 aug 2011: tweaked the zlib compression parameters after benchmarking.
     A bug with the PNG filtertype heuristic was fixed, so that it chooses much
