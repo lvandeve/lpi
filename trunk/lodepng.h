@@ -1,5 +1,5 @@
 /*
-LodePNG version 20111009
+LodePNG version 20111106
 
 Copyright (c) 2005-2011 Lode Vandevenne
 
@@ -350,6 +350,8 @@ typedef struct LodePNG_InfoColor
 
   When decoding, by default you can ignore this palette, since LodePNG already
   fills the palette colors in the pixels of the raw RGBA output.
+
+  The palette is only supported for color type 3.
   */
   unsigned char* palette; /*palette in RGBARGBA... order*/
   size_t palettesize; /*palette size in number of colors (amount of bytes is 4 * palettesize)*/
@@ -361,6 +363,8 @@ typedef struct LodePNG_InfoColor
 
   When decoding, by default you can ignore this information, since LodePNG sets
   pixels with this key to transparent already in the raw RGBA output.
+
+  The color key is only supported for color types 0 and 2.
   */
   unsigned key_defined; /*is a transparent color key given? 0 = false, 1 = true*/
   unsigned key_r;       /*red/greyscale component of color key*/
@@ -693,10 +697,10 @@ typedef struct LodePNG_EncodeSettings
   If you enable this, also consider setting zlibsettings.windowSize to 32768, and consider
   using a less than 24-bit per pixel colorType if the image has <= 256 colors, for optimal compression.
   Default: 0 (false)*/
-  unsigned bruteForceFilters;
+  unsigned brute_force_filters;
 
-  /*automatically use color type without alpha instead of given one, if given image is opaque*/
-  unsigned autoLeaveOutAlphaChannel;
+  /*automatically use color type with less bits per pixel if losslessly possible. Default: 1 (true)*/
+  unsigned auto_choose_color;
   /*force creating a PLTE chunk if colortype is 2 or 6 (= a suggested palette).
   If colortype is 3, PLTE is _always_ created.*/
   unsigned force_palette;
@@ -1331,11 +1335,12 @@ format with 4 bytes (unsigned chars) per pixel.
 =Settings=
 
 The following settings are supported (some are in sub-structs):
-*) autoLeaveOutAlphaChannel: when this option is enabled, when you specify a PNG
-color type with alpha channel (not to be confused with the color type of the raw
-image you specify!!), but the encoder detects that all pixels of the given image
-are opaque, then it'll automatically use the corresponding type without alpha
-channel, resulting in a smaller PNG image.
+*) auto_choose_color: when this option is enabled, the encoder will automatically
+choose the smallest possible color type that can encode the colors of all pixels
+without information loss, resulting in a smaller PNG image. The color type you
+specify for the PNG is then ignored, since it is automatically chosen instead.
+It will also automatically use a color key if possible, without discarding
+the RGB information of fully transparent pixels.
 *) btype: the block type for LZ77.
    0 = uncompressed, 1 = fixed huffman tree, 2 = dynamic huffman tree (best compression)
 *) useLZ77: whether or not to use LZ77 for compressed block types
@@ -1356,10 +1361,18 @@ channel, resulting in a smaller PNG image.
 In LodePNG, the color mode (bits, channels and palette) used in the PNG image,
 and the color mode used in the raw data, are separate and independently
 configurable. Therefore, LodePNG needs to do conversions from one color mode to
-another. Not all possible conversions are supported (e.g. converting to a palette
-or a lower bit depth isn't supported). This section will explain which conversions
-are supported and how to configure this. This explains for example when LodePNG
-uses the settings in LodePNG_InfoPng, LodePNG_InfoRaw and Settings.
+another. Not all possible conversions are supported, e.g. converting color to
+greyscale isn't allowed because it would remove information.
+
+By default, when decoding, you get the raw image in 32-bit RGBA color, no matter
+what color type the PNG has. And by default when encoding, LodePNG automatically
+picks the best color model for the output PNG, and expects the input image to be
+32-bit RGBA. So, unless you want to control the color format of the encoded or
+decoded image yourself, you can skip this chapter.
+
+This section will explain which conversions are supported and how to configure
+this. This explains for example when LodePNG uses the settings in
+LodePNG_InfoPng, LodePNG_InfoRaw and Settings.
 
 6.1. PNG color types
 --------------------
@@ -1379,17 +1392,17 @@ The PNG specification mentions the following color types:
 6: RGBA, bit depths 8 and 16
 
 Bit depth is the amount of bits per pixel per color channel. So the total amount
-of bits per pixel = amount of channels * bitDepth.
+of bits per pixel is: amount of channels * bitDepth.
 
 6.2. Default Behaviour of LodePNG
 ---------------------------------
 
-By default, the Decoder will convert the data from the PNG to 32-bit RGBA color,
+By default, the decoder will convert the data from the PNG to 32-bit RGBA color,
 no matter what color type the PNG has, so that the result can be used directly
 as a texture in OpenGL etc... without worries about what color type the original
 image has.
 
-The Encoder assumes by default that the raw input you give it is a 32-bit RGBA
+The encoder assumes by default that the raw input you give it is a 32-bit RGBA
 buffer and will store the PNG as either 32 bit or 24 bit depending on whether
 or not any translucent pixels were detected in it.
 
@@ -1405,11 +1418,29 @@ color types and bit depths in LodePNG_InfoPng and LodePNG_InfoRaw, to change the
 explained above. (for the Decoder you can only specify the LodePNG_InfoRaw, because the
 LodePNG_InfoPng contains what the PNG file has).
 
+If, when decoding, you want the image to be something else than 32-bit RGBA,
+you need to set the color type and bit depht you want in the LodePNG_InfoRaw, or
+the parameters of the shortcut function of LodePNG you're using.
+
+If, when encoding, you use another color type than 32-bit RGBA in the input image,
+you need to specify its color type and bit depth in the LodePNG_InfoRaw of the
+encoder, or use the parameters of the shortcut encoder function of LodePNG you're
+using.
+
+If, when encoding, you don't want LodePNG to choose the output PNG color type but
+control it yourself, you need to set auto_choose_color in the encoder settings to 0,
+and specify the color type you want in the LodePNG_InfoPng of the encoder.
+
+If you do any of the above, LodePNG may need to do a color conversion, which follows
+the rules below, and may sometimes not be allowed.
+
 To avoid some confusion:
--the Decoder converts from PNG to raw image
--the Encoder converts from raw image to PNG
+-the decoder converts from PNG to raw image
+-the encoder converts from raw image to PNG
 -the color type and bit depth in LodePNG_InfoRaw, are those of the raw image
 -the color type and bit depth in LodePNG_InfoPng, are those of the PNG
+-when encoding, the color type in LodePNG_InfoPng is ignored if auto_choose_color
+is enabled, it is automatically generated instead
 -if the color type of the LodePNG_InfoRaw and PNG image aren't the same, a conversion
 between the color types is done if the color types are supported. If it is not
 supported, an error is returned. If the types are the same, no conversion is done
@@ -1421,11 +1452,16 @@ Supported color conversions:
 suport the same color types at the input and the output. So the decoder supports
 any type of PNG image and can convert it to certain types of raw image, while the
 encoder supports any type of raw data but only certain color types for the output PNG.
--The converter can convert from _any_ input color type, to 24-bit RGB or 32-bit RGBA (8 bits per channel)
--The converter can convert from _any_ input color type, to 48-bit RGB or 64-bit RGBA (16 bits per channel)
--The converter can convert from greyscale input color type, to 8-bit greyscale or greyscale with alpha
--The converter can convert from greyscale input color type, to 16-bit greyscale or greyscale with alpha
--If both color types are the same, conversion from anything to anything is possible
+-Any input color type, to 24-bit RGB or 32-bit RGBA (8 bits per channel)
+-Any input color type, to 48-bit RGB or 64-bit RGBA (16 bits per channel)
+-Greyscale input color type, to 8-bit greyscale or greyscale with alpha
+-Greyscale input color type, to 16-bit greyscale or greyscale with alpha
+-Any input color type, to 1, 2, 4, 8-bit greyscale or greyscale with alpha, but only
+ if the input image only contains white, grey or black colors, and for lower bitdepth outputs,
+ only if the input image contains grey values that can be represented with so few bits
+-Any input color type, to 1, 2, 4 or 8-bit palette, but only if the correct palette colors
+ are already calculated and the input image only contains colors that fit this palette
+-If both color types are the same, conversion from anything to itself is possible
 -Color types that are invalid according to the PNG specification are not allowed
 -When converting from a type with alpha channel to one without, the alpha channel information is discarded
 -When converting from a type without alpha channel to one with, the result will be opaque except
@@ -1458,7 +1494,7 @@ normally isn't needed since the encoder and decoder already call it.
 
 In the PNG file format, if a less than 8-bit per pixel color type is used and the scanlines
 have a bit amount that isn't a multiple of 8, then padding bits are used so that each
-scanline starts at a fresh byte. But that is NOT true for the LodePNG input and output!
+scanline starts at a fresh byte. But that is NOT true for the LodePNG raw input and output.
 The raw input image you give to the encoder, and the raw output image you get from the decoder
 will NOT have these padding bits, e.g. in the case of a 1-bit image with a width
 of 7 pixels, the first pixel of the second scanline will the the 8th bit of the first byte,
@@ -1777,6 +1813,9 @@ Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
 
+*) 6 nov 2011 (!): By default, the encoder now automatically chooses the best
+    PNG color model and bit depth, based on the amount and type of colors of the
+    raw image. For this, autoLeaveOutAlphaChannel replaced by auto_choose_color.
 *) 9 okt 2011: simpler hash chain implementation for the encoder.
 *) 8 sep 2011: lz77 encoder lazy matching instead of greedy matching.
 *) 23 aug 2011: tweaked the zlib compression parameters after benchmarking.
