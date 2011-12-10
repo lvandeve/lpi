@@ -597,7 +597,7 @@ static unsigned HuffmanTree_make2DTree(HuffmanTree* tree)
     for(i = 0; i < tree->lengths.data[n]; i++) /*the bits for this code*/
     {
       unsigned char bit = (unsigned char)((tree->tree1d.data[n] >> (tree->lengths.data[n] - i - 1)) & 1);
-      if(treepos > tree->numcodes - 2) return 55; /*error 55: oversubscribed; see description in header*/
+      if(treepos > tree->numcodes - 2) return 55; /*oversubscribed, see comment in LodePNG_error_text*/
       if(tree->tree2d.data[2 * treepos + bit] == 32767) /*not yet filled in*/
       {
         if(i + 1 == tree->lengths.data[n]) /*last bit*/
@@ -1023,10 +1023,11 @@ static unsigned getTreeInflateDynamic(HuffmanTree* tree_ll, HuffmanTree* tree_d,
         unsigned value; /*set value to the previous code*/
 
         if((*bp) >> 3 >= inlength) ERROR_BREAK(50); /*error, bit pointer jumps past memory*/
+        if (i == 0) ERROR_BREAK(54); /*can't repeat previous if i is 0*/
 
         replength += readBitsFromStream(bp, in, 2);
 
-        if((i - 1) < HLIT) value = bitlen_ll.data[i - 1];
+        if(i < HLIT + 1) value = bitlen_ll.data[i - 1];
         else value = bitlen_d.data[i - HLIT - 1];
         /*repeat this value in the next lengths*/
         for(n = 0; n < replength; n++)
@@ -1121,7 +1122,7 @@ static unsigned inflateHuffmanBlock(ucvector* out, const unsigned char* in, size
     error = getTreeInflateDynamic(&tree_ll, &tree_d, in, bp, inlength);
   }
 
-  for(;;) /*decode all symbols until end reached*/
+  while(!error) /*decode all symbols until end reached, breaks at end code*/
   {
     /*code_ll is literal, length or end code*/
     unsigned code_ll = huffmanDecodeSymbol(in, bp, &tree_ll, inbitlength);
@@ -6219,6 +6220,7 @@ const char* LodePNG_error_text(unsigned code)
     case 51: return "jumped past memory while inflating huffman block";
     case 52: return "jumped past memory while inflating";
     case 53: return "size of zlib data too small";
+    case 54: return "repeat symbol in tree while there was no value symbol yet";
 
     /*jumped past tree while generating huffman tree, this could be when the
     tree will have more leaves than symbols after generating it out of the
