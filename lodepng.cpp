@@ -989,7 +989,7 @@ static unsigned getTreeInflateDynamic(HuffmanTree* tree_ll, HuffmanTree* tree_d,
   while(!error)
   {
     /*read the code length codes out of 3 * (amount of code length codes) bits*/
-    
+
     if(!uivector_resize(&bitlen_cl, NUM_CODE_LENGTH_CODES)) ERROR_BREAK(9911);
 
     for(i = 0; i < NUM_CODE_LENGTH_CODES; i++)
@@ -1140,7 +1140,7 @@ static unsigned inflateHuffmanBlock(ucvector* out, const unsigned char* in, size
       unsigned code_d, distance;
       unsigned numextrabits_l, numextrabits_d; /*extra bits for length and distance*/
       size_t start, forward, backward, length;
-      
+
       /*part 1: get length base*/
       length = LENGTHBASE[code_ll - FIRST_LENGTH_CODE_INDEX];
 
@@ -1260,7 +1260,7 @@ static unsigned LodePNG_inflate(ucvector* out, const unsigned char* in, size_t i
 
     if(error) return error;
   }
-  
+
   /*Only now we know the true size of out, resize it to that*/
   if(!ucvector_resize(out, pos)) error = 9916; /*alloc fail*/
 
@@ -1479,7 +1479,7 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
     for(pos = 0; pos < insize; pos++)
     {
       size_t wpos = pos % windowSize; /*position for in 'circular' hash buffers*/
-      
+
       hash = getHash(in, insize, pos);
       updateHashChain(hashchain, hashhead, hashval, pos, hash, windowSize);
       if(hash == 0)
@@ -1487,12 +1487,12 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
         numzeros = countZeros(in, insize, pos);
         hashzeros[wpos] = numzeros;
       }
-      
+
       length = 0, offset = 0; /*the length and offset found for the current position*/
 
       prevpos = hashhead[hash];
       hashpos = hashchain[prevpos];
-        
+
       lastptr = &in[insize < pos + MAX_SUPPORTED_DEFLATE_LENGTH ? insize : pos + MAX_SUPPORTED_DEFLATE_LENGTH];
 
       /*search for the longest string*/
@@ -1568,7 +1568,7 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
         }
       }
 #endif /*LAZY_MATCHING*/
-      
+
       /**encode it as length/distance pair or literal value**/
       if(length < 3) /*only lengths of 3 or higher are supported as length/distance pair*/
       {
@@ -1613,7 +1613,7 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
 
     } /*end of the loop through each character of input*/
   } /*end of "if(!error)"*/
-  
+
   free(hashhead);
   free(hashval);
   free(hashchain);
@@ -1709,7 +1709,7 @@ static unsigned deflateDynamic(ucvector* out, const unsigned char* data, size_t 
   of code lengths "cl". The code lenghts used to describe this third tree are
   the code length code lengths ("clcl").
   */
-  
+
   /*The lz77 encoded data, represented with integers since there will also be length and distance codes in it*/
   uivector lz77_encoded;
   HuffmanTree tree_ll; /*tree for lit,len values*/
@@ -1727,7 +1727,7 @@ static unsigned deflateDynamic(ucvector* out, const unsigned char* data, size_t 
 
   /*
   Due to the huffman compression of huffman tree representations ("two levels"), there are some anologies:
-  bitlen_lld is to tree_cl what data is to tree_ll and tree_d. 
+  bitlen_lld is to tree_cl what data is to tree_ll and tree_d.
   bitlen_lld_e is to bitlen_lld what lz77_encoded is to data.
   bitlen_cl is to bitlen_lld_e what bitlen_lld is to lz77_encoded.
   */
@@ -1868,7 +1868,7 @@ static unsigned deflateDynamic(ucvector* out, const unsigned char* data, size_t 
 
     /*
     Write everything into the output
-    
+
     After the BFINAL and BTYPE, the dynamic block consists out of the following:
     - 5 bits HLIT, 5 bits HDIST, 4 bits HCLEN
     - (HCLEN+4)*3 bits code lengths of code length alphabet
@@ -3302,7 +3302,7 @@ static unsigned LodePNG_convert_palette(unsigned char* out, const unsigned char*
   {
     void** tree = (void**)malloc(256 * sizeof(void*));
     for(k = 0; k < 256; k++) tree[k] = 0;
-    
+
     for(i = 0; i < palettesize; i++)
     {
       void** tree2 = tree;
@@ -3311,6 +3311,7 @@ static unsigned LodePNG_convert_palette(unsigned char* out, const unsigned char*
         unsigned char v = palette[i * 4 + j];
         if(!tree2[v])
         {
+          /* Store the palette index itself in the deepest pointer. */
           if(j == 3) tree2[v] = (void**)i;
           else
           {
@@ -3360,7 +3361,9 @@ static unsigned LodePNG_convert_palette(unsigned char* out, const unsigned char*
       tree2 = (void**)tree[r]; if(!tree2) return 82 /*error: color not in palette*/;
       tree2 = (void**)tree2[g]; if(!tree2) return 82 /*error: color not in palette*/;
       tree2 = (void**)tree2[b]; if(!tree2) return 82 /*error: color not in palette*/;
-      palette_index = (unsigned)tree2[a]; if(palette_index > 255) return 82 /*error: color not in palette*/;
+      /* Extract integer from the void pointer */
+      /* TODO: this is not very portable. Use something else than storing an integer value in a void**. */
+      palette_index = (size_t)tree2[a]; if(palette_index > 255) return 82 /*error: color not in palette*/;
       if(palettebits == 8) out[i] = palette_index;
       else addColorBits(out, i, palettebits, palette_index);
     }
@@ -3373,9 +3376,9 @@ static unsigned LodePNG_convert_palette(unsigned char* out, const unsigned char*
     unsigned char* pal = (unsigned char*)(malloc(256));
     unsigned highest = ((1U << infoIn->bitDepth) - 1U); /*highest possible value for this bit depth*/
     size_t bp = 0;
-    
+
     for(i = 0; i < palettesize; i++) pal[palette[i * 4]] = i;
-    
+
     for(i = 0; i < numpixels; i++)
     {
       unsigned grey;
@@ -3386,11 +3389,11 @@ static unsigned LodePNG_convert_palette(unsigned char* out, const unsigned char*
         unsigned value = readBitsFromReversedStream(&bp, in, infoIn->bitDepth);
         grey = ((value * 255) / highest);
       }
-      
+
       if(palettebits == 8) out[i] = pal[grey];
       else addColorBits(out, i, palettebits, pal[grey]);
     }
-    
+
     free(pal);
   }
   /*palette-to-palette*/
@@ -3411,13 +3414,13 @@ static unsigned LodePNG_convert_palette(unsigned char* out, const unsigned char*
         }
       }
     }
-    
+
     for(i = 0; i < numpixels; i++)
     {
       unsigned value;
       if(infoIn->bitDepth == 8) value = in[i];
       else value = readBitsFromReversedStream(&bp, in, infoIn->bitDepth);
-      
+
       if(palettebits == 8) out[i] = pal[value];
       else addColorBits(out, i, palettebits, pal[value]);
     }
@@ -3542,7 +3545,7 @@ unsigned LodePNG_convert(unsigned char* out, const unsigned char* in, LodePNG_In
   unsigned bytes = LodePNG_InfoColor_getBpp(infoOut) / 8; /*bytes per pixel in the output image*/
   unsigned alpha = LodePNG_InfoColor_isAlphaType(infoOut); /*use 8-bit alpha channel*/
   unsigned error = 0;
-  
+
   /*cases where in and out already have the same format*/
   if(LodePNG_InfoColor_equal(infoIn, infoOut))
   {
@@ -5599,7 +5602,7 @@ static size_t countColorsChanneled(unsigned char* palette_out,
       if(count < 256)
       {
         getPixelColorRGBA8(&palette_out[4 * count + 0], &palette_out[4 * count + 1],
-                           &palette_out[4 * count + 2], &palette_out[4 * count + 3], 
+                           &palette_out[4 * count + 2], &palette_out[4 * count + 3],
                            image, i, info);
       }
       count++;
@@ -5629,7 +5632,7 @@ static size_t countColorsLowDepth(unsigned char* palette_out,
     {
       count++;
       getPixelColorRGBA8(&palette_out[4 * count + 0], &palette_out[4 * count + 1],
-                         &palette_out[4 * count + 2], &palette_out[4 * count + 3], 
+                         &palette_out[4 * count + 2], &palette_out[4 * count + 3],
                          image, i, info);
     }
     colors[color] = 1;
@@ -5711,7 +5714,7 @@ static unsigned getRequiredBits(const unsigned char* image, unsigned w, unsigned
   size_t i, numpixels = w * h;
   unsigned char r, g, b, a;
   unsigned best = 1;
-  
+
   if(info->bitDepth == 16)
   {
     if(info->colorType == 0)
@@ -5817,7 +5820,7 @@ void doAutoChooseColor(LodePNG_InfoColor* infoOut,
           infoOut->bitDepth = countbits;
           infoOut->colorType = 3;
           for(i = 0; i < count; i++)
-            LodePNG_InfoColor_addPalette(infoOut, palette[i * 4 + 0], palette[i * 4 + 1], 
+            LodePNG_InfoColor_addPalette(infoOut, palette[i * 4 + 0], palette[i * 4 + 1],
                                          palette[i * 4 + 2], palette[i * 4 + 3]);
         }
       }
@@ -5828,7 +5831,7 @@ void doAutoChooseColor(LodePNG_InfoColor* infoOut,
           infoOut->bitDepth = countbits;
           infoOut->colorType = 3;
           for(i = 0; i < count; i++)
-            LodePNG_InfoColor_addPalette(infoOut, palette[i * 4 + 0], palette[i * 4 + 1], 
+            LodePNG_InfoColor_addPalette(infoOut, palette[i * 4 + 0], palette[i * 4 + 1],
                                          palette[i * 4 + 2], palette[i * 4 + 3]);
         }
         else
@@ -5845,7 +5848,7 @@ void doAutoChooseColor(LodePNG_InfoColor* infoOut,
         infoOut->bitDepth = countbits;
         infoOut->colorType = 3;
         for(i = 0; i < count; i++)
-          LodePNG_InfoColor_addPalette(infoOut, palette[i * 4 + 0], palette[i * 4 + 1], 
+          LodePNG_InfoColor_addPalette(infoOut, palette[i * 4 + 0], palette[i * 4 + 1],
                                        palette[i * 4 + 2], palette[i * 4 + 3]);
       }
       else
@@ -6180,7 +6183,7 @@ const char* LodePNG_error_text(unsigned code)
      all the pixels of the image, given the color depth and image dimensions. Something that doesn't
      happen in a normal, well encoded, PNG image.*/
     case 22: return "end of out buffer memory reached while inflating";
-    
+
     case 23: return "end of in buffer memory reached while inflating";
     case 24: return "invalid FCHECK in zlib header";
     case 25: return "invalid compression method in zlib header";
@@ -6221,7 +6224,7 @@ const char* LodePNG_error_text(unsigned code)
     tree will have more leaves than symbols after generating it out of the
     given lenghts. They call this an oversubscribed dynamic bit lengths tree in zlib.*/
     case 55: return "jumped past tree while generating huffman tree";
-    
+
     case 56: return "given output image colorType or bitDepth not supported for color conversion";
     case 57: return "invalid CRC encountered (checking CRC can be disabled)";
     case 58: return "invalid ADLER32 encountered (checking ADLER32 can be disabled)";
@@ -6232,7 +6235,7 @@ const char* LodePNG_error_text(unsigned code)
     case 62: return "conversion from color to greyscale not supported";
     case 63: return "length of a chunk too long, max allowed for PNG is 2147483647 bytes per chunk"; /*(2^31-1)*/
     /*this would result in the inability of a deflated block to ever contain an end code. It must be at least 1.*/
-    case 64: return "the length of the END symbol 256 in the Huffman tree is 0"; 
+    case 64: return "the length of the END symbol 256 in the Huffman tree is 0";
     case 66: return "the length of a text chunk keyword given to the encoder is longer than the maximum of 79 bytes";
     case 67: return "the length of a text chunk keyword given to the encoder is smaller than the minimum of 1 byte";
     case 68: return "tried to encode a PLTE chunk with a palette that has less than 1 or more than 256 colors";
