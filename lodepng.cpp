@@ -1,7 +1,7 @@
 /*
-LodePNG version 20111210
+LodePNG version 20120417
 
-Copyright (c) 2005-2011 Lode Vandevenne
+Copyright (c) 2005-2012 Lode Vandevenne
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any damages
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*__cplusplus*/
 
-#define VERSION_STRING "20111210"
+#define VERSION_STRING "20120417"
 
 /*
 This source file is built up in the following large parts. The code sections
@@ -1453,7 +1453,6 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
   unsigned short* hashchain = (unsigned short*)malloc(sizeof(unsigned short) * windowSize);
   unsigned short* hashzeros = (unsigned short*)malloc(sizeof(unsigned short) * windowSize);
   unsigned short numzeros = 0;
-  unsigned numones = 0;
 
   unsigned pos, i, error = 0;
 
@@ -1597,17 +1596,6 @@ static unsigned encodeLZ77(uivector* out, const unsigned char* in, size_t insize
           if(hash == 0)
           {
             hashzeros[pos % windowSize] = countZeros(in, insize, pos);
-          }
-          else if(hash == 1)
-          {
-            numones++;
-            /*
-            If many hash values are getting grouped together in hash value 1, 4, 16, 20, ...,
-            it indicates there are many near-zero values. This is not zero enough to benefit from a speed
-            increase from numzeros, and makes it very slow. For that case switch to a different
-            hash scheme which is way faster for this specific case but results in slightly worse compression.
-            */
-            if(numones == 8192 && numones > pos / 16) windowSize = windowSize < 256 ? windowSize : 256;
           }
         }
       }

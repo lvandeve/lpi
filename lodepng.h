@@ -1,5 +1,5 @@
 /*
-LodePNG version 20111210
+LodePNG version 20120417
 
 Copyright (c) 2005-2011 Lode Vandevenne
 
@@ -1813,6 +1813,7 @@ Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
 
+*) 17 apr 2012: Fixed compression data corruption bug.
 *) 6 nov 2011 (!): By default, the encoder now automatically chooses the best
     PNG color model and bit depth, based on the amount and type of colors of the
     raw image. For this, autoLeaveOutAlphaChannel replaced by auto_choose_color.
