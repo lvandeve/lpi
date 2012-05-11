@@ -1,5 +1,5 @@
 /*
-LodePNG version 20120422
+LodePNG version 20120506
 
 Copyright (c) 2005-2012 Lode Vandevenne
 
@@ -37,8 +37,7 @@ freely, subject to the following restrictions:
 The following #defines are used to create code sections. They can be disabled
 to disable code sections, which can give faster compile time and smaller binary.
 */
-
-/*deflate&zlib. If disabled, you can plug in another in the source file.*/
+/*deflate&zlib. If disabled, you need to define two zlib functions, see documtation of LODEPNG_CUSTOM_ZLIB_... below*/
 #define LODEPNG_COMPILE_ZLIB
 /*png encoder and png decoder*/
 #define LODEPNG_COMPILE_PNG
@@ -57,8 +56,36 @@ to disable code sections, which can give faster compile time and smaller binary.
 #define LODEPNG_COMPILE_CPP
 #endif
 
-#ifdef LODEPNG_COMPILE_PNG
+/*
+custom zlib decoder (if LODEPNG_COMPILE_ZLIB is disabled, this is ignored, always treated as "1"):
+0: not custom, use LodePNG's zlib decoder
+1: allow using custom zlib decoder with a setting
+--> you must then provide following function in your source files that LodePNG will link to:
+  unsigned lodepng_custom_inflate(unsigned char**, size_t*, const unsigned char*, size_t,
+                                  const LodePNGDecompressSettings*)
+2: allow using custom deflate decoder with a setting
+--> you must then provide following function in your source files that LodePNG will link to:
+  unsigned lodepng_custom_zlib_decompress(unsigned char**, size_t*, const unsigned char*, size_t,
+                                          const LodePNGDecompressSettings*)
+*/
+#define LODEPNG_CUSTOM_ZLIB_DECODER 0
 
+/*
+custom zlib encoder (if LODEPNG_COMPILE_ZLIB is disabled, this is ignored, always treated as "1"):
+0: not custom, use LodePNG's zlib encoder
+1: allow using custom zlib encoder with a setting
+--> you must then provide following function in your source files that LodePNG will link to:
+  unsigned lodepng_custom_deflate(unsigned char**, size_t*, const unsigned char*, size_t,
+                                  const LodePNGCompressSettings*)
+2: allow using custom deflate encoder with a setting
+--> you must then provide following function in your source files that LodePNG will link to:
+  unsigned lodepng_custom_zlib_compress(unsigned char**, size_t*, const unsigned char*, size_t,
+                                        const LodePNGCompressSettings*)
+*/
+#define LODEPNG_CUSTOM_ZLIB_ENCODER 0
+
+
+#ifdef LODEPNG_COMPILE_PNG
 /*The PNG color types (also used for raw).*/
 typedef enum LodePNGColorType
 {
@@ -223,6 +250,7 @@ const char* lodepng_error_text(unsigned code);
 typedef struct LodePNGDecompressSettings
 {
   unsigned ignore_adler32; /*if 1, continue and don't give an error message if the Adler32 checksum is corrupted*/
+  unsigned custom_decoder; /*use custom decoder if LODEPNG_CUSTOM_ZLIB_DECODER and LODEPNG_COMPILE_ZLIB are enabled*/
 } LodePNGDecompressSettings;
 
 extern const LodePNGDecompressSettings lodepng_default_decompress_settings;
@@ -240,6 +268,7 @@ typedef struct LodePNGCompressSettings /*deflate = compress*/
   unsigned btype; /*the block type for LZ (0, 1, 2 or 3, see zlib standard). Should be 2 for proper compression.*/
   unsigned use_lz77; /*whether or not to use LZ77. Should be 1 for proper compression.*/
   unsigned windowsize; /*the maximum is 32768, higher gives more compression but is slower. Typical value: 2048.*/
+  unsigned custom_encoder; /*use custom encoder if LODEPNG_CUSTOM_ZLIB_DECODER and LODEPNG_COMPILE_ZLIB are enabled*/
 } LodePNGCompressSettings;
 
 extern const LodePNGCompressSettings lodepng_default_compress_settings;
@@ -647,7 +676,9 @@ part of zlib that is required for PNG, it does not support dictionaries.
 
 #ifdef LODEPNG_COMPILE_DECODER
 /*Inflate a buffer. Inflate is the decompression step of deflate. Out buffer must be freed after use.*/
-unsigned lodepng_inflate(unsigned char** out, size_t* outsize, const unsigned char* in, size_t insize);
+unsigned lodepng_inflate(unsigned char** out, size_t* outsize,
+                         const unsigned char* in, size_t insize,
+                         const LodePNGDecompressSettings* settings);
 
 /*
 Decompresses Zlib data. Reallocates the out buffer and appends the data. The
@@ -656,7 +687,8 @@ Either, *out must be NULL and *outsize must be 0, or, *out must be a valid
 buffer and *outsize its size in bytes. out must be freed by user after usage.
 */
 unsigned lodepng_zlib_decompress(unsigned char** out, size_t* outsize,
-                                 const unsigned char* in, size_t insize, const LodePNGDecompressSettings* settings);
+                                 const unsigned char* in, size_t insize,
+                                 const LodePNGDecompressSettings* settings);
 #endif /*LODEPNG_COMPILE_DECODER*/
 
 #ifdef LODEPNG_COMPILE_ENCODER
@@ -668,7 +700,8 @@ Either, *out must be NULL and *outsize must be 0, or, *out must be a valid
 buffer and *outsize its size in bytes. out must be freed by user after usage.
 */
 unsigned lodepng_zlib_compress(unsigned char** out, size_t* outsize,
-                               const unsigned char* in, size_t insize, const LodePNGCompressSettings* settings);
+                               const unsigned char* in, size_t insize,
+                               const LodePNGCompressSettings* settings);
 
 /*
 Find length-limited Huffman code for given frequencies. This function is in the
@@ -1438,6 +1471,7 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 6 may 2012 (!): Made plugging in custom zlib/deflate functions more flexible.
 *) 22 apr 2012 (!): Made interface more consistent, renaming a lot. Removed
     redundant C++ codec classes. Reduced amount of structs. Everything changed,
     but it is cleaner now imho and functionality remains the same. Also fixed

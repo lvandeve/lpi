@@ -1,5 +1,5 @@
 /*
-LodePNG version 20120422
+LodePNG version 20120506
 
 Copyright (c) 2005-2012 Lode Vandevenne
 
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*LODEPNG_COMPILE_CPP*/
 
-#define VERSION_STRING "20120422"
+#define VERSION_STRING "20120506"
 
 /*
 This source file is built up in the following large parts. The code sections
@@ -47,6 +47,34 @@ with the "LODEPNG_COMPILE_" #defines divide this up further in an intermixed way
 -C Code for PNG (file format chunks, adam7, PNG filters, color conversions, ...)
 -The C++ wrapper around all of the above
 */
+
+/*
+Declaration of the custom functions used if LODEPNG_COMPILE_ZLIB isn't defined
+or LODEPNG_CUSTOM_ZLIB_DECODER or LODEPNG_CUSTOM_ZLIB_ENCODER are enabled.
+
+In that case, you need to define these yourself (which you can do in one of your
+own source files) so that LodePNG can link to it.
+
+By default, this is not needed. If LODEPNG_COMPILE_ZLIB isn't defined, then only
+the two zlib related ones are needed.
+
+If needed, the functions must act as follows:
+*out must be NULL and *outsize must be 0 initially, and after the function is done,
+*out must point to the decompressed data, *outsize must be the size of it, and must
+be the size of the useful data in bytes, not the alloc size.
+*/
+unsigned lodepng_custom_zlib_decompress(unsigned char** out, size_t* outsize,
+                                        const unsigned char* in, size_t insize,
+                                        const LodePNGDecompressSettings* settings);
+unsigned lodepng_custom_zlib_compress(unsigned char** out, size_t* outsize,
+                                      const unsigned char* in, size_t insize,
+                                      const LodePNGCompressSettings* settings);
+unsigned lodepng_custom_inflate(unsigned char** out, size_t* outsize,
+                                const unsigned char* in, size_t insize,
+                                const LodePNGDecompressSettings* settings);
+unsigned lodepng_custom_deflate(unsigned char** out, size_t* outsize,
+                                const unsigned char* in, size_t insize,
+                                const LodePNGCompressSettings* settings);
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* ////////////////////////////////////////////////////////////////////////// */
@@ -1205,7 +1233,9 @@ static unsigned inflateNoCompression(ucvector* out, const unsigned char* in, siz
   return error;
 }
 
-static unsigned lodepng_inflatev(ucvector* out, const unsigned char* in, size_t insize)
+static unsigned lodepng_inflatev(ucvector* out,
+                                 const unsigned char* in, size_t insize,
+                                 const LodePNGDecompressSettings* settings)
 {
   /*bit pointer in the "in" data, current byte is bp >> 3, current bit is bp & 0x7 (from lsb to msb of the byte)*/
   size_t bp = 0;
@@ -1213,6 +1243,8 @@ static unsigned lodepng_inflatev(ucvector* out, const unsigned char* in, size_t 
   size_t pos = 0; /*byte position in the out buffer*/
 
   unsigned error = 0;
+  
+  (void)settings;
 
   while(!BFINAL)
   {
@@ -1235,15 +1267,28 @@ static unsigned lodepng_inflatev(ucvector* out, const unsigned char* in, size_t 
   return error;
 }
 
-unsigned lodepng_inflate(unsigned char** out, size_t* outsize, const unsigned char* in, size_t insize)
+unsigned lodepng_inflate(unsigned char** out, size_t* outsize,
+                         const unsigned char* in, size_t insize,
+                         const LodePNGDecompressSettings* settings)
 {
-  unsigned error;
-  ucvector v;
-  ucvector_init_buffer(&v, *out, *outsize);
-  error = lodepng_inflatev(&v, in, insize);
-  *out = v.data;
-  *outsize = v.size;
-  return error;
+#if LODEPNG_CUSTOM_ZLIB_DECODER == 2
+  if(settings->custom_encoder)
+  {
+    return lodepng_custom_inflate(out, outsize, in, insize, settings);
+  }
+  else
+  {
+#endif /*LODEPNG_CUSTOM_ZLIB_DECODER == 2*/
+    unsigned error;
+    ucvector v;
+    ucvector_init_buffer(&v, *out, *outsize);
+    error = lodepng_inflatev(&v, in, insize, settings);
+    *out = v.data;
+    *outsize = v.size;
+    return error;
+#if LODEPNG_CUSTOM_ZLIB_DECODER == 2
+  }
+#endif /*LODEPNG_CUSTOM_ZLIB_DECODER == 2*/
 }
 
 #endif /*LODEPNG_COMPILE_DECODER*/
@@ -1923,44 +1968,61 @@ static unsigned deflateFixed(ucvector* out, size_t* bp, Hash* hash,
 }
 
 static unsigned lodepng_deflatev(ucvector* out, const unsigned char* in, size_t insize,
-                                const LodePNGCompressSettings* settings)
+                                 const LodePNGCompressSettings* settings)
 {
-  unsigned error = 0;
-  size_t i, blocksize, numdeflateblocks;
-  size_t bp = 0; /*the bit pointer*/
-  Hash hash;
-
-  if(settings->btype > 2) return 61;
-
-  if(settings->btype == 0) return deflateNoCompression(out, in, insize);
-
-  if(settings->btype == 1) blocksize = insize;
-  else /*if(settings->btype == 2)*/
+#if LODEPNG_CUSTOM_ZLIB_ENCODER == 2
+  if(settings->custom_encoder)
   {
-    blocksize = insize / 8 + 8;
-    if(blocksize < 65535) blocksize = 65535;
+    unsigned char** out2 = &out->data;
+    size_t* outsize = &out->size;
+    
+    unsigned error = lodepng_custom_deflate(out2, outsize, in, insize, settings);
+
+    if(!error) ucvector_init_buffer(out, *out2, *outsize);
+    return error;
   }
-
-  numdeflateblocks = (insize + blocksize - 1) / blocksize;
-  if(numdeflateblocks == 0) numdeflateblocks = 1;
-
-  error = hash_init(&hash, settings->windowsize);
-  if(error) return error;
-
-  for(i = 0; i < numdeflateblocks && !error; i++)
+  else
   {
-    int final = i == numdeflateblocks - 1;
-    size_t start = i * blocksize;
-    size_t end = start + blocksize;
-    if(end > insize) end = insize;
+#endif /*LODEPNG_CUSTOM_ZLIB_ENCODER == 2*/
+    unsigned error = 0;
+    size_t i, blocksize, numdeflateblocks;
+    size_t bp = 0; /*the bit pointer*/
+    Hash hash;
 
-    if(settings->btype == 1) error = deflateFixed(out, &bp, &hash, in, start, end, settings, final);
-    else if(settings->btype == 2) error = deflateDynamic(out, &bp, &hash, in, start, end, settings, final);
+    if(settings->btype > 2) return 61;
+
+    if(settings->btype == 0) return deflateNoCompression(out, in, insize);
+
+    if(settings->btype == 1) blocksize = insize;
+    else /*if(settings->btype == 2)*/
+    {
+      blocksize = insize / 8 + 8;
+      if(blocksize < 65535) blocksize = 65535;
+    }
+
+    numdeflateblocks = (insize + blocksize - 1) / blocksize;
+    if(numdeflateblocks == 0) numdeflateblocks = 1;
+
+    error = hash_init(&hash, settings->windowsize);
+    if(error) return error;
+
+    for(i = 0; i < numdeflateblocks && !error; i++)
+    {
+      int final = i == numdeflateblocks - 1;
+      size_t start = i * blocksize;
+      size_t end = start + blocksize;
+      if(end > insize) end = insize;
+
+      if(settings->btype == 1) error = deflateFixed(out, &bp, &hash, in, start, end, settings, final);
+      else if(settings->btype == 2) error = deflateDynamic(out, &bp, &hash, in, start, end, settings, final);
+    }
+
+    hash_cleanup(&hash);
+
+    return error;
+#if LODEPNG_CUSTOM_ZLIB_ENCODER == 2
   }
-
-  hash_cleanup(&hash);
-
-  return error;
+#endif /*LODEPNG_CUSTOM_ZLIB_ENCODER == 2*/
 }
 
 unsigned lodepng_deflate(unsigned char** out, size_t* outsize,
@@ -2020,46 +2082,57 @@ static unsigned adler32(const unsigned char* data, unsigned len)
 unsigned lodepng_zlib_decompress(unsigned char** out, size_t* outsize, const unsigned char* in,
                                  size_t insize, const LodePNGDecompressSettings* settings)
 {
-  unsigned error = 0;
-  unsigned CM, CINFO, FDICT;
-
-  if(insize < 2) return 53; /*error, size of zlib data too small*/
-  /*read information from zlib header*/
-  if((in[0] * 256 + in[1]) % 31 != 0)
+#if LODEPNG_CUSTOM_ZLIB_DECODER == 1
+  if(settings->custom_decoder)
   {
-    /*error: 256 * in[0] + in[1] must be a multiple of 31, the FCHECK value is supposed to be made that way*/
-    return 24;
+    return lodepng_custom_zlib_decompress(out, outsize, in, insize, settings);
   }
-
-  CM = in[0] & 15;
-  CINFO = (in[0] >> 4) & 15;
-  /*FCHECK = in[1] & 31;*/ /*FCHECK is already tested above*/
-  FDICT = (in[1] >> 5) & 1;
-  /*FLEVEL = (in[1] >> 6) & 3;*/ /*FLEVEL is not used here*/
-
-  if(CM != 8 || CINFO > 7)
+  else
   {
-    /*error: only compression method 8: inflate with sliding window of 32k is supported by the PNG spec*/
-    return 25;
-  }
-  if(FDICT != 0)
-  {
-    /*error: the specification of PNG says about the zlib stream:
-      "The additional flags shall not specify a preset dictionary."*/
-    return 26;
-  }
+#endif /*LODEPNG_CUSTOM_ZLIB_DECODER == 1*/
+    unsigned error = 0;
+    unsigned CM, CINFO, FDICT;
 
-  error = lodepng_inflate(out, outsize, in + 2, insize - 2);
-  if(error) return error;
+    if(insize < 2) return 53; /*error, size of zlib data too small*/
+    /*read information from zlib header*/
+    if((in[0] * 256 + in[1]) % 31 != 0)
+    {
+      /*error: 256 * in[0] + in[1] must be a multiple of 31, the FCHECK value is supposed to be made that way*/
+      return 24;
+    }
 
-  if(!settings->ignore_adler32)
-  {
-    unsigned ADLER32 = lodepng_read32bitInt(&in[insize - 4]);
-    unsigned checksum = adler32(*out, (unsigned)(*outsize));
-    if(checksum != ADLER32) return 58; /*error, adler checksum not correct, data must be corrupted*/
+    CM = in[0] & 15;
+    CINFO = (in[0] >> 4) & 15;
+    /*FCHECK = in[1] & 31;*/ /*FCHECK is already tested above*/
+    FDICT = (in[1] >> 5) & 1;
+    /*FLEVEL = (in[1] >> 6) & 3;*/ /*FLEVEL is not used here*/
+
+    if(CM != 8 || CINFO > 7)
+    {
+      /*error: only compression method 8: inflate with sliding window of 32k is supported by the PNG spec*/
+      return 25;
+    }
+    if(FDICT != 0)
+    {
+      /*error: the specification of PNG says about the zlib stream:
+        "The additional flags shall not specify a preset dictionary."*/
+      return 26;
+    }
+
+    error = lodepng_inflate(out, outsize, in + 2, insize - 2, settings);
+    if(error) return error;
+
+    if(!settings->ignore_adler32)
+    {
+      unsigned ADLER32 = lodepng_read32bitInt(&in[insize - 4]);
+      unsigned checksum = adler32(*out, (unsigned)(*outsize));
+      if(checksum != ADLER32) return 58; /*error, adler checksum not correct, data must be corrupted*/
+    }
+
+    return 0; /*no error*/
+#if LODEPNG_CUSTOM_ZLIB_DECODER == 1
   }
-
-  return 0; /*no error*/
+#endif /*LODEPNG_CUSTOM_ZLIB_DECODER == 1*/
 }
 
 #endif /*LODEPNG_COMPILE_DECODER*/
@@ -2069,70 +2142,71 @@ unsigned lodepng_zlib_decompress(unsigned char** out, size_t* outsize, const uns
 unsigned lodepng_zlib_compress(unsigned char** out, size_t* outsize, const unsigned char* in,
                                size_t insize, const LodePNGCompressSettings* settings)
 {
-  /*initially, *out must be NULL and outsize 0, if you just give some random *out
-  that's pointing to a non allocated buffer, this'll crash*/
-  ucvector deflatedata, outv;
-  size_t i;
-  unsigned error;
-
-  unsigned ADLER32;
-  /*zlib data: 1 byte CMF (CM+CINFO), 1 byte FLG, deflate data, 4 byte ADLER32 checksum of the Decompressed data*/
-  unsigned CMF = 120; /*0b01111000: CM 8, CINFO 7. With CINFO 7, any window size up to 32768 can be used.*/
-  unsigned FLEVEL = 0;
-  unsigned FDICT = 0;
-  unsigned CMFFLG = 256 * CMF + FDICT * 32 + FLEVEL * 64;
-  unsigned FCHECK = 31 - CMFFLG % 31;
-  CMFFLG += FCHECK;
-
-  /*ucvector-controlled version of the output buffer, for dynamic array*/
-  ucvector_init_buffer(&outv, *out, *outsize);
-
-  ucvector_push_back(&outv, (unsigned char)(CMFFLG / 256));
-  ucvector_push_back(&outv, (unsigned char)(CMFFLG % 256));
-
-  ucvector_init(&deflatedata);
-  error = lodepng_deflatev(&deflatedata, in, insize, settings);
-
-  if(!error)
+#if LODEPNG_CUSTOM_ZLIB_ENCODER == 1
+  if(settings->custom_encoder)
   {
-    ADLER32 = adler32(in, (unsigned)insize);
-    for(i = 0; i < deflatedata.size; i++) ucvector_push_back(&outv, deflatedata.data[i]);
-    ucvector_cleanup(&deflatedata);
-    lodepng_add32bitInt(&outv, ADLER32);
+    return lodepng_custom_zlib_decompress(out, outsize, in, insize, settings);
   }
+  else
+  {
+#endif /*LODEPNG_CUSTOM_ZLIB_ENCODER == 1*/
+    /*initially, *out must be NULL and outsize 0, if you just give some random *out
+    that's pointing to a non allocated buffer, this'll crash*/
+    ucvector deflatedata, outv;
+    size_t i;
+    unsigned error;
 
-  *out = outv.data;
-  *outsize = outv.size;
+    unsigned ADLER32;
+    /*zlib data: 1 byte CMF (CM+CINFO), 1 byte FLG, deflate data, 4 byte ADLER32 checksum of the Decompressed data*/
+    unsigned CMF = 120; /*0b01111000: CM 8, CINFO 7. With CINFO 7, any window size up to 32768 can be used.*/
+    unsigned FLEVEL = 0;
+    unsigned FDICT = 0;
+    unsigned CMFFLG = 256 * CMF + FDICT * 32 + FLEVEL * 64;
+    unsigned FCHECK = 31 - CMFFLG % 31;
+    CMFFLG += FCHECK;
 
-  return error;
+    /*ucvector-controlled version of the output buffer, for dynamic array*/
+    ucvector_init_buffer(&outv, *out, *outsize);
+
+    ucvector_push_back(&outv, (unsigned char)(CMFFLG / 256));
+    ucvector_push_back(&outv, (unsigned char)(CMFFLG % 256));
+
+    ucvector_init(&deflatedata);
+    error = lodepng_deflatev(&deflatedata, in, insize, settings);
+
+    if(!error)
+    {
+      ADLER32 = adler32(in, (unsigned)insize);
+      for(i = 0; i < deflatedata.size; i++) ucvector_push_back(&outv, deflatedata.data[i]);
+      ucvector_cleanup(&deflatedata);
+      lodepng_add32bitInt(&outv, ADLER32);
+    }
+
+    *out = outv.data;
+    *outsize = outv.size;
+
+    return error;
+#if LODEPNG_CUSTOM_ZLIB_ENCODER == 1
+  }
+#endif /*LODEPNG_CUSTOM_ZLIB_ENCODER == 1*/
 }
 
 #endif /*LODEPNG_COMPILE_ENCODER*/
 
 #else /*no LODEPNG_COMPILE_ZLIB*/
 
-/*
-Dummy functions used if LODEPNG_COMPILE_ZLIB isn't defined. You need to implement
-these yourself when disabling the LodePNG Zlib part, e.g. by calling another
-library from here.
-
-*out must be NULL and *outsize must be 0 initially, and after the function is done,
-*out must point to the decompressed data, *outsize must be the size of it, and must
-be the size of the useful data in bytes, not the alloc size.
-*/
-
 #ifdef LODEPNG_COMPILE_DECODER
 static unsigned lodepng_zlib_decompress(unsigned char** out, size_t* outsize, const unsigned char* in,
                                         size_t insize, const LodePNGDecompressSettings* settings)
 {
-  return 0; //Placeholder to be implemented if LODEPNG_COMPILE_ZLIB is disabled.
+  return lodepng_custom_zlib_decompress(out, outsize, in, insize, settings);
 }
 #endif /*LODEPNG_COMPILE_DECODER*/
 #ifdef LODEPNG_COMPILE_ENCODER
 static unsigned lodepng_zlib_compress(unsigned char** out, size_t* outsize, const unsigned char* in,
                                       size_t insize, const LodePNGCompressSettings* settings)
 {
-  return 0; //Placeholder to be implemented if LODEPNG_COMPILE_ZLIB is disabled.
+  return lodepng_custom_zlib_compress(out, outsize, in, insize, settings);
 }
 #endif /*LODEPNG_COMPILE_ENCODER*/
 
@@ -2151,9 +2225,19 @@ void lodepng_compress_settings_init(LodePNGCompressSettings* settings)
   settings->btype = 2;
   settings->use_lz77 = 1;
   settings->windowsize = DEFAULT_WINDOWSIZE;
+#if LODEPNG_CUSTOM_ZLIB_ENCODER == 0
+  settings->custom_encoder = 0;
+#else
+  settings->custom_encoder = 1;
+#endif
 }
 
-const LodePNGCompressSettings lodepng_default_compress_settings = {2, 1, DEFAULT_WINDOWSIZE};
+#if LODEPNG_CUSTOM_ZLIB_ENCODER == 0
+const LodePNGCompressSettings lodepng_default_compress_settings = {2, 1, DEFAULT_WINDOWSIZE, 0};
+#else
+const LodePNGCompressSettings lodepng_default_compress_settings = {2, 1, DEFAULT_WINDOWSIZE, 1};
+#endif
+
 
 #endif /*LODEPNG_COMPILE_ENCODER*/
 
@@ -2162,9 +2246,18 @@ const LodePNGCompressSettings lodepng_default_compress_settings = {2, 1, DEFAULT
 void lodepng_decompress_settings_init(LodePNGDecompressSettings* settings)
 {
   settings->ignore_adler32 = 0;
+#if LODEPNG_CUSTOM_ZLIB_DECODER == 0
+  settings->custom_decoder = 0;
+#else
+  settings->custom_decoder = 1;
+#endif
 }
 
-const LodePNGDecompressSettings lodepng_default_decompress_settings = {0};
+#if LODEPNG_CUSTOM_ZLIB_DECODER == 0
+const LodePNGDecompressSettings lodepng_default_decompress_settings = {0, 0};
+#else
+const LodePNGDecompressSettings lodepng_default_decompress_settings = {0, 1};
+#endif
 
 #endif /*LODEPNG_COMPILE_DECODER*/
 
@@ -2816,7 +2909,13 @@ static void addColorBits(unsigned char* out, size_t index, unsigned bits, unsign
 
 typedef struct ColorTree ColorTree;
 
-/*One node of a color tree*/
+/*
+One node of a color tree
+This is the data structure used to count the number of unique colors and to get a palette
+index for a color. This could use up to 256x the memory of the amount of colors, but it
+is only used to count up to 256, and is used because implementing a whole dictionary data
+structure in C here would take too much room.
+*/
 struct ColorTree
 {
   ColorTree* next; /*null, or array of 256 pointers to ColorTree of next level*/
@@ -4784,12 +4883,12 @@ static void filterScanline(unsigned char* out, const unsigned char* scanline, co
       if(prevline)
       {
         for(i = 0; i < bytewidth; i++) out[i] = scanline[i];
-        for(i = bytewidth; i < length   ; i++) out[i] = scanline[i] - scanline[i - bytewidth];
+        for(i = bytewidth; i < length; i++) out[i] = scanline[i] - scanline[i - bytewidth];
       }
       else
       {
         for(i = 0; i < bytewidth; i++) out[i] = scanline[i];
-        for(i = bytewidth; i <    length; i++) out[i] = scanline[i] - scanline[i - bytewidth];
+        for(i = bytewidth; i < length; i++) out[i] = scanline[i] - scanline[i - bytewidth];
       }
       break;
     case 2: /*Up*/
@@ -4934,7 +5033,7 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
       for(type = 0; type < 5; type++) ucvector_cleanup(&attempt[type]);
     }
   }
-  else /*BRUTE_FORCE*/
+  else /*LFS_BRUTE_FORCE*/
   {
     /*brute force filter chooser.
     deflate the scanline after every filter attempt to see which one deflates best.
@@ -4950,6 +5049,9 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
     better result with dynamic tree anyway. Using the fixed tree sometimes gives worse, but in rare
     cases better compression. It does make this a bit less slow, so it's worth doing this.*/
     zlibsettings.btype = 1;
+    /*a custom encoder likely doesn't read the btype setting and is optimized for complete PNG
+    images only, so disable it*/
+    zlibsettings.custom_encoder = 0;
     for(type = 0; type < 5; type++)
     {
       ucvector_init(&attempt[type]);
