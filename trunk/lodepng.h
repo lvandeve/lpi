@@ -1,5 +1,5 @@
 /*
-LodePNG version 20120506
+LodePNG version 20120528
 
 Copyright (c) 2005-2012 Lode Vandevenne
 
@@ -489,7 +489,7 @@ typedef struct LodePNGDecoderSettings
 
 #ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
   unsigned read_text_chunks; /*if false but remember_unknown_chunks is true, they're stored in the unknown chunks*/
-  /*store all bytes from unknown chunks in the InfoPng (off by default, useful for a png editor)*/
+  /*store all bytes from unknown chunks in the LodePNGInfo (off by default, useful for a png editor)*/
   unsigned remember_unknown_chunks;
 #endif /*LODEPNG_COMPILE_ANCILLARY_CHUNKS*/
 } LodePNGDecoderSettings;
