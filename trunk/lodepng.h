@@ -1,5 +1,5 @@
 /*
-LodePNG version 20120528
+LodePNG version 20120623
 
 Copyright (c) 2005-2012 Lode Vandevenne
 
@@ -36,24 +36,43 @@ freely, subject to the following restrictions:
 /*
 The following #defines are used to create code sections. They can be disabled
 to disable code sections, which can give faster compile time and smaller binary.
+The "NO_COMPILE" defines are designed to be used to pass as defines to the
+compiler command to disable them without modifying this header, e.g.
+-DLODEPNG_NO_COMPILE_ZLIB for gcc.
 */
 /*deflate&zlib. If disabled, you need to define two zlib functions, see documtation of LODEPNG_CUSTOM_ZLIB_... below*/
+#ifndef LODEPNG_NO_COMPILE_ZLIB
 #define LODEPNG_COMPILE_ZLIB
+#endif
 /*png encoder and png decoder*/
+#ifndef LODEPNG_NO_COMPILE_PNG
 #define LODEPNG_COMPILE_PNG
+#endif
 /*deflate&zlib decoder and png decoder*/
+#ifndef LODEPNG_NO_COMPILE_DECODER
 #define LODEPNG_COMPILE_DECODER
+#endif
 /*deflate&zlib encoder and png encoder*/
+#ifndef LODEPNG_NO_COMPILE_ENCODER
 #define LODEPNG_COMPILE_ENCODER
+#endif
 /*the optional built in harddisk file loading and saving functions*/
+#ifndef LODEPNG_NO_COMPILE_DISK
 #define LODEPNG_COMPILE_DISK
+#endif
 /*support for chunks other than IHDR, IDAT, PLTE, tRNS, IEND: ancillary and unknown chunks*/
+#ifndef LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS
 #define LODEPNG_COMPILE_ANCILLARY_CHUNKS
+#endif
 /*ability to convert error numerical codes to English text string*/
+#ifndef LODEPNG_NO_COMPILE_ERROR_TEXT
 #define LODEPNG_COMPILE_ERROR_TEXT
+#endif
 /*compile the C++ version (you can disable the C++ wrapper here even when compiling for C++)*/
 #ifdef __cplusplus
+#ifndef LODEPNG_NO_COMPILE_CPP
 #define LODEPNG_COMPILE_CPP
+#endif
 #endif
 
 /*
@@ -68,7 +87,11 @@ custom zlib decoder (if LODEPNG_COMPILE_ZLIB is disabled, this is ignored, alway
   unsigned lodepng_custom_zlib_decompress(unsigned char**, size_t*, const unsigned char*, size_t,
                                           const LodePNGDecompressSettings*)
 */
+#ifndef LODEPNG_OVERRIDE_CUSTOM_ZLIB_DECODER
 #define LODEPNG_CUSTOM_ZLIB_DECODER 0
+#else
+#define LODEPNG_CUSTOM_ZLIB_DECODER LODEPNG_OVERRIDE_CUSTOM_ZLIB_DECODER
+#endif
 
 /*
 custom zlib encoder (if LODEPNG_COMPILE_ZLIB is disabled, this is ignored, always treated as "1"):
@@ -82,8 +105,11 @@ custom zlib encoder (if LODEPNG_COMPILE_ZLIB is disabled, this is ignored, alway
   unsigned lodepng_custom_zlib_compress(unsigned char**, size_t*, const unsigned char*, size_t,
                                         const LodePNGCompressSettings*)
 */
+#ifndef LODEPNG_OVERRIDE_CUSTOM_ZLIB_ENCODER
 #define LODEPNG_CUSTOM_ZLIB_ENCODER 0
-
+#else
+#define LODEPNG_CUSTOM_ZLIB_ENCODER LODEPNG_OVERRIDE_CUSTOM_ZLIB_ENCODER
+#endif
 
 #ifdef LODEPNG_COMPILE_PNG
 /*The PNG color types (also used for raw).*/
@@ -489,7 +515,7 @@ typedef struct LodePNGDecoderSettings
 
 #ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
   unsigned read_text_chunks; /*if false but remember_unknown_chunks is true, they're stored in the unknown chunks*/
-  /*store all bytes from unknown chunks in the LodePNGInfo (off by default, useful for a png editor)*/
+  /*store all bytes from unknown chunks in the InfoPng (off by default, useful for a png editor)*/
   unsigned remember_unknown_chunks;
 #endif /*LODEPNG_COMPILE_ANCILLARY_CHUNKS*/
 } LodePNGDecoderSettings;
@@ -502,13 +528,17 @@ void lodepng_decoder_settings_init(LodePNGDecoderSettings* settings);
 typedef enum LodePNGFilterStrategy
 {
   LFS_HEURISTIC, /*official PNG heuristic*/
+  LFS_ZERO, /*every filter at zero*/
+  LFS_MINSUM, /*like the official PNG heuristic, but use minimal sum always, including palette and low bitdepth images*/
+  LFS_, /*every filter at zero*/
   /*
   Brute-force-search PNG filters by compressing each filter for each scanline.
   This gives better compression, at the cost of being super slow. Experimental!
   If you enable this, also set zlibsettings.windowsize to 32768 and choose an
   optimal color mode for the PNG image for best compression. Default: 0 (false).
   */
-  LFS_BRUTE_FORCE
+  LFS_BRUTE_FORCE,
+  LFS_PREDEFINED /*use predefined_filters buffer: you specify the filter type for each scanline*/
 } LodePNGFilterStrategy;
 
 /*automatically use color type with less bits per pixel if losslessly possible. Default: LAC_AUTO*/
@@ -533,6 +563,10 @@ typedef struct LodePNGEncoderSettings
   LodePNGAutoConvert auto_convert; /*how to automatically choose output PNG color type, if at all*/
 
   LodePNGFilterStrategy filter_strategy;
+
+  /*used if filter_strategy is LFS_PREDEFINED. In that case, this must point to a buffer with
+    the same length as the amount of scanlines in the image, and each value must <= 5.*/
+  unsigned char* predefined_filters;
 
   /*force creating a PLTE chunk if colortype is 2 or 6 (= a suggested palette).
   If colortype is 3, PLTE is _always_ created.*/
@@ -1471,6 +1505,8 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 23 jun 2012: Added more filter strategies. Made it easier to use custom alloc
+    and free functions and toggle #defines from compiler flags. Small fixes.
 *) 6 may 2012 (!): Made plugging in custom zlib/deflate functions more flexible.
 *) 22 apr 2012 (!): Made interface more consistent, renaming a lot. Removed
     redundant C++ codec classes. Reduced amount of structs. Everything changed,

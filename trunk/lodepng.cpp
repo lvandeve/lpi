@@ -1,5 +1,5 @@
 /*
-LodePNG version 20120528
+LodePNG version 20120623
 
 Copyright (c) 2005-2012 Lode Vandevenne
 
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*LODEPNG_COMPILE_CPP*/
 
-#define VERSION_STRING "20120528"
+#define VERSION_STRING "20120623"
 
 /*
 This source file is built up in the following large parts. The code sections
@@ -1012,7 +1012,7 @@ static unsigned getTreeInflateDynamic(HuffmanTree* tree_ll, HuffmanTree* tree_d,
     if(!bitlen_ll || !bitlen_d) ERROR_BREAK(83 /*alloc fail*/);
     for(i = 0; i < NUM_DEFLATE_CODE_SYMBOLS; i++) bitlen_ll[i] = 0;
     for(i = 0; i < NUM_DISTANCE_SYMBOLS; i++) bitlen_d[i] = 0;
-    
+
     /*i is the current symbol we're reading in the part that contains the code lengths of lit/len and dist codes*/
     i = 0;
     while(i < HLIT + HDIST)
@@ -1255,7 +1255,7 @@ static unsigned lodepng_inflatev(ucvector* out,
   size_t pos = 0; /*byte position in the out buffer*/
 
   unsigned error = 0;
-  
+
   (void)settings;
 
   while(!BFINAL)
@@ -1490,7 +1490,6 @@ static unsigned encodeLZ77(uivector* out, Hash* hash,
         numzeros = countZeros(in, insize, pos);
         hash->zeros[wpos] = numzeros;
       }
-
 
       /*the length and offset found for the current position*/
       length = 0;
@@ -1987,7 +1986,7 @@ static unsigned lodepng_deflatev(ucvector* out, const unsigned char* in, size_t 
   {
     unsigned char** out2 = &out->data;
     size_t* outsize = &out->size;
-    
+
     unsigned error = lodepng_custom_deflate(out2, outsize, in, insize, settings);
 
     if(!error) ucvector_init_buffer(out, *out2, *outsize);
@@ -2157,7 +2156,7 @@ unsigned lodepng_zlib_compress(unsigned char** out, size_t* outsize, const unsig
 #if LODEPNG_CUSTOM_ZLIB_ENCODER == 1
   if(settings->custom_encoder)
   {
-    return lodepng_custom_zlib_decompress(out, outsize, in, insize, settings);
+    return lodepng_custom_zlib_compress(out, outsize, in, insize, settings);
   }
   else
   {
@@ -3688,7 +3687,7 @@ static unsigned doAutoChooseColor(LodePNGColorMode* mode_out,
   }
 
   color_profile_cleanup(&profile);
-  
+
   if(mode_in->colortype == LCT_PALETTE && mode_out->colortype == LCT_PALETTE
      && mode_in->palettesize == mode_out->palettesize) {
     /*In this case keep the palette order of the input, so that the user can choose an optimal one*/
@@ -3704,7 +3703,7 @@ static unsigned doAutoChooseColor(LodePNGColorMode* mode_out,
     /*palette can keep its small amount of colors, as long as no indices use it*/
     mode_out->bitdepth = 8;
   }
-  
+
   return error;
 }
 
@@ -4682,8 +4681,15 @@ static unsigned addChunk_tRNS(ucvector* out, const LodePNGColorMode* info)
   ucvector_init(&tRNS);
   if(info->colortype == LCT_PALETTE)
   {
+    size_t amount = info->palettesize;
+    /*the tail of palette values that all have 255 as alpha, does not have to be encoded*/
+    for(i = info->palettesize; i > 0; i--)
+    {
+      if(info->palette[4 * (i - 1) + 3] == 255) amount--;
+      else break;
+    }
     /*add only alpha channel*/
-    for(i = 0; i < info->palettesize; i++) ucvector_push_back(&tRNS, info->palette[4 * i + 3]);
+    for(i = 0; i < amount; i++) ucvector_push_back(&tRNS, info->palette[4 * i + 3]);
   }
   else if(info->colortype == LCT_GREY)
   {
@@ -4963,86 +4969,102 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
   const unsigned char* prevline = 0;
   unsigned x, y;
   unsigned error = 0;
+  /*
+  There is a heuristic called the minimum sum of absolute differences heuristic, suggested by the PNG standard:
+   *  If the image type is Palette, or the bit depth is smaller than 8, then do not filter the image (i.e.
+      use fixed filtering, with the filter None).
+   * (The other case) If the image type is Grayscale or RGB (with or without Alpha), and the bit depth is
+     not smaller than 8, then use adaptive filtering heuristic as follows: independently for each row, apply
+     all five filters and select the filter that produces the smallest sum of absolute values per row.
+   This heuristic is used if filter strategy is LFS_HEURISTIC. Parts of it are used for filter strategies
+   LFS_MINSUM and LFS_ZERO.
+  */
+  int heuristic_zero = info->colortype == LCT_PALETTE || info->bitdepth < 8;
 
   if(bpp == 0) return 31; /*error: invalid color type*/
 
-  if(settings->filter_strategy == LFS_HEURISTIC)
+  if((!heuristic_zero && settings->filter_strategy == LFS_HEURISTIC)||
+      settings->filter_strategy == LFS_MINSUM)
   {
-    /*
-    There is a heuristic called the minimum sum of absolute differences heuristic, suggested by the PNG standard:
-       *  If the image type is Palette, or the bit depth is smaller than 8, then do not filter the image (i.e.
-          use fixed filtering, with the filter None).
-       * (The other case) If the image type is Grayscale or RGB (with or without Alpha), and the bit depth is
-         not smaller than 8, then use adaptive filtering heuristic as follows: independently for each row, apply
-         all five filters and select the filter that produces the smallest sum of absolute values per row.
-    */
-    if(info->colortype == LCT_PALETTE || info->bitdepth < 8) /*None filtertype for everything*/
+    /*adaptive filtering*/
+    size_t sum[5];
+    ucvector attempt[5]; /*five filtering attempts, one for each filter type*/
+    size_t smallest = 0;
+    unsigned type, bestType = 0;
+
+    for(type = 0; type < 5; type++) ucvector_init(&attempt[type]);
+
+    for(type = 0; type < 5; type++)
+    {
+      if(!ucvector_resize(&attempt[type], linebytes)) ERROR_BREAK(83 /*alloc fail*/);
+    }
+
+    if(!error)
     {
       for(y = 0; y < h; y++)
       {
-        size_t outindex = (1 + linebytes) * y; /*the extra filterbyte added to each row*/
-        size_t inindex = linebytes * y;
-        const unsigned TYPE = 0;
-        out[outindex] = TYPE; /*filter type byte*/
-        filterScanline(&out[outindex + 1], &in[inindex], prevline, linebytes, bytewidth, TYPE);
-        prevline = &in[inindex];
-      }
-    }
-    else /*adaptive filtering*/
-    {
-      size_t sum[5];
-      ucvector attempt[5]; /*five filtering attempts, one for each filter type*/
-      size_t smallest = 0;
-      unsigned type, bestType = 0;
-
-      for(type = 0; type < 5; type++) ucvector_init(&attempt[type]);
-      for(type = 0; type < 5; type++)
-      {
-        if(!ucvector_resize(&attempt[type], linebytes)) ERROR_BREAK(83 /*alloc fail*/);
-      }
-
-      if(!error)
-      {
-        for(y = 0; y < h; y++)
+        /*try the 5 filter types*/
+        for(type = 0; type < 5; type++)
         {
-          /*try the 5 filter types*/
-          for(type = 0; type < 5; type++)
+          filterScanline(attempt[type].data, &in[y * linebytes], prevline, linebytes, bytewidth, type);
+
+          /*calculate the sum of the result*/
+          sum[type] = 0;
+          /*note that not all pixels are checked to speed this up while still having probably the best choice*/
+          for(x = 0; x < attempt[type].size; x+=3)
           {
-            filterScanline(attempt[type].data, &in[y * linebytes], prevline, linebytes, bytewidth, type);
-
-            /*calculate the sum of the result*/
-            sum[type] = 0;
-            /*note that not all pixels are checked to speed this up while still having probably the best choice*/
-            for(x = 0; x < attempt[type].size; x+=3)
+            /*For differences, each byte should be treated as signed, values above 127 are negative
+            (converted to signed char). Filtertype 0 isn't a difference though, so use unsigned there.
+            This means filtertype 0 is almost never chosen, but that is justified.*/
+            if(type == 0) sum[type] += (unsigned char)(attempt[type].data[x]);
+            else
             {
-              /*For differences, each byte should be treated as signed, values above 127 are negative
-              (converted to signed char). Filtertype 0 isn't a difference though, so use unsigned there.
-              This means filtertype 0 is almost never chosen, but that is justified.*/
-              if(type == 0) sum[type] += (unsigned char)(attempt[type].data[x]);
-              else
-              {
-                signed char s = (signed char)(attempt[type].data[x]);
-                sum[type] += s < 0 ? -s : s;
-              }
-            }
-
-            /*check if this is smallest sum (or if type == 0 it's the first case so always store the values)*/
-            if(type == 0 || sum[type] < smallest)
-            {
-              bestType = type;
-              smallest = sum[type];
+              signed char s = (signed char)(attempt[type].data[x]);
+              sum[type] += s < 0 ? -s : s;
             }
           }
 
-          prevline = &in[y * linebytes];
-
-          /*now fill the out values*/
-          out[y * (linebytes + 1)] = bestType; /*the first byte of a scanline will be the filter type*/
-          for(x = 0; x < linebytes; x++) out[y * (linebytes + 1) + 1 + x] = attempt[bestType].data[x];
+          /*check if this is smallest sum (or if type == 0 it's the first case so always store the values)*/
+          if(type == 0 || sum[type] < smallest)
+          {
+            bestType = type;
+            smallest = sum[type];
+          }
         }
-      }
 
-      for(type = 0; type < 5; type++) ucvector_cleanup(&attempt[type]);
+        prevline = &in[y * linebytes];
+
+        /*now fill the out values*/
+        out[y * (linebytes + 1)] = bestType; /*the first byte of a scanline will be the filter type*/
+        for(x = 0; x < linebytes; x++) out[y * (linebytes + 1) + 1 + x] = attempt[bestType].data[x];
+      }
+    }
+
+    for(type = 0; type < 5; type++) ucvector_cleanup(&attempt[type]);
+  }
+  else if((heuristic_zero && settings->filter_strategy == LFS_HEURISTIC)||
+      settings->filter_strategy == LFS_ZERO)
+  {
+    for(y = 0; y < h; y++)
+    {
+      size_t outindex = (1 + linebytes) * y; /*the extra filterbyte added to each row*/
+      size_t inindex = linebytes * y;
+      const unsigned TYPE = 0;
+      out[outindex] = TYPE; /*filter type byte*/
+      filterScanline(&out[outindex + 1], &in[inindex], prevline, linebytes, bytewidth, TYPE);
+      prevline = &in[inindex];
+    }
+  }
+  else if(settings->filter_strategy == LFS_PREDEFINED)
+  {
+    for(y = 0; y < h; y++)
+    {
+      size_t outindex = (1 + linebytes) * y; /*the extra filterbyte added to each row*/
+      size_t inindex = linebytes * y;
+      unsigned type = settings->predefined_filters[y];
+      out[outindex] = type; /*filter type byte*/
+      filterScanline(&out[outindex + 1], &in[inindex], prevline, linebytes, bytewidth, type);
+      prevline = &in[inindex];
     }
   }
   else /*LFS_BRUTE_FORCE*/
@@ -5551,6 +5573,7 @@ void lodepng_encoder_settings_init(LodePNGEncoderSettings* settings)
   settings->filter_strategy = LFS_HEURISTIC;
   settings->auto_convert = LAC_AUTO;
   settings->force_palette = 0;
+  settings->predefined_filters = 0;
 #ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
   settings->add_id = 0;
   settings->text_compression = 1;
