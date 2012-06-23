@@ -515,7 +515,7 @@ typedef struct LodePNGDecoderSettings
 
 #ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
   unsigned read_text_chunks; /*if false but remember_unknown_chunks is true, they're stored in the unknown chunks*/
-  /*store all bytes from unknown chunks in the InfoPng (off by default, useful for a png editor)*/
+  /*store all bytes from unknown chunks in the LodePNGInfo (off by default, useful for a png editor)*/
   unsigned remember_unknown_chunks;
 #endif /*LODEPNG_COMPILE_ANCILLARY_CHUNKS*/
 } LodePNGDecoderSettings;
@@ -530,7 +530,6 @@ typedef enum LodePNGFilterStrategy
   LFS_HEURISTIC, /*official PNG heuristic*/
   LFS_ZERO, /*every filter at zero*/
   LFS_MINSUM, /*like the official PNG heuristic, but use minimal sum always, including palette and low bitdepth images*/
-  LFS_, /*every filter at zero*/
   /*
   Brute-force-search PNG filters by compressing each filter for each scanline.
   This gives better compression, at the cost of being super slow. Experimental!
@@ -565,7 +564,8 @@ typedef struct LodePNGEncoderSettings
   LodePNGFilterStrategy filter_strategy;
 
   /*used if filter_strategy is LFS_PREDEFINED. In that case, this must point to a buffer with
-    the same length as the amount of scanlines in the image, and each value must <= 5.*/
+    the same length as the amount of scanlines in the image, and each value must <= 5. You
+    have to cleanup this buffer, LodePNG will never free it.*/
   unsigned char* predefined_filters;
 
   /*force creating a PLTE chunk if colortype is 2 or 6 (= a suggested palette).
