@@ -1,5 +1,5 @@
 /*
-LodePNG version 20120623
+LodePNG version 20120729
 
 Copyright (c) 2005-2012 Lode Vandevenne
 
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*LODEPNG_COMPILE_CPP*/
 
-#define VERSION_STRING "20120623"
+#define VERSION_STRING "20120729"
 
 /*
 This source file is built up in the following large parts. The code sections
@@ -1513,7 +1513,8 @@ static unsigned encodeLZ77(uivector* out, Hash* hash,
           if(maxchainlength-- == 0) break;
 
           current_offset = hashpos <= wpos ? wpos - hashpos : wpos - hashpos + windowsize;
-          if(current_offset > 0) {
+          if(current_offset > 0)
+          {
             /*test the next characters*/
             foreptr = &in[pos];
             backptr = &in[pos - current_offset];
@@ -2923,9 +2924,9 @@ typedef struct ColorTree ColorTree;
 /*
 One node of a color tree
 This is the data structure used to count the number of unique colors and to get a palette
-index for a color. This could use up to 256x the memory of the amount of colors, but it
-is only used to count up to 256, and is used because implementing a whole dictionary data
-structure in C here would take too much room.
+index for a color. It's a bit like an octree for RGB bits, except that a node has 256
+children and there is one level of the tree per color channel. This may use more memory
+than an octree, but this is only used to count up to 256 so it's good enough.
 */
 struct ColorTree
 {
@@ -2947,7 +2948,7 @@ static void color_tree_make_next(ColorTree* tree)
 {
   int i;
   tree->next = (ColorTree*)mymalloc(256 * sizeof(ColorTree));
-  for(i = 0; i <  256; i++) color_tree_init(&tree->next[i], 0);
+  for(i = 0; i < 256; i++) color_tree_init(&tree->next[i], 0);
 }
 
 static void color_tree_cleanup(ColorTree* tree)
@@ -2955,7 +2956,7 @@ static void color_tree_cleanup(ColorTree* tree)
   if(tree->next)
   {
     int i;
-    for(i = 0; i <  256; i++) color_tree_cleanup(&tree->next[i]);
+    for(i = 0; i < 256; i++) color_tree_cleanup(&tree->next[i]);
     myfree(tree->next);
   }
 }
@@ -3688,8 +3689,8 @@ static unsigned doAutoChooseColor(LodePNGColorMode* mode_out,
 
   color_profile_cleanup(&profile);
 
-  if(mode_in->colortype == LCT_PALETTE && mode_out->colortype == LCT_PALETTE
-     && mode_in->palettesize == mode_out->palettesize) {
+  if(mode_out->colortype == LCT_PALETTE && mode_in->palettesize == mode_out->palettesize)
+  {
     /*In this case keep the palette order of the input, so that the user can choose an optimal one*/
     size_t i;
     for(i = 0; i < mode_in->palettesize * 4; i++)
@@ -3720,14 +3721,9 @@ static unsigned char paethPredictor(short a, short b, short c)
   short pb = abs(a - c);
   short pc = abs(a + b - c - c);
 
-  /*short pc = a + b - c;
-  short pa = abs(pc - a);
-  short pb = abs(pc - b);
-  pc = abs(pc - c);*/
-
-  if(pa <= pb && pa <= pc) return (unsigned char)a;
-  else if(pb <= pc) return (unsigned char)b;
-  else return (unsigned char)c;
+  if(pc < pa && pc < pb) return (unsigned char)c;
+  else if(pb < pa) return (unsigned char)b;
+  else return (unsigned char)a;
 }
 
 /*shared values used by multiple Adam7 related functions*/
@@ -3848,8 +3844,8 @@ static unsigned unfilterScanline(unsigned char* recon, const unsigned char* scan
       for(i = 0; i < length; i++) recon[i] = scanline[i];
       break;
     case 1:
-      for(i =         0; i < bytewidth; i++) recon[i] = scanline[i];
-      for(i = bytewidth; i <    length; i++) recon[i] = scanline[i] + recon[i - bytewidth];
+      for(i = 0; i < bytewidth; i++) recon[i] = scanline[i];
+      for(i = bytewidth; i < length; i++) recon[i] = scanline[i] + recon[i - bytewidth];
       break;
     case 2:
       if(precon)
@@ -3864,13 +3860,13 @@ static unsigned unfilterScanline(unsigned char* recon, const unsigned char* scan
     case 3:
       if(precon)
       {
-        for(i =         0; i < bytewidth; i++) recon[i] = scanline[i] + precon[i] / 2;
-        for(i = bytewidth; i <    length; i++) recon[i] = scanline[i] + ((recon[i - bytewidth] + precon[i]) / 2);
+        for(i = 0; i < bytewidth; i++) recon[i] = scanline[i] + precon[i] / 2;
+        for(i = bytewidth; i < length; i++) recon[i] = scanline[i] + ((recon[i - bytewidth] + precon[i]) / 2);
       }
       else
       {
-        for(i =         0; i < bytewidth; i++) recon[i] = scanline[i];
-        for(i = bytewidth; i <    length; i++) recon[i] = scanline[i] + recon[i - bytewidth] / 2;
+        for(i = 0; i < bytewidth; i++) recon[i] = scanline[i];
+        for(i = bytewidth; i < length; i++) recon[i] = scanline[i] + recon[i - bytewidth] / 2;
       }
       break;
     case 4:
