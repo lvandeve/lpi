@@ -1,5 +1,5 @@
 /*
-LodePNG version 20120729
+LodePNG version 20120901
 
 Copyright (c) 2005-2012 Lode Vandevenne
 
@@ -40,7 +40,8 @@ The "NO_COMPILE" defines are designed to be used to pass as defines to the
 compiler command to disable them without modifying this header, e.g.
 -DLODEPNG_NO_COMPILE_ZLIB for gcc.
 */
-/*deflate&zlib. If disabled, you need to define two zlib functions, see documtation of LODEPNG_CUSTOM_ZLIB_... below*/
+/*deflate & zlib. If disabled, you must specify alternative zlib functions in
+the custom_zlib field of the compress and decompress settings*/
 #ifndef LODEPNG_NO_COMPILE_ZLIB
 #define LODEPNG_COMPILE_ZLIB
 #endif
@@ -73,42 +74,6 @@ compiler command to disable them without modifying this header, e.g.
 #ifndef LODEPNG_NO_COMPILE_CPP
 #define LODEPNG_COMPILE_CPP
 #endif
-#endif
-
-/*
-custom zlib decoder (if LODEPNG_COMPILE_ZLIB is disabled, this is ignored, always treated as "1"):
-0: not custom, use LodePNG's zlib decoder
-1: allow using custom zlib decoder with a setting
---> you must then provide following function in your source files that LodePNG will link to:
-  unsigned lodepng_custom_inflate(unsigned char**, size_t*, const unsigned char*, size_t,
-                                  const LodePNGDecompressSettings*)
-2: allow using custom deflate decoder with a setting
---> you must then provide following function in your source files that LodePNG will link to:
-  unsigned lodepng_custom_zlib_decompress(unsigned char**, size_t*, const unsigned char*, size_t,
-                                          const LodePNGDecompressSettings*)
-*/
-#ifndef LODEPNG_OVERRIDE_CUSTOM_ZLIB_DECODER
-#define LODEPNG_CUSTOM_ZLIB_DECODER 0
-#else
-#define LODEPNG_CUSTOM_ZLIB_DECODER LODEPNG_OVERRIDE_CUSTOM_ZLIB_DECODER
-#endif
-
-/*
-custom zlib encoder (if LODEPNG_COMPILE_ZLIB is disabled, this is ignored, always treated as "1"):
-0: not custom, use LodePNG's zlib encoder
-1: allow using custom zlib encoder with a setting
---> you must then provide following function in your source files that LodePNG will link to:
-  unsigned lodepng_custom_deflate(unsigned char**, size_t*, const unsigned char*, size_t,
-                                  const LodePNGCompressSettings*)
-2: allow using custom deflate encoder with a setting
---> you must then provide following function in your source files that LodePNG will link to:
-  unsigned lodepng_custom_zlib_compress(unsigned char**, size_t*, const unsigned char*, size_t,
-                                        const LodePNGCompressSettings*)
-*/
-#ifndef LODEPNG_OVERRIDE_CUSTOM_ZLIB_ENCODER
-#define LODEPNG_CUSTOM_ZLIB_ENCODER 0
-#else
-#define LODEPNG_CUSTOM_ZLIB_ENCODER LODEPNG_OVERRIDE_CUSTOM_ZLIB_ENCODER
 #endif
 
 #ifdef LODEPNG_COMPILE_PNG
@@ -273,11 +238,24 @@ const char* lodepng_error_text(unsigned code);
 
 #ifdef LODEPNG_COMPILE_DECODER
 /*Settings for zlib decompression*/
-typedef struct LodePNGDecompressSettings
+typedef struct LodePNGDecompressSettings LodePNGDecompressSettings;
+struct LodePNGDecompressSettings
 {
   unsigned ignore_adler32; /*if 1, continue and don't give an error message if the Adler32 checksum is corrupted*/
-  unsigned custom_decoder; /*use custom decoder if LODEPNG_CUSTOM_ZLIB_DECODER and LODEPNG_COMPILE_ZLIB are enabled*/
-} LodePNGDecompressSettings;
+
+  /*use custom zlib decoder instead of built in one (default: null)*/
+  unsigned (*custom_zlib)(unsigned char**, size_t*,
+                          const unsigned char*, size_t,
+                          const LodePNGDecompressSettings*);
+  /*use custom deflate decoder instead of built in one (default: null)
+  if custom_zlib is used, custom_deflate is ignored since only the built in
+  zlib function will call custom_deflate*/
+  unsigned (*custom_inflate)(unsigned char**, size_t*,
+                             const unsigned char*, size_t,
+                             const LodePNGDecompressSettings*);
+
+  void* custom_context; /*optional custom settings for custom functions*/
+};
 
 extern const LodePNGDecompressSettings lodepng_default_decompress_settings;
 void lodepng_decompress_settings_init(LodePNGDecompressSettings* settings);
@@ -288,14 +266,27 @@ void lodepng_decompress_settings_init(LodePNGDecompressSettings* settings);
 Settings for zlib compression. Tweaking these settings tweaks the balance
 between speed and compression ratio.
 */
-typedef struct LodePNGCompressSettings /*deflate = compress*/
+typedef struct LodePNGCompressSettings LodePNGCompressSettings;
+struct LodePNGCompressSettings /*deflate = compress*/
 {
   /*LZ77 related settings*/
   unsigned btype; /*the block type for LZ (0, 1, 2 or 3, see zlib standard). Should be 2 for proper compression.*/
   unsigned use_lz77; /*whether or not to use LZ77. Should be 1 for proper compression.*/
   unsigned windowsize; /*the maximum is 32768, higher gives more compression but is slower. Typical value: 2048.*/
-  unsigned custom_encoder; /*use custom encoder if LODEPNG_CUSTOM_ZLIB_DECODER and LODEPNG_COMPILE_ZLIB are enabled*/
-} LodePNGCompressSettings;
+
+  /*use custom zlib encoder instead of built in one (default: null)*/
+  unsigned (*custom_zlib)(unsigned char**, size_t*,
+                          const unsigned char*, size_t,
+                          const LodePNGCompressSettings*);
+  /*use custom deflate encoder instead of built in one (default: null)
+  if custom_zlib is used, custom_deflate is ignored since only the built in
+  zlib function will call custom_deflate*/
+  unsigned (*custom_deflate)(unsigned char**, size_t*,
+                             const unsigned char*, size_t,
+                             const LodePNGCompressSettings*);
+
+  void* custom_context; /*optional custom settings for custom functions*/
+};
 
 extern const LodePNGCompressSettings lodepng_default_compress_settings;
 void lodepng_compress_settings_init(LodePNGCompressSettings* settings);
@@ -1505,6 +1496,8 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 1 sep 2012 (!): Removed #define's for giving custom (de)compression functions
+    and made it work with function pointers instead.
 *) 23 jun 2012: Added more filter strategies. Made it easier to use custom alloc
     and free functions and toggle #defines from compiler flags. Small fixes.
 *) 6 may 2012 (!): Made plugging in custom zlib/deflate functions more flexible.
