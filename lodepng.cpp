@@ -1,5 +1,5 @@
 /*
-LodePNG version 20120901
+LodePNG version 20120923
 
 Copyright (c) 2005-2012 Lode Vandevenne
 
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*LODEPNG_COMPILE_CPP*/
 
-#define VERSION_STRING "20120901"
+#define VERSION_STRING "20120923"
 
 /*
 This source file is built up in the following large parts. The code sections
@@ -1407,7 +1407,8 @@ static unsigned countZeros(const unsigned char* data, size_t size, size_t pos)
   if(end > data + size) end = data + size;
   data = start;
   while (data != end && *data == 0) data++;
-  return data - start;
+  /*subtracting two addresses returned as 32-bit number (max value is MAX_SUPPORTED_DEFLATE_LENGTH)*/
+  return (unsigned)(data - start);
 }
 
 static void updateHashChain(Hash* hash,
@@ -3365,7 +3366,7 @@ static void color_profile_cleanup(ColorProfile* profile)
 }*/
 
 /*Returns how many bits needed to represent given value (max 8 bit)*/
-unsigned getValueRequiredBits(unsigned char value)
+unsigned getValueRequiredBits(unsigned short value)
 {
   if(value == 0 || value == 255) return 1;
   /*The scaling of 2-bit and 4-bit values uses multiples of 85 and 17*/
@@ -3441,17 +3442,18 @@ static unsigned get_color_profile(ColorProfile* profile,
       if(!profile->numcolors_done)
       {
         /*assuming 8-bit rgba, this test does not care about 16-bit*/
-        if(!color_tree_has(&profile->tree, r, g, b, a))
+        if(!color_tree_has(&profile->tree, (unsigned char)r, (unsigned char)g, (unsigned char)b, (unsigned char)a))
         {
-          color_tree_add(&profile->tree, r, g, b, a, profile->numcolors);
+          color_tree_add(&profile->tree, (unsigned char)r, (unsigned char)g, (unsigned char)b, (unsigned char)a, 
+            profile->numcolors);
           if(profile->numcolors < 256)
           {
             unsigned char* p = profile->palette;
             unsigned i = profile->numcolors;
-            p[i * 4 + 0] = r;
-            p[i * 4 + 1] = g;
-            p[i * 4 + 2] = b;
-            p[i * 4 + 3] = a;
+            p[i * 4 + 0] = (unsigned char)r;
+            p[i * 4 + 1] = (unsigned char)g;
+            p[i * 4 + 2] = (unsigned char)b;
+            p[i * 4 + 3] = (unsigned char)a;
           }
           profile->numcolors++;
           if(profile->numcolors >= profile->maxnumcolors) profile->numcolors_done = 1;
@@ -5266,7 +5268,7 @@ returns 2 if the palette is semi-translucent.
 static unsigned getPaletteTranslucency(const unsigned char* palette, size_t palettesize)
 {
   size_t i, key = 0;
-  unsigned r, g, b; /*the value of the color with alpha 0, so long as color keying is possible*/
+  unsigned r = 0, g = 0, b = 0; /*the value of the color with alpha 0, so long as color keying is possible*/
   for(i = 0; i < palettesize; i++)
   {
     if(!key && palette[4 * i + 3] == 0)
@@ -5339,10 +5341,11 @@ unsigned lodepng_encode(unsigned char** out, size_t* outsize,
   {
     CERROR_RETURN_ERROR(state->error, 71); /*error: unexisting interlace mode*/
   }
-  /*error: unexisting color type given*/
-  if((state->error = checkColorValidity(info.color.colortype, info.color.bitdepth))) return state->error;
-  /*error: unexisting color type given*/
-  if((state->error = checkColorValidity(state->info_raw.colortype, state->info_raw.bitdepth))) return state->error;
+  
+  state->error = checkColorValidity(info.color.colortype, info.color.bitdepth);
+  if(state->error) return state->error; /*error: unexisting color type given*/
+  state->error = checkColorValidity(state->info_raw.colortype, state->info_raw.bitdepth);
+  if(state->error) return state->error; /*error: unexisting color type given*/
 
   if(!lodepng_color_mode_equal(&state->info_raw, &info.color))
   {
