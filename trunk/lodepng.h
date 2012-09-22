@@ -1,5 +1,5 @@
 /*
-LodePNG version 20120901
+LodePNG version 20120923
 
 Copyright (c) 2005-2012 Lode Vandevenne
 
@@ -1396,21 +1396,25 @@ CHAR_BITS must be 8 or higher, because LodePNG uses unsigned chars for octets.
 
 LodePNG is developed in gcc so this compiler is natively supported. It gives no
 warnings with compiler options "-Wall -Wextra -pedantic -ansi", with gcc and g++
-version 4.7.0 on Linux.
+version 4.7.1 on Linux, 32-bit and 64-bit.
 
 *) Mingw
 
 The Mingw compiler (a port of gcc) for Windows is fully supported by LodePNG.
 
-*) Visual Studio 2005 and Visual C++ 2005 Express Edition
+*) Visual Studio 2005 and up, Visual C++ Express Edition 2005 and up
 
-Versions 20070604 up to 20080107 have been tested on VS2005 and work. Visual
-studio may give warnings about 'fopen' being deprecated. A multiplatform library
-can't support the proposed Visual Studio alternative however.
-
-If you're using LodePNG in VS2005 and don't want to see the deprecated warnings,
-put this on top of lodepng.h before the inclusions:
+Visual Studio may give warnings about 'fopen' being deprecated. A multiplatform library
+can't support the proposed Visual Studio alternative however, so LodePNG keeps using
+fopen. If you don't want to see the deprecated warnings, put this on top of lodepng.h
+before the inclusions:
 #define _CRT_SECURE_NO_DEPRECATE
+
+With warning level 4 (W4), there may be a lot of warnings about possible loss of data
+due to integer conversions. I'm not planning to resolve these warnings. The gcc compiler
+doesn't give those even with strict warning flags. With warning level 3 in VS 2008
+Express Edition, LodePNG is, other than the fopen warnings, warning-free again since
+version 20120923.
 
 Visual Studio may want "stdafx.h" files to be included in each source file. That
 is not standard C++ and will not be added to the stock LodePNG. Try to find a
@@ -1496,6 +1500,7 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 23 sep 2012: Reduced warnings in Visual Studio a little bit.
 *) 1 sep 2012 (!): Removed #define's for giving custom (de)compression functions
     and made it work with function pointers instead.
 *) 23 jun 2012: Added more filter strategies. Made it easier to use custom alloc
