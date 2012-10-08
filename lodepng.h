@@ -1,5 +1,5 @@
 /*
-LodePNG version 20120923
+LodePNG version 20121008
 
 Copyright (c) 2005-2012 Lode Vandevenne
 
@@ -273,6 +273,9 @@ struct LodePNGCompressSettings /*deflate = compress*/
   unsigned btype; /*the block type for LZ (0, 1, 2 or 3, see zlib standard). Should be 2 for proper compression.*/
   unsigned use_lz77; /*whether or not to use LZ77. Should be 1 for proper compression.*/
   unsigned windowsize; /*the maximum is 32768, higher gives more compression but is slower. Typical value: 2048.*/
+  unsigned minmatch; /*mininum lz77 length. 3 is normally best, 6 can be better for some PNGs. Default: 0*/
+  unsigned nicematch; /*stop searching if >= this length found. Set to 258 for best compression. Default: 128*/
+  unsigned lazymatching; /*use lazy matching: better compression but a bit slower. Default: true*/
 
   /*use custom zlib encoder instead of built in one (default: null)*/
   unsigned (*custom_zlib)(unsigned char**, size_t*,
@@ -518,17 +521,20 @@ void lodepng_decoder_settings_init(LodePNGDecoderSettings* settings);
 /*automatically use color type with less bits per pixel if losslessly possible. Default: AUTO*/
 typedef enum LodePNGFilterStrategy
 {
-  LFS_HEURISTIC, /*official PNG heuristic*/
-  LFS_ZERO, /*every filter at zero*/
-  LFS_MINSUM, /*like the official PNG heuristic, but use minimal sum always, including palette and low bitdepth images*/
+  /*every filter at zero*/
+  LFS_ZERO, 
+  /*Use filter that gives minumum sum, as described in the official PNG filter heuristic.*/
+  LFS_MINSUM,
+  /*Use the filter type that gives smallest Shannon entropy for this scanline. Depending
+  on the image, this is better or worse than minsum.*/
+  LFS_ENTROPY,
   /*
   Brute-force-search PNG filters by compressing each filter for each scanline.
-  This gives better compression, at the cost of being super slow. Experimental!
-  If you enable this, also set zlibsettings.windowsize to 32768 and choose an
-  optimal color mode for the PNG image for best compression. Default: 0 (false).
+  Experimental, very slow, and only rarely gives better compression than MINSUM.
   */
   LFS_BRUTE_FORCE,
-  LFS_PREDEFINED /*use predefined_filters buffer: you specify the filter type for each scanline*/
+  /*use predefined_filters buffer: you specify the filter type for each scanline*/
+  LFS_PREDEFINED 
 } LodePNGFilterStrategy;
 
 /*automatically use color type with less bits per pixel if losslessly possible. Default: LAC_AUTO*/
@@ -541,7 +547,16 @@ typedef enum LodePNGAutoConvert
   like AUTO, but do not choose 1, 2 or 4 bit per pixel types.
   sometimes a PNG image compresses worse if less than 8 bits per pixels.
   */
-  LAC_AUTO_NO_NIBBLES
+  LAC_AUTO_NO_NIBBLES,
+  /*
+  like AUTO, but never choose palette color type. For small images, encoding
+  the palette may take more bytes than what is gained. Note that AUTO also
+  already prevents encoding the palette for extremely small images, but that may
+  not be sufficient because due to the compression it cannot predict when to
+  switch.
+  */
+  LAC_AUTO_NO_PALETTE,
+  LAC_AUTO_NO_NIBBLES_NO_PALETTE
 } LodePNGAutoConvert;
 
 
@@ -552,11 +567,18 @@ typedef struct LodePNGEncoderSettings
 
   LodePNGAutoConvert auto_convert; /*how to automatically choose output PNG color type, if at all*/
 
+  /*If true, follows the official PNG heuristic: if the PNG uses a palette or lower than
+  8 bit depth, set all filters to zero. Otherwise use the filter_strategy. Note that to
+  completely follow the official PNG heuristic, filter_palette_zero must be true and
+  filter_strategy must be LFS_MINSUM*/
+  unsigned filter_palette_zero;
+  /*Which filter strategy to use when not using zeroes due to filter_palette_zero.
+  Set filter_palette_zero to 0 to ensure always using your chosen strategy. Default: LFS_MINSUM*/
   LodePNGFilterStrategy filter_strategy;
-
   /*used if filter_strategy is LFS_PREDEFINED. In that case, this must point to a buffer with
-    the same length as the amount of scanlines in the image, and each value must <= 5. You
-    have to cleanup this buffer, LodePNG will never free it.*/
+  the same length as the amount of scanlines in the image, and each value must <= 5. You
+  have to cleanup this buffer, LodePNG will never free it. Don't forget that filter_palette_zero
+  must be set to 0 to ensure this is also used on palette or low bitdepth images.*/
   unsigned char* predefined_filters;
 
   /*force creating a PLTE chunk if colortype is 2 or 6 (= a suggested palette).
@@ -1500,6 +1522,9 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 8 okt 2012 (!): Added new filter strategy (entropy) and new auto color mode.
+    (no palette). Better deflate tree encoding. New compression tweak settings.
+    Faster color conversions while decoding. Some internal cleanups.
 *) 23 sep 2012: Reduced warnings in Visual Studio a little bit.
 *) 1 sep 2012 (!): Removed #define's for giving custom (de)compression functions
     and made it work with function pointers instead.
@@ -1568,7 +1593,7 @@ symbol.
 *) 11 mar 2007: very simple addition: ability to encode bKGD chunks.
 *) 04 mar 2007: (!) tEXt chunk related fixes, and support for encoding
     palettized PNG images. Plus little interface change with palette and texts.
-*) 03 mar 2007: Made it encode dynamic Huffman shorter  with repeat codes.
+*) 03 mar 2007: Made it encode dynamic Huffman shorter with repeat codes.
     Fixed a bug where the end code of a block had length 0 in the Huffman tree.
 *) 26 feb 2007: Huffman compression with dynamic trees (BTYPE 2) now implemented
     and supported by the encoder, resulting in smaller PNGs at the output.
