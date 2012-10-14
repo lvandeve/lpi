@@ -1,5 +1,5 @@
 /*
-LodePNG version 20121008
+LodePNG version 20121014
 
 Copyright (c) 2005-2012 Lode Vandevenne
 
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*LODEPNG_COMPILE_CPP*/
 
-#define VERSION_STRING "20121008"
+#define VERSION_STRING "20121014"
 
 /*
 This source file is built up in the following large parts. The code sections
@@ -754,7 +754,7 @@ unsigned lodepng_huffman_code_lengths(unsigned* lengths, const unsigned* frequen
   }
 
   for(i = 0; i < numcodes; i++) lengths[i] = 0;
-  
+
   /*ensure at least two present symbols. There should be at least one symbol
   according to RFC 1951 section 3.2.7. To decoders incorrectly require two. To
   make these work as well ensure there are at least two symbols. The
@@ -3208,8 +3208,8 @@ static unsigned getPixelColorsRGBA8(unsigned char* buffer, size_t numpixels,
     {
       for(i = 0; i < numpixels; i++, buffer += num_channels)
       {
-        buffer[0] = buffer[1] = buffer[2] = in[i * i];
-        if(has_alpha) buffer[3] = 256U * in[i * 2 + 0] + in[i * 2 + 1] == mode->key_r ? 0 : 255;
+        buffer[0] = buffer[1] = buffer[2] = in[i * 2];
+        if(has_alpha) buffer[3] = mode->key_defined && 256U * in[i * 2 + 0] + in[i * 2 + 1] == mode->key_r ? 0 : 255;
       }
     }
     else
@@ -4048,12 +4048,19 @@ static unsigned unfilter(unsigned char* out, const unsigned char* in, unsigned w
   return 0;
 }
 
+/*
+in: Adam7 interlaced image, with no padding bits between scanlines, but between
+ reduced images so that each reduced image starts at a byte.
+out: the same pixels, but re-ordered so that they're now a non-interlaced image with size w*h
+bpp: bits per pixel
+out has the following size in bits: w * h * bpp.
+in is possibly bigger due to padding bits between reduced images.
+out must be big enough AND must be 0 everywhere if bpp < 8 in the current implementation
+(because that's likely a little bit faster)
+NOTE: comments about padding bits are only relevant if bpp < 8
+*/
 static void Adam7_deinterlace(unsigned char* out, const unsigned char* in, unsigned w, unsigned h, unsigned bpp)
 {
-  /*Note: this function works on image buffers WITHOUT padding bits at end of scanlines
-  with non-multiple-of-8 bit amounts, only between reduced images is padding
-  out must be big enough AND must be 0 everywhere if bpp < 8 in the current implementation
-  (because that's likely a little bit faster)*/
   unsigned passw[7], passh[7];
   size_t filter_passstart[8], padded_passstart[8], passstart[8];
   unsigned i;
@@ -5396,10 +5403,19 @@ static void addPaddingBits(unsigned char* out, const unsigned char* in,
   }
 }
 
+/*
+in: non-interlaced image with size w*h
+out: the same pixels, but re-ordered according to PNG's Adam7 interlacing, with
+ no padding bits between scanlines, but between reduced images so that each
+ reduced image starts at a byte.
+bpp: bits per pixel
+there are no padding bits, not between scanlines, not between reduced images
+in has the following size in bits: w * h * bpp.
+out is possibly bigger due to padding bits between reduced images
+NOTE: comments about padding bits are only relevant if bpp < 8
+*/
 static void Adam7_interlace(unsigned char* out, const unsigned char* in, unsigned w, unsigned h, unsigned bpp)
 {
-  /*Note: this function works on image buffers WITHOUT padding bits at end of scanlines with non-multiple-of-8
-  bit amounts, only between reduced images is padding*/
   unsigned passw[7], passh[7];
   size_t filter_passstart[8], padded_passstart[8], passstart[8];
   unsigned i;
@@ -5491,7 +5507,8 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
   }
   else /*interlace_method is 1 (Adam7)*/
   {
-    unsigned char* adam7 = (unsigned char*)mymalloc((h * w * bpp + 7) / 8);
+    /*the alloc size is an estimate: 6 bytes are added for worse-case padding bits between the 7 passes.*/
+    unsigned char* adam7 = (unsigned char*)mymalloc((h * w * bpp + 7) / 8 + 6);
     if(!adam7 && ((h * w * bpp + 7) / 8)) error = 83; /*alloc fail*/
 
     while(!error) /*not a real while loop, used to break out to cleanup to avoid a goto*/
@@ -5500,13 +5517,12 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
       size_t filter_passstart[8], padded_passstart[8], passstart[8];
       unsigned i;
 
+      Adam7_interlace(adam7, in, w, h, bpp);
       Adam7_getpassvalues(passw, passh, filter_passstart, padded_passstart, passstart, w, h, bpp);
 
       *outsize = filter_passstart[7]; /*image size plus an extra byte per scanline + possible padding bits*/
       *out = (unsigned char*)mymalloc(*outsize);
       if(!(*out) && (*outsize)) ERROR_BREAK(83 /*alloc fail*/);
-
-      Adam7_interlace(adam7, in, w, h, bpp);
 
       for(i = 0; i < 7; i++)
       {
