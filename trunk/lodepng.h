@@ -1,5 +1,5 @@
 /*
-LodePNG version 20121008
+LodePNG version 20121014
 
 Copyright (c) 2005-2012 Lode Vandevenne
 
@@ -820,7 +820,6 @@ unsigned encode(std::vector<unsigned char>& out,
                 const std::vector<unsigned char>& in, unsigned w, unsigned h,
                 State& state);
 #endif /*LODEPNG_COMPILE_ENCODER*/
-
 
 #ifdef LODEPNG_COMPILE_DISK
 /*
