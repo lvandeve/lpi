@@ -1,5 +1,5 @@
 /*
-LodePNG version 20121014
+LodePNG version 20121016
 
 Copyright (c) 2005-2012 Lode Vandevenne
 
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*LODEPNG_COMPILE_CPP*/
 
-#define VERSION_STRING "20121014"
+#define VERSION_STRING "20121016"
 
 /*
 This source file is built up in the following large parts. The code sections
@@ -3851,6 +3851,21 @@ static const unsigned ADAM7_IY[7] = { 0, 0, 4, 0, 2, 0, 1 }; /*y start values*/
 static const unsigned ADAM7_DX[7] = { 8, 8, 4, 4, 2, 2, 1 }; /*x delta values*/
 static const unsigned ADAM7_DY[7] = { 8, 8, 8, 4, 4, 2, 2 }; /*y delta values*/
 
+/*
+Outputs various dimensions and positions in the image related to the Adam7 reduced images.
+passw: output containing the width of the 7 passes
+passh: output containing the height of the 7 passes
+filter_passstart: output containing the index of the start and end of each
+ reduced image with filter bytes
+padded_passstart output containing the index of the start and end of each
+ reduced image when without filter bytes but with padded scanlines
+passstart: output containing the index of the start and end of each reduced
+ image without padding between scanlines, but still padding between the images
+w, h: width and height of non-interlaced image
+bpp: bits per pixel
+"padded" is only relevant if bpp is less than 8 and a scanline or image does not
+ end at a full byte
+*/
 static void Adam7_getpassvalues(unsigned passw[7], unsigned passh[7], size_t filter_passstart[8],
                                 size_t padded_passstart[8], size_t passstart[8], unsigned w, unsigned h, unsigned bpp)
 {
@@ -5488,15 +5503,14 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
       /*non multiple of 8 bits per scanline, padding bits needed per scanline*/
       if(bpp < 8 && w * bpp != ((w * bpp + 7) / 8) * 8)
       {
-        ucvector padded;
-        ucvector_init(&padded);
-        if(!ucvector_resize(&padded, h * ((w * bpp + 7) / 8))) error = 83; /*alloc fail*/
+        unsigned char* padded = (unsigned char*)mymalloc(h * ((w * bpp + 7) / 8));
+        if(!padded) error = 83; /*alloc fail*/
         if(!error)
         {
-          addPaddingBits(padded.data, in, ((w * bpp + 7) / 8) * 8, w * bpp, h);
-          error = filter(*out, padded.data, w, h, &info_png->color, settings);
+          addPaddingBits(padded, in, ((w * bpp + 7) / 8) * 8, w * bpp, h);
+          error = filter(*out, padded, w, h, &info_png->color, settings);
         }
-        ucvector_cleanup(&padded);
+        myfree(padded);
       }
       else
       {
@@ -5507,48 +5521,44 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
   }
   else /*interlace_method is 1 (Adam7)*/
   {
-    /*the alloc size is an estimate: 6 bytes are added for worse-case padding bits between the 7 passes.*/
-    unsigned char* adam7 = (unsigned char*)mymalloc((h * w * bpp + 7) / 8 + 6);
-    if(!adam7 && ((h * w * bpp + 7) / 8)) error = 83; /*alloc fail*/
+    unsigned passw[7], passh[7];
+    size_t filter_passstart[8], padded_passstart[8], passstart[8];
+    unsigned char* adam7;
 
-    while(!error) /*not a real while loop, used to break out to cleanup to avoid a goto*/
+    Adam7_getpassvalues(passw, passh, filter_passstart, padded_passstart, passstart, w, h, bpp);
+
+    *outsize = filter_passstart[7]; /*image size plus an extra byte per scanline + possible padding bits*/
+    *out = (unsigned char*)mymalloc(*outsize);
+    if(!(*out)) error = 83; /*alloc fail*/
+
+    adam7 = (unsigned char*)mymalloc(passstart[7]);
+    if(!adam7 && passstart[7]) error = 83; /*alloc fail*/
+
+    if(!error)
     {
-      unsigned passw[7], passh[7];
-      size_t filter_passstart[8], padded_passstart[8], passstart[8];
       unsigned i;
 
       Adam7_interlace(adam7, in, w, h, bpp);
-      Adam7_getpassvalues(passw, passh, filter_passstart, padded_passstart, passstart, w, h, bpp);
-
-      *outsize = filter_passstart[7]; /*image size plus an extra byte per scanline + possible padding bits*/
-      *out = (unsigned char*)mymalloc(*outsize);
-      if(!(*out) && (*outsize)) ERROR_BREAK(83 /*alloc fail*/);
-
       for(i = 0; i < 7; i++)
       {
         if(bpp < 8)
         {
-          ucvector padded;
-          ucvector_init(&padded);
-          if(!ucvector_resize(&padded, h * ((w * bpp + 7) / 8))) error = 83; /*alloc fail*/
-          if(!error)
-          {
-            addPaddingBits(&padded.data[padded_passstart[i]], &adam7[passstart[i]],
-                           ((passw[i] * bpp + 7) / 8) * 8, passw[i] * bpp, passh[i]);
-            error = filter(&(*out)[filter_passstart[i]], &padded.data[padded_passstart[i]],
-                           passw[i], passh[i], &info_png->color, settings);
-          }
-
-          ucvector_cleanup(&padded);
+          unsigned char* padded = (unsigned char*)mymalloc(padded_passstart[i + 1] - padded_passstart[i]);
+          if(!padded) ERROR_BREAK(83); /*alloc fail*/
+          addPaddingBits(padded, &adam7[passstart[i]],
+                         ((passw[i] * bpp + 7) / 8) * 8, passw[i] * bpp, passh[i]);
+          error = filter(&(*out)[filter_passstart[i]], padded,
+                         passw[i], passh[i], &info_png->color, settings);
+          myfree(padded);
         }
         else
         {
           error = filter(&(*out)[filter_passstart[i]], &adam7[padded_passstart[i]],
                          passw[i], passh[i], &info_png->color, settings);
         }
-      }
 
-      break;
+        if(error) break;
+      }
     }
 
     myfree(adam7);
