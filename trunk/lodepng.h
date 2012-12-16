@@ -1,5 +1,5 @@
 /*
-LodePNG version 20121027
+LodePNG version 20121216
 
 Copyright (c) 2005-2012 Lode Vandevenne
 
@@ -94,6 +94,7 @@ out: Output parameter. Pointer to buffer that will contain the raw pixel data.
      After decoding, its size is w * h * (bytes per pixel) bytes larger than
      initially. Bytes per pixel depends on colortype and bitdepth.
      Must be freed after usage with free(*out).
+     Note: for 16-bit per channel colors, uses big endian format like PNG does.
 w: Output parameter. Pointer to width of pixel data.
 h: Output parameter. Pointer to height of pixel data.
 in: Memory buffer with the PNG file.
@@ -139,7 +140,8 @@ unsigned lodepng_decode24_file(unsigned char** out, unsigned* w, unsigned* h,
 Converts raw pixel data into a PNG image in memory. The colortype and bitdepth
   of the output PNG image cannot be chosen, they are automatically determined
   by the colortype, bitdepth and content of the input pixel data.
-out: Output parameter. Pointer to buffer that will contain the raw pixel data.
+  Note: for 16-bit per channel colors, needs big endian format like PNG does.
+out: Output parameter. Pointer to buffer that will contain the PNG image data.
      Must be freed after usage with free(*out).
 outsize: Output parameter. Pointer to the size in bytes of the out buffer.
 image: The raw pixel data to encode. The size of this buffer should be
@@ -489,6 +491,7 @@ See the reference manual at the end of this header file to see which color conve
 return value = LodePNG error code (0 if all went ok, an error if the conversion isn't supported)
 The out buffer must have size (w * h * bpp + 7) / 8, where bpp is the bits per pixel
 of the output color type (lodepng_get_bpp)
+Note: for 16-bit per channel colors, uses big endian format like PNG does.
 */
 unsigned lodepng_convert(unsigned char* out, const unsigned char* in,
                          LodePNGColorMode* mode_out, LodePNGColorMode* mode_in,
@@ -895,6 +898,7 @@ LodePNG Documentation
     6.1. PNG color types
     6.2. color conversions
     6.3. padding bits
+    6.4. A note about 16-bits per channel and endianness
   7. error values
   8. chunks and PNG editing
   9. compiler support
@@ -1276,6 +1280,26 @@ The raw input image you give to the encoder, and the raw output image you get fr
 will NOT have these padding bits, e.g. in the case of a 1-bit image with a width
 of 7 pixels, the first pixel of the second scanline will the the 8th bit of the first byte,
 not the first bit of a new byte.
+
+6.4. A note about 16-bits per channel and endianness
+----------------------------------------------------
+
+LodePNG uses unsigned char arrays for 16-bit per channel colors too, just like
+for any other color format. The 16-bit values are stored in big endian (most
+significant byte first) in these arrays. This is the opposite order of the
+little endian used by x86 CPU's.
+
+LodePNG always uses big endian because the PNG file format does so internally.
+Conversions to other formats than PNG uses internally are not supported by
+LodePNG on purpose, there are myriads of formats, including endianness of 16-bit
+colors, the order in which you store R, G, B and A, and so on. Supporting and
+converting to/from all that is outside the scope of LodePNG.
+
+This may mean that, depending on your use case, you may want to convert the big
+endian output of LodePNG to little endian with a for loop. This is certainly not
+always needed, many applications and libraries support big endian 16-bit colors
+anyway, but it means you cannot simply cast the unsigned char* buffer to an
+unsigned short* buffer on x86 CPUs.
 
 
 7. error values
