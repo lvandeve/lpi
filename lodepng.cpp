@@ -1,7 +1,7 @@
 /*
-LodePNG version 20121216
+LodePNG version 20130128
 
-Copyright (c) 2005-2012 Lode Vandevenne
+Copyright (c) 2005-2013 Lode Vandevenne
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any damages
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*LODEPNG_COMPILE_CPP*/
 
-#define VERSION_STRING "20121216"
+#define VERSION_STRING "20130128"
 
 /*
 This source file is built up in the following large parts. The code sections
@@ -3548,7 +3548,7 @@ static unsigned get_color_profile(ColorProfile* profile,
         profile->greybits_done = 1; /*greybits is not applicable anymore*/
       }
 
-      if(!profile->alpha_done && a != 255)
+      if(!profile->alpha_done && a != 65535)
       {
         if(a == 0 && !(profile->key && (r != profile->key_r || g != profile->key_g || b != profile->key_b)))
         {
@@ -3566,6 +3566,15 @@ static unsigned get_color_profile(ColorProfile* profile,
           profile->alpha_done = 1;
           profile->greybits_done = 1; /*greybits is not applicable anymore*/
         }
+      }
+
+      /* Color key cannot be used if an opaque pixel also has that RGB color. */
+      if(!profile->alpha_done && a == 65535 && profile->key
+          && r == profile->key_r && g == profile->key_g && b == profile->key_b)
+      {
+          profile->alpha = 1;
+          profile->alpha_done = 1;
+          profile->greybits_done = 1; /*greybits is not applicable anymore*/
       }
 
       if(!profile->greybits_done)
@@ -3604,7 +3613,7 @@ static unsigned get_color_profile(ColorProfile* profile,
       }
     };
   }
-  else
+  else /* < 16-bit */
   {
     for(i = 0; i < numpixels; i++)
     {
@@ -3637,6 +3646,15 @@ static unsigned get_color_profile(ColorProfile* profile,
           profile->alpha_done = 1;
           profile->greybits_done = 1; /*greybits is not applicable anymore*/
         }
+      }
+
+      /* Color key cannot be used if an opaque pixel also has that RGB color. */
+      if(!profile->alpha_done && a == 255 && profile->key
+          && r == profile->key_r && g == profile->key_g && b == profile->key_b)
+      {
+          profile->alpha = 1;
+          profile->alpha_done = 1;
+          profile->greybits_done = 1; /*greybits is not applicable anymore*/
       }
 
       if(!profile->greybits_done)
