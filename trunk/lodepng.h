@@ -1,7 +1,7 @@
 /*
-LodePNG version 20121216
+LodePNG version 20130128
 
-Copyright (c) 2005-2012 Lode Vandevenne
+Copyright (c) 2005-2013 Lode Vandevenne
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any damages
@@ -525,7 +525,7 @@ void lodepng_decoder_settings_init(LodePNGDecoderSettings* settings);
 typedef enum LodePNGFilterStrategy
 {
   /*every filter at zero*/
-  LFS_ZERO, 
+  LFS_ZERO,
   /*Use filter that gives minumum sum, as described in the official PNG filter heuristic.*/
   LFS_MINSUM,
   /*Use the filter type that gives smallest Shannon entropy for this scanline. Depending
@@ -537,7 +537,7 @@ typedef enum LodePNGFilterStrategy
   */
   LFS_BRUTE_FORCE,
   /*use predefined_filters buffer: you specify the filter type for each scanline*/
-  LFS_PREDEFINED 
+  LFS_PREDEFINED
 } LodePNGFilterStrategy;
 
 /*automatically use color type with less bits per pixel if losslessly possible. Default: LAC_AUTO*/
@@ -1545,6 +1545,7 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 28 jan 2013: Bugfix with color key.
 *) 27 okt 2012: Tweaks in text chunk keyword length error handling.
 *) 8 okt 2012 (!): Added new filter strategy (entropy) and new auto color mode.
     (no palette). Better deflate tree encoding. New compression tweak settings.
