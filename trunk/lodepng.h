@@ -1,5 +1,5 @@
 /*
-LodePNG version 20130128
+LodePNG version 20130311
 
 Copyright (c) 2005-2013 Lode Vandevenne
 
@@ -68,6 +68,12 @@ the custom_zlib field of the compress and decompress settings*/
 /*ability to convert error numerical codes to English text string*/
 #ifndef LODEPNG_NO_COMPILE_ERROR_TEXT
 #define LODEPNG_COMPILE_ERROR_TEXT
+#endif
+/*Compile the default allocators (C's free, malloc and realloc). If you disable this,
+you can define the functions lodepng_free, lodepng_malloc and lodepng_realloc in your
+source files with custom allocators.*/
+#ifndef LODEPNG_NO_COMPILE_ALLOCATORS
+#define LODEPNG_COMPILE_ALLOCATORS
 #endif
 /*compile the C++ version (you can disable the C++ wrapper here even when compiling for C++)*/
 #ifdef __cplusplus
@@ -1455,15 +1461,17 @@ fopen. If you don't want to see the deprecated warnings, put this on top of lode
 before the inclusions:
 #define _CRT_SECURE_NO_DEPRECATE
 
-With warning level 4 (W4), there may be a lot of warnings about possible loss of data
-due to integer conversions. I'm not planning to resolve these warnings. The gcc compiler
-doesn't give those even with strict warning flags. With warning level 3 in VS 2008
-Express Edition, LodePNG is, other than the fopen warnings, warning-free again since
-version 20120923.
+Other than the above warnings, LodePNG should be warning-free with warning
+level 3 (W3). Warning level 4 (W4) will give warnings about integer conversions.
+I'm not planning to resolve these warnings. To get rid of them, let Visual
+Studio use warning level W3 for lodepng.cpp only: right click lodepng.cpp,
+Properties, C/C++, General, Warning Level: Level 3 (/W3).
 
-Visual Studio may want "stdafx.h" files to be included in each source file. That
-is not standard C++ and will not be added to the stock LodePNG. Try to find a
-setting to disable it for this source file.
+Visual Studio may want "stdafx.h" files to be included in each source file and
+give an error "unexpected end of file while looking for precompiled header".
+That is not standard C++ and will not be added to the stock LodePNG. You can
+disable it for lodepng.cpp only by right clicking it, Properties, C/C++,
+Precompiled Headers, and set it to Not Using Precompiled Headers there.
 
 *) Visual Studio 6.0
 
@@ -1545,6 +1553,9 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 11 mar 2013 (!): Bugfix with custom free. Changed from "my" to "lodepng_"
+    prefix for the custom allocators and made it possible with a new #define to
+    use custom ones in your project without needing to change lodepng's code.
 *) 28 jan 2013: Bugfix with color key.
 *) 27 okt 2012: Tweaks in text chunk keyword length error handling.
 *) 8 okt 2012 (!): Added new filter strategy (entropy) and new auto color mode.
