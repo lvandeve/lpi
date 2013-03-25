@@ -1,5 +1,5 @@
 /*
-LodePNG version 20130311
+LodePNG version 20130325
 
 Copyright (c) 2005-2013 Lode Vandevenne
 
@@ -497,11 +497,12 @@ See the reference manual at the end of this header file to see which color conve
 return value = LodePNG error code (0 if all went ok, an error if the conversion isn't supported)
 The out buffer must have size (w * h * bpp + 7) / 8, where bpp is the bits per pixel
 of the output color type (lodepng_get_bpp)
+The fix_png value makes it ignore out of bound palette indices.
 Note: for 16-bit per channel colors, uses big endian format like PNG does.
 */
 unsigned lodepng_convert(unsigned char* out, const unsigned char* in,
                          LodePNGColorMode* mode_out, LodePNGColorMode* mode_in,
-                         unsigned w, unsigned h);
+                         unsigned w, unsigned h, unsigned fix_png);
 
 
 #ifdef LODEPNG_COMPILE_DECODER
@@ -514,6 +515,7 @@ typedef struct LodePNGDecoderSettings
   LodePNGDecompressSettings zlibsettings; /*in here is the setting to ignore Adler32 checksums*/
 
   unsigned ignore_crc; /*ignore CRC checksums*/
+  unsigned fix_png; /*if 1, try to parse some broken PNG images, e.g. with out of bound palette.*/
   unsigned color_convert; /*whether to convert the PNG to the color type you want. Default: yes*/
 
 #ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
@@ -1553,6 +1555,7 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 25 mar 2013: Added an optional feature to ignore some PNG errors (fix_png).
 *) 11 mar 2013 (!): Bugfix with custom free. Changed from "my" to "lodepng_"
     prefix for the custom allocators and made it possible with a new #define to
     use custom ones in your project without needing to change lodepng's code.
