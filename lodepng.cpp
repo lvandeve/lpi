@@ -1,5 +1,5 @@
 /*
-LodePNG version 20130311
+LodePNG version 20130325
 
 Copyright (c) 2005-2013 Lode Vandevenne
 
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*LODEPNG_COMPILE_CPP*/
 
-#define VERSION_STRING "20130311"
+#define VERSION_STRING "20130325"
 
 /*
 This source file is built up in the following large parts. The code sections
@@ -502,7 +502,7 @@ typedef struct HuffmanTree
 } HuffmanTree;
 
 /*function used for debug purposes to draw the tree in ascii art with C++*/
-/*#include <iostream>
+/*
 static void HuffmanTree_draw(HuffmanTree* tree)
 {
   std::cout << "tree. length: " << tree->numcodes << " maxbitlen: " << tree->maxbitlen << std::endl;
@@ -3096,7 +3096,8 @@ static unsigned rgba16ToPixel(unsigned char* out, size_t i,
 static unsigned getPixelColorRGBA8(unsigned char* r, unsigned char* g,
                                    unsigned char* b, unsigned char* a,
                                    const unsigned char* in, size_t i,
-                                   const LodePNGColorMode* mode)
+                                   const LodePNGColorMode* mode,
+                                   unsigned fix_png)
 {
   if(mode->colortype == LCT_GREY)
   {
@@ -3150,11 +3151,21 @@ static unsigned getPixelColorRGBA8(unsigned char* r, unsigned char* g,
       size_t j = i * mode->bitdepth;
       index = readBitsFromReversedStream(&j, in, mode->bitdepth);
     }
-    if(index >= mode->palettesize) return 47; /*index out of palette*/
-    *r = mode->palette[index * 4 + 0];
-    *g = mode->palette[index * 4 + 1];
-    *b = mode->palette[index * 4 + 2];
-    *a = mode->palette[index * 4 + 3];
+
+    if(index >= mode->palettesize)
+    {
+      /*This is an error according to the PNG spec, but fix_png can ignore it*/
+      if(!fix_png) return (mode->bitdepth == 8 ? 46 : 47); /*index out of palette*/
+      *r = *g = *b = 0;
+      *a = 255;
+    }
+    else
+    {
+      *r = mode->palette[index * 4 + 0];
+      *g = mode->palette[index * 4 + 1];
+      *b = mode->palette[index * 4 + 2];
+      *a = mode->palette[index * 4 + 3];
+    }
   }
   else if(mode->colortype == LCT_GREY_ALPHA)
   {
@@ -3197,7 +3208,8 @@ enough memory, if has_alpha is true the output is RGBA. mode has the color mode
 of the input buffer.*/
 static unsigned getPixelColorsRGBA8(unsigned char* buffer, size_t numpixels,
                                     unsigned has_alpha, const unsigned char* in,
-                                    const LodePNGColorMode* mode)
+                                    const LodePNGColorMode* mode,
+                                    unsigned fix_png)
 {
   unsigned num_channels = has_alpha ? 4 : 3;
   size_t i;
@@ -3266,11 +3278,21 @@ static unsigned getPixelColorsRGBA8(unsigned char* buffer, size_t numpixels,
     {
       if(mode->bitdepth == 8) index = in[i];
       else index = readBitsFromReversedStream(&j, in, mode->bitdepth);
-      if(index >= mode->palettesize) return 47; /*index out of palette*/
-      buffer[0] = mode->palette[index * 4 + 0];
-      buffer[1] = mode->palette[index * 4 + 1];
-      buffer[2] = mode->palette[index * 4 + 2];
-      if(has_alpha) buffer[3] = mode->palette[index * 4 + 3];
+
+      if(index >= mode->palettesize)
+      {
+        /*This is an error according to the PNG spec, but fix_png can ignore it*/
+        if(!fix_png) return (mode->bitdepth == 8 ? 46 : 47); /*index out of palette*/
+        buffer[0] = buffer[1] = buffer[2] = 0;
+        if(has_alpha) buffer[3] = 255;
+      }
+      else
+      {
+        buffer[0] = mode->palette[index * 4 + 0];
+        buffer[1] = mode->palette[index * 4 + 1];
+        buffer[2] = mode->palette[index * 4 + 2];
+        if(has_alpha) buffer[3] = mode->palette[index * 4 + 3];
+      }
     }
   }
   else if(mode->colortype == LCT_GREY_ALPHA)
@@ -3366,7 +3388,7 @@ the out buffer must have (w * h * bpp + 7) / 8 bytes, where bpp is the bits per 
 */
 unsigned lodepng_convert(unsigned char* out, const unsigned char* in,
                          LodePNGColorMode* mode_out, LodePNGColorMode* mode_in,
-                         unsigned w, unsigned h)
+                         unsigned w, unsigned h, unsigned fix_png)
 {
   unsigned error = 0;
   size_t i;
@@ -3405,18 +3427,18 @@ unsigned lodepng_convert(unsigned char* out, const unsigned char* in,
   }
   else if(mode_out->bitdepth == 8 && mode_out->colortype == LCT_RGBA)
   {
-    error = getPixelColorsRGBA8(out, numpixels, 1, in, mode_in);
+    error = getPixelColorsRGBA8(out, numpixels, 1, in, mode_in, fix_png);
   }
   else if(mode_out->bitdepth == 8 && mode_out->colortype == LCT_RGB)
   {
-    error = getPixelColorsRGBA8(out, numpixels, 0, in, mode_in);
+    error = getPixelColorsRGBA8(out, numpixels, 0, in, mode_in, fix_png);
   }
   else
   {
     unsigned char r = 0, g = 0, b = 0, a = 0;
     for(i = 0; i < numpixels; i++)
     {
-      error = getPixelColorRGBA8(&r, &g, &b, &a, in, i, mode_in);
+      error = getPixelColorRGBA8(&r, &g, &b, &a, in, i, mode_in, fix_png);
       if(error) break;
       error = rgba8ToPixel(out, i, mode_out, &tree, r, g, b, a);
       if(error) break;
@@ -3526,7 +3548,8 @@ unsigned getValueRequiredBits(unsigned short value)
 It's ok to set some parameters of profile to done already.*/
 static unsigned get_color_profile(ColorProfile* profile,
                                   const unsigned char* in, size_t numpixels,
-                                  LodePNGColorMode* mode)
+                                  LodePNGColorMode* mode,
+                                  unsigned fix_png)
 {
   unsigned error = 0;
   size_t i;
@@ -3629,7 +3652,7 @@ static unsigned get_color_profile(ColorProfile* profile,
     for(i = 0; i < numpixels; i++)
     {
       unsigned char r = 0, g = 0, b = 0, a = 0;
-      error = getPixelColorRGBA8(&r, &g, &b, &a, in, i, mode);
+      error = getPixelColorRGBA8(&r, &g, &b, &a, in, i, mode, fix_png);
       if(error) break;
 
       if(!profile->colored_done && (r != g || r != b))
@@ -3738,7 +3761,7 @@ static unsigned doAutoChooseColor(LodePNGColorMode* mode_out,
     profile.numcolors_done = 1;
     profile.sixteenbit_done = 1;
   }
-  error = get_color_profile(&profile, image, w * h, mode_in);
+  error = get_color_profile(&profile, image, w * h, mode_in, 0 /*fix_png*/);
 
   if(!error && auto_convert == LAC_ALPHA)
   {
@@ -4752,7 +4775,7 @@ unsigned lodepng_decode(unsigned char** out, unsigned* w, unsigned* h,
     {
       state->error = 83; /*alloc fail*/
     }
-    else state->error = lodepng_convert(*out, data, &state->info_raw, &state->info_png.color, *w, *h);
+    else state->error = lodepng_convert(*out, data, &state->info_raw, &state->info_png.color, *w, *h, state->decoder.fix_png);
     lodepng_free(data);
   }
   return state->error;
@@ -4813,6 +4836,7 @@ void lodepng_decoder_settings_init(LodePNGDecoderSettings* settings)
   settings->remember_unknown_chunks = 0;
 #endif /*LODEPNG_COMPILE_ANCILLARY_CHUNKS*/
   settings->ignore_crc = 0;
+  settings->fix_png = 0;
   lodepng_decompress_settings_init(&settings->zlibsettings);
 }
 
@@ -5695,7 +5719,7 @@ unsigned lodepng_encode(unsigned char** out, size_t* outsize,
     if(!converted && size) state->error = 83; /*alloc fail*/
     if(!state->error)
     {
-      state->error = lodepng_convert(converted, image, &info.color, &state->info_raw, w, h);
+      state->error = lodepng_convert(converted, image, &info.color, &state->info_raw, w, h, 0 /*fix_png*/);
     }
     if(!state->error) preProcessScanlines(&data, &datasize, converted, w, h, &info, &state->encoder);
     lodepng_free(converted);
