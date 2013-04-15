@@ -3807,9 +3807,9 @@ static unsigned doAutoChooseColor(LodePNGColorMode* mode_out,
       {
         if(!palette_ok || (grey_ok && profile.greybits <= palettebits))
         {
+          unsigned grey = profile.key_r;
           mode_out->colortype = LCT_GREY;
           mode_out->bitdepth = profile.greybits;
-          unsigned grey = profile.key_r;
           if(profile.key) setColorKeyFrom16bit(mode_out, grey, grey, grey, mode_out->bitdepth);
         }
         else
