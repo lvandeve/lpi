@@ -3737,6 +3737,15 @@ static unsigned get_color_profile(ColorProfile* profile,
   return error;
 }
 
+static void setColorKeyFrom16bit(LodePNGColorMode* mode_out, unsigned r, unsigned g, unsigned b, unsigned bitdepth)
+{
+  unsigned mask = (1 << bitdepth) - 1;
+  mode_out->key_defined = 1;
+  mode_out->key_r = r & mask;
+  mode_out->key_g = g & mask;
+  mode_out->key_b = b & mask;
+}
+
 /*updates values of mode with a potentially smaller color model. mode_out should
 contain the user chosen color model, but will be overwritten with the new chosen one.*/
 static unsigned doAutoChooseColor(LodePNGColorMode* mode_out,
@@ -3762,19 +3771,12 @@ static unsigned doAutoChooseColor(LodePNGColorMode* mode_out,
     profile.sixteenbit_done = 1;
   }
   error = get_color_profile(&profile, image, w * h, mode_in, 0 /*fix_png*/);
-
   if(!error && auto_convert == LAC_ALPHA)
   {
     if(!profile.alpha)
     {
       mode_out->colortype = (mode_out->colortype == LCT_RGBA ? LCT_RGB : LCT_GREY);
-      if(profile.key)
-      {
-        mode_out->key_defined = 1;
-        mode_out->key_r = profile.key_r;
-        mode_out->key_g = profile.key_g;
-        mode_out->key_b = profile.key_b;
-      }
+      if(profile.key) setColorKeyFrom16bit(mode_out, profile.key_r, profile.key_g, profile.key_b, mode_out->bitdepth);
     }
   }
   else if(!error && auto_convert != LAC_ALPHA)
@@ -3791,13 +3793,7 @@ static unsigned doAutoChooseColor(LodePNGColorMode* mode_out,
       else
       {
         mode_out->colortype = profile.colored ? LCT_RGB : LCT_GREY;
-        if(profile.key)
-        {
-          mode_out->key_defined = 1;
-          mode_out->key_r = profile.key_r;
-          mode_out->key_g = profile.key_g;
-          mode_out->key_b = profile.key_b;
-        }
+        if(profile.key) setColorKeyFrom16bit(mode_out, profile.key_r, profile.key_g, profile.key_b, mode_out->bitdepth);
       }
     }
     else /*less than 16 bits per channel*/
@@ -3813,15 +3809,8 @@ static unsigned doAutoChooseColor(LodePNGColorMode* mode_out,
         {
           mode_out->colortype = LCT_GREY;
           mode_out->bitdepth = profile.greybits;
-          if(profile.key)
-          {
-            unsigned keyval = profile.key_r;
-            keyval &= (profile.greybits - 1); /*same subgroup of bits repeated, so taking right bits is fine*/
-            mode_out->key_defined = 1;
-            mode_out->key_r = keyval;
-            mode_out->key_g = keyval;
-            mode_out->key_b = keyval;
-          }
+          unsigned grey = profile.key_r;
+          if(profile.key) setColorKeyFrom16bit(mode_out, grey, grey, grey, mode_out->bitdepth);
         }
         else
         {
@@ -3850,13 +3839,7 @@ static unsigned doAutoChooseColor(LodePNGColorMode* mode_out,
         else
         {
           mode_out->colortype = profile.colored ? LCT_RGB : LCT_GREY /*LCT_GREY normally won't occur, already done earlier*/;
-          if(profile.key)
-          {
-            mode_out->key_defined = 1;
-            mode_out->key_r = profile.key_r % 256;
-            mode_out->key_g = profile.key_g % 256;
-            mode_out->key_b = profile.key_b % 256;
-          }
+          if(profile.key) setColorKeyFrom16bit(mode_out, profile.key_r, profile.key_g, profile.key_b, mode_out->bitdepth);
         }
       }
     }

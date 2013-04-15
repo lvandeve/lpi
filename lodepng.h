@@ -1692,5 +1692,5 @@ Domain: gmail dot com.
 Account: lode dot vandevenne.
 
 
-Copyright (c) 2005-2012 Lode Vandevenne
+Copyright (c) 2005-2013 Lode Vandevenne
 */
