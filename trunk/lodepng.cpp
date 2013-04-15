@@ -1,5 +1,5 @@
 /*
-LodePNG version 20130325
+LodePNG version 20130415
 
 Copyright (c) 2005-2013 Lode Vandevenne
 
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*LODEPNG_COMPILE_CPP*/
 
-#define VERSION_STRING "20130325"
+#define VERSION_STRING "20130415"
 
 /*
 This source file is built up in the following large parts. The code sections
@@ -2540,7 +2540,7 @@ unsigned lodepng_color_mode_copy(LodePNGColorMode* dest, const LodePNGColorMode*
   *dest = *source;
   if(source->palette)
   {
-    dest->palette = (unsigned char*)lodepng_malloc(source->palettesize * 4);
+    dest->palette = (unsigned char*)lodepng_malloc(1024);
     if(!dest->palette && source->palettesize) return 83; /*alloc fail*/
     for(i = 0; i < source->palettesize * 4; i++) dest->palette[i] = source->palette[i];
   }
@@ -2570,6 +2570,7 @@ static int lodepng_color_mode_equal(const LodePNGColorMode* a, const LodePNGColo
 void lodepng_palette_clear(LodePNGColorMode* info)
 {
   if(info->palette) lodepng_free(info->palette);
+  info->palette = 0;
   info->palettesize = 0;
 }
 
@@ -2579,11 +2580,10 @@ unsigned lodepng_palette_add(LodePNGColorMode* info,
   unsigned char* data;
   /*the same resize technique as C++ std::vectors is used, and here it's made so that for a palette with
   the max of 256 colors, it'll have the exact alloc size*/
-  if(!(info->palettesize & (info->palettesize - 1))) /*if palettesize is 0 or a power of two*/
+  if(!info->palette) /*allocate palette if empty*/
   {
-    /*allocated data must be at least 4* palettesize (for 4 color bytes)*/
-    size_t alloc_size = info->palettesize == 0 ? 4 : info->palettesize * 4 * 2;
-    data = (unsigned char*)lodepng_realloc(info->palette, alloc_size);
+    /*room for 256 colors with 4 bytes each*/
+    data = (unsigned char*)lodepng_realloc(info->palette, 1024);
     if(!data) return 83; /*alloc fail*/
     else info->palette = data;
   }
@@ -3768,6 +3768,13 @@ static unsigned doAutoChooseColor(LodePNGColorMode* mode_out,
     if(!profile.alpha)
     {
       mode_out->colortype = (mode_out->colortype == LCT_RGBA ? LCT_RGB : LCT_GREY);
+      if(profile.key)
+      {
+        mode_out->key_defined = 1;
+        mode_out->key_r = profile.key_r;
+        mode_out->key_g = profile.key_g;
+        mode_out->key_b = profile.key_b;
+      }
     }
   }
   else if(!error && auto_convert != LAC_ALPHA)
@@ -3821,6 +3828,8 @@ static unsigned doAutoChooseColor(LodePNGColorMode* mode_out,
           /*fill in the palette*/
           unsigned i;
           unsigned char* p = profile.palette;
+          /*remove potential earlier palette*/
+          lodepng_palette_clear(mode_out);
           for(i = 0; i < profile.numcolors; i++)
           {
             error = lodepng_palette_add(mode_out, p[i * 4 + 0], p[i * 4 + 1], p[i * 4 + 2], p[i * 4 + 3]);
