@@ -1,5 +1,5 @@
 /*
-LodePNG version 20130824
+LodePNG version 20130831
 
 Copyright (c) 2005-2013 Lode Vandevenne
 
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*LODEPNG_COMPILE_CPP*/
 
-#define VERSION_STRING "20130824"
+#define VERSION_STRING "20130831"
 
 /*
 This source file is built up in the following large parts. The code sections
@@ -795,7 +795,12 @@ unsigned lodepng_huffman_code_lengths(unsigned* lengths, const unsigned* frequen
     coinmem = numpresent * 2; /*max amount of coins needed with the current algo*/
     coins = (Coin*)lodepng_malloc(sizeof(Coin) * coinmem);
     prev_row = (Coin*)lodepng_malloc(sizeof(Coin) * coinmem);
-    if(!coins || !prev_row) return 83; /*alloc fail*/
+    if(!coins || !prev_row)
+    {
+      lodepng_free(coins);
+      lodepng_free(prev_row);
+      return 83; /*alloc fail*/
+    }
     init_coins(coins, coinmem);
     init_coins(prev_row, coinmem);
 
