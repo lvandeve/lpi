@@ -1,5 +1,5 @@
 /*
-LodePNG version 20130831
+LodePNG version 20131115
 
 Copyright (c) 2005-2013 Lode Vandevenne
 
@@ -501,9 +501,8 @@ The fix_png value works as described in struct LodePNGDecoderSettings.
 Note: for 16-bit per channel colors, uses big endian format like PNG does.
 */
 unsigned lodepng_convert(unsigned char* out, const unsigned char* in,
-                         LodePNGColorMode* mode_out, LodePNGColorMode* mode_in,
+                         LodePNGColorMode* mode_out, const LodePNGColorMode* mode_in,
                          unsigned w, unsigned h, unsigned fix_png);
-
 
 #ifdef LODEPNG_COMPILE_DECODER
 /*
@@ -579,6 +578,17 @@ typedef enum LodePNGAutoConvert
   LAC_AUTO_NO_NIBBLES_NO_PALETTE
 } LodePNGAutoConvert;
 
+
+/*
+Automatically chooses color type that gives smallest amount of bits in the
+output image, e.g. grey if there are only greyscale pixels, palette if there
+are less than 256 colors, ...
+The auto_convert parameter allows limiting it to not use palette, ...
+*/
+unsigned lodepng_auto_choose_color(LodePNGColorMode* mode_out,
+                                   const unsigned char* image, unsigned w, unsigned h,
+                                   const LodePNGColorMode* mode_in,
+                                   LodePNGAutoConvert auto_convert);
 
 /*Settings for the encoder.*/
 typedef struct LodePNGEncoderSettings

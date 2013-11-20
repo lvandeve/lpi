@@ -1,5 +1,5 @@
 /*
-LodePNG version 20130831
+LodePNG version 20131115
 
 Copyright (c) 2005-2013 Lode Vandevenne
 
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*LODEPNG_COMPILE_CPP*/
 
-#define VERSION_STRING "20130831"
+#define VERSION_STRING "20131115"
 
 /*
 This source file is built up in the following large parts. The code sections
@@ -580,7 +580,7 @@ static unsigned HuffmanTree_make2DTree(HuffmanTree* tree)
     }
   }
 
-  for(n = 0;  n < tree->numcodes * 2; n++)
+  for(n = 0; n < tree->numcodes * 2; n++)
   {
     if(tree->tree2d[n] == 32767) tree->tree2d[n] = 0; /*remove possible remaining 32767's*/
   }
@@ -3399,7 +3399,7 @@ the out buffer must have (w * h * bpp + 7) / 8 bytes, where bpp is the bits per 
 (lodepng_get_bpp) for < 8 bpp images, there may _not_ be padding bits at the end of scanlines.
 */
 unsigned lodepng_convert(unsigned char* out, const unsigned char* in,
-                         LodePNGColorMode* mode_out, LodePNGColorMode* mode_in,
+                         LodePNGColorMode* mode_out, const LodePNGColorMode* mode_in,
                          unsigned w, unsigned h, unsigned fix_png)
 {
   unsigned error = 0;
@@ -3494,7 +3494,7 @@ typedef struct ColorProfile
 
 } ColorProfile;
 
-static void color_profile_init(ColorProfile* profile, LodePNGColorMode* mode)
+static void color_profile_init(ColorProfile* profile, const LodePNGColorMode* mode)
 {
   profile->sixteenbit = 0;
   profile->sixteenbit_done = mode->bitdepth == 16 ? 0 : 1;
@@ -3561,7 +3561,7 @@ It's ok to set some parameters of profile to done already.*/
 static unsigned get_color_profile(ColorProfile* profile,
                                   const unsigned char* in,
                                   size_t numpixels /*must be full image size, for certain filesize based choices*/,
-                                  LodePNGColorMode* mode,
+                                  const LodePNGColorMode* mode,
                                   unsigned fix_png)
 {
   unsigned error = 0;
@@ -3762,9 +3762,10 @@ static void setColorKeyFrom16bit(LodePNGColorMode* mode_out, unsigned r, unsigne
 
 /*updates values of mode with a potentially smaller color model. mode_out should
 contain the user chosen color model, but will be overwritten with the new chosen one.*/
-static unsigned doAutoChooseColor(LodePNGColorMode* mode_out,
-                                  const unsigned char* image, unsigned w, unsigned h, LodePNGColorMode* mode_in,
-                                  LodePNGAutoConvert auto_convert)
+unsigned lodepng_auto_choose_color(LodePNGColorMode* mode_out,
+                                   const unsigned char* image, unsigned w, unsigned h,
+                                   const LodePNGColorMode* mode_in,
+                                   LodePNGAutoConvert auto_convert)
 {
   ColorProfile profile;
   unsigned error = 0;
@@ -5693,8 +5694,8 @@ unsigned lodepng_encode(unsigned char** out, size_t* outsize,
 
   if(state->encoder.auto_convert != LAC_NO)
   {
-    state->error = doAutoChooseColor(&info.color, image, w, h, &state->info_raw,
-                                     state->encoder.auto_convert);
+    state->error = lodepng_auto_choose_color(&info.color, image, w, h, &state->info_raw,
+                                             state->encoder.auto_convert);
   }
   if(state->error) return state->error;
 
