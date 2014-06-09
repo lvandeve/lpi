@@ -1,7 +1,7 @@
 /*
-LodePNG version 20131222
+LodePNG version 20140609
 
-Copyright (c) 2005-2013 Lode Vandevenne
+Copyright (c) 2005-2014 Lode Vandevenne
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any damages
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*LODEPNG_COMPILE_CPP*/
 
-#define VERSION_STRING "20131222"
+#define VERSION_STRING "20140609"
 
 /*
 This source file is built up in the following large parts. The code sections
@@ -1330,31 +1330,23 @@ static void addLengthDistance(uivector* values, size_t length, size_t distance)
   uivector_push_back(values, extra_distance);
 }
 
-static const unsigned HASH_BIT_MASK = 65535;
+/*3 bytes of data get encoded into two bytes. The hash cannot use more than 3
+bytes as input because 3 is the minimum match length for deflate*/
 static const unsigned HASH_NUM_VALUES = 65536;
-static const unsigned HASH_NUM_CHARACTERS = 3;
-static const unsigned HASH_SHIFT = 2;
-/*
-The HASH_NUM_CHARACTERS value is used to make encoding faster by using longer
-sequences to generate a hash value from the stream bytes. Setting it to 3
-gives exactly the same compression as the brute force method, since deflate's
-run length encoding starts with lengths of 3. Setting it to higher values,
-like 6, can make the encoding faster (not always though!), but will cause the
-encoding to miss any length between 3 and this value, so that the compression
-may be worse (but this can vary too depending on the image, sometimes it is
-even a bit better instead).
-The HASH_NUM_VALUES is the amount of unique possible hash values that
-combinations of bytes can give, the higher it is the more memory is needed, but
-if it's too low the advantage of hashing is gone.
-*/
+static const unsigned HASH_BIT_MASK = 65535; /*HASH_NUM_VALUES - 1, but C90 does not like that as initializer*/
 
 typedef struct Hash
 {
-  int* head; /*hash value to head circular pos*/
-  int* val; /*circular pos to hash value*/
+  int* head; /*hash value to head circular pos - can be outdated if went around window*/
   /*circular pos to prev circular pos*/
   unsigned short* chain;
-  unsigned short* zeros;
+  int* val; /*circular pos to hash value*/
+
+  /*TODO: do this not only for zeros but for any repeated byte. However for PNG
+  it's always going to be the zeros that dominate, so not important for PNG*/
+  int* headz; /*similar to head, but for chainz*/
+  unsigned short* chainz; /*those with same amount of zeros*/
+  unsigned short* zeros; /*length of zeros streak, used as a second hash chain*/
 } Hash;
 
 static unsigned hash_init(Hash* hash, unsigned windowsize)
@@ -1363,14 +1355,23 @@ static unsigned hash_init(Hash* hash, unsigned windowsize)
   hash->head = (int*)lodepng_malloc(sizeof(int) * HASH_NUM_VALUES);
   hash->val = (int*)lodepng_malloc(sizeof(int) * windowsize);
   hash->chain = (unsigned short*)lodepng_malloc(sizeof(unsigned short) * windowsize);
-  hash->zeros = (unsigned short*)lodepng_malloc(sizeof(unsigned short) * windowsize);
 
-  if(!hash->head || !hash->val || !hash->chain || !hash->zeros) return 83; /*alloc fail*/
+  hash->zeros = (unsigned short*)lodepng_malloc(sizeof(unsigned short) * windowsize);
+  hash->headz = (int*)lodepng_malloc(sizeof(int) * (MAX_SUPPORTED_DEFLATE_LENGTH + 1));
+  hash->chainz = (unsigned short*)lodepng_malloc(sizeof(unsigned short) * windowsize);
+
+  if(!hash->head || !hash->chain || !hash->val  || !hash->headz|| !hash->chainz || !hash->zeros)
+  {
+    return 83; /*alloc fail*/
+  }
 
   /*initialize hash table*/
   for(i = 0; i < HASH_NUM_VALUES; i++) hash->head[i] = -1;
   for(i = 0; i < windowsize; i++) hash->val[i] = -1;
   for(i = 0; i < windowsize; i++) hash->chain[i] = i; /*same value as index indicates uninitialized*/
+
+  for(i = 0; i <= MAX_SUPPORTED_DEFLATE_LENGTH; i++) hash->headz[i] = -1;
+  for(i = 0; i < windowsize; i++) hash->chainz[i] = i; /*same value as index indicates uninitialized*/
 
   return 0;
 }
@@ -1380,22 +1381,31 @@ static void hash_cleanup(Hash* hash)
   lodepng_free(hash->head);
   lodepng_free(hash->val);
   lodepng_free(hash->chain);
+
   lodepng_free(hash->zeros);
+  lodepng_free(hash->headz);
+  lodepng_free(hash->chainz);
 }
+
+
 
 static unsigned getHash(const unsigned char* data, size_t size, size_t pos)
 {
   unsigned result = 0;
-  if (HASH_NUM_CHARACTERS == 3 && pos + 2 < size) {
-    result ^= (data[pos + 0] << (0 * HASH_SHIFT));
-    result ^= (data[pos + 1] << (1 * HASH_SHIFT));
-    result ^= (data[pos + 2] << (2 * HASH_SHIFT));
+  if (pos + 2 < size)
+  {
+    /*A simple shift and xor hash is used. Since the data of PNGs is dominated
+    by zeroes due to the filters, a better hash does not have a significant
+    effect on speed in traversing the chain, and causes more time spend on
+    calculating the hash.*/
+    result ^= (data[pos + 0] << 0u);
+    result ^= (data[pos + 1] << 4u);
+    result ^= (data[pos + 2] << 8u);
   } else {
     size_t amount, i;
     if(pos >= size) return 0;
-    amount = HASH_NUM_CHARACTERS;
-    if(pos + amount >= size) amount = size - pos;
-    for(i = 0; i < amount; i++) result ^= (data[pos + i] << (i * HASH_SHIFT));
+    amount = size - pos;
+    for(i = 0; i < amount; i++) result ^= (data[pos + i] << (i * 8));
   }
   return result & HASH_BIT_MASK;
 }
@@ -1412,11 +1422,15 @@ static unsigned countZeros(const unsigned char* data, size_t size, size_t pos)
 }
 
 /*wpos = pos & (windowsize - 1)*/
-static void updateHashChain(Hash* hash, size_t wpos, int hashval)
+static void updateHashChain(Hash* hash, size_t wpos, int hashval, int numzeros)
 {
   hash->val[wpos] = hashval;
   if(hash->head[hashval] != -1) hash->chain[wpos] = hash->head[hashval];
   hash->head[hashval] = wpos;
+
+  hash->zeros[wpos] = numzeros;
+  if(hash->headz[numzeros] != -1) hash->chainz[wpos] = hash->headz[numzeros];
+  hash->headz[numzeros] = wpos;
 }
 
 /*
@@ -1446,8 +1460,9 @@ static unsigned encodeLZ77(uivector* out, Hash* hash,
   unsigned lazylength = 0, lazyoffset = 0;
   unsigned hashval;
   unsigned current_offset, current_length;
+  unsigned prev_offset;
   const unsigned char *lastptr, *foreptr, *backptr;
-  unsigned hashpos, prevpos;
+  unsigned hashpos;
 
   if(windowsize <= 0 || windowsize > 32768) return 60; /*error: windowsize smaller/larger than allowed*/
   if((windowsize & (windowsize - 1)) != 0) return 90; /*error: must be power of two*/
@@ -1460,37 +1475,36 @@ static unsigned encodeLZ77(uivector* out, Hash* hash,
     unsigned chainlength = 0;
 
     hashval = getHash(in, insize, pos);
-    updateHashChain(hash, wpos, hashval);
 
     if(usezeros && hashval == 0)
     {
       if (numzeros == 0) numzeros = countZeros(in, insize, pos);
-      else if (pos + numzeros >= insize || in[pos + numzeros - 1] != 0) numzeros--;
-      hash->zeros[wpos] = numzeros;
+      else if (pos + numzeros > insize || in[pos + numzeros - 1] != 0) numzeros--;
     }
     else
     {
       numzeros = 0;
     }
 
+    updateHashChain(hash, wpos, hashval, numzeros);
+
     /*the length and offset found for the current position*/
     length = 0;
     offset = 0;
 
-    prevpos = hash->head[hashval];
-    hashpos = hash->chain[prevpos];
+    hashpos = hash->chain[wpos];
 
     lastptr = &in[insize < pos + MAX_SUPPORTED_DEFLATE_LENGTH ? insize : pos + MAX_SUPPORTED_DEFLATE_LENGTH];
 
     /*search for the longest string*/
+    prev_offset = 0;
     for(;;)
     {
-      /*stop when went completely around the circular buffer*/
-      if(prevpos < wpos && hashpos > prevpos && hashpos <= wpos) break;
-      if(prevpos > wpos && (hashpos <= wpos || hashpos > prevpos)) break;
       if(chainlength++ >= maxchainlength) break;
-
       current_offset = hashpos <= wpos ? wpos - hashpos : wpos - hashpos + windowsize;
+
+      if(current_offset < prev_offset) break; /*stop when went completely around the circular buffer*/
+      prev_offset = current_offset;
       if(current_offset > 0)
       {
         /*test the next characters*/
@@ -1498,7 +1512,7 @@ static unsigned encodeLZ77(uivector* out, Hash* hash,
         backptr = &in[pos - current_offset];
 
         /*common case in PNGs is lots of zeros. Quickly skip over them as a speedup*/
-        if(usezeros && hashval == 0 && hash->val[hashpos] == 0 /*hashval[hashpos] may be out of date*/)
+        if(numzeros >= 3)
         {
           unsigned skip = hash->zeros[hashpos];
           if(skip > numzeros) skip = numzeros;
@@ -1524,9 +1538,15 @@ static unsigned encodeLZ77(uivector* out, Hash* hash,
       }
 
       if(hashpos == hash->chain[hashpos]) break;
-
-      prevpos = hashpos;
-      hashpos = hash->chain[hashpos];
+      
+      if(numzeros >= 3 && length > numzeros) {
+        hashpos = hash->chainz[hashpos];
+        if(hash->zeros[hashpos] != numzeros) break;
+      } else {
+        hashpos = hash->chain[hashpos];
+        /*outdated hash value, happens if particular value was not encountered in whole last window*/
+        if(hash->val[hashpos] != (int)hashval) break;
+      }
     }
 
     if(lazymatching)
@@ -1552,6 +1572,7 @@ static unsigned encodeLZ77(uivector* out, Hash* hash,
           length = lazylength;
           offset = lazyoffset;
           hash->head[hashval] = -1; /*the same hashchain update will be done, this ensures no wrong alteration*/
+          hash->headz[numzeros] = -1; /*idem*/
           pos--;
         }
       }
@@ -1577,17 +1598,16 @@ static unsigned encodeLZ77(uivector* out, Hash* hash,
         pos++;
         wpos = pos & (windowsize - 1);
         hashval = getHash(in, insize, pos);
-        updateHashChain(hash, wpos, hashval);
         if(usezeros && hashval == 0)
         {
           if (numzeros == 0) numzeros = countZeros(in, insize, pos);
-          else if (pos + numzeros >= insize || in[pos + numzeros - 1] != 0) numzeros--;
-          hash->zeros[wpos] = numzeros;
+          else if (pos + numzeros > insize || in[pos + numzeros - 1] != 0) numzeros--;
         }
         else
         {
           numzeros = 0;
         }
+        updateHashChain(hash, wpos, hashval, numzeros);
       }
     }
   } /*end of the loop through each character of input*/
