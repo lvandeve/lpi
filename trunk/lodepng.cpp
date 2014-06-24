@@ -1,5 +1,5 @@
 /*
-LodePNG version 20140609
+LodePNG version 20140624
 
 Copyright (c) 2005-2014 Lode Vandevenne
 
@@ -37,7 +37,12 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*LODEPNG_COMPILE_CPP*/
 
-#define VERSION_STRING "20140609"
+#define VERSION_STRING "20140624"
+
+#if (_MSC_VER >= 1310) /*Visual Studio: Kept warning-free but a few warning types are not desired here.*/
+#pragma warning( disable : 4244 ) /*implicit conversions: not warned by gcc -Wall -Wextra and requires too much casts*/
+#pragma warning( disable : 4996 ) /*VS does not like fopen, but fopen_s is not standard C so unusable here*/
+#endif /*_MSC_VER >= 1310*/
 
 /*
 This source file is built up in the following large parts. The code sections
@@ -318,7 +323,7 @@ static void string_set(char** out, const char* in)
 
 unsigned lodepng_read32bitInt(const unsigned char* buffer)
 {
-  return (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
+  return (unsigned)((buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3]);
 }
 
 #if defined(LODEPNG_COMPILE_PNG) || defined(LODEPNG_COMPILE_ENCODER)
@@ -719,8 +724,8 @@ unsigned lodepng_huffman_code_lengths(unsigned* lengths, const unsigned* frequen
   unsigned error = 0;
   Coin* coins; /*the coins of the currently calculated row*/
   Coin* prev_row; /*the previous row of coins*/
-  unsigned numcoins;
-  unsigned coinmem;
+  size_t numcoins;
+  size_t coinmem;
 
   if(numcodes == 0) return 80; /*error: a tree of 0 symbols is not supposed to be made*/
 
@@ -1193,8 +1198,8 @@ static unsigned inflateNoCompression(ucvector* out, const unsigned char* in, siz
 
   /*read LEN (2 bytes) and NLEN (2 bytes)*/
   if(p >= inlength - 4) return 52; /*error, bit pointer will jump past memory*/
-  LEN = in[p] + 256 * in[p + 1]; p += 2;
-  NLEN = in[p] + 256 * in[p + 1]; p += 2;
+  LEN = in[p] + 256u * in[p + 1]; p += 2;
+  NLEN = in[p] + 256u * in[p + 1]; p += 2;
 
   /*check if 16-bit NLEN is really the one's complement of LEN*/
   if(LEN + NLEN != 65535) return 21; /*error: NLEN is not one's complement of LEN*/
@@ -1231,8 +1236,8 @@ static unsigned lodepng_inflatev(ucvector* out,
     unsigned BTYPE;
     if(bp + 2 >= insize * 8) return 52; /*error, bit pointer will jump past memory*/
     BFINAL = readBitFromStream(&bp, in);
-    BTYPE = 1 * readBitFromStream(&bp, in);
-    BTYPE += 2 * readBitFromStream(&bp, in);
+    BTYPE = 1u * readBitFromStream(&bp, in);
+    BTYPE += 2u * readBitFromStream(&bp, in);
 
     if(BTYPE == 3) return 20; /*error: invalid BTYPE*/
     else if(BTYPE == 0) error = inflateNoCompression(out, in, &bp, &pos, insize); /*no compression*/
@@ -1398,14 +1403,14 @@ static unsigned getHash(const unsigned char* data, size_t size, size_t pos)
     by zeroes due to the filters, a better hash does not have a significant
     effect on speed in traversing the chain, and causes more time spend on
     calculating the hash.*/
-    result ^= (data[pos + 0] << 0u);
-    result ^= (data[pos + 1] << 4u);
-    result ^= (data[pos + 2] << 8u);
+    result ^= (unsigned)(data[pos + 0] << 0u);
+    result ^= (unsigned)(data[pos + 1] << 4u);
+    result ^= (unsigned)(data[pos + 2] << 8u);
   } else {
     size_t amount, i;
     if(pos >= size) return 0;
     amount = size - pos;
-    for(i = 0; i < amount; i++) result ^= (data[pos + i] << (i * 8));
+    for(i = 0; i < amount; i++) result ^= (unsigned)(data[pos + i] << (i * 8u));
   }
   return result & HASH_BIT_MASK;
 }
@@ -1422,9 +1427,9 @@ static unsigned countZeros(const unsigned char* data, size_t size, size_t pos)
 }
 
 /*wpos = pos & (windowsize - 1)*/
-static void updateHashChain(Hash* hash, size_t wpos, int hashval, int numzeros)
+static void updateHashChain(Hash* hash, size_t wpos, unsigned hashval, unsigned short numzeros)
 {
-  hash->val[wpos] = hashval;
+  hash->val[wpos] = (int)hashval;
   if(hash->head[hashval] != -1) hash->chain[wpos] = hash->head[hashval];
   hash->head[hashval] = wpos;
 
@@ -1446,7 +1451,8 @@ static unsigned encodeLZ77(uivector* out, Hash* hash,
                            const unsigned char* in, size_t inpos, size_t insize, unsigned windowsize,
                            unsigned minmatch, unsigned nicematch, unsigned lazymatching)
 {
-  unsigned pos, i, error = 0;
+  size_t pos;
+  unsigned i, error = 0;
   /*for large window lengths, assume the user wants no compression loss. Otherwise, max hash chain length speedup.*/
   unsigned maxchainlength = windowsize >= 8192 ? windowsize : windowsize / 8;
   unsigned maxlazymatch = windowsize >= 8192 ? MAX_SUPPORTED_DEFLATE_LENGTH : 64;
@@ -1690,7 +1696,7 @@ static void writeLZ77data(size_t* bp, ucvector* out, const uivector* lz77_encode
 /*Deflate for a block of type "dynamic", that is, with freely, optimally, created huffman trees*/
 static unsigned deflateDynamic(ucvector* out, size_t* bp, Hash* hash,
                                const unsigned char* data, size_t datapos, size_t dataend,
-                               const LodePNGCompressSettings* settings, int final)
+                               const LodePNGCompressSettings* settings, unsigned final)
 {
   unsigned error = 0;
 
@@ -1936,7 +1942,7 @@ static unsigned deflateDynamic(ucvector* out, size_t* bp, Hash* hash,
 static unsigned deflateFixed(ucvector* out, size_t* bp, Hash* hash,
                              const unsigned char* data,
                              size_t datapos, size_t dataend,
-                             const LodePNGCompressSettings* settings, int final)
+                             const LodePNGCompressSettings* settings, unsigned final)
 {
   HuffmanTree tree_ll; /*tree for literal values and length codes*/
   HuffmanTree tree_d; /*tree for distance codes*/
@@ -2006,7 +2012,7 @@ static unsigned lodepng_deflatev(ucvector* out, const unsigned char* in, size_t 
 
   for(i = 0; i < numdeflateblocks && !error; i++)
   {
-    int final = i == numdeflateblocks - 1;
+    unsigned final = (i == numdeflateblocks - 1);
     size_t start = i * blocksize;
     size_t end = start + blocksize;
     if(end > insize) end = insize;
@@ -2387,7 +2393,7 @@ unsigned lodepng_chunk_length(const unsigned char* chunk)
 void lodepng_chunk_type(char type[5], const unsigned char* chunk)
 {
   unsigned i;
-  for(i = 0; i < 4; i++) type[i] = chunk[4 + i];
+  for(i = 0; i < 4; i++) type[i] = (char)chunk[4 + i];
   type[4] = 0; /*null termination char*/
 }
 
@@ -2487,10 +2493,10 @@ unsigned lodepng_chunk_create(unsigned char** out, size_t* outlength, unsigned l
   lodepng_set32bitInt(chunk, (unsigned)length);
 
   /*2: chunk name (4 letters)*/
-  chunk[4] = type[0];
-  chunk[5] = type[1];
-  chunk[6] = type[2];
-  chunk[7] = type[3];
+  chunk[4] = (unsigned char)type[0];
+  chunk[5] = (unsigned char)type[1];
+  chunk[6] = (unsigned char)type[2];
+  chunk[7] = (unsigned char)type[3];
 
   /*3: the data*/
   for(i = 0; i < length; i++) chunk[8 + i] = data[i];
@@ -2919,7 +2925,7 @@ static void addColorBits(unsigned char* out, size_t index, unsigned bits, unsign
   unsigned m = bits == 1 ? 7 : bits == 2 ? 3 : 1; /*8 / bits - 1*/
   /*p = the partial index in the byte, e.g. with 4 palettebits it is 0 for first half or 1 for second half*/
   unsigned p = index & m;
-  in &= (1 << bits) - 1; /*filter out any other bits of the input value*/
+  in &= (1u << bits) - 1u; /*filter out any other bits of the input value*/
   in = in << (bits * (m - p));
   if(p == 0) out[index * bits / 8] = in;
   else out[index * bits / 8] |= in;
@@ -2982,7 +2988,7 @@ static int color_tree_has(ColorTree* tree, unsigned char r, unsigned char g, uns
 /*color is not allowed to already exist.
 Index should be >= 0 (it's signed to be compatible with using -1 for "doesn't exist")*/
 static void color_tree_add(ColorTree* tree,
-                           unsigned char r, unsigned char g, unsigned char b, unsigned char a, int index)
+                           unsigned char r, unsigned char g, unsigned char b, unsigned char a, unsigned index)
 {
   int bit;
   for(bit = 0; bit < 8; bit++)
@@ -2995,7 +3001,7 @@ static void color_tree_add(ColorTree* tree,
     }
     tree = tree->children[i];
   }
-  tree->index = index;
+  tree->index = (int)index;
 }
 
 /*put a pixel, given its RGBA color, into image of any color type*/
@@ -3035,7 +3041,7 @@ static unsigned rgba8ToPixel(unsigned char* out, size_t i,
     int index = color_tree_get(tree, r, g, b, a);
     if(index < 0) return 82; /*color not in palette*/
     if(mode->bitdepth == 8) out[i] = index;
-    else addColorBits(out, i, mode->bitdepth, index);
+    else addColorBits(out, i, mode->bitdepth, (unsigned)index);
   }
   else if(mode->colortype == LCT_GREY_ALPHA)
   {
@@ -3428,7 +3434,7 @@ unsigned lodepng_convert(unsigned char* out, const unsigned char* in,
 
   if(mode_out->colortype == LCT_PALETTE)
   {
-    size_t palsize = 1 << mode_out->bitdepth;
+    size_t palsize = 1u << mode_out->bitdepth;
     if(mode_out->palettesize < palsize) palsize = mode_out->palettesize;
     color_tree_init(&tree);
     for(i = 0; i < palsize; i++)
@@ -3524,7 +3530,7 @@ static void color_profile_init(ColorProfile* profile, const LodePNGColorMode* mo
   profile->maxnumcolors = 257;
   if(lodepng_get_bpp(mode) <= 8)
   {
-    int bpp = lodepng_get_bpp(mode);
+    unsigned bpp = lodepng_get_bpp(mode);
     profile->maxnumcolors = bpp == 1 ? 2 : (bpp == 2 ? 4 : (bpp == 4 ? 16 : 256));
   }
   profile->numcolors_done = 0;
@@ -3728,7 +3734,6 @@ static unsigned get_color_profile(ColorProfile* profile,
       {
         if(!color_tree_has(&profile->tree, r, g, b, a))
         {
-
           color_tree_add(&profile->tree, r, g, b, a, profile->numcolors);
           if(profile->numcolors < 256)
           {
@@ -3765,7 +3770,7 @@ static unsigned get_color_profile(ColorProfile* profile,
 
 static void setColorKeyFrom16bit(LodePNGColorMode* mode_out, unsigned r, unsigned g, unsigned b, unsigned bitdepth)
 {
-  unsigned mask = (1 << bitdepth) - 1;
+  unsigned mask = (1u << bitdepth) - 1u;
   mode_out->key_defined = 1;
   mode_out->key_r = r & mask;
   mode_out->key_g = g & mask;
@@ -4311,7 +4316,7 @@ static unsigned readChunk_tRNS(LodePNGColorMode* color, const unsigned char* dat
     if(chunkLength != 2) return 30;
 
     color->key_defined = 1;
-    color->key_r = color->key_g = color->key_b = 256 * data[0] + data[1];
+    color->key_r = color->key_g = color->key_b = 256u * data[0] + data[1];
   }
   else if(color->colortype == LCT_RGB)
   {
@@ -4319,9 +4324,9 @@ static unsigned readChunk_tRNS(LodePNGColorMode* color, const unsigned char* dat
     if(chunkLength != 6) return 41;
 
     color->key_defined = 1;
-    color->key_r = 256 * data[0] + data[1];
-    color->key_g = 256 * data[2] + data[3];
-    color->key_b = 256 * data[4] + data[5];
+    color->key_r = 256u * data[0] + data[1];
+    color->key_g = 256u * data[2] + data[3];
+    color->key_b = 256u * data[4] + data[5];
   }
   else return 42; /*error: tRNS chunk not allowed for other color models*/
 
@@ -4347,8 +4352,7 @@ static unsigned readChunk_bKGD(LodePNGInfo* info, const unsigned char* data, siz
     if(chunkLength != 2) return 44;
 
     info->background_defined = 1;
-    info->background_r = info->background_g = info->background_b
-                                 = 256 * data[0] + data[1];
+    info->background_r = info->background_g = info->background_b = 256u * data[0] + data[1];
   }
   else if(info->color.colortype == LCT_RGB || info->color.colortype == LCT_RGBA)
   {
@@ -4356,9 +4360,9 @@ static unsigned readChunk_bKGD(LodePNGInfo* info, const unsigned char* data, siz
     if(chunkLength != 6) return 45;
 
     info->background_defined = 1;
-    info->background_r = 256 * data[0] + data[1];
-    info->background_g = 256 * data[2] + data[3];
-    info->background_b = 256 * data[4] + data[5];
+    info->background_r = 256u * data[0] + data[1];
+    info->background_g = 256u * data[2] + data[3];
+    info->background_b = 256u * data[4] + data[5];
   }
 
   return 0; /* OK */
@@ -4385,7 +4389,7 @@ static unsigned readChunk_tEXt(LodePNGInfo* info, const unsigned char* data, siz
     if(!key) CERROR_BREAK(error, 83); /*alloc fail*/
 
     key[length] = 0;
-    for(i = 0; i < length; i++) key[i] = data[i];
+    for(i = 0; i < length; i++) key[i] = (char)data[i];
 
     string2_begin = length + 1; /*skip keyword null terminator*/
 
@@ -4394,7 +4398,7 @@ static unsigned readChunk_tEXt(LodePNGInfo* info, const unsigned char* data, siz
     if(!str) CERROR_BREAK(error, 83); /*alloc fail*/
 
     str[length] = 0;
-    for(i = 0; i < length; i++) str[i] = data[string2_begin + i];
+    for(i = 0; i < length; i++) str[i] = (char)data[string2_begin + i];
 
     error = lodepng_add_text(info, key, str);
 
@@ -4430,7 +4434,7 @@ static unsigned readChunk_zTXt(LodePNGInfo* info, const LodePNGDecompressSetting
     if(!key) CERROR_BREAK(error, 83); /*alloc fail*/
 
     key[length] = 0;
-    for(i = 0; i < length; i++) key[i] = data[i];
+    for(i = 0; i < length; i++) key[i] = (char)data[i];
 
     if(data[length + 1] != 0) CERROR_BREAK(error, 72); /*the 0 byte indicating compression must be 0*/
 
@@ -4483,7 +4487,7 @@ static unsigned readChunk_iTXt(LodePNGInfo* info, const LodePNGDecompressSetting
     if(!key) CERROR_BREAK(error, 83); /*alloc fail*/
 
     key[length] = 0;
-    for(i = 0; i < length; i++) key[i] = data[i];
+    for(i = 0; i < length; i++) key[i] = (char)data[i];
 
     /*read the compression method*/
     compressed = data[length + 1];
@@ -4501,7 +4505,7 @@ static unsigned readChunk_iTXt(LodePNGInfo* info, const LodePNGDecompressSetting
     if(!langtag) CERROR_BREAK(error, 83); /*alloc fail*/
 
     langtag[length] = 0;
-    for(i = 0; i < length; i++) langtag[i] = data[begin + i];
+    for(i = 0; i < length; i++) langtag[i] = (char)data[begin + i];
 
     /*read the transkey*/
     begin += length + 1;
@@ -4512,7 +4516,7 @@ static unsigned readChunk_iTXt(LodePNGInfo* info, const LodePNGDecompressSetting
     if(!transkey) CERROR_BREAK(error, 83); /*alloc fail*/
 
     transkey[length] = 0;
-    for(i = 0; i < length; i++) transkey[i] = data[begin + i];
+    for(i = 0; i < length; i++) transkey[i] = (char)data[begin + i];
 
     /*read the actual text*/
     begin += length + 1;
@@ -4555,7 +4559,7 @@ static unsigned readChunk_tIME(LodePNGInfo* info, const unsigned char* data, siz
   if(chunkLength != 7) return 73; /*invalid tIME chunk size*/
 
   info->time_defined = 1;
-  info->time.year = 256 * data[0] + data[+ 1];
+  info->time.year = 256u * data[0] + data[1];
   info->time.month = data[2];
   info->time.day = data[3];
   info->time.hour = data[4];
@@ -4570,8 +4574,8 @@ static unsigned readChunk_pHYs(LodePNGInfo* info, const unsigned char* data, siz
   if(chunkLength != 9) return 74; /*invalid pHYs chunk size*/
 
   info->phys_defined = 1;
-  info->phys_x = 16777216 * data[0] + 65536 * data[1] + 256 * data[2] + data[3];
-  info->phys_y = 16777216 * data[4] + 65536 * data[5] + 256 * data[6] + data[7];
+  info->phys_x = 16777216u * data[0] + 65536u * data[1] + 256u * data[2] + data[3];
+  info->phys_y = 16777216u * data[4] + 65536u * data[5] + 256u * data[6] + data[7];
   info->phys_unit = data[8];
 
   return 0; /* OK */
@@ -5147,11 +5151,11 @@ static unsigned addChunk_tIME(ucvector* out, const LodePNGTime* time)
   if(!data) return 83; /*alloc fail*/
   data[0] = (unsigned char)(time->year / 256);
   data[1] = (unsigned char)(time->year % 256);
-  data[2] = time->month;
-  data[3] = time->day;
-  data[4] = time->hour;
-  data[5] = time->minute;
-  data[6] = time->second;
+  data[2] = (unsigned char)time->month;
+  data[3] = (unsigned char)time->day;
+  data[4] = (unsigned char)time->hour;
+  data[5] = (unsigned char)time->minute;
+  data[6] = (unsigned char)time->second;
   error = addChunk(out, "tIME", data, 7);
   lodepng_free(data);
   return error;
@@ -5302,7 +5306,7 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
     size_t sum[5];
     ucvector attempt[5]; /*five filtering attempts, one for each filter type*/
     size_t smallest = 0;
-    unsigned type, bestType = 0;
+    unsigned char type, bestType = 0;
 
     for(type = 0; type < 5; type++)
     {
@@ -5332,8 +5336,8 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
               /*For differences, each byte should be treated as signed, values above 127 are negative
               (converted to signed char). Filtertype 0 isn't a difference though, so use unsigned there.
               This means filtertype 0 is almost never chosen, but that is justified.*/
-              signed char s = (signed char)(attempt[type].data[x]);
-              sum[type] += s < 0 ? -s : s;
+              unsigned char s = attempt[type].data[x];
+              sum[type] += s < 128 ? s : (255U - s);
             }
           }
 
@@ -5407,7 +5411,7 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
     {
       size_t outindex = (1 + linebytes) * y; /*the extra filterbyte added to each row*/
       size_t inindex = linebytes * y;
-      unsigned type = settings->predefined_filters[y];
+      unsigned char type = settings->predefined_filters[y];
       out[outindex] = type; /*filter type byte*/
       filterScanline(&out[outindex + 1], &in[inindex], prevline, linebytes, bytewidth, type);
       prevline = &in[inindex];
@@ -5647,7 +5651,8 @@ returns 2 if the palette is semi-translucent.
 */
 static unsigned getPaletteTranslucency(const unsigned char* palette, size_t palettesize)
 {
-  size_t i, key = 0;
+  size_t i;
+  unsigned key = 0;
   unsigned r = 0, g = 0, b = 0; /*the value of the color with alpha 0, so long as color keying is possible*/
   for(i = 0; i < palettesize; i++)
   {
