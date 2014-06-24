@@ -1,5 +1,5 @@
 /*
-LodePNG version 20140609
+LodePNG version 20140624
 
 Copyright (c) 2005-2014 Lode Vandevenne
 
@@ -1455,6 +1455,8 @@ LodePNG. For the C++ version, only the standard C++ library is needed on top.
 Add the files lodepng.c(pp) and lodepng.h to your project, include
 lodepng.h where needed, and your program can read/write PNG files.
 
+It is compatible with C90 and up, and C++03 and up.
+
 If performance is important, use optimization when compiling! For both the
 encoder and decoder, this makes a large difference.
 
@@ -1470,49 +1472,40 @@ LodePNG is developed in gcc so this compiler is natively supported. It gives no
 warnings with compiler options "-Wall -Wextra -pedantic -ansi", with gcc and g++
 version 4.7.1 on Linux, 32-bit and 64-bit.
 
+*) Clang
+
+Fully supported and warning-free.
+
 *) Mingw
 
-The Mingw compiler (a port of gcc) for Windows is fully supported by LodePNG.
+The Mingw compiler (a port of gcc for Windows) should be fully supported by
+LodePNG.
 
-*) Visual Studio 2005 and up, Visual C++ Express Edition 2005 and up
+*) Visual Studio and Visual C++ Express Edition
 
-Visual Studio may give warnings about 'fopen' being deprecated. A multiplatform library
-can't support the proposed Visual Studio alternative however, so LodePNG keeps using
-fopen. If you don't want to see the deprecated warnings, put this on top of lodepng.h
-before the inclusions:
-#define _CRT_SECURE_NO_DEPRECATE
-
-Other than the above warnings, LodePNG should be warning-free with warning
-level 3 (W3). Warning level 4 (W4) will give warnings about integer conversions.
-I'm not planning to resolve these warnings. To get rid of them, let Visual
-Studio use warning level W3 for lodepng.cpp only: right click lodepng.cpp,
-Properties, C/C++, General, Warning Level: Level 3 (/W3).
+LodePNG should be warning-free with warning level W4. Two warnings were disabled
+with pragmas though: warning 4244 about implicit conversions, and warning 4996
+where it wants to use a non-standard function fopen_s instead of the standard C
+fopen.
 
 Visual Studio may want "stdafx.h" files to be included in each source file and
 give an error "unexpected end of file while looking for precompiled header".
-That is not standard C++ and will not be added to the stock LodePNG. You can
+This is not standard C++ and will not be added to the stock LodePNG. You can
 disable it for lodepng.cpp only by right clicking it, Properties, C/C++,
 Precompiled Headers, and set it to Not Using Precompiled Headers there.
 
-*) Visual Studio 6.0
-
-LodePNG support for Visual Studio 6.0 is not guaranteed because VS6 doesn't
-follow the C++ standard correctly.
-
-*) Comeau C/C++
-
-Vesion 20070107 compiles without problems on the Comeau C/C++ Online Test Drive
-at http://www.comeaucomputing.com/tryitout in both C90 and C++ mode.
+NOTE: Modern versions of VS should be fully supported, but old versions, e.g.
+VS6, are not guaranteed to work.
 
 *) Compilers on Macintosh
 
-LodePNG has been reported to work both with the gcc and LLVM for Macintosh, both
-for C and C++.
+LodePNG has been reported to work both with gcc and LLVM for Macintosh, both for
+C and C++.
 
 *) Other Compilers
 
-If you encounter problems on other compilers, feel free to let me know and I may
-try to fix it if the compiler is modern standards complient.
+If you encounter problems on any compilers, feel free to let me know and I may
+try to fix it if the compiler is modern and standards complient.
 
 
 10. examples
