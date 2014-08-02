@@ -1,5 +1,5 @@
 /*
-LodePNG version 20140624
+LodePNG version 20140801
 
 Copyright (c) 2005-2014 Lode Vandevenne
 
@@ -195,7 +195,8 @@ unsigned lodepng_encode24_file(const char* filename,
 namespace lodepng
 {
 #ifdef LODEPNG_COMPILE_DECODER
-/*Same as lodepng_decode_memory, but decodes to an std::vector.*/
+/*Same as lodepng_decode_memory, but decodes to an std::vector. The colortype
+is the format to output the pixels to. Default is RGBA 8-bit per channel.*/
 unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h,
                 const unsigned char* in, size_t insize,
                 LodePNGColorType colortype = LCT_RGBA, unsigned bitdepth = 8);
@@ -214,7 +215,8 @@ unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h,
 #endif //LODEPNG_COMPILE_DECODER
 
 #ifdef LODEPNG_COMPILE_ENCODER
-/*Same as lodepng_encode_memory, but encodes to an std::vector.*/
+/*Same as lodepng_encode_memory, but encodes to an std::vector. colortype
+is that of the raw input data. The output PNG color type will be auto chosen.*/
 unsigned encode(std::vector<unsigned char>& out,
                 const unsigned char* in, unsigned w, unsigned h,
                 LodePNGColorType colortype = LCT_RGBA, unsigned bitdepth = 8);
@@ -496,13 +498,14 @@ LodePNGColorMode structs to describe the input and output color type.
 See the reference manual at the end of this header file to see which color conversions are supported.
 return value = LodePNG error code (0 if all went ok, an error if the conversion isn't supported)
 The out buffer must have size (w * h * bpp + 7) / 8, where bpp is the bits per pixel
-of the output color type (lodepng_get_bpp)
-The fix_png value works as described in struct LodePNGDecoderSettings.
-Note: for 16-bit per channel colors, uses big endian format like PNG does.
+of the output color type (lodepng_get_bpp).
+For < 8 bpp images, there should not be padding bits at the end of scanlines.
+For 16-bit per channel colors, uses big endian format like PNG does.
+Return value is LodePNG error code
 */
 unsigned lodepng_convert(unsigned char* out, const unsigned char* in,
                          LodePNGColorMode* mode_out, const LodePNGColorMode* mode_in,
-                         unsigned w, unsigned h, unsigned fix_png);
+                         unsigned w, unsigned h);
 
 #ifdef LODEPNG_COMPILE_DECODER
 /*
@@ -514,16 +517,7 @@ typedef struct LodePNGDecoderSettings
   LodePNGDecompressSettings zlibsettings; /*in here is the setting to ignore Adler32 checksums*/
 
   unsigned ignore_crc; /*ignore CRC checksums*/
-  /*
-  The fix_png setting, if 1, makes the decoder tolerant towards some PNG images
-  that do not correctly follow the PNG specification. This only supports errors
-  that are fixable, were found in images that are actually used on the web, and
-  are silently tolerated by other decoders as well. Currently only one such fix
-  is implemented: if a palette index is out of bounds given the palette size,
-  interpret it as opaque black.
-  By default this value is 0, which makes it stop with an error on such images.
-  */
-  unsigned fix_png;
+
   unsigned color_convert; /*whether to convert the PNG to the color type you want. Default: yes*/
 
 #ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
@@ -556,46 +550,39 @@ typedef enum LodePNGFilterStrategy
   LFS_PREDEFINED
 } LodePNGFilterStrategy;
 
-/*automatically use color type with less bits per pixel if losslessly possible. Default: LAC_AUTO*/
-typedef enum LodePNGAutoConvert
+/*Gives characteristics about the colors of the image, which helps decide which color model to use for encoding.
+Used internally by default if "auto_convert" is enabled. Public because it's useful for custom algorithms.*/
+typedef struct LodePNGColorProfile
 {
-  LAC_NO, /*use color type user requested*/
-  LAC_ALPHA, /*use color type user requested, but if only opaque pixels and RGBA or grey+alpha, use RGB or grey*/
-  LAC_AUTO, /*use PNG color type that can losslessly represent the uncompressed image the smallest possible*/
-  /*
-  like AUTO, but do not choose 1, 2 or 4 bit per pixel types.
-  sometimes a PNG image compresses worse if less than 8 bits per pixels.
-  */
-  LAC_AUTO_NO_NIBBLES,
-  /*
-  like AUTO, but never choose palette color type. For small images, encoding
-  the palette may take more bytes than what is gained. Note that AUTO also
-  already prevents encoding the palette for extremely small images, but that may
-  not be sufficient because due to the compression it cannot predict when to
-  switch.
-  */
-  LAC_AUTO_NO_PALETTE,
-  LAC_AUTO_NO_NIBBLES_NO_PALETTE
-} LodePNGAutoConvert;
+  unsigned colored; /*not greyscale*/
+  unsigned key; /*if true, image is not opaque. Only if true and alpha is false, color key is possible.*/
+  unsigned short key_r; /*these values are always in 16-bit bitdepth in the profile*/
+  unsigned short key_g;
+  unsigned short key_b;
+  unsigned alpha; /*alpha channel or alpha palette required*/
+  unsigned numcolors; /*amount of colors, up to 257. Not valid if bits == 16.*/
+  unsigned char palette[1024]; /*Remembers up to the first 256 RGBA colors, in no particular order*/
+  unsigned bits; /*bits per channel (not for palette). 1,2 or 4 for greyscale only. 16 if 16-bit per channel required.*/
+} LodePNGColorProfile;
 
+void lodepng_color_profile_init(LodePNGColorProfile* profile);
 
-/*
-Automatically chooses color type that gives smallest amount of bits in the
-output image, e.g. grey if there are only greyscale pixels, palette if there
-are less than 256 colors, ...
-The auto_convert parameter allows limiting it to not use palette, ...
-*/
+/*Get a LodePNGColorProfile of the image.*/
+unsigned get_color_profile(LodePNGColorProfile* profile,
+                           const unsigned char* image, unsigned w, unsigned h,
+                           const LodePNGColorMode* mode_in);
+/*The function LodePNG uses internally to decide the PNG color with auto_convert.
+Chooses an optimal color model, e.g. grey if only grey pixels, palette if < 256 colors, ...*/
 unsigned lodepng_auto_choose_color(LodePNGColorMode* mode_out,
                                    const unsigned char* image, unsigned w, unsigned h,
-                                   const LodePNGColorMode* mode_in,
-                                   LodePNGAutoConvert auto_convert);
+                                   const LodePNGColorMode* mode_in);
 
 /*Settings for the encoder.*/
 typedef struct LodePNGEncoderSettings
 {
   LodePNGCompressSettings zlibsettings; /*settings for the zlib encoder, such as window size, ...*/
 
-  LodePNGAutoConvert auto_convert; /*how to automatically choose output PNG color type, if at all*/
+  unsigned auto_convert; /*automatically choose output PNG color type. Default: true*/
 
   /*If true, follows the official PNG heuristic: if the PNG uses a palette or lower than
   8 bit depth, set all filters to zero. Otherwise use the filter_strategy. Note that to
@@ -1240,20 +1227,22 @@ behaviour.
 
 If, when decoding, you want the raw image to be something else than the default,
 you need to set the color type and bit depth you want in the LodePNGColorMode,
-or the parameters of the simple function of LodePNG you're using.
+or the parameters colortype and bitdepth of the simple decoding function.
 
-If, when encoding, you use another color type than the default in the input
+If, when encoding, you use another color type than the default in the raw input
 image, you need to specify its color type and bit depth in the LodePNGColorMode
-of the raw image, or use the parameters of the simplefunction of LodePNG you're
-using.
+of the raw image, or use the parameters colortype and bitdepth of the simple
+encoding function.
 
 If, when encoding, you don't want LodePNG to choose the output PNG color type
 but control it yourself, you need to set auto_convert in the encoder settings
-to LAC_NONE, and specify the color type you want in the LodePNGInfo of the
-encoder.
+to false, and specify the color type you want in the LodePNGInfo of the
+encoder (including palette: it can generate a palette if auto_convert is true,
+otherwise not).
 
-If you do any of the above, LodePNG may need to do a color conversion, which
-follows the rules below, and may sometimes not be allowed.
+If the input and output color type differ (whether user chosen or auto chosen),
+LodePNG will do a color conversion, which follows the rules below, and may
+sometimes result in an error.
 
 To avoid some confusion:
 -the decoder converts from PNG to raw image
@@ -1275,7 +1264,7 @@ To avoid some confusion:
 Non supported color conversions:
 -color to greyscale: no error is thrown, but the result will look ugly because
 only the red channel is taken
--anything, to palette when that palette does not have that color in it: in this
+-anything to palette when that palette does not have that color in it: in this
 case an error is thrown
 
 Supported color conversions:
@@ -1285,10 +1274,10 @@ Supported color conversions:
 -removing alpha channel
 -higher to smaller bitdepth, and vice versa
 
-If you want no color conversion to be done:
+If you want no color conversion to be done (e.g. for speed or control):
 -In the encoder, you can make it save a PNG with any color type by giving the
 raw color mode and LodePNGInfo the same color mode, and setting auto_convert to
-LAC_NO.
+false.
 -In the decoder, you can make it store the pixel data in the same color type
 as the PNG has, by setting the color_convert setting to false. Settings in
 info_raw are then ignored.
@@ -1567,6 +1556,8 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 28 jun 2014: Removed fix_png setting, always support palette OOB for
+    simplicity. Made ColorProfile public.
 *) 09 jun 2014: Faster encoder by fixing hash bug and more zeros optimization.
 *) 22 dec 2013: Power of two windowsize required for optimization.
 *) 15 apr 2013: Fixed bug with LAC_ALPHA and color key.
