@@ -1,5 +1,5 @@
 /*
-LodePNG version 20140801
+LodePNG version 20140822
 
 Copyright (c) 2005-2014 Lode Vandevenne
 
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*LODEPNG_COMPILE_CPP*/
 
-#define VERSION_STRING "20140801"
+#define VERSION_STRING "20140822"
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1310) /*Visual Studio: A few warning types are not desired here.*/
 #pragma warning( disable : 4244 ) /*implicit conversions: not warned by gcc -Wall -Wextra and requires too much casts*/
@@ -3628,11 +3628,11 @@ unsigned get_color_profile(LodePNGColorProfile* profile,
           if(profile->numcolors < 256)
           {
             unsigned char* p = profile->palette;
-            unsigned i = profile->numcolors;
-            p[i * 4 + 0] = r;
-            p[i * 4 + 1] = g;
-            p[i * 4 + 2] = b;
-            p[i * 4 + 3] = a;
+            unsigned n = profile->numcolors;
+            p[n * 4 + 0] = r;
+            p[n * 4 + 1] = g;
+            p[n * 4 + 2] = b;
+            p[n * 4 + 3] = a;
           }
           profile->numcolors++;
           numcolors_done = profile->numcolors >= maxnumcolors;
