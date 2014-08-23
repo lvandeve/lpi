@@ -1,5 +1,5 @@
 /*
-LodePNG version 20140822
+LodePNG version 20140823
 
 Copyright (c) 2005-2014 Lode Vandevenne
 
@@ -37,7 +37,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*LODEPNG_COMPILE_CPP*/
 
-#define VERSION_STRING "20140822"
+#define VERSION_STRING "20140823"
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1310) /*Visual Studio: A few warning types are not desired here.*/
 #pragma warning( disable : 4244 ) /*implicit conversions: not warned by gcc -Wall -Wextra and requires too much casts*/
@@ -145,22 +145,28 @@ static void uivector_cleanup(void* p)
 }
 
 /*returns 1 if success, 0 if failure ==> nothing done*/
-static unsigned uivector_resize(uivector* p, size_t size)
+static unsigned uivector_reserve(uivector* p, size_t allocsize)
 {
-  if(size * sizeof(unsigned) > p->allocsize)
+  if(allocsize > p->allocsize)
   {
-    size_t newsize = size * sizeof(unsigned) * 2;
+    size_t newsize = (allocsize > p->allocsize * 2) ? allocsize : (allocsize * 3 / 2);
     void* data = lodepng_realloc(p->data, newsize);
     if(data)
     {
       p->allocsize = newsize;
       p->data = (unsigned*)data;
-      p->size = size;
     }
-    else return 0;
+    else return 0; /*error: not enough memory*/
   }
-  else p->size = size;
   return 1;
+}
+
+/*returns 1 if success, 0 if failure ==> nothing done*/
+static unsigned uivector_resize(uivector* p, size_t size)
+{
+  if(!uivector_reserve(p, size * sizeof(unsigned))) return 0;
+  p->size = size;
+  return 1; /*success*/
 }
 
 /*resize and give all new elements the value*/
@@ -209,22 +215,28 @@ typedef struct ucvector
 } ucvector;
 
 /*returns 1 if success, 0 if failure ==> nothing done*/
-static unsigned ucvector_resize(ucvector* p, size_t size)
+static unsigned ucvector_reserve(ucvector* p, size_t allocsize)
 {
-  if(size * sizeof(unsigned char) > p->allocsize)
+  if(allocsize > p->allocsize)
   {
-    size_t newsize = size * sizeof(unsigned char) * 2;
+    size_t newsize = (allocsize > p->allocsize * 2) ? allocsize : (allocsize * 3 / 2);
     void* data = lodepng_realloc(p->data, newsize);
     if(data)
     {
       p->allocsize = newsize;
       p->data = (unsigned char*)data;
-      p->size = size;
     }
     else return 0; /*error: not enough memory*/
   }
-  else p->size = size;
   return 1;
+}
+
+/*returns 1 if success, 0 if failure ==> nothing done*/
+static unsigned ucvector_resize(ucvector* p, size_t size)
+{
+  if(!ucvector_reserve(p, size * sizeof(unsigned char))) return 0;
+  p->size = size;
+  return 1; /*success*/
 }
 
 #ifdef LODEPNG_COMPILE_PNG
@@ -1108,12 +1120,9 @@ static unsigned inflateHuffmanBlock(ucvector* out, const unsigned char* in, size
     unsigned code_ll = huffmanDecodeSymbol(in, bp, &tree_ll, inbitlength);
     if(code_ll <= 255) /*literal symbol*/
     {
-      if((*pos) >= out->size)
-      {
-        /*reserve more room at once*/
-        if(!ucvector_resize(out, ((*pos) + 1) * 2)) ERROR_BREAK(83 /*alloc fail*/);
-      }
-      out->data[(*pos)] = (unsigned char)(code_ll);
+      /*ucvector_push_back would do the same, but for some reason the two lines below run 10% faster*/
+      if(!ucvector_resize(out, (*pos) + 1)) ERROR_BREAK(83 /*alloc fail*/);
+      out->data[*pos] = (unsigned char)code_ll;
       (*pos)++;
     }
     else if(code_ll >= FIRST_LENGTH_CODE_INDEX && code_ll <= LAST_LENGTH_CODE_INDEX) /*length code*/
@@ -1155,12 +1164,8 @@ static unsigned inflateHuffmanBlock(ucvector* out, const unsigned char* in, size
       start = (*pos);
       if(distance > start) ERROR_BREAK(52); /*too long backward distance*/
       backward = start - distance;
-      if((*pos) + length >= out->size)
-      {
-        /*reserve more room at once*/
-        if(!ucvector_resize(out, ((*pos) + length) * 2)) ERROR_BREAK(83 /*alloc fail*/);
-      }
 
+      if(!ucvector_resize(out, (*pos) + length)) ERROR_BREAK(83 /*alloc fail*/);
       for(forward = 0; forward < length; forward++)
       {
         out->data[(*pos)] = out->data[backward];
@@ -1204,10 +1209,7 @@ static unsigned inflateNoCompression(ucvector* out, const unsigned char* in, siz
   /*check if 16-bit NLEN is really the one's complement of LEN*/
   if(LEN + NLEN != 65535) return 21; /*error: NLEN is not one's complement of LEN*/
 
-  if((*pos) + LEN >= out->size)
-  {
-    if(!ucvector_resize(out, (*pos) + LEN)) return 83; /*alloc fail*/
-  }
+  if(!ucvector_resize(out, (*pos) + LEN)) return 83; /*alloc fail*/
 
   /*read the literal data: LEN bytes are now stored in the out buffer*/
   if(p + LEN > inlength) return 23; /*error: reading outside of in buffer*/
@@ -1226,7 +1228,6 @@ static unsigned lodepng_inflatev(ucvector* out,
   size_t bp = 0;
   unsigned BFINAL = 0;
   size_t pos = 0; /*byte position in the out buffer*/
-
   unsigned error = 0;
 
   (void)settings;
@@ -1245,9 +1246,6 @@ static unsigned lodepng_inflatev(ucvector* out,
 
     if(error) return error;
   }
-
-  /*Only now we know the true size of out, resize it to that*/
-  if(!ucvector_resize(out, pos)) error = 83; /*alloc fail*/
 
   return error;
 }
@@ -2676,6 +2674,17 @@ size_t lodepng_get_raw_size_lct(unsigned w, unsigned h, LodePNGColorType colorty
 {
   return (w * h * lodepng_get_bpp_lct(colortype, bitdepth) + 7) / 8;
 }
+
+
+#ifdef LODEPNG_COMPILE_PNG
+#ifdef LODEPNG_COMPILE_DECODER
+/*in an idat chunk, each scanline is a multiple of 8 bits, unlike the lodepng output buffer*/
+static size_t lodepng_get_raw_size_idat(unsigned w, unsigned h, const LodePNGColorMode* color)
+{
+  return h * ((w * lodepng_get_bpp(color) + 7) / 8);
+}
+#endif /*LODEPNG_COMPILE_DECODER*/
+#endif /*LODEPNG_COMPILE_PNG*/
 
 #ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
 
@@ -4412,6 +4421,7 @@ static void decodeGeneric(unsigned char** out, unsigned* w, unsigned* h,
   size_t i;
   ucvector idat; /*the data from idat chunks*/
   ucvector scanlines;
+  size_t predict;
 
   /*for unknown chunk order*/
   unsigned unknown = 0;
@@ -4550,17 +4560,12 @@ static void decodeGeneric(unsigned char** out, unsigned* w, unsigned* h,
   }
 
   ucvector_init(&scanlines);
+  /*predict output size, to allocate exact size for output buffer to avoid more dynamic allocation.
+  The prediction is currently not correct for interlaced PNG images.*/
+  predict = lodepng_get_raw_size_idat(*w, *h, &state->info_png.color) + *h;
+  if(!state->error && !ucvector_reserve(&scanlines, predict)) state->error = 83; /*alloc fail*/
   if(!state->error)
   {
-    /*maximum final image length is already reserved in the vector's length - this is not really necessary*/
-    if(!ucvector_resize(&scanlines, lodepng_get_raw_size(*w, *h, &state->info_png.color) + *h))
-    {
-      state->error = 83; /*alloc fail*/
-    }
-  }
-  if(!state->error)
-  {
-    /*decompress with the Zlib decompressor*/
     state->error = zlib_decompress(&scanlines.data, &scanlines.size, idat.data,
                                    idat.size, &state->decoder.zlibsettings);
   }
