@@ -1,5 +1,5 @@
 /*
-LodePNG version 20140822
+LodePNG version 20140823
 
 Copyright (c) 2005-2014 Lode Vandevenne
 
@@ -1556,6 +1556,7 @@ yyyymmdd.
 Some changes aren't backwards compatible. Those are indicated with a (!)
 symbol.
 
+*) 23 aug 2014: Reduced needless memory usage of decoder.
 *) 28 jun 2014: Removed fix_png setting, always support palette OOB for
     simplicity. Made ColorProfile public.
 *) 09 jun 2014: Faster encoder by fixing hash bug and more zeros optimization.
