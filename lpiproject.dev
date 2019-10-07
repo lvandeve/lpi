@@ -177,26 +177,6 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit14]
-FileName=lpi_crypto.cpp
-CompileCpp=1
-Folder=Project1
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit15]
-FileName=lpi_crypto.h
-CompileCpp=1
-Folder=Project1
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
 [Unit16]
 FileName=lpi_draw2d.cpp
 CompileCpp=1

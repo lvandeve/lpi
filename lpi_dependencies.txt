@@ -29,7 +29,6 @@ lpi_audio: playing audio, audio samples being std::vector<double>'s
 lpi_base64: base64 encode/decode
 lpi_bignums: contains currently a 128-bit fixed point number class
 lpi_color: different color types and conversions
-lpi_crypto: xtea implementation (not guaranteed to be safe, use at own risk)
 lpi_draw2d: interface for 2D geometric primitive drawers, and general 2D drawing algorithms such as line clipping
 lpi_draw2d_buffer: implementation of the 2D drawer using a unsigned char pixel buffer
 lpi_draw2dgl: implementation of the 2D drawer using OpenGL
@@ -86,7 +85,6 @@ These can be used as independent libraries or tools whenever needed individually
 *) lpi_base64
 *) lpi_bignums
 *) lpi_color
-*) lpi_crypto
 *) lpi_file
 *) lpi_math
 *) lpi_math2d
